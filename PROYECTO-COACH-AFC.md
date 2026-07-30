@@ -732,6 +732,15 @@ Persistencia: `localStorage` (claves `afc2:*`) — sigue pendiente migrar a Supa
 - 423 pruebas en verde (chk46 nuevo). Archivo ~3.70 MB. Artifact REV 59.
 - **Pendiente**: (1) ejecutar el nodo del ícono de app dúo-split e integrarlo; (2) animación de "deslizador" en los segmentos internos (`.seg`) — el nav ya desliza, pero los segmentos se recrean por render y no animan entre estados sin usar View Transitions (queda como mejora aparte).
 
+**REV 66-70 (29-30/07/2026):** tanda grande de UX + features.
+- **REV 66**: comparación de fotos con pie de **fecha completa + peso + pasos/entreno** y delta de kg (`fotoStats`/`fmtLong`); padding de la rejilla de medidas (clase `mcells`); check del ejercicio al final y alineado; ícono de filtro de recetas → embudo (`filter`).
+- **REV 67**: **tabla compacta de series** (Set/Anterior/kg/Reps/✓) con descanso entre filas y "+Agregar serie · m:ss", íconos de progreso/cambiar arriba de la tarjeta; **Records Personales por ejercicio** (peso más pesado, mejor 1RM, mejor volumen de serie y de sesión) en la vista de progreso.
+- **REV 68**: detalle de receta con **bloques por persona** (color + chips de macros P/C/G/kcal/costo); **duración del entreno** guardada en la sesión (`min` desde `draft.t0`) y mostrada en actividad reciente.
+- **REV 69**: **caja rotativa del home** (`homeRotator`/`HOMEFEED`): rota entre pendiente del día, frases motivacionales, versículos (Reina-Valera dominio público, editables para pegar TPT) y datos útiles; **cabrita durmiendo** en el coach card de la noche (`dormidoA`/`dormidoC`). Nodo `APP — cabrita lectora` creado en el space (create-only).
+- **REV 70**: **isla flotante** de la rutina en curso (`updateIsland`, `#island`) para volver al entreno desde cualquier parte; **avisos al abrir** (`partnerAlerts`) si el otro propuso premio/reinicio de reto o ideas (banner en home + toast); **imagen del ejercicio en círculo** en la lista de la sesión.
+- 437 pruebas en verde (chk46-50). SW cache v14. Todo publicado en el artifact y en `site/` (git → Netlify).
+- **Space create-only pendiente de ejecutar por Andy**: `APP — cabrita lectora` (para el rotador; mientras usa el avatar). Ya ejecutados e integrados: dúo-split app icon, banners de rutina, íconos de comida, dormido.
+
 **Nota MCP**: quedó registrado el servidor `21st` (21st.dev, componentes React/Tailwind) en la config local de Claude Code; requiere exportar `API_KEY_21ST` en el shell para autenticar. Útil para el port a Next.js, no para el prototipo vanilla.
 
 ### Notas de producto

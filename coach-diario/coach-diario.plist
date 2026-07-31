@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Programa el coach diario a las 9:00 pm.
+     Instalar:
+       cp coach-diario.plist ~/Library/LaunchAgents/com.cabritos.coach.plist
+       launchctl load ~/Library/LaunchAgents/com.cabritos.coach.plist
+     Probar a mano:  zsh coach-diario.sh -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.cabritos.coach</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>/Users/afcastro/Documents/Projects/SandyApp/coach-diario/coach-diario.sh</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>21</integer><key>Minute</key><integer>0</integer></dict>
+  <key>StandardOutPath</key><string>/tmp/coach-diario.log</string>
+  <key>StandardErrorPath</key><string>/tmp/coach-diario.err</string>
+</dict>
+</plist>

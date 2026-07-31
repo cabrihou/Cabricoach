@@ -1,3 +1,4 @@
 .DS_Store
 *.backup-*.html
 coach-afc.jsx
+__pycache__/

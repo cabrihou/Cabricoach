@@ -32,7 +32,8 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 
 ## E · Entrenar (`vEntrenar`)
 
-- **E1** Rutina del día / lista de rutinas (`.pcard`, sub-pestañas de entrenar)
+- **E1** Rutina del día / lista de rutinas (`.pcard`, sub-pestañas de entrenar: Rutinas · Ejercicios, `UI.sub.train`, `ACTIONS.trainSub`)
+  - E1a Caja "Personalizado" junto a Movilidad en el grid de rutinas: formulario de herramientas/tiempo/grupos/intensidad, genera y arranca una sesión con `rid:'perso'` (`vPerso`, `persoGen`, `ACTIONS.persoOpen/persoRoll/persoStart`)
 - **E2** Sesión activa (modo foco)
   - E2a Tabla de series: kg, reps, check, botón × de borrar (`setTable`)
   - E2b Divisor de descanso entre series (`.restdiv`)
@@ -40,6 +41,10 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - E2d Botón "Empezar entreno" / finalizar sesión
 - **E3** Importar entreno pegando texto (Strong, etc.) (`impTgl`)
 - **E4** Historial de entrenos
+- **E5** Sub-pestaña Ejercicios: catálogo EXCAT completo (`vExcat`)
+  - E5a Buscador en vivo, sin acentos ni mayúsculas (`excatq`)
+  - E5b Cajas colapsadas por categoría con conteo, tocables enteras (`excatRow`, patrón `schedhead`)
+  - E5c Ventana flotante de detalle: foto, categoría, equipo, tipo, último peso y "Agregar a la sesión de hoy" si hay sesión activa (`excatDetailBox`)
 
 ## A · Agenda (`vAgenda` / `vCalendario`)
 

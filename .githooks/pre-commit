@@ -1,0 +1,47 @@
+#!/bin/zsh
+# Antes de cada commit: verifica la app y sincroniza site/.
+# Existe porque site/index.html es una copia manual de la fuente y es facil
+# commitear una sin la otra: el sitio quedaria desplegando una version vieja.
+#
+# Se instala con:  git config core.hooksPath .githooks
+# Para saltarlo una vez:  git commit --no-verify
+set -euo pipefail
+RAIZ=$(git rev-parse --show-toplevel)
+cd "$RAIZ"
+
+# Solo actua si la fuente entra en este commit
+if ! git diff --cached --name-only | grep -q "^coach-afc-v2.html$"; then
+  exit 0
+fi
+
+print "pre-commit: verificando la app..."
+if ! python3 herramientas/verificar.py coach-afc-v2.html > /tmp/cabritos-verif.txt 2>&1; then
+  print "pre-commit: la verificacion FALLO, no commiteo."
+  tail -20 /tmp/cabritos-verif.txt
+  print "\n(si sabes lo que haces: git commit --no-verify)"
+  exit 1
+fi
+
+# Aviso si cambio la app pero no subio el REV
+rev=$(grep -o "const APPREV='REV [0-9]*'" coach-afc-v2.html | grep -o '[0-9]*')
+rev_publicada=$(git show HEAD:coach-afc-v2.html 2>/dev/null | grep -o "const APPREV='REV [0-9]*'" | grep -o '[0-9]*' || echo 0)
+if [ "$rev" = "$rev_publicada" ]; then
+  print "pre-commit: AVISO, cambiaste la app y el REV sigue en $rev."
+  print "            Los telefonos no van a notar la actualizacion."
+fi
+
+# Los dos sw.js deben tener el mismo cache
+c1=$(grep -o "cabritos-v[0-9]*" sw.js | head -1)
+c2=$(grep -o "cabritos-v[0-9]*" site/sw.js | head -1)
+if [ "$c1" != "$c2" ]; then
+  print "pre-commit: sw.js dice $c1 y site/sw.js dice $c2. Deben coincidir."
+  exit 1
+fi
+
+if ! cmp -s coach-afc-v2.html site/index.html; then
+  cp coach-afc-v2.html site/index.html
+  git add site/index.html
+  print "pre-commit: site/index.html sincronizado y agregado al commit."
+fi
+
+print "pre-commit: listo (REV $rev, cache $c1)."

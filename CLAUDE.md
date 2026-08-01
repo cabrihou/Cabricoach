@@ -46,13 +46,40 @@ hallazgos nuevos**. Chrome headless funciona para validar con clics (sirve con
 
 ## Publicar
 
+El hook de pre-commit (`.githooks/pre-commit`) hace el trabajo solo: al commitear la
+fuente, verifica la app, avisa si el `APPREV` no subió, comprueba que los dos `sw.js`
+tengan el mismo cache y sincroniza `site/index.html` dentro del mismo commit.
+
 ```bash
-./publicar.sh
+git add -A && git commit -m "REV N: ..." && git push origin main
 ```
 
-Verifica, avisa si olvidaste subir el `APPREV` o el cache de `sw.js`, y copia la fuente
-a `site/index.html`. Después: commit y push a `main` de `cabrihou/Cabricoach`, que
-dispara Netlify.
+El push a `main` de `cabrihou/Cabricoach` dispara Netlify. `./publicar.sh` sigue
+existiendo para verificar y sincronizar a mano cuando quieras, sin commitear.
+
+Si el hook no corre: `git config core.hooksPath .githooks` (lo hace `setup.sh`).
+
+## Trabajar desde varios computadores
+
+En un computador nuevo:
+
+```bash
+git clone https://github.com/cabrihou/Cabricoach.git
+cd Cabricoach
+zsh herramientas/setup.sh
+```
+
+`setup.sh` revisa python3, jsc y el CLI de claude, activa los hooks, valida las
+credenciales de la nube contra Supabase y dice qué falta. Se puede correr cuantas
+veces sea.
+
+**La regla que evita el dolor**: `git pull --rebase` **antes** de tocar nada. La app es
+un solo archivo de 4,8 MB; si dos computadores lo editan en paralelo, el conflicto es
+irresoluble a mano y toca descartar el trabajo de uno. `setup.sh` avisa si estás atrás.
+
+Lo que **no** viaja por git y hay que crear en cada máquina: `~/.config/cabritos.env`
+(credenciales) y la programación del coach diario
+(`zsh herramientas/coach-diario/instalar.sh`).
 
 ## Señalar dónde está algo
 

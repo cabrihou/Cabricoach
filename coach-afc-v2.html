@@ -97,6 +97,7 @@ h2.disp{font-size:clamp(19px,5.2vw,24px);font-weight:800}
 .dim{color:var(--smoke)}
 .red{color:var(--red)}
 .mint{color:var(--mint)}
+.gold{color:var(--gold)}
 a{color:inherit}
 
 /* ===== estructura ===== */
@@ -195,6 +196,11 @@ input[type=time].in{text-align:left}
 .bar{height:10px;border:none;background:rgba(255,255,255,.09);position:relative;border-radius:999px;overflow:hidden}
 .bar>i{display:block;height:100%;background:var(--grad);border-radius:999px;transition:width .6s cubic-bezier(.32,.72,0,1)}
 .bar.thin{height:7px}
+/* Punto E: color de estado de una barra (cerca/lejos de la meta), mismo criterio
+   que .macbox.over/.macbox.low: verde = grad por defecto, ambar/rojo solo cuando
+   corresponde, nunca en el fondo de la tarjeta */
+.bar.gold>i{background:var(--gold)}
+.bar.low>i{background:var(--red)}
 
 .rule2{border:none;border-top:1px solid var(--line);margin:14px 0}
 .stripe{display:none}
@@ -1031,6 +1037,9 @@ svg .acc{fill:var(--mint);stroke:none}
 .macbox.over{border-color:rgba(255,201,77,.4)} .macbox.over b{color:var(--gold)}
 .macbox.prot{border-color:rgba(var(--acc-rgb),.35)} .macbox.prot b{color:var(--mint)}
 .macbox.done{border-color:rgba(88,223,163,.4);background:rgba(88,223,163,.08)} .macbox.done b{color:#58DFA3}
+/* Punto E: rojo solo cuando falta de verdad (<85% de la meta), mismo patron que
+   .over/.done de arriba */
+.macbox.low{border-color:rgba(255,82,87,.4)} .macbox.low b{color:var(--red)}
 .npro{color:var(--mint);font-weight:600;font-family:var(--num);font-variant-numeric:tabular-nums}
 .nfsub{display:block;font-size:13px;color:var(--ink2);margin-top:2px}
 .catchip{padding-left:8px}
@@ -1296,7 +1305,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 106';
+const APPREV='REV 107';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -1591,6 +1600,14 @@ function repartirPct(pesos){
   return out;
 }
 function repartoIguales(n){ return repartirPct(Array.from({length:n},()=>1)); }
+/* pcts efectivos de reparto de un usuario para n comidas: los guardados si calzan
+   con n, si no reparto igual. Un solo lugar para este fallback (antes vivia repetido
+   en comidasDe y en repBoxHTML); ahora tambien lo usa el control de % por comida de
+   gestPlanHTML (Punto C), para que los tres lean exactamente el mismo numero. */
+function repartoEfectivo(key, n){
+  const arr = S && S.meal && S.meal.prefs && S.meal.prefs.reparto && S.meal.prefs.reparto[key];
+  return (arr && arr.length===n) ? arr : repartoIguales(n);
+}
 /* presets rapidos del reparto: si el nombre buscado no existe entre las etiquetas
    (p. ej. Andres no tiene "Desayuno" literal con 3 comidas: almuerzo/snack/cena) cae
    a una posicion sensata: desayuno->primera, cena->ultima, almuerzo->la del medio. */
@@ -1611,7 +1628,7 @@ function comidasDe(uid){
   const plan = PLANS[uid];
   const prefs = (S && S.meal && S.meal.prefs) || {};
   const n = clamp((prefs.comidas && prefs.comidas[key]) || 3, 1, 5);
-  let pcts = (prefs.reparto && prefs.reparto[key] && prefs.reparto[key].length===n) ? prefs.reparto[key] : repartoIguales(n);
+  let pcts = repartoEfectivo(key, n);
   const labels = MEAL_LABELS(n);
   const pgs=repartirMacro(plan.prot,pcts), cgs=repartirMacro(plan.carb,pcts), fgs=repartirMacro(plan.fat,pcts), kcs=repartirMacro(plan.kcal,pcts);
   return labels.map((label,i)=>({k:'m'+(i+1), label, pg:pgs[i], cg:cgs[i], fg:fgs[i], kc:kcs[i]}));
@@ -7427,6 +7444,18 @@ function vComida(){
 }
 function recCost(r,w){ return r[w].ing.reduce((a,[n,q,u,c])=>a+costOf(q,u,c),0); }
 function macroLine(m){ return `${m.pg}P · ${m.cg}C · ${m.fg}G · ~${m.kc} kcal`; }
+/* Punto E: un solo criterio de color de estado para toda la vista de comida (el
+   resumen de la semana, "como se distribuye" y la semana comida por comida): verde
+   si cumple la meta, ambar si esta cerca (85-99%), rojo solo si falta de verdad
+   (<85%). Devuelve la clase de texto (.mint/.gold/.red, ya existen) y el modificador
+   de .bar/.macbox correspondiente, para no repetir el umbral en cada vista. */
+function estadoPct(val, meta){
+  const pct = meta>0 ? val/meta*100 : 0;
+  const txt = pct>=100?'mint':pct>=85?'gold':'red';
+  const box = pct>=100?'done':pct>=85?'over':'low';
+  const bar = pct>=100?'':pct>=85?'gold':'low';
+  return {pct, txt, box, bar};
+}
 function recCard(r){
       const p=S.meal.selected[r.id];
       return `<details class="rec ${p?'sel':''}">
@@ -7465,8 +7494,11 @@ function recCard(r){
         </div>
       </details>`;
     }
-/* filtro de dificultad de la vista Recetas: null = todas, si no exacto (1/2/3) */
-function difMatch(r){ return !UI.recDif || r.dif===UI.recDif; }
+/* filtro de dificultad de la vista Recetas: null = todas, si no exacto (1/2/3).
+   El segundo parametro es opcional: sin el, usa el filtro de la pestana Recetas
+   (UI.recDif); el selector de cambio de receta (Punto B) pasa el suyo propio
+   (UI.recSwapDif) para no compartir estado con esa pestana. */
+function difMatch(r, dif){ const d = dif===undefined ? UI.recDif : dif; return !d || r.dif===d; }
 function recListing(recs,q){
   if(q) return recs.map(recCard).join('')||`<div class="tc" style="padding:16px 0"><img loading="lazy" class="cabimg" src="${CAB.vacio}" width="110" height="110" decoding="async" alt=""><div class="small dim mt8">Nada con esa búsqueda.</div></div>`;
   /* categoría abierta → sus recetas con botón volver */
@@ -7667,15 +7699,35 @@ function weekSummaryHTML(res){
       <button class="btn full" data-a="wkFormOpen">${ic('chevL',13)} Volver al formulario</button>
     </div>`;
   }
+  /* Punto A: contadores que respiran (fila por persona, nombre a la izquierda,
+     cifras alineadas a la derecha, unidad y meta chicas debajo). Punto D: kcal del
+     dia junto a la proteina. Punto E: color de estado en el numero (verde/ambar/
+     rojo), la proteina en tier grande (.t-metric-md) y las kcal en tier mediano
+     (.num), igual que pide el estandar (un solo dato manda por bloque). */
+  const filaMetrica=(nombre,val,unit,meta,grande)=>{
+    const e=estadoPct(val,meta);
+    return `<div class="row"><div class="grow"><b style="font-size:15px">${nombre}</b></div>
+      <div style="text-align:right;flex:none">
+        <div class="${grande?'t-metric-md':'num'} ${e.txt}" style="line-height:1">${val}<span class="t-unit"> ${unit}</span></div>
+        <div class="small dim" style="margin-top:2px">meta ${meta}</div>
+      </div>
+    </div>`;
+  };
   return `<div class="fboxin">
     <div class="flex between mb8"><b class="t-h2">Así quedó la semana</b><button class="btn sm" data-a="wkFormClose" aria-label="cerrar">${ic('x',14)}</button></div>
-    ${res.recetas.map((r,i)=>`<div class="row"><div class="grow"><b style="font-size:15px">${esc(r.name)}</b><div class="small dim">Andrés × ${res.porA[i]} · Cami × ${res.porC[i]}</div>
-      <div class="small dim mt2">A: ${macroLine(r.a)} · C: ${macroLine(r.c)}</div></div></div>`).join('')}
-    <div class="grid1px cols2 mt12 mb4">
-      <div class="stat"><span class="lbl">Proteína/día Andrés</span><div class="v" style="font-size:16px">${fmtInt(res.protDiaA)}</div><span class="u">g · meta ${PLANS.andres.prot}</span></div>
-      <div class="stat"><span class="lbl">Proteína/día Cami</span><div class="v" style="font-size:16px">${fmtInt(res.protDiaC)}</div><span class="u">g · meta ${PLANS.cami.prot}</span></div>
+    <div class="small dim mb8">Toca una receta para cambiarla.</div>
+    ${res.recetas.map((r,i)=>`<div class="row" data-a="recSwapOpen" data-id="${r.id}" role="button" style="cursor:pointer;align-items:flex-start;flex-wrap:wrap">
+      <div class="grow"><b style="font-size:15px">${esc(r.name)}</b><div class="small dim">Andrés × ${res.porA[i]} · Cami × ${res.porC[i]}</div>
+      <div class="small dim mt2">A: ${macroLine(r.a)} · C: ${macroLine(r.c)}</div></div>
+      <span class="chip" style="flex:none">${ic('repeat',11)} Cambiar</span>
+    </div>`).join('')}
+    <div class="mt8">
+      ${filaMetrica('Proteína/día Andrés', fmtInt(res.protDiaA), 'g', PLANS.andres.prot, true)}
+      ${filaMetrica('Kcal/día Andrés', fmtInt(res.kcDiaA||0), 'kcal', PLANS.andres.kcal, false)}
+      ${filaMetrica('Proteína/día Cami', fmtInt(res.protDiaC), 'g', PLANS.cami.prot, true)}
+      ${filaMetrica('Kcal/día Cami', fmtInt(res.kcDiaC||0), 'kcal', PLANS.cami.kcal, false)}
     </div>
-    <div class="small dim mb8">Andrés: ${res.cgDiaA}C · ${res.fgDiaA}G /día (meta ${PLANS.andres.carb}C · ${PLANS.andres.fat}G) · Cami: ${res.cgDiaC}C · ${res.fgDiaC}G /día (meta ${PLANS.cami.carb}C · ${PLANS.cami.fat}G)</div>
+    <div class="small dim mt8 mb8">Andrés: ${res.cgDiaA}C · ${res.fgDiaA}G /día (meta ${PLANS.andres.carb}C · ${PLANS.andres.fat}G) · Cami: ${res.cgDiaC}C · ${res.fgDiaC}G /día (meta ${PLANS.cami.carb}C · ${PLANS.cami.fat}G)</div>
     <div class="small dim mb12">Costo estimado: <b style="color:var(--ink)">${fmtCOP(res.costo)}</b>${res.presupuesto?(res.costo>res.presupuesto?' de '+fmtCOP(res.presupuesto)+' · se pasa por '+fmtCOP(res.costo-res.presupuesto):' de '+fmtCOP(res.presupuesto)+' · dentro del presupuesto'):''}</div>
     ${res.avisos.length?`<div class="small dim mb12">${esc(res.avisos.join(' · '))}</div>`:''}
     <div class="flex mt8" style="gap:8px">
@@ -7783,13 +7835,13 @@ function autoWeekGen(){
      escalado (Punto A: "no escales sin avisar") */
   const semanaEsc=uid=>{
     const key=uid==='andres'?'a':'c', cm=comidasDe(uid), plan=PLANS[uid];
-    let totP=0, totC=0, totF=0, diasCumplen=0;
+    let totP=0, totC=0, totF=0, totK=0, diasCumplen=0;
     DLETRAS.forEach(dl=>{
-      let dp=0,dc=0,df=0;
-      cm.forEach((m,i)=>{ const ca=comidaArmada(uid,dl,i,cm); if(!ca) return; dp+=ca.totalMac.pg; dc+=ca.totalMac.cg; df+=ca.totalMac.fg; });
-      totP+=dp; totC+=dc; totF+=df; if(dp>=plan.prot) diasCumplen++;
+      let dp=0,dc=0,df=0,dk=0;
+      cm.forEach((m,i)=>{ const ca=comidaArmada(uid,dl,i,cm); if(!ca) return; dp+=ca.totalMac.pg; dc+=ca.totalMac.cg; df+=ca.totalMac.fg; dk+=ca.totalMac.kc; });
+      totP+=dp; totC+=dc; totF+=df; totK+=dk; if(dp>=plan.prot) diasCumplen++;
     });
-    return {protDia:Math.round(totP/7), cgDia:Math.round(totC/7), fgDia:Math.round(totF/7), diasCumplen};
+    return {protDia:Math.round(totP/7), cgDia:Math.round(totC/7), fgDia:Math.round(totF/7), kcDia:Math.round(totK/7), diasCumplen};
   };
   const escA=semanaEsc('andres'), escC=semanaEsc('cami');
   if(escA.diasCumplen<7) avisos.push('La proteína de Andrés no llega a la meta '+(7-escA.diasCumplen)+' día(s) de la semana incluso escalando las porciones: prueba agregar un scoop en el desayuno o sumar otra receta.');
@@ -7797,6 +7849,7 @@ function autoWeekGen(){
   return {
     ok:true, recetas:elegidas, porA, porC, costo, presupuesto:prefs.presupuesto,
     protDiaA: escA.protDia, protDiaC: escC.protDia,
+    kcDiaA: escA.kcDia, kcDiaC: escC.kcDia,
     cgDiaA: escA.cgDia, fgDiaA: escA.fgDia, cgDiaC: escC.cgDia, fgDiaC: escC.fgDia,
     avisos,
   };
@@ -7971,7 +8024,7 @@ function repBoxHTML(){
   const secUser=uid=>{
     const key=uid==='andres'?'a':'c', plan=PLANS[uid];
     const n=clamp((S.meal.prefs.comidas&&S.meal.prefs.comidas[key])||3,1,5);
-    const pcts=(S.meal.prefs.reparto&&S.meal.prefs.reparto[key]&&S.meal.prefs.reparto[key].length===n)?S.meal.prefs.reparto[key]:repartoIguales(n);
+    const pcts=repartoEfectivo(key,n);
     const labels=MEAL_LABELS(n);
     const pgs=repartirMacro(plan.prot,pcts), cgs=repartirMacro(plan.carb,pcts), fgs=repartirMacro(plan.fat,pcts), kcs=repartirMacro(plan.kcal,pcts);
     return `<div class="mb16">
@@ -8012,6 +8065,97 @@ function repBoxRemove(){
   UI._repBox=null;
   document.querySelectorAll('[data-a="repartoBoxTgl"]').forEach(b=>b.classList.remove('on'));
 }
+
+/* ============ PUNTO B: CAMBIAR RECETA DESDE EL RESUMEN/LA SEMANA ============
+   Reemplaza una receta de la rotacion (S.meal.selected) por otra del catalogo, para
+   Andres, Cami o los dos. Mueve las porciones de quien(es) aplique de la receta
+   vieja a la nueva (sumando si la nueva ya estaba en la rotacion) y actualiza las
+   asignaciones manuales dia->receta (S.meal.plan) que apuntaban a la vieja. No hay
+   una segunda fuente de porciones/macros que mantener: gestData, comidaArmada y
+   recetaDeComida ya leen de S.meal.selected/S.meal.plan, asi que el recalculo de
+   macros, lo que falta y el costo es automatico al repintar. */
+function recSwapApply(oldId, newId, target){
+  if(!oldId || !newId || oldId===newId) return;
+  const sel=S.meal.selected, oldP=sel[oldId]; if(!oldP) return;
+  const keys = target==='both' ? ['a','c'] : [target];
+  keys.forEach(k=>{
+    const amt=oldP[k]||0; if(!amt) return;
+    sel[newId]=sel[newId]||{a:0,c:0};
+    sel[newId][k]=(sel[newId][k]||0)+amt;
+    oldP[k]=0;
+  });
+  if(!oldP.a && !oldP.c) delete sel[oldId];
+  ['a','c'].forEach(k=>{
+    if(!keys.includes(k)) return;
+    const porDia=S.meal.plan&&S.meal.plan[k]; if(!porDia) return;
+    Object.keys(porDia).forEach(dl=>{
+      const dia=porDia[dl]; if(!dia) return;
+      Object.keys(dia).forEach(mk=>{ if(dia[mk]===oldId) dia[mk]=newId; });
+    });
+  });
+  S.meal.checklist={};
+  save('meal');
+}
+/* recalculo en vivo del resumen "Asi quedo la semana" despues de cambiar una receta
+   o sus porciones desde ADENTRO del resumen mismo: reusa gestData() (la misma
+   fuente que ya usa gestSemanaHTML) para no tener una segunda cuenta de la
+   escalada, solo la reempaqueta con la forma que espera weekSummaryHTML. */
+function weekResFromSelected(){
+  const g=gestData();
+  const costo = g.recetas.reduce((a,x)=>a+(x.p.a||0)*recCost(x.r,'a')+(x.p.c||0)*recCost(x.r,'c'),0)
+    + (S.meal.staples?STAPLES.reduce((a,[n,q,u,c])=>a+costOf(q,u,c),0):0);
+  const avisos=[];
+  if(g.andres.diasCumplen<7) avisos.push('La proteína de Andrés no llega a la meta '+(7-g.andres.diasCumplen)+' día(s) de la semana con esta receta: prueba agregar un scoop en el desayuno o sumar otra receta.');
+  if(g.cami.diasCumplen<7) avisos.push('La proteína de Cami no llega a la meta '+(7-g.cami.diasCumplen)+' día(s) de la semana con esta receta: prueba sumar otra receta.');
+  return {
+    ok:true, recetas:g.recetas.map(x=>x.r), porA:g.recetas.map(x=>x.p.a||0), porC:g.recetas.map(x=>x.p.c||0),
+    costo, presupuesto:S.meal.prefs.presupuesto,
+    protDiaA:g.andres.protDiaEsc, protDiaC:g.cami.protDiaEsc,
+    kcDiaA:g.andres.kcDiaEsc, kcDiaC:g.cami.kcDiaEsc,
+    cgDiaA:g.andres.cgDiaEsc, fgDiaA:g.andres.fgDiaEsc,
+    cgDiaC:g.cami.cgDiaEsc, fgDiaC:g.cami.fgDiaEsc,
+    avisos,
+  };
+}
+/* candidatas del selector: todo el catalogo menos la receta que se va a reemplazar,
+   con el mismo buscador y filtro de dificultad de Recetas (difMatch), pero con su
+   propio estado (UI.recSwapDif) para no pisar el filtro de esa pestana */
+function recSwapCandidatas(){
+  const q=(UI.recSwapQ||'').trim().toLowerCase();
+  const oldId=UI.recSwap&&UI.recSwap.id;
+  return RECIPES.filter(r=>r.id!==oldId && difMatch(r,UI.recSwapDif) && (!q||r.name.toLowerCase().includes(q)));
+}
+function recSwapBoxHTML(){
+  const st=UI.recSwap; if(!st) return '';
+  const old=RECIPES.find(r=>r.id===st.id);
+  const cands=recSwapCandidatas();
+  const targets=[['both','Los dos'],['a','Andrés'],['c','Cami']];
+  return `<div class="fboxin">
+    <div class="flex between mb8"><b class="t-h2">Cambiar receta</b><button class="btn sm" data-a="recSwapClose" aria-label="cerrar">${ic('x',14)}</button></div>
+    ${old?`<div class="small dim mb12">Vas a reemplazar <b style="color:var(--ink)">${esc(old.name)}</b> por otra del catálogo</div>`:''}
+    <span class="lbl">Aplica el cambio a</span>
+    <div class="seg cols3 mt8 mb12">${targets.map(([v,lb])=>`<button class="${(st.target||'both')===v?'on':''}" data-a="recSwapTarget" data-v="${v}" aria-label="Aplicar a ${lb}">${lb}</button>`).join('')}</div>
+    <div class="inwrap mb8"><span style="left:13px">${ic('search',16)}</span><input class="in has-ic" placeholder="Buscar receta…" value="${esc(UI.recSwapQ||'')}" data-ch="recSwapQ" style="padding-right:12px"></div>
+    <div class="flex wrapf mb12" style="gap:6px">${DIF_OPTS.map(([v,lb])=>`<button class="chip ${UI.recSwapDif===v?'fill':''}" data-a="recSwapDifSet" data-v="${v}" aria-label="Filtrar por dificultad ${lb}">${lb}</button>`).join('')}</div>
+    ${cands.length?cands.slice(0,50).map(r=>`
+      <div class="row" data-a="recSwapPick" data-id="${r.id}" role="button" style="cursor:pointer">
+        <span class="badge cat-${r.cat}">${catIco(r.cat,20)}</span>
+        <div class="grow" style="min-width:0"><b style="font-size:14.5px">${esc(r.name)}</b>
+          <div class="small dim">A: ${macroLine(r.a)} · C: ${macroLine(r.c)}</div>
+        </div>
+      </div>`).join(''):'<div class="small dim" style="padding:12px 0">Nada con esa búsqueda.</div>'}
+  </div>`;
+}
+function recSwapOpenBox(){
+  let box=document.querySelector('.fbox.recswap');
+  if(!box){ box=document.createElement('div'); box.className='fbox scroll recswap'; box.innerHTML=recSwapBoxHTML();
+    box.onclick=e=>{ if(e.target===box) ACTIONS.recSwapClose(); };
+    document.body.appendChild(box);
+  } else box.innerHTML=recSwapBoxHTML();
+  return box;
+}
+function recSwapRedraw(){ const box=document.querySelector('.fbox.recswap'); if(box) box.innerHTML=recSwapBoxHTML(); }
+function recSwapRemove(){ const box=document.querySelector('.fbox.recswap'); if(box) box.remove(); UI.recSwap=null; }
 
 /* ============ VISTA: GESTION ALIMENTACION (antes "Meal prep", Tarea 1/2) ============
    Usa RECIPE_PREP (metadatos embebidos: tiempos, utensilios, conservación, pasos con
@@ -8199,6 +8343,11 @@ function gestSemanaHTML(){
   const personCard=p=>{
     const pctP=clamp(p.protDiaEsc/p.plan.prot*100,0,100), pctK=clamp(p.kcDiaEsc/p.plan.kcal*100,0,100);
     const cumple=p.diasCumplen>=7;
+    /* Punto D: kcal del dia junto a la proteina. Punto E: un solo dato manda (la
+       proteina, en el anillo grande); las kcal van en tier mediano (.num, ya
+       existe) con color de estado; carbo/grasa quedan de tercer nivel en macrow,
+       igual que antes. */
+    const eK=estadoPct(p.kcDiaEsc,p.plan.kcal), eP=estadoPct(p.protDiaEsc,p.plan.prot);
     return `<div class="recperson" style="--pc:${col[p.uid]}">
       <div class="recph"><i class="pdot" style="background:${col[p.uid]}"></i><b>${nombre[p.uid]}</b>
         <span class="recmc p">${p.porciones} porciones</span><span class="recmc">${p.nDia}/día</span></div>
@@ -8206,13 +8355,17 @@ function gestSemanaHTML(){
         ${ring(pctP, String(p.protDiaEsc), 'g PROT/DÍA', 74, 8)}
         <div class="grow" style="min-width:0">
           <div class="small">Ya escalado: ${cumple?'<b>cumple los 7 días</b>':'cumple <b>'+p.diasCumplen+' de 7 días</b>'} la meta de ${p.plan.prot} g</div>
-          <div class="bar mt8"><i style="width:${pctK.toFixed(0)}%"></i></div>
-          <div class="small dim mt4">${p.kcDiaEsc} de ${p.plan.kcal} kcal/día · ${p.diasCubiertos} de 7 días con inventario cocinado</div>
+          <div class="flex between mt8" style="align-items:baseline">
+            <span class="num ${eK.txt}">${p.kcDiaEsc}<span class="t-unit"> kcal</span></span>
+            <span class="small dim">meta ${p.plan.kcal}</span>
+          </div>
+          <div class="bar mt6 ${eK.bar}"><i style="width:${pctK.toFixed(0)}%"></i></div>
+          <div class="small dim mt4">${p.diasCubiertos} de 7 días con inventario cocinado</div>
           ${p.grande?`<div class="small dim mt4">Comida más grande: <b style="color:var(--ink)">${p.grande.label}</b> · ${p.grande.pg}P · ${p.grande.kc} kcal</div>`:''}
         </div>
       </div>
       <div class="macrow mt10">
-        <span class="macbox ${cumple?'done':'prot'}"><b>${p.protDiaEsc}</b><span class="mn">Proteína</span><span class="mt">meta ${p.plan.prot} g</span></span>
+        <span class="macbox ${eP.box}"><b>${p.protDiaEsc}</b><span class="mn">Proteína</span><span class="mt">meta ${p.plan.prot} g</span></span>
         <span class="macbox"><b>${p.cgDiaEsc}</b><span class="mn">Carbo</span><span class="mt">meta ${p.plan.carb} g</span></span>
         <span class="macbox"><b>${p.fgDiaEsc}</b><span class="mn">Grasa</span><span class="mt">meta ${p.plan.fat} g</span></span>
       </div>
@@ -8236,7 +8389,10 @@ function gestSemanaHTML(){
     <div class="mod-head"><span class="ttl">${ic('book',16)} Qué elegiste · ${g.recetas.length} receta${g.recetas.length>1?'s':''}</span></div>
     ${g.recetas.map(x=>`<div class="row" style="align-items:flex-start;flex-wrap:wrap">
       <span class="badge cat-${x.r.cat}">${catIco(x.r.cat,22)}</span>
-      <div class="grow" style="min-width:200px"><b style="font-size:15px">${esc(x.r.name)}</b>
+      <div class="grow" style="min-width:200px">
+        <div class="flex between" style="gap:8px"><b style="font-size:15px">${esc(x.r.name)}</b>
+          <button class="chip" style="flex:none" data-a="recSwapOpen" data-id="${x.id}" aria-label="Cambiar receta ${esc(x.r.name)}">${ic('repeat',11)} Cambiar</button>
+        </div>
         <div class="recmac"><i class="pdot" style="background:${col.andres}"></i>Andrés · <b>${x.r.a.pg} g prot</b> · ${x.r.a.cg}C · ${x.r.a.fg}G · ${x.r.a.kc} kcal</div>
         <div class="flex between mt4" style="max-width:210px"><span class="small dim">porciones/semana</span>
           <div class="qty"><button data-a="port" data-r="${x.id}" data-w="a" data-n="-1" aria-label="menos porciones Andrés">−</button><span class="n">${x.p.a||0}</span><button data-a="port" data-r="${x.id}" data-w="a" data-n="1" aria-label="más porciones Andrés">+</button></div></div>
@@ -8287,6 +8443,8 @@ function gestPlanHTML(){
       <span class="badge">${ca.cubre?ic('check',16):ic('alert',16)}</span>
       <div class="grow" style="min-width:180px">
         <div class="flex between"><b style="font-size:14.5px">${ca.m.label}</b><span class="small dim">meta ${ca.m.pg} g prot</span></div>
+        ${cm.length>1?`<div class="flex between mt6" style="align-items:center"><span class="small dim">% del día para esta comida</span>
+          <input class="in ctr" style="width:60px;font-size:14px;padding:6px 8px" inputmode="numeric" data-ch="mealPct" data-u="${uid}" data-i="${i}" value="${Math.round(repartoEfectivo(uid==='andres'?'a':'c', cm.length)[i])}"></div>`:''}
         ${opciones.length?`<select class="in mt6" style="font-size:13.5px" data-ch="planRec" data-u="${uid}" data-d="${dl}" data-m="${i}">
           ${opciones.map(id=>{const rr=RECIPES.find(x=>x.id===id); return rr?`<option value="${id}" ${id===ca.rid?'selected':''}>${esc(rr.name)}</option>`:'';}).join('')}
         </select>`:'<div class="small dim mt4">Sin recetas en la rotación</div>'}
@@ -8304,10 +8462,18 @@ function gestPlanHTML(){
     const cm=comidasDe(uid);
     const tot=cm.reduce((a,m,i)=>{ const ca=comidaArmada(uid,dl,i,cm); if(!ca) return a;
       return {pg:a.pg+ca.totalMac.pg, cg:a.cg+ca.totalMac.cg, fg:a.fg+ca.totalMac.fg, kc:a.kc+ca.totalMac.kc}; },{pg:0,cg:0,fg:0,kc:0});
-    const plan=PLANS[uid], cumple=tot.pg>=plan.prot;
+    const plan=PLANS[uid];
+    /* Punto D: kcal del dia junto a la proteina, tambien aca. Punto E: color de
+       estado en el numero de proteina (verde/ambar/rojo), no solo cumple/no cumple. */
+    const eP=estadoPct(tot.pg,plan.prot);
     return `<div class="mb12">
-      <div class="flex between mb4"><b style="font-size:15px">${USERS[uid].name}</b>
-        <span class="chip ${cumple?'fill':'red'}">${tot.pg} / ${plan.prot} g</span></div>
+      <div class="flex between mb4" style="align-items:flex-end">
+        <b style="font-size:15px">${USERS[uid].name}</b>
+        <div style="text-align:right">
+          <span class="num ${eP.txt}" style="font-size:18px">${tot.pg}<span class="t-unit"> / ${plan.prot} g</span></span>
+          <div class="small dim">${tot.kc} / ${plan.kcal} kcal</div>
+        </div>
+      </div>
       ${cm.map((m,i)=>comidaRow(uid,dl,i,cm)).join('')}
     </div>`;
   };
@@ -9941,6 +10107,26 @@ const ACTIONS = {
     S.meal.prefs.reparto[key]=arr;
     save('meal'); repBoxRedraw();
   },
+  /* Punto B: abrir/cerrar/operar el selector de cambio de receta (ver recSwapApply
+     y weekResFromSelected mas arriba) */
+  recSwapOpen(d){ UI.recSwap={id:d.id, target:'both'}; UI.recSwapQ=''; UI.recSwapDif=null; recSwapOpenBox(); },
+  recSwapClose(){ recSwapRemove(); },
+  recSwapTarget(d){ if(UI.recSwap) UI.recSwap.target=d.v; recSwapRedraw(); },
+  recSwapDifSet(d){ const v=+d.v; UI.recSwapDif=(UI.recSwapDif===v)?null:v; recSwapRedraw(); },
+  recSwapPick(d){
+    if(!UI.recSwap) return;
+    const oldId=UI.recSwap.id, newId=d.id, target=UI.recSwap.target||'both';
+    const oldR=RECIPES.find(r=>r.id===oldId), newR=RECIPES.find(r=>r.id===newId);
+    if(!oldR||!newR||oldId===newId){ recSwapRemove(); return; }
+    recSwapApply(oldId,newId,target);
+    recSwapRemove();
+    /* si el picker se abrio dentro del resumen de la semana (fbox.weekform), lo
+       refresca con los macros/costo ya recalculados en vivo */
+    const wf=document.querySelector('.fbox.weekform');
+    if(wf) weekFormRedraw(weekResFromSelected());
+    render();
+    toast('Cambiaste '+oldR.name+' por '+newR.name);
+  },
   /* Tarea 3: marcar pasos de la linea de tiempo del meal prep (solo de la sesion,
      no se guarda: es una checklist mientras cocinas, no un historial) y el cierre
      que paga XP una vez por domingo (ver xpEntrenoExterno fuente 'mealprep'). */
@@ -10805,6 +10991,32 @@ const CHANGES = {
     const {u,d,m}=el.dataset, key=u==='andres'?'a':'c';
     S.meal.plan=S.meal.plan||{}; S.meal.plan[key]=S.meal.plan[key]||{}; S.meal.plan[key][d]=S.meal.plan[key][d]||{};
     S.meal.plan[key][d]['m'+(+m+1)]=el.value;
+    save('meal'); render();
+  },
+  /* Punto B: buscador del selector de cambio de receta (ventana flotante, no vive
+     en #view, por eso repinta con recSwapRedraw en vez de render) */
+  recSwapQ(el){ UI.recSwapQ=el.value; recSwapRedraw(); },
+  /* Punto C: fijar a mano el % del dia de UNA comida puntual (a diferencia de
+     repPct, que solo mueve +/-5 entre vecinas desde la ventana aparte). Reescala
+     las demas comidas de ese usuario proporcionalmente a lo que ya tenian entre
+     si, para que la suma siga dando 100 exacto; el redondeo sobrante lo absorbe
+     la ultima comida distinta de la editada. Misma fuente de verdad que repPct/
+     repPreset (S.meal.prefs.reparto), asi que comidasDe/comidaArmada recalculan
+     solas: no hay una segunda logica de reparto que mantener. */
+  mealPct(el){
+    const u=el.dataset.u, i=+el.dataset.i, key=u==='andres'?'a':'c';
+    const n=clamp((S.meal.prefs.comidas&&S.meal.prefs.comidas[key])||3,1,5);
+    if(n<2 || i<0 || i>=n) return;
+    let v=parseInt(String(el.value).replace(/\D/g,''),10);
+    if(isNaN(v)){ render(); return; }
+    v=clamp(v,5,95);
+    const arr=repartoEfectivo(key,n).slice();
+    const sumaOtros=arr.reduce((a,p,j)=>j===i?a:a+p,0)||1;
+    const restoNuevo=100-v;
+    const nuevo=arr.map((p,j)=> j===i? v : Math.max(0,Math.round(p/sumaOtros*restoNuevo)));
+    let usado=0,last=-1; nuevo.forEach((p,j)=>{ if(j!==i){ usado+=p; last=j; } });
+    if(last>=0) nuevo[last]+=(100-v-usado);
+    S.meal.prefs.reparto[key]=nuevo;
     save('meal'); render();
   },
 };

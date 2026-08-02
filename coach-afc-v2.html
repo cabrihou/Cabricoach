@@ -1334,7 +1334,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 115';
+const APPREV='REV 116';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -1759,12 +1759,13 @@ function recetaApta(r, momentos){ return !!(r && r.mom && momentos && r.mom.some
    de esa comida, se quedaba corta. Ahora se calcula un factor entre lo que pide la
    comida (comidasDe) y lo que da la porcion de la receta, y se escalan los
    INGREDIENTES (no solo los macros) para que el plato real tenga esa cantidad.
-   Nunca se escala hacia abajo: una porcion de mas no es el problema, quedarse
-   corto si lo es. Tope FACTOR_TOPE (2.5x) porque mas que eso ya no es un plato
-   real de una sentada; ahi se corta el escalado (excede:true) para que la UI
-   proponga dividir en dos comidas, sumar un scoop u otra fuente de proteina, o
-   cambiar de receta, en vez de mostrar una cantidad absurda sin avisar. */
-const FACTOR_TOPE = 2.5;
+   El escalado SI puede bajar (antes no): una receta que ya de por si se pasaba de
+   la meta de kcal se servia entera, y eso no es "una porcion de mas", es un tercio
+   del dia extra. Dos topes cortan el escalado hacia arriba: FACTOR_TOPE por
+   proporcion y TOPE_ABS por cantidad real en el plato (5 huevos, 350 g de carne).
+   Cuando ni asi se llega a la meta, faltaProt:true y la UI propone el scoop,
+   cambiar de receta o dividir en dos comidas, en vez de mostrar 8 huevos y medio. */
+const FACTOR_TOPE = 3;
 /* redondea una cantidad ya escalada a un paso manejable: 5 g/ml si es chico, 10 si
    es grande, medio si se cuenta por unidades (huevos, bananos, scoops...). Asi
    nunca se muestra un "137,4 g" ni un "1,3 unid" (nadie compra 1,3 bananos).
@@ -1777,18 +1778,217 @@ function redondeaCantidad(q, u){
   if(u==='unid') return Math.max(0.5, Math.round(q*2)/2);
   return Math.round(q*100)/100;
 }
-/* escala una receta (r[w]) contra el objetivo de proteina de UNA comida puntual */
-function escalaReceta(r, w, objetivoP){
+const ING_MACROS={
+  /* proteina */
+  "Atún en lata|unid":{pg:26,cg:0,fg:2,por:1,rol:'prot',tope:2},
+  "Camarones (crudos, pelados)|g":{pg:21,cg:0,fg:1,por:100,rol:'prot'},
+  "Carne molida magra|g":{pg:20,cg:0,fg:10,por:100,rol:'prot'},
+  "Chuleta de cerdo|g":{pg:18,cg:0,fg:14,por:100,rol:'prot'},
+  "Costillas de cerdo|g":{pg:17,cg:0,fg:18,por:100,rol:'prot'},
+  "Falda de res|g":{pg:21,cg:0,fg:12,por:100,rol:'prot'},
+  "Fríjol (crudo)|g":{pg:23,cg:60,fg:1,por:100,rol:'prot'},
+  "Garbanzo (crudo)|g":{pg:19,cg:61,fg:6,por:100,rol:'prot'},
+  "Huevos|unid":{pg:6,cg:0.5,fg:5,por:1,rol:'prot',tope:5},
+  "Lenteja (cruda)|g":{pg:24,cg:60,fg:1,por:100,rol:'prot'},
+  "Lomo de cerdo|g":{pg:21,cg:0,fg:7,por:100,rol:'prot'},
+  "Lomo de res|g":{pg:23,cg:0,fg:8,por:100,rol:'prot'},
+  "Muslos deshuesados|g":{pg:19,cg:0,fg:11,por:100,rol:'prot'},
+  "Pechuga de pollo|g":{pg:23,cg:0,fg:4,por:100,rol:'prot'},
+  "Proteína en polvo (whey)|g":{pg:78,cg:8,fg:2.5,por:100,rol:'prot'},
+  "Punta de anca|g":{pg:20,cg:0,fg:15,por:100,rol:'prot'},
+  "Queso bajo en grasa|g":{pg:17,cg:3,fg:8,por:100,rol:'prot'},
+  "Salmón (filete)|g":{pg:20,cg:0,fg:13,por:100,rol:'prot'},
+  "Tilapia (filete)|g":{pg:20,cg:0,fg:1.7,por:100,rol:'prot'},
+  "Trucha|g":{pg:20,cg:0,fg:7,por:100,rol:'prot'},
+  "Whey (scoop)|unid":{pg:24,cg:3,fg:1.5,por:1,rol:'prot'},
+  "Yogur griego|g":{pg:8,cg:4,fg:8,por:100,rol:'prot'},
+  /* carbo */
+  "Arepas|unid":{pg:2,cg:25,fg:1,por:1,rol:'carb'},
+  "Arroz (crudo)|g":{pg:7,cg:80,fg:1,por:100,rol:'carb'},
+  "Avena en hojuelas|g":{pg:13,cg:67,fg:7,por:100,rol:'carb'},
+  "Banano|g":{pg:1.1,cg:23,fg:0.3,por:100,rol:'carb'},
+  "Banano|unid":{pg:1,cg:27,fg:0,por:1,rol:'carb'},
+  "Frutos rojos congelados|g":{pg:1,cg:12,fg:0.3,por:100,rol:'carb'},
+  "Granola|g":{pg:10,cg:64,fg:15,por:100,rol:'carb'},
+  "Leche|ml":{pg:3.3,cg:4.8,fg:1.8,por:100,rol:'carb'},
+  "Manzana verde|g":{pg:0.3,cg:14,fg:0.2,por:100,rol:'carb'},
+  "Pan integral (tajada)|unid":{pg:3,cg:12,fg:1.5,por:1,rol:'carb'},
+  "Papa criolla|g":{pg:2,cg:18,fg:0.1,por:100,rol:'carb'},
+  "Papa|g":{pg:2,cg:17,fg:0.1,por:100,rol:'carb'},
+  "Pasta (seca)|g":{pg:13,cg:75,fg:1.5,por:100,rol:'carb'},
+  "Piña|g":{pg:0.5,cg:13,fg:0.1,por:100,rol:'carb'},
+  "Plátano verde|g":{pg:1.3,cg:28,fg:7,por:100,rol:'carb'},
+  "Plátano|g":{pg:1.3,cg:32,fg:0.4,por:100,rol:'carb'},
+  "Quinua (cruda)|g":{pg:14,cg:64,fg:6,por:100,rol:'carb'},
+  "Salsa BBQ|ml":{pg:0.5,cg:25,fg:0.3,por:100,rol:'carb'},
+  "Tortilla integral (wrap)|unid":{pg:5,cg:22,fg:3,por:1,rol:'carb'},
+  "Yuca|g":{pg:1.4,cg:38,fg:0.3,por:100,rol:'carb'},
+  /* grasa */
+  "Aguacate|g":{pg:2,cg:9,fg:15,por:100,rol:'gras'},
+  "Almendras|g":{pg:21,cg:22,fg:50,por:100,rol:'gras'},
+  "Chocolate 85%|g":{pg:8,cg:25,fg:43,por:100,rol:'gras'},
+  "Chía|g":{pg:17,cg:42,fg:31,por:100,rol:'gras'},
+  "Leche de coco light|ml":{pg:1,cg:3.5,fg:4.5,por:100,rol:'gras'},
+  "Mantequilla de maní|g":{pg:25,cg:20,fg:50,por:100,rol:'gras'},
+  "Maní natural|g":{pg:25,cg:16,fg:49,por:100,rol:'gras'},
+  "Queso parmesano|g":{pg:38,cg:4,fg:29,por:100,rol:'gras'},
+  /* libre */
+  "Alcaparras|g":{pg:2.4,cg:4.9,fg:0.9,por:100,rol:'libre'},
+  "Apio|g":{pg:0.7,cg:3,fg:0.2,por:100,rol:'libre'},
+  "Arveja|g":{pg:5,cg:14,fg:0.4,por:100,rol:'libre'},
+  "Brócoli|g":{pg:2.8,cg:7,fg:0.4,por:100,rol:'libre'},
+  "Cebolla cabezona|g":{pg:1.1,cg:9,fg:0.1,por:100,rol:'libre'},
+  "Cebolla larga|g":{pg:1.8,cg:7.3,fg:0.2,por:100,rol:'libre'},
+  "Champiñones|g":{pg:3,cg:3,fg:0.3,por:100,rol:'libre'},
+  "Chipotle|g":{pg:1.5,cg:8,fg:0.5,por:100,rol:'libre'},
+  "Ensalada verde|g":{pg:1.5,cg:3,fg:0.3,por:100,rol:'libre'},
+  "Espinaca|g":{pg:2.9,cg:3.6,fg:0.4,por:100,rol:'libre'},
+  "Espárragos|g":{pg:2.2,cg:3.9,fg:0.1,por:100,rol:'libre'},
+  "Pepino|g":{pg:0.7,cg:3.6,fg:0.1,por:100,rol:'libre'},
+  "Pimentón|g":{pg:1,cg:6,fg:0.3,por:100,rol:'libre'},
+  "Salsa de ostras|ml":{pg:1.5,cg:14,fg:0.1,por:100,rol:'libre'},
+  "Salsa soya|ml":{pg:8,cg:8,fg:0,por:100,rol:'libre'},
+  "Tomate|g":{pg:1,cg:4,fg:0.3,por:100,rol:'libre'},
+  "Verduras mixtas|g":{pg:2,cg:7,fg:0.3,por:100,rol:'libre'},
+  "Vino tinto (cocción)|ml":{pg:0.1,cg:2.6,fg:0,por:100,rol:'libre'},
+  "Zanahoria|g":{pg:0.9,cg:10,fg:0.2,por:100,rol:'libre'}
+};
+/* ============ ESCALADO POR INGREDIENTE ============
+   Antes se multiplicaban TODOS los ingredientes por un mismo factor sacado solo de
+   la proteina. Para exprimir proteina de una receta que no es buena fuente, ese
+   factor inflaba tambien el arroz, la arepa y el aceite: medido sobre las 80
+   recetas, el 40% de las combinaciones se pasaba de la meta de kcal (+23% de
+   media, hasta +72% en la tortilla con arepa). Ademas nunca bajaba de 1, asi que
+   una receta que ya de por si se pasaba (chili con frijol: 1150 kcal contra una
+   meta de 733) se servia entera.
+   Ahora cada ingrediente se escala segun lo que aporta (ING_MACROS): suben los
+   proteicos hasta cumplir la meta, y si eso dispara las kcal bajan primero las
+   grasas y despues los carbos, con pisos para que el plato siga siendo el plato.
+   Las verduras y condimentos (rol 'libre') no se tocan nunca: nadie ajusta su
+   dieta moviendo la cebolla. */
+const PISO_PROT = 0.60;  /* los proteicos pueden bajar si la receta ya sobrepasa la meta */
+const PISO_GRAS = 0.35;  /* la grasa es lo mas denso en kcal, es lo primero que cede */
+const PISO_CARB = 0.40;  /* el carbo cede despues, pero sin desaparecer del plato */
+const TOL_KCAL  = 1.05;  /* 5% de tolerancia: no vale la pena pelear con el redondeo */
+const VUELTAS   = 4;     /* alternancias proteina/kcal: mas vueltas ya no mueven el resultado */
+
+function ingInfo(n, u){ return ING_MACROS[n+'|'+u] || null; }
+/* cuanto de un ingrediente cabe de verdad en un plato de una sentada. El tope por
+   factor no basta: triplicar 3 huevos da 9 huevos, que es justo la cantidad absurda
+   que el escalado deberia evitar. Cuando una receta no llega a la meta sin pasarse
+   de aqui, es que esa receta no da para esa meta: se marca faltaProt y la UI propone
+   el scoop o cambiar de plato, que es la respuesta honesta. */
+const TOPE_ABS={unid:5, ml:400, g:350};
+function topeIng(n, u){
+  const i=ingInfo(n,u);
+  return (i && i.tope) || TOPE_ABS[u] || Infinity;
+}
+/* lo que aporta una cantidad concreta de un ingrediente */
+function ingAporte(n, q, u){
+  const i=ingInfo(n,u); if(!i) return null;
+  const f=q/(i.por||100);
+  const pg=i.pg*f, cg=i.cg*f, fg=i.fg*f;
+  return {pg, cg, fg, kc:pg*4+cg*4+fg*9, rol:i.rol};
+}
+
+/* el escalado de siempre, proporcional y sin bajar de 1. Se conserva como red:
+   si a una receta le falta algun ingrediente en la tabla, se comporta como antes
+   en vez de inventar cantidades con datos incompletos. */
+function escalaProporcional(r, w, objetivoP){
   const base=r[w];
   const factorCrudo = base.pg>0 ? objetivoP/base.pg : 1;
   const factor = clamp(factorCrudo, 1, FACTOR_TOPE);
-  const excede = factorCrudo > FACTOR_TOPE;
-  const ing = base.ing.map(([n,q,u,c])=>[n, redondeaCantidad(q*factor,u), u, c]);
-  const macros = {
-    pg:Math.round(base.pg*factor), cg:Math.round(base.cg*factor),
-    fg:Math.round(base.fg*factor), kc:Math.round(base.kc*factor),
+  return {
+    factor, factorCrudo, excede: factorCrudo>FACTOR_TOPE, porIng: base.ing.map(()=>factor),
+    ing: base.ing.map(([n,q,u,c])=>[n, redondeaCantidad(q*factor,u), u, c]),
+    macros:{pg:Math.round(base.pg*factor), cg:Math.round(base.cg*factor),
+            fg:Math.round(base.fg*factor), kc:Math.round(base.kc*factor)},
+    base, ajustes:[], excedeKcal:false, faltaProt:factorCrudo>FACTOR_TOPE, porIngrediente:false
   };
-  return {factor, factorCrudo, excede, ing, macros, base};
+}
+
+/* objetivoKc es opcional: sin techo de kcal el motor solo cumple la proteina */
+function escalaReceta(r, w, objetivoP, objetivoKc){
+  const base=r[w];
+  const items=base.ing.map(([n,q,u,c])=>({n,q,u,c,a:ingAporte(n,q,u)}));
+  if(items.some(x=>!x.a)) return escalaProporcional(r, w, objetivoP);
+
+  const fs=items.map(()=>1);
+  const suma=()=>items.reduce((s,x,i)=>({pg:s.pg+x.a.pg*fs[i], cg:s.cg+x.a.cg*fs[i],
+    fg:s.fg+x.a.fg*fs[i], kc:s.kc+x.a.kc*fs[i]}), {pg:0,cg:0,fg:0,kc:0});
+  const idxDe=rol=>items.map((x,i)=>x.a.rol===rol?i:-1).filter(i=>i>=0);
+  const base0=suma();
+
+  /* la meta llega en la escala de los macros DECLARADOS de la receta, pero el motor
+     razona sumando ingredientes, y las dos escalas no calzan exactamente (la tabla
+     cuadra en 134 de 160 casos, el resto se desvia sobre todo en grasa por el aceite
+     de coccion que no esta listado). Sin traducir la meta se apunta a un numero y se
+     mide en otro: era la causa de que la proteina se quedara corta en un tercio de
+     los casos aunque los ingredientes proteicos ni siquiera llegaran a su tope. */
+  const kProt = (base.pg>0 && base0.pg>0) ? base0.pg/base.pg : 1;
+  const kKcal = (base.kc>0 && base0.kc>0) ? base0.kc/base.kc : 1;
+  const objP = objetivoP>0 ? objetivoP*kProt : 0;
+  const techo = objetivoKc>0 ? objetivoKc*TOL_KCAL*kKcal : Infinity;
+  const iProt=idxDe('prot');
+  const pgProt=iProt.reduce((a,i)=>a+items[i].a.pg,0);
+
+  /* las dos fases se alternan porque no son independientes: recortar carbos para
+     bajar kcal se lleva por delante la proteina del arroz o la avena, asi que hay
+     que volver a pedirsela a los proteicos. Converge en pocas vueltas. */
+  for(let v=0; v<VUELTAS; v++){
+    /* FASE 1 · proteina: mueve solo los ingredientes proteicos, y les pide cubrir
+       lo que el resto del plato NO esta aportando en este momento */
+    if(objP>0 && pgProt>0){
+      const s0=suma();
+      const pgResto=s0.pg - iProt.reduce((a,i)=>a+items[i].a.pg*fs[i],0);
+      const pedido=clamp((objP-pgResto)/pgProt, PISO_PROT, FACTOR_TOPE);
+      fs.forEach((_,i)=>{ if(items[i].a.rol==='prot'){
+        const x=items[i], maxF=x.q>0 ? topeIng(x.n,x.u)/x.q : Infinity;
+        fs[i]=Math.min(pedido, Math.max(1, maxF));
+      }});
+    }
+    /* FASE 2 · kcal: si el plato se paso, ceden primero las grasas y luego los
+       carbos. Los proteicos no se tocan aqui: bajarlos desharia la fase 1. */
+    if(suma().kc<=techo) break;
+    [['gras',PISO_GRAS],['carb',PISO_CARB]].forEach(([rol,piso])=>{
+      const s=suma(); if(s.kc<=techo) return;
+      const idx=idxDe(rol); if(!idx.length) return;
+      const kcGrupo=idx.reduce((a,i)=>a+items[i].a.kc*fs[i],0);
+      if(kcGrupo<=0) return;
+      const recorte=Math.max(piso, (kcGrupo-(s.kc-techo))/kcGrupo);
+      idx.forEach(i=>{ fs[i]=Math.max(piso, fs[i]*recorte); });
+    });
+  }
+  const s=suma();
+  const faltaProt = objP>0 && s.pg < objP-0.5;
+
+  /* los macros que se muestran siguen anclados a los declarados de la receta y solo
+     se mueven en la proporcion en que cambio cada macro. Asi la tabla de ingredientes
+     decide COMO se reparte el ajuste, pero no reescribe las cifras que el dueno ya
+     conoce ni arrastra sus imprecisiones a la pantalla. */
+  const prop=(nuevo, viejo)=> viejo>0 ? nuevo/viejo : 1;
+  const macros={
+    pg:Math.round(base.pg*prop(s.pg,base0.pg)), cg:Math.round(base.cg*prop(s.cg,base0.cg)),
+    fg:Math.round(base.fg*prop(s.fg,base0.fg)), kc:Math.round(base.kc*prop(s.kc,base0.kc)),
+  };
+
+  /* que se movio, en palabras, para poder decirselo al dueno en vez de cambiarle
+     el plato en silencio */
+  const ajustes=[];
+  items.forEach((x,i)=>{
+    const q0=redondeaCantidad(x.q,x.u), q1=redondeaCantidad(x.q*fs[i],x.u);
+    if(q1!==q0) ajustes.push({n:x.n, de:q0, a:q1, u:x.u, rol:x.a.rol, sube:q1>q0});
+  });
+
+  const fProt = iProt.length ? fs[iProt[0]] : 1;
+  return {
+    factor:fProt, factorCrudo:fProt, excede:faltaProt, porIngrediente:true,
+    porIng:fs.slice(),
+    ing: items.map((x,i)=>[x.n, redondeaCantidad(x.q*fs[i],x.u), x.u, x.c]),
+    macros, base, ajustes, faltaProt,
+    excedeKcal: objetivoKc>0 && macros.kc > objetivoKc*TOL_KCAL,
+    kcObjetivo: objetivoKc||0
+  };
 }
 /* macros del "scoop de proteina" (Punto C): reusa el alimento real del catalogo
    ('wheyagua', 24 g prot / ~122 kcal) para no inventar una cifra aparte */
@@ -1855,7 +2055,7 @@ function comidaArmada(uid, dl, i, comidas){
     const totalMac={pg:scoops*sc.pg, cg:scoops*sc.cg, fg:scoops*sc.fg, kc:scoops*sc.kc};
     return {m, i, dl, r:null, rid:null, es:null, scoops, totalMac, falta:Math.max(0,m.pg-totalMac.pg), cubre:false, momentos, apto};
   }
-  const es=escalaReceta(r, key, m.pg);
+  const es=escalaReceta(r, key, m.pg, m.kc);
   const totalMac={
     pg: es.macros.pg + scoops*sc.pg, cg: es.macros.cg + scoops*sc.cg,
     fg: es.macros.fg + scoops*sc.fg, kc: es.macros.kc + scoops*sc.kc,
@@ -1924,7 +2124,7 @@ function comidaArmadaExtra(uid, dl, ex){
     const totalMac={pg:scoops*sc.pg, cg:scoops*sc.cg, fg:scoops*sc.fg, kc:scoops*sc.kc};
     return {m, i:null, dl, r:null, rid:null, es:null, scoops, totalMac, falta:Math.max(0,m.pg-totalMac.pg), cubre:false, momentos, apto, extra:true, exId:ex.id};
   }
-  const es=escalaReceta(r, key, m.pg);
+  const es=escalaReceta(r, key, m.pg, m.kc);
   const totalMac={
     pg: es.macros.pg + scoops*sc.pg, cg: es.macros.cg + scoops*sc.cg,
     fg: es.macros.fg + scoops*sc.fg, kc: es.macros.kc + scoops*sc.kc,
@@ -8173,17 +8373,33 @@ function autoWeekGen(){
    un plato que la app no va a proponer. Mismo resultado de antes si no hay
    comidas configuradas o la rotacion esta vacia, porque ahi no hay ocurrencias.
 */
+/* con el escalado por ingrediente ya no existe UN factor por receta: el pollo puede
+   subir mientras el arroz baja. Asi que se promedia ingrediente por ingrediente
+   sobre las mismas ocurrencias de la rotacion. Si esto devolviera un solo numero,
+   la lista compraria el arroz al factor de la proteina, o sea justo el exceso de
+   kcal que el motor acaba de quitar del plato. */
 function factorMercado(rid, key){
   const uid = key==='a' ? 'andres' : 'cami';
-  const r = RECIPES.find(x=>x.id===rid); if(!r) return 1;
+  const r = RECIPES.find(x=>x.id===rid);
+  const nIng = r ? r[key].ing.length : 0;
+  const unos = Array.from({length:nIng},()=>1);
+  if(!r) return {porIng:unos, medio:1};
   const cm = comidasDe(uid), nDia = cm.length;
-  let suma=0, n=0;
+  const suma = Array.from({length:nIng},()=>0);
+  let n=0;
   DLETRAS.forEach(dl=>{
     for(let i=0;i<nDia;i++){
-      if(recetaDeComida(uid, dl, i, nDia)===rid){ suma += escalaReceta(r, key, cm[i].pg).factor; n++; }
+      if(recetaDeComida(uid, dl, i, nDia)===rid){
+        const es = escalaReceta(r, key, cm[i].pg, cm[i].kc);
+        const fs = es.porIng || unos;
+        for(let j=0;j<nIng;j++) suma[j] += (fs[j]!==undefined ? fs[j] : 1);
+        n++;
+      }
     }
   });
-  return n ? suma/n : 1;
+  if(!n) return {porIng:unos, medio:1};
+  const porIng = suma.map(v=>v/n);
+  return {porIng, medio: porIng.reduce((a,b)=>a+b,0)/(nIng||1)};
 }
 function vLista(){
   const mult=PERIODS.find(p=>p.id===S.meal.period).mult;
@@ -8197,9 +8413,10 @@ function vLista(){
     ['a','c'].forEach(w=>{
       if(view!=='both'&&view!==w) return;
       if(!por[w]) return;
-      const factor=factorMercado(id,w);
-      pesoFactor+=factor*por[w]; pesoPor+=por[w];
-      r[w].ing.forEach(([n,q,u,c])=>{
+      const fm=factorMercado(id,w);
+      pesoFactor+=fm.medio*por[w]; pesoPor+=por[w];
+      r[w].ing.forEach(([n,q,u,c],j)=>{
+        const factor = fm.porIng[j]!==undefined ? fm.porIng[j] : 1;
         if(factor!==1) escalados.add(n+'|'+u);
         addIng(n, q*factor*por[w]*mult, u, c);
       });
@@ -8871,7 +9088,8 @@ function gestPlanHTML(){
       ${sinApta?`<div class="t-body-sm" style="color:var(--gold);margin-top:4px">Sin receta adecuada para ${fraseMomento(ca.momentos)}.</div>
         <button class="btn sm ghost" style="margin-top:6px" data-a="recSwapAddFor" data-u="${key}" data-mom="${ca.momentos[0]}">${ic('plus',12)} Agregar receta para ${fraseMomento([ca.momentos[0]])}</button>`:''}
       ${foraDeLugar?`<div class="t-body-sm" style="color:var(--gold);margin-top:4px">Fuera de lugar: elegiste esto a mano, pero no es lo típico para ${fraseMomento(ca.momentos)}.</div>`:''}
-      ${ca.es&&ca.es.excede?`<div class="t-body-sm" style="color:var(--gold);margin-top:4px">La porción ya quedó grande (×${FACTOR_TOPE}) y aun así falta proteína: ${uid==='andres'?'agrega un scoop, ':''}cambia de receta o divide en dos comidas.</div>`:''}
+      ${ca.es&&ca.es.faltaProt?`<div class="t-body-sm" style="color:var(--gold);margin-top:4px">Esta receta da ${ca.es.macros.pg} g y necesitas ${ca.m.pg}: subir más la porción ya no sería un plato de una sentada. ${uid==='andres'?'Agrega un scoop, ':''}cambia de receta o divídela en dos comidas.</div>`:''}
+      ${ca.es&&ca.es.ajustes&&ca.es.ajustes.length?`<div class="t-body-sm dim mt4">Ajusté la receta para que cuadre: ${ca.es.ajustes.map(a=>(a.sube?'más':'menos')+' '+esc(a.n.toLowerCase())+' ('+fmtQty(a.de,a.u)+' → '+fmtQty(a.a,a.u)+')').join(' · ')}</div>`:''}
       <div class="flex between" style="align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px">
         ${ca.es?`<button class="chip" data-a="gestIngTgl" data-k="${rowId}" data-factor="${ca.es.factor>1?'Porción × '+fmt1(ca.es.factor)+' · ':''}" aria-label="${ingOpen?'Ocultar':'Ver'} los ingredientes de esta comida">${ca.es.factor>1?'Porción × '+fmt1(ca.es.factor)+' · ':''}${ingOpen?'ocultar ingredientes':'ver ingredientes'}</button>`:'<span></span>'}
         <span class="t-body-sm dim" style="font-size:13px">${ca.totalMac.cg}C · ${ca.totalMac.fg}G${ca.scoops?' · +'+ca.scoops+' scoop'+(ca.scoops>1?'s':''):''}</span>
@@ -11352,7 +11570,7 @@ const ACTIONS = {
     if(!UI.nlogSlot){ UI.nlogSlot=slotNow(); UI.nlogQ=''; UI.nlogCat=null; UI.nlogDraft=[]; }
     const w=UID==='andres'?'a':'c';
     const obj=objetivoFranja(UID, UI.nlogSlot);
-    const es=escalaReceta(r, w, obj.pg||r[w].pg);
+    const es=escalaReceta(r, w, obj.pg||r[w].pg, obj.kc||0);
     if(!UI.nlogDraft) UI.nlogDraft=[];
     UI.nlogDraft.push({n:r.name, q:1, u:'porción', pg:es.macros.pg, cg:es.macros.cg, fg:es.macros.fg, kc:es.macros.kc,
       comp: es.ing.map(([nm,qq,un])=>[nm+' ('+fmtQty(qq,un)+')',null,null])});

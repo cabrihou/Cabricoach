@@ -766,6 +766,14 @@ svg .acc{fill:var(--mint);stroke:none}
 /* ficha del ejercicio en dos columnas: la foto manda a la izquierda en marco
    cuadrado y sin redondear (la imagen ya viene cuadrada, redondearla la recortaba),
    y a la derecha los chips con una descripcion corta */
+/* control de porcentaje con menos, campo editable y mas: el campo suelto obligaba
+   a escribir para cualquier ajuste pequeño */
+.ingline{display:none;margin-top:4px;font-size:13px}
+.ingline.on{display:block}
+.pctstep{display:inline-flex;align-items:center;gap:2px;background:var(--card2);border:1px solid var(--line2);border-radius:999px;padding:2px;flex:none}
+.pctstep .pctb{width:32px;height:32px;border:none;background:none;color:var(--mint);font:600 18px/1 var(--ui);border-radius:999px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.pctstep .pctb:active{background:rgba(var(--acc-rgb),.16)}
+.pctstep .in{width:46px;padding:6px 2px;border:none;background:none;font:600 16px var(--num);font-variant-numeric:tabular-nums}
 .exdet2{display:grid;grid-template-columns:minmax(120px,40%) 1fr;gap:12px;align-items:start;margin-top:4px}
 /* la foto vive en una caja con el mismo tratamiento que el resto de tarjetas
    (degradado, borde y esquinas redondeadas): el cuadrado pelado con esquinas
@@ -1326,7 +1334,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 111';
+const APPREV='REV 112';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -1635,11 +1643,21 @@ function pisoPctDeReceta(r, uid, metaP){
 /* piso de la comida i de hoy (para la ventana "Comidas y reparto", que no es por
    dia): usa la receta que le toca HOY via comidaArmada, misma fuente que ya usa
    la vista dia por dia */
+/* el reparto es uno solo para toda la semana, asi que el piso de una comida tiene que
+   ser el mas exigente de los siete dias: si el martes esa comida lleva una receta que
+   ya aporta 59 g, bajar el porcentaje por debajo de eso haria que el numero mostrado
+   fuera mentira ese dia, aunque hoy tenga una receta liviana */
 function pisoComida(uid, i, comidas){
-  const dl=DLETRAS[fromISO(TODAY()).getDay()];
-  const ca=comidaArmada(uid, dl, i, comidas||comidasDe(uid));
-  if(!ca || !ca.r) return null;
-  return pisoPctDeReceta(ca.r, uid, metasDe(uid).prot);
+  const cm=comidas||comidasDe(uid);
+  const meta=metasDe(uid).prot;
+  let peor=null;
+  DLETRAS.forEach(dl=>{
+    const ca=comidaArmada(uid, dl, i, cm);
+    if(!ca || !ca.r) return;
+    const p=pisoPctDeReceta(ca.r, uid, meta);
+    if(p && (!peor || p.pct>peor.pct)) peor=p;
+  });
+  return peor;
 }
 
 /* ============ COMIDAS POR DIA Y REPARTO DE MACROS ============
@@ -8820,10 +8838,10 @@ function gestPlanHTML(){
       ${foraDeLugar?`<div class="t-body-sm" style="color:var(--gold);margin-top:4px">Fuera de lugar: elegiste esto a mano, pero no es lo típico para ${fraseMomento(ca.momentos)}.</div>`:''}
       ${ca.es&&ca.es.excede?`<div class="t-body-sm" style="color:var(--gold);margin-top:4px">La porción ya quedó grande (×${FACTOR_TOPE}) y aun así falta proteína: ${uid==='andres'?'agrega un scoop, ':''}cambia de receta o divide en dos comidas.</div>`:''}
       <div class="flex between" style="align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px">
-        ${ca.es?`<button class="chip" data-a="gestIngTgl" data-k="${rowId}" aria-label="${ingOpen?'Ocultar':'Ver'} los ingredientes de esta comida">${ca.es.factor>1?'Porción × '+fmt1(ca.es.factor)+' · ':''}${ingOpen?'ocultar ingredientes':'ver ingredientes'}</button>`:'<span></span>'}
+        ${ca.es?`<button class="chip" data-a="gestIngTgl" data-k="${rowId}" data-factor="${ca.es.factor>1?'Porción × '+fmt1(ca.es.factor)+' · ':''}" aria-label="${ingOpen?'Ocultar':'Ver'} los ingredientes de esta comida">${ca.es.factor>1?'Porción × '+fmt1(ca.es.factor)+' · ':''}${ingOpen?'ocultar ingredientes':'ver ingredientes'}</button>`:'<span></span>'}
         <span class="t-body-sm dim" style="font-size:13px">${ca.totalMac.cg}C · ${ca.totalMac.fg}G${ca.scoops?' · +'+ca.scoops+' scoop'+(ca.scoops>1?'s':''):''}</span>
       </div>
-      ${ingOpen&&ca.es?`<div class="t-body-sm dim" style="margin-top:4px;font-size:13px">${ca.es.ing.map(([n,q,u])=>esc(n)+' '+fmtQty(q,u)).join(' · ')}</div>`:''}
+      ${ca.es?`<div class="ingline t-body-sm dim${ingOpen?' on':''}" data-ing="${rowId}">${ca.es.ing.map(([n,q,u])=>esc(n)+' '+fmtQty(q,u)).join(' · ')}</div>`:''}
       <div class="flex wrapf" style="gap:6px;margin-top:8px">
         ${uid==='andres'&&ca.r?`<button class="chip" data-a="planScoop" data-u="${uid}" data-d="${dl}" ${mAttr} data-n="1">${ic('plus',10)} scoop</button>`:''}
         ${uid==='andres'&&ca.r&&ca.scoops?`<button class="chip" data-a="planScoop" data-u="${uid}" data-d="${dl}" ${mAttr} data-n="-1">${ic('minus',10)} scoop</button>`:''}
@@ -8835,7 +8853,11 @@ function gestPlanHTML(){
         const piso=pisoPctDeReceta(ca.r, uid, metasDe(uid).prot);
         return `<div class="flex between" style="align-items:center;gap:8px;margin-top:8px">
         <span class="t-label">% día para esta comida</span>
-        <input class="in ctr" style="width:56px;padding:6px 4px" inputmode="numeric" data-ch="mealPct" data-u="${uid}" data-i="${i}" value="${Math.round(repartoEfectivo(key,nDia)[i])}">
+        <span class="pctstep">
+          <button class="pctb" data-a="mealPctStep" data-u="${uid}" data-i="${i}" data-n="-5" aria-label="Bajar el porcentaje de ${esc(ca.m.label)}">−</button>
+          <input class="in ctr" inputmode="numeric" data-ch="mealPct" data-u="${uid}" data-i="${i}" value="${Math.round(repartoEfectivo(key,nDia)[i])}" aria-label="Porcentaje del día para ${esc(ca.m.label)}">
+          <button class="pctb" data-a="mealPctStep" data-u="${uid}" data-i="${i}" data-n="5" aria-label="Subir el porcentaje de ${esc(ca.m.label)}">+</button>
+        </span>
       </div>
       ${piso?`<div class="t-body-sm dim mt4">mínimo ${piso.pct}% porque ${esc(ca.r.name.split(' ').slice(0,3).join(' '))} ya aporta ${piso.pg} g</div>`:''}`;
       })():''}
@@ -8902,7 +8924,7 @@ function gestPlanHTML(){
       <h3 class="t-h2 mb8">${nombreDia[diaSel]}</h3>
       ${uids.map(uid=>diaBlock(uid,diaSel,true)).join('')}
     `:`
-      ${DLETRAS.map(dl=>`<details class="catgroup mb8" ${dl===hoyLetra?'open':''}>
+      ${DLETRAS.map(dl=>`<details class="catgroup mb8" data-dia="${dl}" ${((UI.gestDiasOpen&&UI.gestDiasOpen[dl]!==undefined)?UI.gestDiasOpen[dl]:dl===hoyLetra)?'open':''}>
         <summary><b style="font-size:15px">${nombreDia[dl]}</b>${dl===hoyLetra?' <span class="chip fill">hoy</span>':''}<span class="chev">${ic('chevR',14)}</span></summary>
         <div style="padding:8px 2px 4px">${uids.map(uid=>diaBlock(uid,dl,false)).join('')}</div>
       </details>`).join('')}
@@ -11206,7 +11228,20 @@ const ACTIONS = {
   },
   /* pliega/despliega la linea de ingredientes de una comida dentro de la vista
      por dia (Punto jerarquia): UI transitoria, no se persiste */
-  gestIngTgl(d){ UI.gestIngOpen=UI.gestIngOpen||{}; UI.gestIngOpen[d.k]=!UI.gestIngOpen[d.k]; render(); },
+  /* sin render(): reconstruir la vista entera cerraba los dias desplegados, la pagina
+     se encogia y el scroll saltaba al inicio. Aqui basta con mostrar u ocultar la linea */
+  gestIngTgl(d, el){
+    UI.gestIngOpen=UI.gestIngOpen||{};
+    const abierto=!UI.gestIngOpen[d.k];
+    UI.gestIngOpen[d.k]=abierto;
+    const linea=document.querySelector('.ingline[data-ing="'+d.k+'"]');
+    if(linea) linea.classList.toggle('on', abierto);
+    if(el){
+      const factor=el.getAttribute('data-factor')||'';
+      el.textContent=factor+(abierto?'ocultar ingredientes':'ver ingredientes');
+      el.setAttribute('aria-label', (abierto?'Ocultar':'Ver')+' los ingredientes de esta comida');
+    }
+  },
   /* Punto F: chip de meal prep en el registro de comida. Agrega la receta a la
      franja abierta con su porcion ya escalada al objetivo de esa franja */
   nlogPickMP(d){
@@ -11387,6 +11422,16 @@ const ACTIONS = {
     location.reload();
   },
   none(){},
+  /* los botones de mas y menos comparten la logica del campo escrito: arman el
+     valor nuevo y llaman al mismo handler, asi el piso por receta y el reparto
+     del resto se calculan en un solo sitio */
+  mealPctStep(d){
+    const u=d.u, i=+d.i, delta=+d.n, key=u==='andres'?'a':'c';
+    const n=clamp((S.meal.prefs.comidas&&S.meal.prefs.comidas[key])||3,1,5);
+    if(n<2 || i<0 || i>=n) return;
+    const actual=Math.round(repartoEfectivo(key,n)[i]||0);
+    CHANGES.mealPct({dataset:{u, i:String(i)}, value:String(actual+delta)});
+  },
 };
 function dl(blob,name){
   /* en el entorno de Artifacts los <a download> están bloqueados: usar la capacidad downloads */
@@ -11599,6 +11644,16 @@ document.addEventListener('click', e=>{
    atendieran el 'change' que dispara el navegador al destruirse el campo, se repintaria
    dos veces por tecla (ver el guardia de render) */
 const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq']);
+/* los dias de la semana son <details>: si no se recuerda cual quedo abierto, cada
+   render los cierra, la pagina se encoge de golpe y el scroll cae al inicio (era el
+   salto al tocar "ver ingredientes"). 'toggle' no burbujea: se escucha en captura. */
+document.addEventListener('toggle', e=>{
+  const d=e.target;
+  if(d && d.tagName==='DETAILS' && d.dataset && d.dataset.dia){
+    UI.gestDiasOpen=UI.gestDiasOpen||{};
+    UI.gestDiasOpen[d.dataset.dia]=d.open;
+  }
+}, true);
 document.addEventListener('change', e=>{
   const el=e.target.closest('[data-ch]');
   if(!el) return;

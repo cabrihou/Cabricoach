@@ -1296,7 +1296,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 104';
+const APPREV='REV 105';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -5458,7 +5458,7 @@ function spark(vals){
 }
 
 /* ============ UI STATE ============ */
-const UI = { tab:'inicio', sub:{prog:'general', food:'recetas', train:'rutinas'}, progAct:'general', backTo:null, ex:'bench', session:null, recFilter:'all', recQ:'', recDif:null, exQ:'', calM:0, calSel:null, calView:'mes', calDay:null, calFoto:false, nutriDate:null, progRange:30, exIdx:null, sessList:false, swapOpen:false, noteOpen:false, platesOpen:false, exOpts:null, rotIdx:null, fueraOpen:false, hand:{p:1.5,c:1,g:1}, nlogSlot:null, nlogQ:'', nlogCat:null, nlogDraft:[], nlogNew:null, schedOpen:false, wkPick:null, dayEdit:null, pwSel:null, sugOpen:false, sugAutoDay:null, ideaOpen:false, ideaCalc:null, irNameVal:'', irDescVal:'', irIngVal:'', facOpen:false, facPendingId:null, facFotoOk:false, facQ:'', facTiendaVal:'', irQ:'', nnQ:'', excatQ:'', excatCat:null, addExQ:'', persoOpen:false, persoPreview:null };
+const UI = { tab:'inicio', sub:{prog:'general', food:'recetas', train:'rutinas'}, progAct:'general', backTo:null, ex:'bench', session:null, recFilter:'all', recQ:'', recDif:null, exQ:'', calM:0, calSel:null, calView:'mes', calDay:null, calFoto:false, nutriDate:null, progRange:30, exIdx:null, sessList:false, swapOpen:false, noteOpen:false, platesOpen:false, exOpts:null, rotIdx:null, fueraOpen:false, hand:{p:1.5,c:1,g:1}, nlogSlot:null, nlogQ:'', nlogCat:null, nlogDraft:[], nlogNew:null, schedOpen:false, mpOpen:false, wkPick:null, dayEdit:null, pwSel:null, sugOpen:false, sugAutoDay:null, ideaOpen:false, ideaCalc:null, irNameVal:'', irDescVal:'', irIngVal:'', facOpen:false, facPendingId:null, facFotoOk:false, facQ:'', facTiendaVal:'', irQ:'', nnQ:'', excatQ:'', excatCat:null, addExQ:'', persoOpen:false, persoPreview:null };
 
 /* ============ VISTA: INICIO ============ */
 function ring(pct,main,sub,size=138,sw=11){
@@ -6013,15 +6013,17 @@ function vInicio(){
   ${injectToday?`<section class="mod tight"><div class="flex between"><div class="flex">${ic('syringe',18)}<div><b style="font-size:16px">Hoy: inyección semanal</b><div class="small dim">Retatrutida · registra la aplicación</div></div></div><button class="btn sm" data-a="inject">Hecha</button></div></section>`:''}
 
   ${nutriDay(t)}
-  ${nutriExtras()}
 
   <div class="tc" style="margin-top:16px"><span class="lbl">CABRICOACH · ${APPREV} · ${CU().name.toUpperCase()}${DEMO?' · DEMO':''}</span></div>
   <div class="stripe"></div>`;
 }
-/* I4f/I4g: registro libre "que comiste" y la tabla de comidas y macros del dia (con
-   el aviso de comidas vencidas de mealStatus), rescatadas de la vieja Plan dia (N6,
-   Tarea 2) al panel de nutricion del Inicio, en formato sobrio (sin fotocard ni
-   caras). Usa comidasDe(UID) en vez de las filas fijas de antes. */
+/* registro libre "que comiste" y la tabla de comidas y macros del dia (con el aviso de
+   comidas vencidas de mealStatus). Vivio un tiempo en el panel de nutricion del Inicio
+   (I4f/I4g); el dueno pidio sacarlas de ahi porque el Inicio es un resumen, no el lugar
+   de registrar (Tarea 3). Quedan en Comida > Gestion alimentacion (vGestion), que es
+   donde ya vive el resto de la gestion del dia a dia de comida: el registro cae justo
+   debajo de la semana planeada y arriba del meal prep del domingo. comidasDe(UID) sigue
+   siendo la fuente de las filas, no una lista fija. */
 function nutriExtras(){
   const t=TODAY(), u=CU(), eaten=eatenToday(), fr=S.free[t]||[];
   const comidas=comidasDe(UID);
@@ -6210,7 +6212,19 @@ function cycGradient(c){
 function cycHome(){
   if(UID!=='cami') return '';
   const c=cycleInfo();
-  if(!c) return `<section class="mod tight" data-a="cycCfgGo" role="button" style="cursor:pointer"><div class="flex">${ic('heart',18)}<div class="small grow"><b>Activa el seguimiento de tu ciclo.</b> Registra tu última menstruación y aquí te acompaño fase por fase: cargas, comida y ánimo.</div>${ic('chevR',15)}</div></section>`;
+  /* invitacion cuando no hay cycStart: antes era una linea chiquita y el dueno no la
+     notaba. Ahora es una tarjeta con cabrita y boton propio (Tarea 4), sin ocupar
+     media pantalla: una imagen, dos lineas de beneficio y un boton directo. */
+  if(!c) return `<section class="mod glowtop tight">
+    <div class="flex" style="gap:12px;align-items:center">
+      <img loading="lazy" src="${CAB.cycFoli}" alt="" decoding="async" style="width:58px;flex:none;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4))">
+      <div class="grow" style="min-width:0">
+        <b style="font-size:16px">Aquí va tu ciclo</b>
+        <div class="small dim mt4">Regístralo y te acompaño fase por fase: qué cargas subir, qué comer y cómo entender tu ánimo cada día.</div>
+      </div>
+    </div>
+    <button class="btn primary full mt12" data-a="cycCfgGo">${ic('heart',14)} Activar mi ciclo</button>
+  </section>`;
   const hNow=new Date().getHours();
   const consejo=hNow<12?c.tip:hNow<19?c.food:c.animo;
   const angle=((c.day-0.5)/c.len*360).toFixed(1);
@@ -7297,10 +7311,10 @@ function vComida(){
     <div class="seg cols3 segfood">
       <button class="${sub==='recetas'?'on':''}" data-a="foodSub" data-s="recetas">${ic('cart',15)} Recetas${nsel?' ('+nsel+')':''}</button>
       <button class="${sub==='lista'?'on':''}" data-a="foodSub" data-s="lista">${ic('food',15)} Mercado</button>
-      <button class="${sub==='mealprep'?'on':''}" data-a="foodSub" data-s="mealprep">${ic('clock',15)} Meal prep</button>
+      <button class="${sub==='mealprep'?'on':''}" data-a="foodSub" data-s="mealprep">${ic('clip',15)} Gestión</button>
     </div>
   </section>
-  ${sub==='recetas'?vRecetas():sub==='lista'?vLista():vMealPrep()}`;
+  ${sub==='recetas'?vRecetas():sub==='lista'?vLista():vGestion()}`;
 }
 function recCost(r,w){ return r[w].ing.reduce((a,[n,q,u,c])=>a+costOf(q,u,c),0); }
 function macroLine(m){ return `${m.pg}P · ${m.cg}C · ${m.fg}G · ~${m.kc} kcal`; }
@@ -7865,7 +7879,7 @@ function repBoxRemove(){
   document.querySelectorAll('[data-a="repartoBoxTgl"]').forEach(b=>b.classList.remove('on'));
 }
 
-/* ============ VISTA: MEAL PREP (Tarea 3, reemplaza la vieja Plan día) ============
+/* ============ VISTA: GESTION ALIMENTACION (antes "Meal prep", Tarea 1/2) ============
    Usa RECIPE_PREP (metadatos embebidos: tiempos, utensilios, conservación, pasos con
    atención activo/pasivo) cruzado con S.meal.selected (la rotación activa, venga de
    "Ármame la semana" o de elegir receta a receta en Recetas).
@@ -7919,16 +7933,10 @@ function mealPrepTimeline(tracks){
   const sumaSeparada = tracks.reduce((a,tr)=>a+tr.steps.reduce((x,p)=>x+p.min,0),0);
   return {timeline, totalMin, sumaSeparada};
 }
-function vMealPrep(){
-  const tracks=mealPrepTracks();
-  if(!tracks.length){
-    return `<section class="mod tc">
-      <img loading="lazy" class="cabimg" src="${CAB.vacio}" width="110" height="110" decoding="async" alt="">
-      <h2 class="t-h2 mt8">Todavía no hay rotación activa</h2>
-      <div class="small dim mt8 mb12">Elige recetas en Recetas (a mano o con "Ármame la semana") y aquí se arma sola la guía del domingo: qué cocinar, en qué orden y cómo empacarlo.</div>
-      <button class="btn primary full" data-a="autoWeek">${ic('zap',14)} Ármame la semana</button>
-    </section>`;
-  }
+/* cuerpo completo del viejo vMealPrep, ahora dentro de la caja colapsable "Meal prep
+   del domingo" (Tarea 1). Recibe los tracks ya calculados (mealPrepTracks()), asume
+   que quien llama ya verificó que hay al menos uno. */
+function mealPrepBody(tracks){
   const {timeline, totalMin, sumaSeparada}=mealPrepTimeline(tracks);
   const startHM=((S.reminders||[]).find(r=>r.id==='prep')||{}).time || '15:00';
   const [sh,sm]=startHM.split(':').map(Number);
@@ -7982,6 +7990,127 @@ function vMealPrep(){
     ${tracks.map(tr=>`<div class="row"><div class="grow"><b style="font-size:15px">${esc(tr.r.name)}</b><div class="small dim">${esc(tr.meta.recalienta)}</div></div></div>`).join('')}
     <button class="btn primary full mt8" data-a="mealprepHecho" aria-label="Meal prep hecho" ${doneToday?'disabled':''}>${ic('check',14)} ${doneToday?'Meal prep hecho hoy ✓':'Meal prep hecho'}</button>
   </section>`;
+}
+/* caja colapsable "Meal prep del domingo" (patron schedhead/schedbody, ver C5 en el
+   mapa). El dato clave (tiempo estimado y tuppers) queda en la cabecera aunque este
+   cerrada; el resto (linea de tiempo, empaque, cierre) solo se pinta abierta. Sin
+   rotacion activa no se muestra nada: el estado vacio ya lo cubre gestSemanaHTML. */
+function mealPrepBoxHTML(){
+  const tracks=mealPrepTracks();
+  if(!tracks.length) return '';
+  const {totalMin}=mealPrepTimeline(tracks);
+  const tuppersA=tracks.reduce((a,tr)=>a+(tr.por.a||0),0), tuppersC=tracks.reduce((a,tr)=>a+(tr.por.c||0),0);
+  const horas=Math.round(totalMin/6)/10;
+  const open=UI.mpOpen;
+  return `<section class="mod tight" id="mpbox">
+    <button class="schedhead ${open?'open':''}" data-a="mpBoxTgl">
+      <span class="grow tl" style="min-width:0"><b class="schedt" style="display:block">Meal prep del domingo</b>
+        <span class="small dim" style="display:block">${open?'Toca para plegar':`≈ ${horas} h · ${tuppersA+tuppersC} tuppers (A×${tuppersA} · C×${tuppersC})`}</span></span>
+      <span class="nfchev">${ic('chevR',16)}</span>
+    </button>
+    ${open?`<div class="schedbody">${mealPrepBody(tracks)}</div>`:''}
+  </section>`;
+}
+/* ===== la semana con lo que se eligio (Tarea 2) =====
+   Cruza S.meal.selected (recetas + porciones por persona) con comidasDe(uid) (comidas
+   al dia segun su meta y reparto) para saber cuanto alcanza y que falta. Cada porcion
+   cocinada de una receta equivale a una comida de esa persona (mismo criterio que usa
+   mealPrepBody para tuppers). */
+function gestData(){
+  const sel=S.meal.selected||{};
+  const ids=Object.keys(sel).filter(id=>(sel[id].a>0||sel[id].c>0));
+  const recetas=ids.map(id=>({id, r:RECIPES.find(x=>x.id===id), p:sel[id]})).filter(x=>x.r);
+  const per=uid=>{
+    const key=uid==='andres'?'a':'c';
+    const comidas=comidasDe(uid);
+    const nDia=comidas.length||1;
+    const porciones=recetas.reduce((a,x)=>a+(x.p[key]||0),0);
+    const protSemana=recetas.reduce((a,x)=>a+(x.p[key]||0)*x.r[key].pg,0);
+    const kcSemana=recetas.reduce((a,x)=>a+(x.p[key]||0)*x.r[key].kc,0);
+    const comidasSemana=nDia*7;
+    const faltanComidas=Math.max(0,comidasSemana-porciones);
+    const diasCubiertos=Math.min(7,Math.floor(porciones/nDia));
+    const diasSinNada=Math.max(0,7-diasCubiertos);
+    const plan=PLANS[uid];
+    const protDia=Math.round(protSemana/7), kcDia=Math.round(kcSemana/7);
+    const grande=comidas.slice().sort((a,b)=>b.pg-a.pg)[0]||null;
+    return {uid, key, comidas, nDia, porciones, protSemana, kcSemana, comidasSemana, faltanComidas, diasCubiertos, diasSinNada, plan, protDia, kcDia, grande};
+  };
+  return {recetas, andres:per('andres'), cami:per('cami')};
+}
+function gestSemanaHTML(){
+  const g=gestData();
+  if(!g.recetas.length){
+    return `<section class="mod tc">
+      <img loading="lazy" class="cabimg" src="${CAB.vacio}" width="110" height="110" decoding="async" alt="">
+      <h2 class="t-h2 mt8">Todavía no hay rotación activa</h2>
+      <div class="small dim mt8 mb12">Elige recetas en Recetas (a mano o con "Ármame la semana") y aquí se arma la semana completa: qué cocinaste, cómo se reparte entre los dos y qué te falta.</div>
+      <button class="btn primary full" data-a="autoWeek">${ic('zap',14)} Ármame la semana</button>
+    </section>`;
+  }
+  const nombre={andres:'Andrés',cami:'Cami'}, col={andres:'#5C8DFF',cami:'#FFC94D'};
+  const personCard=p=>{
+    const pctP=clamp(p.protDia/p.plan.prot*100,0,100), pctK=clamp(p.kcDia/p.plan.kcal*100,0,100);
+    return `<div class="recperson" style="--pc:${col[p.uid]}">
+      <div class="recph"><i class="pdot" style="background:${col[p.uid]}"></i><b>${nombre[p.uid]}</b>
+        <span class="recmc p">${p.porciones} porciones</span><span class="recmc">${p.nDia}/día</span></div>
+      <div class="flex" style="gap:14px;align-items:center;margin-top:6px">
+        ${ring(pctP, String(p.protDia), 'g PROT/DÍA', 74, 8)}
+        <div class="grow" style="min-width:0">
+          <div class="small">Cubre <b>${p.diasCubiertos} de 7 días</b> con lo cocinado</div>
+          <div class="bar mt8"><i style="width:${pctK.toFixed(0)}%"></i></div>
+          <div class="small dim mt4">${p.kcDia} de ${p.plan.kcal} kcal/día · meta ${p.plan.prot} g prot/día</div>
+          ${p.grande?`<div class="small dim mt4">Comida más grande: <b style="color:var(--ink)">${p.grande.label}</b> · ${p.grande.pg}P · ${p.grande.kc} kcal</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  };
+  const huecos=[];
+  [g.andres,g.cami].forEach(p=>{
+    const nm=nombre[p.uid];
+    if(p.faltanComidas>0) huecos.push({icon:'alert',
+      txt:`Faltan <b>${p.faltanComidas} comida${p.faltanComidas>1?'s':''}</b> de ${nm} para cubrir toda la semana: cocinaste ${p.porciones} porciones y necesita ${p.comidasSemana} (${p.nDia}/día × 7 días).`,
+      action:'autoWeek', label:'Ármame la semana'});
+    if(p.protDia < p.plan.prot*0.85) huecos.push({icon:'food',
+      txt:`Lo que cocinaste no cubre la proteína de ${nm}: ${p.protDia} de ${p.plan.prot} g por día si se reparte en la semana.`,
+      action:'foodSub', data:{s:'recetas'}, label:'Agregar recetas'});
+    if(p.diasSinNada>0) huecos.push({icon:'cal',
+      txt:`${p.diasSinNada} día${p.diasSinNada>1?'s':''} de la semana de ${nm} quedan sin nada cocinado asignado.`,
+      action:'repartoBoxTgl', label:'Ajustar comidas por día'});
+  });
+  return `
+  <section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('book',16)} Qué elegiste · ${g.recetas.length} receta${g.recetas.length>1?'s':''}</span></div>
+    ${g.recetas.map(x=>`<div class="row">
+      <span class="badge cat-${x.r.cat}">${catIco(x.r.cat,22)}</span>
+      <div class="grow" style="min-width:0"><b style="font-size:15px">${esc(x.r.name)}</b>
+        <div class="recmac"><i class="pdot" style="background:${col.andres}"></i>Andrés × ${x.p.a||0} · <b>${x.r.a.pg} g prot</b>/porción · ${x.r.a.kc} kcal</div>
+        <div class="recmac"><i class="pdot" style="background:${col.cami}"></i>Cami × ${x.p.c||0} · <b>${x.r.c.pg} g prot</b>/porción · ${x.r.c.kc} kcal</div>
+      </div></div>`).join('')}
+  </section>
+  <section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('food',16)} Cómo se distribuye</span></div>
+    ${personCard(g.andres)}
+    ${personCard(g.cami)}
+  </section>
+  ${huecos.length?`<section class="mod tight inv">
+    <div class="mod-head"><span class="ttl">${ic('alert',16)} Qué te hace falta</span></div>
+    ${huecos.map(h=>`<div class="row" style="align-items:flex-start;flex-wrap:wrap">
+      <span class="badge">${ic(h.icon,16)}</span>
+      <div class="grow" style="min-width:180px">${h.txt}</div>
+      <button class="btn sm primary" style="flex:none" data-a="${h.action}"${h.data?Object.entries(h.data).map(([k,v])=>` data-${k}="${esc(String(v))}"`).join(''):''}>${h.label}</button>
+    </div>`).join('')}
+  </section>`:`<section class="mod tight"><div class="flex">${ic('check',18)}<div class="small"><b>Tu semana está cubierta.</b> Las porciones alcanzan para los 7 días con las comidas que tiene configuradas cada uno.</div></div></section>`}`;
+}
+/* vista principal de Comida > Gestion: la semana con lo elegido (Tarea 2), el registro
+   del dia (Tarea 3, nutriExtras venia de Inicio) y el meal prep del domingo colapsado
+   (Tarea 1). El registro de hoy no depende de que haya rotacion: siempre se muestra. */
+function vGestion(){
+  return `
+  <h2 class="t-h1" style="margin:6px 2px 12px">Gestión alimentación</h2>
+  ${gestSemanaHTML()}
+  ${nutriExtras()}
+  ${mealPrepBoxHTML()}`;
 }
 /* ============ VISTA: PROGRESO ============ */
 function ptsBreakdown(a,b){
@@ -9591,6 +9720,8 @@ const ACTIONS = {
      no se guarda: es una checklist mientras cocinas, no un historial) y el cierre
      que paga XP una vez por domingo (ver xpEntrenoExterno fuente 'mealprep'). */
   mpStepTgl(d){ if(!UI.mpChecks) UI.mpChecks={}; UI.mpChecks[d.i]=!UI.mpChecks[d.i]; render(); },
+  /* caja colapsable "Meal prep del domingo" dentro de Gestion alimentacion (Tarea 1) */
+  mpBoxTgl(){ UI.mpOpen=!UI.mpOpen; render(); },
   mealprepHecho(){
     const xp=xpEntrenoExterno('mealprep', {d:TODAY(), clave:'mealprep'});
     render();
@@ -10016,7 +10147,9 @@ const ACTIONS = {
     if(!m.pg&&!m.cg&&!m.fg){ toast('Ajusta las porciones primero'); return; }
     S.free[t]=(S.free[t]||[]).concat([{d:'Comí fuera (a mano)', pg:m.pg, cg:m.cg, fg:m.fg, kc:m.kc}]); save('free');
     UI.hand={p:1.5,c:1,g:1}; UI.fueraOpen=false; render(); toast('Registrado · +'+m.pg+' g de proteína'); },
-  freeGo(){ UI.tab='inicio'; UI.freeMode=false; render();
+  /* sin uso hoy en la UI (no hay boton que la dispare), pero se deja apuntando a donde
+     vive el registro libre ahora: Comida > Gestion (Tarea 3), no Inicio */
+  freeGo(){ UI.tab='comida'; UI.sub.food='mealprep'; UI.freeMode=false; render();
     setTimeout(()=>{ const el=$('#freeTxt'); if(el&&el.scrollIntoView){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.focus&&el.focus(); } },80); },
   freeMode(){ UI.freeMode=!UI.freeMode; UI.freeRes=null; render(); },
   freeCalc(){

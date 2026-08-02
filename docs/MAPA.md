@@ -29,18 +29,19 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - I4c Fila de macros: Carbo / Grasa / Proteína (`.macrow`)
   - I4d Franjas Mañana/Tarde/Noche + buscador de loggeo (`nlogPanel`)
   - I4e Barras de proteína de los últimos 7 días (`.pweek`)
-  - I4f "¿Qué comiste?" registro libre (`freeTxt`/`freeAdd`/`freeDel`, rescatado de la
-    vieja Plan día de Comida, N6)
-  - I4g Tabla "Comidas y macros" + aviso de comidas vencidas (`mealStatus`, rescatada de
-    la vieja Plan día) y chip "Ajustar" que abre el reparto de macros (`repartoBoxTgl`,
-    ver C1a). Las filas salen de `comidasDe(UID)`, no de una lista fija
+  - I4f/I4g **ya no viven aquí** (Tarea 3): el registro libre "¿Qué comiste?" y la tabla
+    "Comidas y macros" se sacaron del Inicio (el dueño no quiere registro en el resumen
+    del día) y quedaron en Comida > Gestión, ver C5b. El Inicio conserva solo el resumen:
+    anillo, macros, franjas con buscador, sugerencias y barra semanal
 - **I5** Tarjeta del ciclo (solo Cami, `cycHome`): anillo de los días del ciclo con el
   tramo de sangrado resaltado y el día actual marcado (`.cycmod`, `cycGradient`), texto
   central con la fecha del próximo período (`cycleInfo` trae `next`/`toNext`), fase y
   cabrita debajo con el consejo del momento (tip/food/animo rotan según la hora). Toca
   la tarjeta y abre el detalle en una `.fbox` (`ACTIONS.cycDetail` → `cycBox`) con las
-  cuatro fases del mes (`cycFasesStrip`). Sin `cycStart` muestra un estado vacío que
-  lleva a M6 (`ACTIONS.cycCfgGo`).
+  cuatro fases del mes (`cycFasesStrip`). Sin `cycStart` muestra una tarjeta de
+  invitación con cabrita, beneficio en dos líneas y botón propio "Activar mi ciclo"
+  (`ACTIONS.cycCfgGo` → M6); antes era una línea de texto chiquita que pasaba
+  desapercibida (Tarea 4).
 
 ## E · Entrenar (`vEntrenar`)
 
@@ -82,14 +83,16 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - A4c Agua, peso, inyección y foto de ese día
 - **A5** Modo foto: las tarjetas de los días se giran y muestran la foto (`calFotoTgl`, `.flip3d`)
 
-## C · Comida (`vComida`, sub-pestañas Recetas / Mercado / Meal prep)
+## C · Comida (`vComida`, sub-pestañas Recetas / Mercado / Gestión)
 
-- **C1** Selector de sub-pestañas (Recetas · Mercado · Meal prep)
+- **C1** Selector de sub-pestañas (Recetas · Mercado · Gestión; internamente la clave
+  de la tercera sigue siendo `UI.sub.food==='mealprep'`, solo cambió el rótulo y lo que
+  pinta, para no tocar todas las referencias)
   - C1a Botones flotantes (`foodFabs`, mismo patrón que `trainFabs` de Entrenar):
     calculadora de proteína (`pcalBoxTgl` → `pcalBox`, rescatada de la vieja Plan día) y
     comidas al día + reparto de macros (`repartoBoxTgl` → `repBoxOpen`/`repBoxHTML`,
     N6). Visibles en las 3 sub-pestañas. El reparto también se abre desde C2g, desde
-    I4g y es la fuente de `comidasDe(uid)`
+    C5b y es la fuente de `comidasDe(uid)`
 - **C2** Recetas (`vRecetas`)
   - C2a CTA "Ármame la semana" + banner de rotación activa (abre C2g)
   - C2b Buscador de recetas
@@ -108,25 +111,47 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - C3b Barra de suma parcial: $ marcado vs total
   - C3c Checklist agrupado: Proteínas / Vegetales y frutas / Despensa (`mktCat`)
   - C3d Caja "Precios y facturas": registrar precio, foto, pegar texto de factura, histórico (`vFacturas`)
-- **C5** Meal prep (`vMealPrep`, N6/Tarea 3 · reemplaza la vieja Plan día, eliminada;
-    C4 y su contenido dejaron de existir, ver I4f/I4g y C1a por dónde quedó cada pieza
-    rescatada)
-  - C5a "La misión del domingo": recetas de la rotación activa (`S.meal.selected`),
-    porciones de cada uno, tuppers totales, tiempo intercalado vs. sumado y hora de
-    arranque (toma `S.reminders` id `prep`, hoy 15:00) (`mealPrepTracks`,
-    `mealPrepTimeline`)
-  - C5b "Antes de empezar": qué bajar del congelador (`meta.descongelar`), los pasos de
-    remojo/reposo nocturno de la víspera (avena trasnochada, `min>=180` en
-    `RECIPE_PREP`), utensilios (unión de todas las recetas) y tuppers a alistar
-  - C5c "La línea de tiempo": pasos intercalados de todas las recetas con reloj corrido,
-    activo/pasivo, marcables uno a uno (`mpStepTgl`, no persiste: es la checklist de la
-    sesión de cocina)
-  - C5d "Empaque y conservación": tuppers por receta y persona con sus macros, y nevera
-    vs. congelador según `meta.conserva`
-  - C5e Cierre: cómo recalienta cada receta (`meta.recalienta`) y botón "Meal prep
-    hecho" que paga XP una vez por día (`ACTIONS.mealprepHecho` →
-    `xpEntrenoExterno('mealprep', …)`)
-  - Sin rotación activa: estado vacío que invita a "Ármame la semana"
+- **C5** Gestión alimentación (`vGestion`, antes "Meal prep"; Tarea 1/2/3 de la fase de
+    Gestión). Sin rotación activa (`S.meal.selected` vacío) toda la vista es un estado
+    vacío que invita a "Ármame la semana"; el registro libre (C5b) se muestra siempre,
+    tenga o no rotación
+  - C5a "La semana con lo que elegiste" (Tarea 2, `gestData`/`gestSemanaHTML`): cruza
+    `S.meal.selected` (recetas + porciones `{a,c}`) con `comidasDe(uid)` (comidas al día
+    según meta y reparto de cada uno). Tres bloques:
+    - "Qué elegiste": cada receta de la rotación con su ícono de categoría, porciones de
+      cada uno y macros por porción
+    - "Cómo se distribuye": por persona, anillo de proteína/día promedio si lo cocinado
+      se reparte en la semana, cuántos de los 7 días alcanza y cuál es la comida más
+      grande de su día (`comidasDe` ordenado por `pg`)
+    - "Qué te hace falta": huecos calculados y con acción concreta cada uno —
+      `faltanComidas = max(0, comidas/día×7 − porciones cocinadas)` con botón "Ármame la
+      semana"; proteína/día por debajo del 85% de la meta del plan con botón "Agregar
+      recetas" (va a C2); días sin nada cocinado (`diasCubiertos = floor(porciones /
+      comidas por día)`, `diasSinNada = 7 − diasCubiertos`) con botón "Ajustar comidas
+      por día" (abre C1a). Sin huecos: aviso de que la semana está cubierta
+  - C5b Registro del día: "¿Qué comiste?" registro libre (`freeTxt`/`freeAdd`/`freeDel`)
+    y tabla "Comidas y macros" con el aviso de comidas vencidas (`mealStatus`) y chip
+    "Ajustar" (`repartoBoxTgl`, ver C1a). Vivió un tiempo en el panel de nutrición del
+    Inicio (I4f/I4g); el dueño pidió sacarlo de ahí porque el Inicio es un resumen, no
+    el lugar de registrar (Tarea 3). Sigue siendo la misma función (`nutriExtras`), solo
+    cambió quién la llama; las filas salen de `comidasDe(UID)`, no de una lista fija
+  - C5c Caja colapsable "Meal prep del domingo" (`mealPrepBoxHTML`/`mealPrepBody`,
+    patrón `schedhead`/`schedbody` como A2a; Tarea 1). Cerrada muestra el dato clave en
+    la cabecera (horas estimadas y tuppers de cada uno); abierta despliega el resto:
+    - "La misión del domingo": recetas de la rotación activa, porciones de cada uno,
+      tuppers totales, tiempo intercalado vs. sumado y hora de arranque (toma
+      `S.reminders` id `prep`, hoy 15:00) (`mealPrepTracks`, `mealPrepTimeline`)
+    - "Antes de empezar": qué bajar del congelador (`meta.descongelar`), los pasos de
+      remojo/reposo nocturno de la víspera (avena trasnochada, `min>=180` en
+      `RECIPE_PREP`), utensilios (unión de todas las recetas) y tuppers a alistar
+    - "La línea de tiempo": pasos intercalados de todas las recetas con reloj corrido,
+      activo/pasivo, marcables uno a uno (`mpStepTgl`, no persiste: es la checklist de
+      la sesión de cocina)
+    - "Empaque y conservación": tuppers por receta y persona con sus macros, y nevera
+      vs. congelador según `meta.conserva`
+    - Cierre: cómo recalienta cada receta (`meta.recalienta`) y botón "Meal prep hecho"
+      que paga XP una vez por día (`ACTIONS.mealprepHecho` →
+      `xpEntrenoExterno('mealprep', …)`)
   - Metadatos por receta (tiempos, utensilios, conservación, pasos activo/pasivo)
     embebidos en `RECIPE_PREP`, alineados índice a índice con `RECIPES[].prep`
 

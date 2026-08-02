@@ -10689,6 +10689,9 @@ document.addEventListener('input', e=>{
   const ch=el.dataset.ch;
   if(ch==='recq'){ UI.recQ=el.value; }
   else if((ch==='nlogq'||ch==='exq'||ch==='excatq'||ch==='addexq'||ch==='nlogGrams') && CHANGES[ch]){ const y=window.scrollY||window.pageYOffset||0; CHANGES[ch](el); window.scrollTo(0,y); }  // búsqueda en vivo, sin brincar
+  /* la calculadora solo escuchaba 'change', que en un campo de texto salta al salir del
+     campo: el numero se quedaba congelado mientras se escribia. Ahora recalcula por tecla. */
+  else if(ch==='pcal' && CHANGES.pcal){ CHANGES.pcal(el); }
   else if(ch==='nnname'){ if(UI.nlogNew&&typeof UI.nlogNew==='object'){ UI.nlogNew.name=el.value;
     /* T6: si el texto calza exacto con algo ya diligenciado, rellena unidad y macros conocidos */
     const f=NFOODS.concat((S.customFoods||[])).find(x=>nrmTxt(x[1])===nrmTxt(el.value));

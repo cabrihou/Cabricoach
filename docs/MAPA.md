@@ -115,6 +115,12 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 ## FT · Fotos (sección independiente, `vFotos`)
 
 - **FT1** Caja de captura "Tomar hoy" con la cabrita + repetir pose + subir antigua
+  - FT1a Botón "Cargar varias": lote de fotos con revisión previa antes de guardar
+    (fecha por EXIF, sin fecha se pregunta una por una, choques con foto existente se
+    preguntan por foto) (`loteIniciar`, `loteReviewOpen`, `.fbox.lotebox`)
+  - FT1b Botón "Deshacer el último lote": visible solo si hay un lote reversible
+    (`S.fotoLote`), pide confirmación y restaura byte a byte lo que el lote tocó
+    (`loteDeshacer`, IndexedDB `cabritos-fotos` store `loteBak`)
 - **FT2** Antes y después: presets 7/30/365 días, primera vs última, comparar 2 a mano
 - **FT3** Galería: filtro por persona + Esta semana / Ver todas (`fotoFill`)
 

@@ -1305,7 +1305,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 108';
+const APPREV='REV 109';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -1633,6 +1633,25 @@ function comidasDe(uid){
   const pgs=repartirMacro(plan.prot,pcts), cgs=repartirMacro(plan.carb,pcts), fgs=repartirMacro(plan.fat,pcts), kcs=repartirMacro(plan.kcal,pcts);
   return labels.map((label,i)=>({k:'m'+(i+1), label, pg:pgs[i], cg:cgs[i], fg:fgs[i], kc:kcs[i]}));
 }
+/* momento(s) del vocabulario (desayuno|almuerzo|cena|snack) que acepta una etiqueta
+   de comida (las de MEAL_LABELS). "Comida principal" (1 comida/dia) acepta almuerzo
+   y cena (nunca desayuno: nadie desayuna albondigas); "Snack"/"Snack tarde" son
+   snack; el resto por su nombre literal. Fuente unica para recetaDeComida,
+   comidaArmada, autoWeekGen y la UI (gestPlanHTML, recSwapOpenBox). */
+function momentosDeEtiqueta(label){
+  const l=(label||'').trim().toLowerCase();
+  if(l==='comida principal') return ['almuerzo','cena'];
+  if(l.startsWith('snack')) return ['snack'];
+  if(l==='desayuno') return ['desayuno'];
+  if(l==='almuerzo') return ['almuerzo'];
+  if(l==='cena') return ['cena'];
+  return ['almuerzo','cena']; // fallback conservador: nunca cae aca con las etiquetas actuales
+}
+/* frase legible de un momento o lista de momentos, para avisos y botones */
+const MOM_FRASE={desayuno:'el desayuno', almuerzo:'el almuerzo', cena:'la cena', snack:'el snack'};
+function fraseMomento(momentos){ return (momentos||[]).map(m=>MOM_FRASE[m]||m).join(' o '); }
+/* si una receta encaja con alguno de los momentos aceptados */
+function recetaApta(r, momentos){ return !!(r && r.mom && momentos && r.mom.some(m=>momentos.includes(m))); }
 
 /* ============ ESCALADO DE RECETAS A LA META (pedido del dueno) ============
    Antes cada receta aportaba lo que traia de fabrica: si no llegaba a la proteina
@@ -1676,10 +1695,15 @@ function scoopMac(){ const f=foodOf('wheyagua'); return f?foodMac(f):{pg:24,cg:3
    letraDia usa fromISO(d).getDay() indexado en DLETRAS (D L M X J V S), porque la
    rotacion de recetas es semanal (se repite cada semana) y no depende de una fecha
    calendario puntual, igual que el resto del sistema de comidas (comidasDe, meal
-   prep). Sin eleccion a mano se reparte por rotacion (round robin) entre las
-   recetas activas de esa persona, en el orden en que aparecen en S.meal.selected:
-   asi la semana completa queda cubierta sin que el usuario tenga que asignar
-   receta por receta antes de ver algo util. */
+   prep). Sin eleccion a mano se reparte por rotacion (round robin), pero SOLO entre
+   las recetas activas que ademas son APTAS para el momento de esa comida segun su
+   campo mom (pedido del dueno: nadie desayuna albondigas). El orden de rotacion
+   sigue siendo el de S.meal.selected (misma formula de antes, diaIdx*nDia+i), solo
+   que ahora corre sobre el subconjunto apto, asi que sigue siendo determinista y
+   varia dia a dia igual que antes. Si no hay ninguna apta, null: comidaArmada lo
+   traduce en "sin receta adecuada" en vez de inventar un plato que no encaja.
+   La eleccion manual (S.meal.plan) SIEMPRE se respeta, encaje o no: el usuario
+   manda. comidaArmada marca aparte si esa eleccion manual quedo fuera de lugar. */
 const DLETRAS=['D','L','M','X','J','V','S'];
 function recetasActivas(key){
   const sel=S.meal.selected||{};
@@ -1691,9 +1715,15 @@ function recetaDeComida(uid, dl, i, nDia){
   if(!activas.length) return null;
   const manual=(S.meal.plan&&S.meal.plan[key]&&S.meal.plan[key][dl]) ? S.meal.plan[key][dl]['m'+(i+1)] : null;
   if(manual && activas.includes(manual)) return manual;
+  const momentos=momentosDeEtiqueta(MEAL_LABELS(nDia)[i]);
+  const aptas=activas.filter(id=>recetaApta(RECIPES.find(r=>r.id===id), momentos));
+  if(!aptas.length) return null;
+  /* el indice avanza con el dia y se desplaza por comida: si se multiplicara por el
+     numero de comidas, cuando hay tantas recetas aptas como comidas el modulo cae
+     siempre en el mismo sitio y la semana entera repetia el mismo plato */
   const diaIdx=Math.max(0,DLETRAS.indexOf(dl));
-  const idx=(diaIdx*Math.max(1,nDia)+i) % activas.length;
-  return activas[idx];
+  const idx=((diaIdx + i*2) % aptas.length + aptas.length) % aptas.length;
+  return aptas[idx];
 }
 function scoopsDeComida(uid, dl, i){
   const key=uid==='andres'?'a':'c', mk='m'+(i+1);
@@ -1707,13 +1737,18 @@ function comidaArmada(uid, dl, i, comidas){
   const cm=comidas||comidasDe(uid);
   const m=cm[i]; if(!m) return null;
   const key=uid==='andres'?'a':'c';
+  const momentos=momentosDeEtiqueta(m.label);
   const rid=recetaDeComida(uid, dl, i, cm.length);
   const r=rid?RECIPES.find(x=>x.id===rid):null;
+  /* apto: null si no hay receta (no aplica), true/false si la hay. Solo puede dar
+     false cuando la receta viene de una eleccion manual (S.meal.plan) que no
+     encaja: la rotacion automatica de recetaDeComida ya filtra por momento. */
+  const apto = r ? recetaApta(r, momentos) : null;
   const scoops=scoopsDeComida(uid, dl, i);
   const sc=scoopMac();
   if(!r){
     const totalMac={pg:scoops*sc.pg, cg:scoops*sc.cg, fg:scoops*sc.fg, kc:scoops*sc.kc};
-    return {m, i, dl, r:null, rid:null, es:null, scoops, totalMac, falta:Math.max(0,m.pg-totalMac.pg), cubre:false};
+    return {m, i, dl, r:null, rid:null, es:null, scoops, totalMac, falta:Math.max(0,m.pg-totalMac.pg), cubre:false, momentos, apto};
   }
   const es=escalaReceta(r, key, m.pg);
   const totalMac={
@@ -1721,7 +1756,7 @@ function comidaArmada(uid, dl, i, comidas){
     fg: es.macros.fg + scoops*sc.fg, kc: es.macros.kc + scoops*sc.kc,
   };
   const falta=Math.max(0, m.pg-totalMac.pg);
-  return {m, i, dl, r, rid, es, scoops, totalMac, falta, cubre:falta<=0};
+  return {m, i, dl, r, rid, es, scoops, totalMac, falta, cubre:falta<=0, momentos, apto};
 }
 /* objetivo de proteina/macros de una franja del dia (m/t/n), sumando las comidas
    de comidasDe() que caen ahi (mismo mapeo que usan eatenOn/mealStatus). Lo usa el
@@ -2190,350 +2225,350 @@ function catIco(id,sz){ return CATIMG[id]?`<img loading="lazy" class="catbi" src
    Cantidades en CRUDO para el mercado (la proteína cocida del plan ≈ crudo × 0,75).
    Macros aproximados por porción: pg prot · cg carbo · fg grasa · kc kcal. cost = COP por kg / L / unid */
 const RECIPES = [
- {id:'snackyogur',cat:'snack',name:'Yogur griego + frutos rojos + granola',desc:'El snack por defecto: 20 g de proteína y saciedad real. A: 200 g · C: 170 g.',prep:["Sirve el yogur griego en un tazón o vaso.","Agrega los frutos rojos congelados encima (se descongelan solos en un par de minutos).","Corona con la granola justo antes de comer para que no se ablande."],
+ {id:'snackyogur',mom:['snack','desayuno'],momPref:'snack',cat:'snack',name:'Yogur griego + frutos rojos + granola',desc:'El snack por defecto: 20 g de proteína y saciedad real. A: 200 g · C: 170 g.',prep:["Sirve el yogur griego en un tazón o vaso.","Agrega los frutos rojos congelados encima (se descongelan solos en un par de minutos).","Corona con la granola justo antes de comer para que no se ablande."],
   dif:1,
   a:{pg:22,cg:24,fg:7,kc:250,ing:[['Yogur griego',200,'g',22000],['Frutos rojos congelados',80,'g',15000],['Granola',25,'g',28000]]},
   c:{pg:18,cg:21,fg:6,kc:215,ing:[['Yogur griego',170,'g',22000],['Frutos rojos congelados',70,'g',15000],['Granola',20,'g',28000]]}},
- {id:'snackbatido',cat:'snack',name:'Batido whey + banano + maní',desc:'Post-entreno en 2 minutos. Licuar todo con hielo.',prep:["Pela el banano y trocéalo.","Lleva a la licuadora el banano, el scoop de whey, el maní y la leche.","Agrega 3-4 cubos de hielo y licúa 30-40 segundos hasta que quede cremoso.","Sirve de inmediato."],
+ {id:'snackbatido',mom:['snack','desayuno'],momPref:'snack',cat:'snack',name:'Batido whey + banano + maní',desc:'Post-entreno en 2 minutos. Licuar todo con hielo.',prep:["Pela el banano y trocéalo.","Lleva a la licuadora el banano, el scoop de whey, el maní y la leche.","Agrega 3-4 cubos de hielo y licúa 30-40 segundos hasta que quede cremoso.","Sirve de inmediato."],
   dif:1,
   a:{pg:31,cg:34,fg:11,kc:360,ing:[['Whey (scoop)',1,'unid',3800],['Banano',1,'unid',800],['Maní natural',15,'g',20000],['Leche',200,'ml',4.5]]},
   c:{pg:28,cg:28,fg:8,kc:300,ing:[['Whey (scoop)',1,'unid',3800],['Banano',1,'unid',800],['Maní natural',10,'g',20000],['Leche',150,'ml',4.5]]}},
- {id:'snackhuevo',cat:'snack',name:'Huevos duros + tostada integral',desc:'El más barato. Cocina varios el domingo y quedan listos.',prep:["Pon los huevos en agua fría y lleva a hervor.","Cocina 9-10 minutos desde que hierve para que queden duros.","Enfría en agua con hielo y pela.","Tuesta el pan integral y sirve junto a los huevos.","Cocina varios huevos el domingo y guárdalos en la nevera para toda la semana."],
+ {id:'snackhuevo',mom:['snack','desayuno'],momPref:'snack',cat:'snack',name:'Huevos duros + tostada integral',desc:'El más barato. Cocina varios el domingo y quedan listos.',prep:["Pon los huevos en agua fría y lleva a hervor.","Cocina 9-10 minutos desde que hierve para que queden duros.","Enfría en agua con hielo y pela.","Tuesta el pan integral y sirve junto a los huevos.","Cocina varios huevos el domingo y guárdalos en la nevera para toda la semana."],
   dif:1,
   a:{pg:15,cg:14,fg:11,kc:220,ing:[['Huevos',2,'unid',700],['Pan integral (tajada)',1,'unid',600]]},
   c:{pg:9,cg:14,fg:6,kc:150,ing:[['Huevos',1,'unid',700],['Pan integral (tajada)',1,'unid',600]]}},
- {id:'snackchoco',cat:'snack',name:'Chocolate 85% + almendras',desc:'El antojo con freno: grasa buena y magnesio, cierra la noche sin descarrilar.',prep:["Parte el chocolate en cuadros pequeños.","Sirve junto con las almendras en un pocillo.","Come despacio: es para cerrar el antojo, no para llenar."],
+ {id:'snackchoco',mom:['snack'],momPref:'snack',cat:'snack',name:'Chocolate 85% + almendras',desc:'El antojo con freno: grasa buena y magnesio, cierra la noche sin descarrilar.',prep:["Parte el chocolate en cuadros pequeños.","Sirve junto con las almendras en un pocillo.","Come despacio: es para cerrar el antojo, no para llenar."],
   dif:1,
   a:{pg:5,cg:12,fg:16,kc:215,ing:[['Chocolate 85%',20,'g',90000],['Almendras',20,'g',60000]]},
   c:{pg:4,cg:10,fg:13,kc:175,ing:[['Chocolate 85%',15,'g',90000],['Almendras',15,'g',60000]]}},
- {id:'polloarroz',cat:'pollo',name:'Pollo a la plancha + arroz + ensalada',desc:'Pechuga sellada a fuego alto. A: 250 g cocidos · C: 150 g.',prep:["Sazona la pechuga con sal, pimienta y limón.","Calienta la plancha o sartén a fuego alto con un chorrito de aceite.","Sella el pollo 4-5 minutos por lado hasta que esté dorado y cocido por dentro.","Cocina el arroz aparte según el paquete.","Sirve con la ensalada verde al lado."],
+ {id:'polloarroz',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'pollo',name:'Pollo a la plancha + arroz + ensalada',desc:'Pechuga sellada a fuego alto. A: 250 g cocidos · C: 150 g.',prep:["Sazona la pechuga con sal, pimienta y limón.","Calienta la plancha o sartén a fuego alto con un chorrito de aceite.","Sella el pollo 4-5 minutos por lado hasta que esté dorado y cocido por dentro.","Cocina el arroz aparte según el paquete.","Sirve con la ensalada verde al lado."],
   dif:1,
   a:{pg:82,cg:47,fg:17,kc:670,ing:[['Pechuga de pollo',330,'g',17000],['Arroz (crudo)',55,'g',4500],['Ensalada verde',150,'g',5000]]},
   c:{pg:49,cg:39,fg:10,kc:440,ing:[['Pechuga de pollo',200,'g',17000],['Arroz (crudo)',45,'g',4500],['Ensalada verde',120,'g',5000]]}},
- {id:'carnepapa',cat:'res',name:'Carne molida desmechada + papa criolla',desc:'Molida magra en hogao. A: 220 g cocidos · C: 130 g.',prep:["Sofríe la cebolla larga y el tomate en un poco de aceite hasta que ablanden (el hogao).","Agrega la carne molida y cocina revolviendo hasta que dore.","Sazona con sal, comino y pimienta al gusto.","Cocina la papa criolla en agua con sal hasta que esté blanda.","Sirve la carne sobre la papa."],
+ {id:'carnepapa',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'res',name:'Carne molida desmechada + papa criolla',desc:'Molida magra en hogao. A: 220 g cocidos · C: 130 g.',prep:["Sofríe la cebolla larga y el tomate en un poco de aceite hasta que ablanden (el hogao).","Agrega la carne molida y cocina revolviendo hasta que dore.","Sazona con sal, comino y pimienta al gusto.","Cocina la papa criolla en agua con sal hasta que esté blanda.","Sirve la carne sobre la papa."],
   dif:2,
   a:{pg:59,cg:45,fg:25,kc:640,ing:[['Carne molida magra',290,'g',22000],['Papa criolla',200,'g',6000],['Tomate',60,'g',4000],['Cebolla larga',25,'g',3500]]},
   c:{pg:35,cg:35,fg:16,kc:425,ing:[['Carne molida magra',175,'g',22000],['Papa criolla',150,'g',6000],['Tomate',50,'g',4000],['Cebolla larga',20,'g',3500]]}},
- {id:'tilapiapat',cat:'pescado',name:'Tilapia al horno + patacón + aguacate',desc:'Filete al horno con limón. A: 250 g · 1 patacón · ½ aguacate. C: 160 g · 1 patacón · ¼.',prep:["Precalienta el horno a 200 grados.","Sazona el filete de tilapia con sal, limón y ajo.","Hornea 15-18 minutos hasta que esté firme y blanco por dentro.","Frita o hornea el plátano verde en dos tandas, aplastando en la mitad, para el patacón.","Sirve con el aguacate en tajadas."],
+ {id:'tilapiapat',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'pescado',name:'Tilapia al horno + patacón + aguacate',desc:'Filete al horno con limón. A: 250 g · 1 patacón · ½ aguacate. C: 160 g · 1 patacón · ¼.',prep:["Precalienta el horno a 200 grados.","Sazona el filete de tilapia con sal, limón y ajo.","Hornea 15-18 minutos hasta que esté firme y blanco por dentro.","Frita o hornea el plátano verde en dos tandas, aplastando en la mitad, para el patacón.","Sirve con el aguacate en tajadas."],
   dif:2,
   a:{pg:65,cg:38,fg:24,kc:630,ing:[['Tilapia (filete)',310,'g',24000],['Plátano verde',120,'g',3000],['Aguacate',70,'g',9000]]},
   c:{pg:42,cg:38,fg:17,kc:475,ing:[['Tilapia (filete)',200,'g',24000],['Plátano verde',120,'g',3000],['Aguacate',35,'g',9000]]}},
- {id:'bandeja',cat:'huevo',name:'Bandeja fit (huevos + fríjol + arroz)',desc:'La más económica. A: 4 huevos · C: 2. Si toca cerrar proteína, suma el respaldo.',prep:["Cocina el fríjol en agua hasta que esté blando (más rápido en olla a presión).","Cocina el arroz aparte según el paquete.","Fríe o revuelve los huevos en poco aceite.","Sirve los tres juntos en el plato."],
+ {id:'bandeja',mom:['almuerzo'],momPref:'almuerzo',cat:'huevo',name:'Bandeja fit (huevos + fríjol + arroz)',desc:'La más económica. A: 4 huevos · C: 2. Si toca cerrar proteína, suma el respaldo.',prep:["Cocina el fríjol en agua hasta que esté blando (más rápido en olla a presión).","Cocina el arroz aparte según el paquete.","Fríe o revuelve los huevos en poco aceite.","Sirve los tres juntos en el plato."],
   dif:1,
   a:{pg:38,cg:58,fg:22,kc:580,ing:[['Huevos',4,'unid',700],['Fríjol (crudo)',45,'g',8000],['Arroz (crudo)',45,'g',4500]]},
   c:{pg:23,cg:47,fg:12,kc:390,ing:[['Huevos',2,'unid',700],['Fríjol (crudo)',35,'g',8000],['Arroz (crudo)',35,'g',4500]]}},
- {id:'criollayuca',cat:'pollo',name:'Pechuga en salsa criolla + yuca',desc:'Guisada en hogao de tomate y cebolla. A: 250 g · C: 150 g.',prep:["Sofríe la cebolla y el tomate en aceite hasta armar el hogao.","Agrega la pechuga en trozos y cocina tapada 10-12 minutos a fuego medio.","Sazona con sal, pimienta y comino.","Cocina la yuca en agua con sal hasta que esté blanda.","Sirve la pechuga guisada sobre la yuca."],
+ {id:'criollayuca',mom:['almuerzo'],momPref:'almuerzo',cat:'pollo',name:'Pechuga en salsa criolla + yuca',desc:'Guisada en hogao de tomate y cebolla. A: 250 g · C: 150 g.',prep:["Sofríe la cebolla y el tomate en aceite hasta armar el hogao.","Agrega la pechuga en trozos y cocina tapada 10-12 minutos a fuego medio.","Sazona con sal, pimienta y comino.","Cocina la yuca en agua con sal hasta que esté blanda.","Sirve la pechuga guisada sobre la yuca."],
   dif:2,
   a:{pg:80,cg:72,fg:11,kc:710,ing:[['Pechuga de pollo',330,'g',17000],['Yuca',180,'g',3500],['Tomate',60,'g',4000],['Cebolla larga',25,'g',3500]]},
   c:{pg:48,cg:53,fg:7,kc:465,ing:[['Pechuga de pollo',200,'g',17000],['Yuca',130,'g',3500],['Tomate',50,'g',4000],['Cebolla larga',20,'g',3500]]}},
- {id:'cerdopure',cat:'cerdo',name:'Lomo de cerdo magro + puré',desc:'Magro y barato, al horno con mostaza. A: 220 g · C: 140 g.',prep:["Precalienta el horno a 200 grados.","Unta el lomo con mostaza, sal y pimienta.","Hornea 25-30 minutos hasta que esté cocido por dentro.","Cocina la papa en agua hasta que esté blanda y hazla puré con la leche.","Deja reposar el lomo 5 minutos antes de tajar y sirve con el puré."],
+ {id:'cerdopure',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'cerdo',name:'Lomo de cerdo magro + puré',desc:'Magro y barato, al horno con mostaza. A: 220 g · C: 140 g.',prep:["Precalienta el horno a 200 grados.","Unta el lomo con mostaza, sal y pimienta.","Hornea 25-30 minutos hasta que esté cocido por dentro.","Cocina la papa en agua hasta que esté blanda y hazla puré con la leche.","Deja reposar el lomo 5 minutos antes de tajar y sirve con el puré."],
   dif:2,
   a:{pg:66,cg:32,fg:18,kc:570,ing:[['Lomo de cerdo',290,'g',18000],['Papa',220,'g',3000],['Leche',30,'ml',4.5]]},
   c:{pg:42,cg:25,fg:12,kc:390,ing:[['Lomo de cerdo',185,'g',18000],['Papa',165,'g',3000],['Leche',20,'ml',4.5]]}},
- {id:'atunarepa',cat:'pescado',name:'Atún + arepa + queso bajo en grasa',desc:'La de emergencia: 10 minutos. A: 2 latas · C: 1 lata.',prep:["Escurre el atún.","Asa o tuesta la arepa en un sartén o parrilla.","Abre la arepa y rellena con el atún y el queso.","Cierra y sirve caliente."],
+ {id:'atunarepa',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'pescado',name:'Atún + arepa + queso bajo en grasa',desc:'La de emergencia: 10 minutos. A: 2 latas · C: 1 lata.',prep:["Escurre el atún.","Asa o tuesta la arepa en un sartén o parrilla.","Abre la arepa y rellena con el atún y el queso.","Cierra y sirve caliente."],
   dif:1,
   a:{pg:63,cg:27,fg:6,kc:415,ing:[['Atún en lata',2,'unid',6500],['Arepas',1,'unid',800],['Queso bajo en grasa',40,'g',16000]]},
   c:{pg:35,cg:27,fg:3,kc:275,ing:[['Atún en lata',1,'unid',6500],['Arepas',1,'unid',800],['Queso bajo en grasa',30,'g',16000]]}},
- {id:'pollopasta',cat:'pollo',name:'Pechuga desmechada + pasta + verduras',desc:'Desmechada con verduras salteadas. A: 250 g · 100 g pasta seca. C: 150 g · 70 g.',prep:["Cocina la pechuga en agua con sal hasta que esté blanda, luego desmecha.","Cocina la pasta según el paquete y escurre.","Saltea las verduras mixtas en un sartén con poco aceite 4-5 minutos.","Mezcla el pollo desmechado con la pasta y las verduras.","Sazona al gusto y sirve."],
+ {id:'pollopasta',mom:['almuerzo'],momPref:'almuerzo',cat:'pollo',name:'Pechuga desmechada + pasta + verduras',desc:'Desmechada con verduras salteadas. A: 250 g · 100 g pasta seca. C: 150 g · 70 g.',prep:["Cocina la pechuga en agua con sal hasta que esté blanda, luego desmecha.","Cocina la pasta según el paquete y escurre.","Saltea las verduras mixtas en un sartén con poco aceite 4-5 minutos.","Mezcla el pollo desmechado con la pasta y las verduras.","Sazona al gusto y sirve."],
   dif:2,
   a:{pg:91,cg:83,fg:11,kc:795,ing:[['Pechuga de pollo',330,'g',17000],['Pasta (seca)',100,'g',6000],['Verduras mixtas',150,'g',5000]]},
   c:{pg:56,cg:57,fg:7,kc:515,ing:[['Pechuga de pollo',200,'g',17000],['Pasta (seca)',70,'g',6000],['Verduras mixtas',120,'g',5000]]}},
- {id:'bolo',cat:'res',name:'Boloñesa colombiana',desc:'Carne molida en hogao con comino. Va con arroz y fríjol.',prep:["Sofríe la cebolla larga y el tomate en aceite hasta armar el hogao.","Agrega la carne molida y el comino, cocina hasta que dore bien.","Deja reducir a fuego medio 10 minutos para que espese.","Cocina el arroz y el fríjol aparte.","Sirve la carne sobre el arroz con el fríjol al lado."],
+ {id:'bolo',mom:['almuerzo'],momPref:'almuerzo',cat:'res',name:'Boloñesa colombiana',desc:'Carne molida en hogao con comino. Va con arroz y fríjol.',prep:["Sofríe la cebolla larga y el tomate en aceite hasta armar el hogao.","Agrega la carne molida y el comino, cocina hasta que dore bien.","Deja reducir a fuego medio 10 minutos para que espese.","Cocina el arroz y el fríjol aparte.","Sirve la carne sobre el arroz con el fríjol al lado."],
   dif:2,
   a:{pg:61,cg:132,fg:27,kc:1015,ing:[['Carne molida magra',180,'g',22000],['Tomate',80,'g',4000],['Cebolla larga',30,'g',3500],['Arroz (crudo)',100,'g',4500],['Fríjol (crudo)',80,'g',8000]]},
   c:{pg:41,cg:99,fg:18,kc:720,ing:[['Carne molida magra',110,'g',22000],['Tomate',65,'g',4000],['Cebolla larga',25,'g',3500],['Arroz (crudo)',75,'g',4500],['Fríjol (crudo)',60,'g',8000]]}},
- {id:'chili',cat:'res',name:'Chili con fríjol',desc:'Carne molida con fríjol y pimentón. Otro sabor, mismo trabajo.',prep:["Sofríe la carne molida hasta que dore.","Agrega el tomate y el pimentón picados, cocina 5 minutos.","Incorpora el fríjol ya cocido y deja hervir 10-15 minutos para que se integren los sabores.","Sazona con comino, sal y un poco de picante si te gusta.","Sirve con el arroz aparte."],
+ {id:'chili',mom:['almuerzo'],momPref:'almuerzo',cat:'res',name:'Chili con fríjol',desc:'Carne molida con fríjol y pimentón. Otro sabor, mismo trabajo.',prep:["Sofríe la carne molida hasta que dore.","Agrega el tomate y el pimentón picados, cocina 5 minutos.","Incorpora el fríjol ya cocido y deja hervir 10-15 minutos para que se integren los sabores.","Sazona con comino, sal y un poco de picante si te gusta.","Sirve con el arroz aparte."],
   dif:2,
   a:{pg:70,cg:156,fg:28,kc:1150,ing:[['Carne molida magra',180,'g',22000],['Fríjol (crudo)',120,'g',8000],['Tomate',80,'g',4000],['Pimentón',50,'g',6000],['Arroz (crudo)',100,'g',4500]]},
   c:{pg:47,cg:117,fg:18,kc:820,ing:[['Carne molida magra',110,'g',22000],['Fríjol (crudo)',90,'g',8000],['Tomate',65,'g',4000],['Pimentón',40,'g',6000],['Arroz (crudo)',75,'g',4500]]}},
- {id:'lomosalt',cat:'res',name:'Lomo salteado',desc:'Tiras de lomo con pimentón y cebolla, estilo wok criollo.',prep:["Corta el lomo de res en tiras delgadas.","Calienta un wok o sartén amplio a fuego alto con aceite.","Saltea el lomo 2-3 minutos hasta sellar, retira y reserva.","En el mismo sartén saltea el pimentón, la cebolla cabezona y las verduras mixtas.","Regresa la carne, mezcla todo y sirve con el arroz."],
+ {id:'lomosalt',mom:['almuerzo','cena'],momPref:'cena',cat:'res',name:'Lomo salteado',desc:'Tiras de lomo con pimentón y cebolla, estilo wok criollo.',prep:["Corta el lomo de res en tiras delgadas.","Calienta un wok o sartén amplio a fuego alto con aceite.","Saltea el lomo 2-3 minutos hasta sellar, retira y reserva.","En el mismo sartén saltea el pimentón, la cebolla cabezona y las verduras mixtas.","Regresa la carne, mezcla todo y sirve con el arroz."],
   dif:2,
   a:{pg:49,cg:91,fg:17,kc:710,ing:[['Lomo de res',180,'g',32000],['Pimentón',60,'g',6000],['Cebolla cabezona',40,'g',3500],['Arroz (crudo)',100,'g',4500],['Verduras mixtas',150,'g',5000]]},
   c:{pg:32,cg:68,fg:11,kc:500,ing:[['Lomo de res',110,'g',32000],['Pimentón',50,'g',6000],['Cebolla cabezona',30,'g',3500],['Arroz (crudo)',75,'g',4500],['Verduras mixtas',120,'g',5000]]}},
- {id:'punta',cat:'res',name:'Punta de anca asada',desc:'A la parrilla con papa criolla. Para el fin de semana.',prep:["Saca la carne de la nevera 20 minutos antes para que tome temperatura ambiente.","Sazona con sal gruesa y pimienta.","Asa a la parrilla o en sartén de fondo grueso 5-6 minutos por lado, según el punto que prefieras.","Deja reposar 5 minutos antes de tajar en contra de la fibra.","Sirve con la papa criolla y la ensalada."],
+ {id:'punta',mom:['almuerzo'],momPref:'almuerzo',cat:'res',name:'Punta de anca asada',desc:'A la parrilla con papa criolla. Para el fin de semana.',prep:["Saca la carne de la nevera 20 minutos antes para que tome temperatura ambiente.","Sazona con sal gruesa y pimienta.","Asa a la parrilla o en sartén de fondo grueso 5-6 minutos por lado, según el punto que prefieras.","Deja reposar 5 minutos antes de tajar en contra de la fibra.","Sirve con la papa criolla y la ensalada."],
   dif:2,
   a:{pg:52,cg:27,fg:37,kc:650,ing:[['Punta de anca',250,'g',38000],['Papa criolla',150,'g',6000],['Ensalada verde',150,'g',5000]]},
   c:{pg:32,cg:20,fg:23,kc:415,ing:[['Punta de anca',150,'g',38000],['Papa criolla',110,'g',6000],['Ensalada verde',120,'g',5000]]}},
- {id:'ropa',cat:'res',name:'Carne desmechada en hogao',desc:'Falda cocida y desmechada, devuelta al hogao. Aguanta 5 días.',prep:["Cocina la falda de res en agua con sal hasta que esté blanda (40-50 minutos u olla a presión).","Desmecha la carne ya fría en tiras finas.","Sofríe la cebolla y el tomate hasta armar el hogao.","Agrega la carne desmechada y las verduras mixtas, cocina 8-10 minutos.","Sirve con el arroz. Aguanta bien en la nevera para varios días."],
+ {id:'ropa',mom:['almuerzo'],momPref:'almuerzo',cat:'res',name:'Carne desmechada en hogao',desc:'Falda cocida y desmechada, devuelta al hogao. Aguanta 5 días.',prep:["Cocina la falda de res en agua con sal hasta que esté blanda (40-50 minutos u olla a presión).","Desmecha la carne ya fría en tiras finas.","Sofríe la cebolla y el tomate hasta armar el hogao.","Agrega la carne desmechada y las verduras mixtas, cocina 8-10 minutos.","Sirve con el arroz. Aguanta bien en la nevera para varios días."],
   dif:2,
   a:{pg:47,cg:90,fg:22,kc:750,ing:[['Falda de res',180,'g',20000],['Tomate',80,'g',4000],['Cebolla larga',30,'g',3500],['Arroz (crudo)',100,'g',4500],['Verduras mixtas',150,'g',5000]]},
   c:{pg:31,cg:68,fg:15,kc:525,ing:[['Falda de res',110,'g',20000],['Tomate',65,'g',4000],['Cebolla larga',25,'g',3500],['Arroz (crudo)',75,'g',4500],['Verduras mixtas',120,'g',5000]]}},
- {id:'albon',cat:'res',name:'Albóndigas al horno',desc:'Carne molida con huevo, al horno en salsa de tomate. Cero fritura.',prep:["Precalienta el horno a 200 grados.","Mezcla la carne molida con el huevo, sal y pimienta, forma bolitas medianas.","Ponlas en una bandeja con el tomate triturado por encima.","Hornea 20-25 minutos hasta que estén cocidas.","Cocina el arroz y el brócoli al vapor aparte, sirve todo junto."],
+ {id:'albon',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'res',name:'Albóndigas al horno',desc:'Carne molida con huevo, al horno en salsa de tomate. Cero fritura.',prep:["Precalienta el horno a 200 grados.","Mezcla la carne molida con el huevo, sal y pimienta, forma bolitas medianas.","Ponlas en una bandeja con el tomate triturado por encima.","Hornea 20-25 minutos hasta que estén cocidas.","Cocina el arroz y el brócoli al vapor aparte, sirve todo junto."],
   dif:2,
   a:{pg:54,cg:90,fg:31,kc:855,ing:[['Carne molida magra',180,'g',22000],['Huevos',1,'unid',700],['Tomate',100,'g',4000],['Arroz (crudo)',100,'g',4500],['Brócoli',150,'g',6000]]},
   c:{pg:38,cg:68,fg:22,kc:620,ing:[['Carne molida magra',110,'g',22000],['Huevos',1,'unid',700],['Tomate',80,'g',4000],['Arroz (crudo)',75,'g',4500],['Brócoli',120,'g',6000]]}},
- {id:'curry',cat:'pollo',name:'Pollo al curry ligero',desc:'Cubos de pechuga en leche de coco light y curry.',prep:["Corta la pechuga en cubos.","Sella el pollo en un sartén con un poco de aceite 3-4 minutos.","Agrega la leche de coco light y el curry en polvo, mezcla bien.","Incorpora las verduras mixtas y cocina tapado 8-10 minutos a fuego medio.","Sirve con el arroz."],
+ {id:'curry',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'pollo',name:'Pollo al curry ligero',desc:'Cubos de pechuga en leche de coco light y curry.',prep:["Corta la pechuga en cubos.","Sella el pollo en un sartén con un poco de aceite 3-4 minutos.","Agrega la leche de coco light y el curry en polvo, mezcla bien.","Incorpora las verduras mixtas y cocina tapado 8-10 minutos a fuego medio.","Sirve con el arroz."],
   dif:2,
   a:{pg:46,cg:87,fg:16,kc:680,ing:[['Pechuga de pollo',160,'g',17000],['Leche de coco light',60,'ml',15],['Arroz (crudo)',100,'g',4500],['Verduras mixtas',200,'g',5000]]},
   c:{pg:29,cg:66,fg:12,kc:485,ing:[['Pechuga de pollo',95,'g',17000],['Leche de coco light',50,'ml',15],['Arroz (crudo)',75,'g',4500],['Verduras mixtas',160,'g',5000]]}},
- {id:'tinga',cat:'pollo',name:'Tinga de pollo',desc:'Desmechado en salsa de tomate y chipotle. Va con arepa.',prep:["Cocina la pechuga en agua con sal hasta que esté blanda y desmecha.","Sofríe la cebolla cabezona y el tomate hasta armar la salsa base.","Agrega el chipotle picado y el pollo desmechado, cocina 8 minutos a fuego medio.","Sazona con sal al gusto.","Sirve caliente sobre las arepas."],
+ {id:'tinga',mom:['almuerzo','cena'],momPref:'cena',cat:'pollo',name:'Tinga de pollo',desc:'Desmechado en salsa de tomate y chipotle. Va con arepa.',prep:["Cocina la pechuga en agua con sal hasta que esté blanda y desmecha.","Sofríe la cebolla cabezona y el tomate hasta armar la salsa base.","Agrega el chipotle picado y el pollo desmechado, cocina 8 minutos a fuego medio.","Sazona con sal al gusto.","Sirve caliente sobre las arepas."],
   dif:2,
   a:{pg:43,cg:58,fg:12,kc:510,ing:[['Pechuga de pollo',160,'g',17000],['Tomate',100,'g',4000],['Cebolla cabezona',40,'g',3500],['Chipotle',10,'g',30000],['Arepas',2,'unid',800]]},
   c:{pg:25,cg:31,fg:8,kc:295,ing:[['Pechuga de pollo',95,'g',17000],['Tomate',80,'g',4000],['Cebolla cabezona',30,'g',3500],['Chipotle',10,'g',30000],['Arepas',1,'unid',800]]}},
- {id:'muslos',cat:'pollo',name:'Muslos al horno',desc:'Muslos marinados al horno con papa. Jugosos y baratos.',prep:["Precalienta el horno a 200 grados.","Marina los muslos con sal, ajo, limón y pimienta al menos 15 minutos.","Ponlos en una bandeja con la papa en trozos alrededor.","Hornea 30-35 minutos hasta que estén dorados y bien cocidos.","Cocina las verduras mixtas al vapor y sirve todo junto."],
+ {id:'muslos',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'pollo',name:'Muslos al horno',desc:'Muslos marinados al horno con papa. Jugosos y baratos.',prep:["Precalienta el horno a 200 grados.","Marina los muslos con sal, ajo, limón y pimienta al menos 15 minutos.","Ponlos en una bandeja con la papa en trozos alrededor.","Hornea 30-35 minutos hasta que estén dorados y bien cocidos.","Cocina las verduras mixtas al vapor y sirve todo junto."],
   dif:2,
   a:{pg:42,cg:42,fg:25,kc:560,ing:[['Muslos deshuesados',200,'g',12000],['Papa',200,'g',3000],['Verduras mixtas',200,'g',5000]]},
   c:{pg:27,cg:32,fg:16,kc:375,ing:[['Muslos deshuesados',120,'g',12000],['Papa',150,'g',3000],['Verduras mixtas',160,'g',5000]]}},
- {id:'plancha',cat:'pollo',name:'Pechuga a la plancha + chimichurri',desc:'Sellada a fuego alto. La más rápida del catálogo.',prep:["Sazona la pechuga con sal y pimienta.","Sella en la plancha a fuego alto 4-5 minutos por lado.","Prepara el chimichurri mezclando perejil, ajo, aceite y vinagre (o usa uno ya listo).","Cocina la papa criolla en agua con sal.","Sirve el pollo bañado en chimichurri con la papa y la ensalada."],
+ {id:'plancha',mom:['almuerzo','cena'],momPref:'cena',cat:'pollo',name:'Pechuga a la plancha + chimichurri',desc:'Sellada a fuego alto. La más rápida del catálogo.',prep:["Sazona la pechuga con sal y pimienta.","Sella en la plancha a fuego alto 4-5 minutos por lado.","Prepara el chimichurri mezclando perejil, ajo, aceite y vinagre (o usa uno ya listo).","Cocina la papa criolla en agua con sal.","Sirve el pollo bañado en chimichurri con la papa y la ensalada."],
   dif:2,
   a:{pg:44,cg:27,fg:11,kc:380,ing:[['Pechuga de pollo',180,'g',17000],['Papa criolla',150,'g',6000],['Ensalada verde',150,'g',5000]]},
   c:{pg:28,cg:20,fg:7,kc:255,ing:[['Pechuga de pollo',110,'g',17000],['Papa criolla',110,'g',6000],['Ensalada verde',120,'g',5000]]}},
- {id:'arrpollo',cat:'pollo',name:'Arroz con pollo fit',desc:'El clásico, con más pollo que arroz y verdura de verdad.',prep:["Corta la pechuga en cubos pequeños y sella en un sartén con poco aceite.","Agrega la zanahoria, la arveja y el pimentón picados, saltea 3-4 minutos.","Incorpora el arroz crudo y el agua correspondiente, mezcla bien.","Cocina tapado a fuego bajo hasta que el arroz esté listo, revolviendo de vez en cuando.","Sirve caliente."],
+ {id:'arrpollo',mom:['almuerzo'],momPref:'almuerzo',cat:'pollo',name:'Arroz con pollo fit',desc:'El clásico, con más pollo que arroz y verdura de verdad.',prep:["Corta la pechuga en cubos pequeños y sella en un sartén con poco aceite.","Agrega la zanahoria, la arveja y el pimentón picados, saltea 3-4 minutos.","Incorpora el arroz crudo y el agua correspondiente, mezcla bien.","Cocina tapado a fuego bajo hasta que el arroz esté listo, revolviendo de vez en cuando.","Sirve caliente."],
   dif:2,
   a:{pg:46,cg:91,fg:11,kc:645,ing:[['Pechuga de pollo',160,'g',17000],['Arroz (crudo)',100,'g',4500],['Zanahoria',50,'g',3500],['Arveja',50,'g',7000],['Pimentón',40,'g',6000]]},
   c:{pg:29,cg:69,fg:8,kc:460,ing:[['Pechuga de pollo',95,'g',17000],['Arroz (crudo)',75,'g',4500],['Zanahoria',40,'g',3500],['Arveja',40,'g',7000],['Pimentón',30,'g',6000]]}},
- {id:'teriyaki',cat:'pollo',name:'Pollo teriyaki casero',desc:'Soya, panela y ajo reducidos. Con arroz y brócoli.',prep:["Corta la pechuga en cubos.","Sella el pollo en un sartén con poco aceite hasta dorar.","Mezcla la salsa soya con un poco de agua y agrega al sartén, deja reducir 3-4 minutos.","Cocina el arroz y el brócoli al vapor aparte.","Sirve el pollo con su salsa sobre el arroz, con el brócoli al lado."],
+ {id:'teriyaki',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'pollo',name:'Pollo teriyaki casero',desc:'Soya, panela y ajo reducidos. Con arroz y brócoli.',prep:["Corta la pechuga en cubos.","Sella el pollo en un sartén con poco aceite hasta dorar.","Mezcla la salsa soya con un poco de agua y agrega al sartén, deja reducir 3-4 minutos.","Cocina el arroz y el brócoli al vapor aparte.","Sirve el pollo con su salsa sobre el arroz, con el brócoli al lado."],
   dif:2,
   a:{pg:49,cg:86,fg:11,kc:640,ing:[['Pechuga de pollo',170,'g',17000],['Arroz (crudo)',100,'g',4500],['Brócoli',150,'g',6000],['Salsa soya',20,'ml',12]]},
   c:{pg:31,cg:65,fg:8,kc:450,ing:[['Pechuga de pollo',100,'g',17000],['Arroz (crudo)',75,'g',4500],['Brócoli',120,'g',6000],['Salsa soya',15,'ml',12]]}},
- {id:'cerdosalt',cat:'cerdo',name:'Cerdo salteado oriental',desc:'Tiras de lomo con pimentón, cebolla y soya.',prep:["Corta el lomo de cerdo en tiras delgadas.","Calienta un wok o sartén a fuego alto con aceite.","Saltea el cerdo 3-4 minutos hasta dorar, retira y reserva.","Saltea el pimentón y la cebolla cabezona en el mismo sartén.","Regresa el cerdo, agrega la salsa soya, mezcla y sirve con el arroz."],
+ {id:'cerdosalt',mom:['almuerzo','cena'],momPref:'cena',cat:'cerdo',name:'Cerdo salteado oriental',desc:'Tiras de lomo con pimentón, cebolla y soya.',prep:["Corta el lomo de cerdo en tiras delgadas.","Calienta un wok o sartén a fuego alto con aceite.","Saltea el cerdo 3-4 minutos hasta dorar, retira y reserva.","Saltea el pimentón y la cebolla cabezona en el mismo sartén.","Regresa el cerdo, agrega la salsa soya, mezcla y sirve con el arroz."],
   dif:2,
   a:{pg:44,cg:85,fg:18,kc:680,ing:[['Lomo de cerdo',170,'g',18000],['Arroz (crudo)',100,'g',4500],['Pimentón',60,'g',6000],['Cebolla cabezona',40,'g',3500],['Salsa soya',15,'ml',12]]},
   c:{pg:27,cg:64,fg:12,kc:470,ing:[['Lomo de cerdo',100,'g',18000],['Arroz (crudo)',75,'g',4500],['Pimentón',50,'g',6000],['Cebolla cabezona',30,'g',3500],['Salsa soya',10,'ml',12]]}},
- {id:'chuleta',cat:'cerdo',name:'Chuleta de cerdo a la plancha',desc:'Sin apanar: a la plancha con yuca cocida y ensalada.',prep:["Sazona la chuleta con sal, pimienta y ajo.","Calienta la plancha a fuego medio-alto con un poco de aceite.","Cocina 4-5 minutos por lado hasta que esté bien cocida por dentro.","Cocina la yuca en agua con sal hasta que esté blanda.","Sirve con la ensalada verde."],
+ {id:'chuleta',mom:['almuerzo','cena'],momPref:'cena',cat:'cerdo',name:'Chuleta de cerdo a la plancha',desc:'Sin apanar: a la plancha con yuca cocida y ensalada.',prep:["Sazona la chuleta con sal, pimienta y ajo.","Calienta la plancha a fuego medio-alto con un poco de aceite.","Cocina 4-5 minutos por lado hasta que esté bien cocida por dentro.","Cocina la yuca en agua con sal hasta que esté blanda.","Sirve con la ensalada verde."],
   dif:1,
   a:{pg:39,cg:60,fg:31,kc:675,ing:[['Chuleta de cerdo',200,'g',18000],['Yuca',150,'g',3500],['Ensalada verde',150,'g',5000]]},
   c:{pg:24,cg:44,fg:19,kc:445,ing:[['Chuleta de cerdo',120,'g',18000],['Yuca',110,'g',3500],['Ensalada verde',120,'g',5000]]}},
- {id:'trucha',cat:'pescado',name:'Trucha al horno',desc:'Al horno con papa criolla. Grasa buena, cero complique.',prep:["Precalienta el horno a 200 grados.","Sazona la trucha con sal, limón y hierbas al gusto.","Hornea 15-18 minutos hasta que esté firme.","Cocina la papa criolla en agua con sal.","Sirve con las verduras mixtas al vapor."],
+ {id:'trucha',mom:['almuerzo','cena'],momPref:'cena',cat:'pescado',name:'Trucha al horno',desc:'Al horno con papa criolla. Grasa buena, cero complique.',prep:["Precalienta el horno a 200 grados.","Sazona la trucha con sal, limón y hierbas al gusto.","Hornea 15-18 minutos hasta que esté firme.","Cocina la papa criolla en agua con sal.","Sirve con las verduras mixtas al vapor."],
   dif:2,
   a:{pg:48,cg:30,fg:20,kc:495,ing:[['Trucha',220,'g',28000],['Papa criolla',150,'g',6000],['Verduras mixtas',150,'g',5000]]},
   c:{pg:29,cg:22,fg:13,kc:320,ing:[['Trucha',130,'g',28000],['Papa criolla',110,'g',6000],['Verduras mixtas',120,'g',5000]]}},
- {id:'atunguiso',cat:'pescado',name:'Atún guisado con arroz',desc:'Atún en hogao. La comida de emergencia: 10 minutos.',prep:["Sofríe la cebolla larga y el tomate hasta armar el hogao.","Agrega el atún escurrido y mezcla bien.","Cocina 5-6 minutos a fuego medio para que se integren los sabores.","Cocina el arroz aparte.","Sirve el atún guisado sobre el arroz."],
+ {id:'atunguiso',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'pescado',name:'Atún guisado con arroz',desc:'Atún en hogao. La comida de emergencia: 10 minutos.',prep:["Sofríe la cebolla larga y el tomate hasta armar el hogao.","Agrega el atún escurrido y mezcla bien.","Cocina 5-6 minutos a fuego medio para que se integren los sabores.","Cocina el arroz aparte.","Sirve el atún guisado sobre el arroz."],
   dif:1,
   a:{pg:60,cg:84,fg:10,kc:665,ing:[['Atún en lata',2,'unid',6500],['Tomate',80,'g',4000],['Cebolla larga',30,'g',3500],['Arroz (crudo)',100,'g',4500]]},
   c:{pg:32,cg:63,fg:7,kc:440,ing:[['Atún en lata',1,'unid',6500],['Tomate',65,'g',4000],['Cebolla larga',25,'g',3500],['Arroz (crudo)',75,'g',4500]]}},
- {id:'arrchino',cat:'huevo',name:'Arroz fit de huevo y pollo',desc:'Estilo arroz chino: arroz, huevo, pollo y verdura.',prep:["Corta la pechuga en cubos pequeños y sella en un sartén con poco aceite.","Agrega la zanahoria y la cebolla larga picadas, saltea 3 minutos.","Empuja todo a un lado del sartén y revuelve los huevos en el espacio libre.","Incorpora el arroz ya cocido y mezcla todo bien a fuego medio-alto 2-3 minutos.","Sirve caliente."],
+ {id:'arrchino',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'huevo',name:'Arroz fit de huevo y pollo',desc:'Estilo arroz chino: arroz, huevo, pollo y verdura.',prep:["Corta la pechuga en cubos pequeños y sella en un sartén con poco aceite.","Agrega la zanahoria y la cebolla larga picadas, saltea 3 minutos.","Empuja todo a un lado del sartén y revuelve los huevos en el espacio libre.","Incorpora el arroz ya cocido y mezcla todo bien a fuego medio-alto 2-3 minutos.","Sirve caliente."],
   dif:2,
   a:{pg:43,cg:101,fg:20,kc:760,ing:[['Huevos',2,'unid',700],['Pechuga de pollo',100,'g',17000],['Arroz (crudo)',120,'g',4500],['Zanahoria',50,'g',3500],['Cebolla larga',30,'g',3500]]},
   c:{pg:26,cg:76,fg:12,kc:515,ing:[['Huevos',1,'unid',700],['Pechuga de pollo',60,'g',17000],['Arroz (crudo)',90,'g',4500],['Zanahoria',40,'g',3500],['Cebolla larga',25,'g',3500]]}},
- {id:'tortilla',cat:'huevo',name:'Tortilla de verduras + arepa',desc:'3 huevos con champiñones y pimentón.',prep:["Bate los huevos con sal y pimienta.","Saltea los champiñones y el pimentón en un sartén hasta que ablanden.","Agrega los huevos batidos y cocina a fuego medio, doblando o volteando la tortilla cuando cuaje.","Tuesta la arepa aparte.","Sirve la tortilla con la arepa y el aguacate."],
+ {id:'tortilla',mom:['desayuno','cena'],momPref:'desayuno',cat:'huevo',name:'Tortilla de verduras + arepa',desc:'3 huevos con champiñones y pimentón.',prep:["Bate los huevos con sal y pimienta.","Saltea los champiñones y el pimentón en un sartén hasta que ablanden.","Agrega los huevos batidos y cocina a fuego medio, doblando o volteando la tortilla cuando cuaje.","Tuesta la arepa aparte.","Sirve la tortilla con la arepa y el aguacate."],
   dif:2,
   a:{pg:24,cg:36,fg:32,kc:530,ing:[['Huevos',3,'unid',700],['Champiñones',60,'g',12000],['Pimentón',40,'g',6000],['Arepas',1,'unid',800],['Aguacate',60,'g',9000]]},
   c:{pg:18,cg:34,fg:24,kc:415,ing:[['Huevos',2,'unid',700],['Champiñones',50,'g',12000],['Pimentón',30,'g',6000],['Arepas',1,'unid',800],['Aguacate',50,'g',9000]]}},
- {id:'lentejas',cat:'huevo',name:'Lentejas con huevo y arroz',desc:'La más barata. Proteína completa combinada.',prep:["Cocina la lenteja en agua con la zanahoria picada hasta que esté blanda (25-30 minutos).","Sazona con sal, comino y un sofrito básico si quieres más sabor.","Cocina los huevos duros o fritos aparte.","Cocina el arroz aparte.","Sirve la lenteja con el arroz y el huevo encima o al lado."],
+ {id:'lentejas',mom:['almuerzo'],momPref:'almuerzo',cat:'huevo',name:'Lentejas con huevo y arroz',desc:'La más barata. Proteína completa combinada.',prep:["Cocina la lenteja en agua con la zanahoria picada hasta que esté blanda (25-30 minutos).","Sazona con sal, comino y un sofrito básico si quieres más sabor.","Cocina los huevos duros o fritos aparte.","Cocina el arroz aparte.","Sirve la lenteja con el arroz y el huevo encima o al lado."],
   dif:1,
   a:{pg:43,cg:142,fg:20,kc:920,ing:[['Lenteja (cruda)',100,'g',6000],['Huevos',2,'unid',700],['Arroz (crudo)',100,'g',4500],['Zanahoria',40,'g',3500]]},
   c:{pg:30,cg:106,fg:12,kc:650,ing:[['Lenteja (cruda)',75,'g',6000],['Huevos',1,'unid',700],['Arroz (crudo)',75,'g',4500],['Zanahoria',30,'g',3500]]}},
- {id:'garbanzos',cat:'huevo',name:'Garbanzos guisados con pollo',desc:'Guiso espeso de garbanzo con pechuga en cubos.',prep:["Sofríe la cebolla larga y el tomate hasta armar el hogao.","Agrega la pechuga en cubos y sella 3-4 minutos.","Incorpora el garbanzo ya cocido y un poco de agua, deja hervir 10 minutos.","Sazona con sal y comino al gusto.","Sirve caliente."],
+ {id:'garbanzos',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'huevo',name:'Garbanzos guisados con pollo',desc:'Guiso espeso de garbanzo con pechuga en cubos.',prep:["Sofríe la cebolla larga y el tomate hasta armar el hogao.","Agrega la pechuga en cubos y sella 3-4 minutos.","Incorpora el garbanzo ya cocido y un poco de agua, deja hervir 10 minutos.","Sazona con sal y comino al gusto.","Sirve caliente."],
   dif:2,
   a:{pg:45,cg:60,fg:15,kc:555,ing:[['Garbanzo (crudo)',90,'g',7000],['Pechuga de pollo',120,'g',17000],['Tomate',80,'g',4000],['Cebolla larga',30,'g',3500]]},
   c:{pg:30,cg:47,fg:11,kc:405,ing:[['Garbanzo (crudo)',70,'g',7000],['Pechuga de pollo',70,'g',17000],['Tomate',65,'g',4000],['Cebolla larga',25,'g',3500]]}},
- {id:'arepapollo',cat:'cena',name:'Arepa con pollo y aguacate',desc:'Cena en 5 minutos con el desmechado del prep.',prep:["Calienta o desmecha la pechuga de pollo (ideal con las sobras del meal prep).","Tuesta o asa las arepas.","Abre la arepa y rellena con el pollo.","Corona con tajadas de aguacate y sirve."],
+ {id:'arepapollo',mom:['almuerzo','cena'],momPref:'cena',cat:'cena',name:'Arepa con pollo y aguacate',desc:'Cena en 5 minutos con el desmechado del prep.',prep:["Calienta o desmecha la pechuga de pollo (ideal con las sobras del meal prep).","Tuesta o asa las arepas.","Abre la arepa y rellena con el pollo.","Corona con tajadas de aguacate y sirve."],
   dif:1,
   a:{pg:38,cg:57,fg:24,kc:595,ing:[['Pechuga de pollo',140,'g',17000],['Arepas',2,'unid',800],['Aguacate',80,'g',9000]]},
   c:{pg:23,cg:31,fg:17,kc:370,ing:[['Pechuga de pollo',85,'g',17000],['Arepas',1,'unid',800],['Aguacate',65,'g',9000]]}},
- {id:'bowlatun',cat:'cena',name:'Bowl de atún',desc:'Atún, tomate y aguacate sobre arepa o arroz del día.',prep:["Escurre el atún.","Tuesta la arepa o calienta el arroz del día.","Pica el tomate y el aguacate en cubos.","Mezcla todo en un bowl y sirve frío."],
+ {id:'bowlatun',mom:['almuerzo','cena'],momPref:'cena',cat:'cena',name:'Bowl de atún',desc:'Atún, tomate y aguacate sobre arepa o arroz del día.',prep:["Escurre el atún.","Tuesta la arepa o calienta el arroz del día.","Pica el tomate y el aguacate en cubos.","Mezcla todo en un bowl y sirve frío."],
   dif:1,
   a:{pg:31,cg:33,fg:18,kc:415,ing:[['Atún en lata',1,'unid',6500],['Arepas',1,'unid',800],['Tomate',60,'g',4000],['Aguacate',60,'g',9000]]},
   c:{pg:30,cg:32,fg:14,kc:380,ing:[['Atún en lata',1,'unid',6500],['Arepas',1,'unid',800],['Tomate',50,'g',4000],['Aguacate',50,'g',9000]]}},
- {id:'bowlyogur',cat:'cena',name:'Bowl proteico de yogur',desc:'Para días sin apetito: cumple la proteína igual.',prep:["Sirve el yogur griego en un bowl.","Agrega el scoop de proteína y mezcla bien hasta disolver.","Corona con el banano en rodajas y la avena en hojuelas.","Termina con la mantequilla de maní encima."],
+ {id:'bowlyogur',mom:['desayuno','cena'],momPref:'cena',cat:'cena',name:'Bowl proteico de yogur',desc:'Para días sin apetito: cumple la proteína igual.',prep:["Sirve el yogur griego en un bowl.","Agrega el scoop de proteína y mezcla bien hasta disolver.","Corona con el banano en rodajas y la avena en hojuelas.","Termina con la mantequilla de maní encima."],
   dif:1,
   a:{pg:53,cg:54,fg:31,kc:710,ing:[['Yogur griego',250,'g',22000],['Proteína en polvo (whey)',30,'g',220000],['Banano',80,'g',3500],['Avena en hojuelas',30,'g',8000],['Mantequilla de maní',15,'g',40000]]},
   c:{pg:34,cg:37,fg:20,kc:465,ing:[['Yogur griego',150,'g',22000],['Proteína en polvo (whey)',20,'g',220000],['Banano',60,'g',3500],['Avena en hojuelas',20,'g',8000],['Mantequilla de maní',10,'g',40000]]}},
- {id:'caldo',cat:'cena',name:'Caldo ligero con pollo',desc:'Sancocho aligerado: una sola raíz, harto pollo.',prep:["Pon a hervir agua con sal en una olla grande.","Agrega la pechuga entera y cocina 15 minutos.","Incorpora la yuca, la papa y el plátano en trozos, cocina 20 minutos más hasta que las raíces estén blandas.","Desmecha o corta el pollo dentro de la olla antes de servir.","Sirve caliente con el caldo."],
+ {id:'caldo',mom:['almuerzo','cena'],momPref:'cena',cat:'cena',name:'Caldo ligero con pollo',desc:'Sancocho aligerado: una sola raíz, harto pollo.',prep:["Pon a hervir agua con sal en una olla grande.","Agrega la pechuga entera y cocina 15 minutos.","Incorpora la yuca, la papa y el plátano en trozos, cocina 20 minutos más hasta que las raíces estén blandas.","Desmecha o corta el pollo dentro de la olla antes de servir.","Sirve caliente con el caldo."],
   dif:2,
   a:{pg:39,cg:81,fg:10,kc:570,ing:[['Pechuga de pollo',160,'g',17000],['Yuca',100,'g',3500],['Papa',100,'g',3000],['Plátano',80,'g',3000]]},
   c:{pg:24,cg:60,fg:7,kc:400,ing:[['Pechuga de pollo',95,'g',17000],['Yuca',75,'g',3500],['Papa',75,'g',3000],['Plátano',60,'g',3000]]}},
- {id:'ensalada',cat:'cena',name:'Ensalada grande de pollo',desc:'Pechuga, huevo duro y aguacate sobre base verde.',prep:["Sella la pechuga en la plancha con sal y pimienta 4-5 minutos por lado.","Cocina el huevo duro y la papa criolla en agua con sal.","Arma la base con la ensalada verde.","Agrega el pollo en tajadas, el huevo partido, la papa criolla y el aguacate encima."],
+ {id:'ensalada',mom:['almuerzo','cena'],momPref:'cena',cat:'cena',name:'Ensalada grande de pollo',desc:'Pechuga, huevo duro y aguacate sobre base verde.',prep:["Sella la pechuga en la plancha con sal y pimienta 4-5 minutos por lado.","Cocina el huevo duro y la papa criolla en agua con sal.","Arma la base con la ensalada verde.","Agrega el pollo en tajadas, el huevo partido, la papa criolla y el aguacate encima."],
   dif:2,
   a:{pg:51,cg:28,fg:28,kc:565,ing:[['Pechuga de pollo',180,'g',17000],['Ensalada verde',200,'g',5000],['Aguacate',80,'g',9000],['Huevos',1,'unid',700],['Papa criolla',100,'g',6000]]},
   c:{pg:35,cg:22,fg:22,kc:420,ing:[['Pechuga de pollo',110,'g',17000],['Ensalada verde',160,'g',5000],['Aguacate',65,'g',9000],['Huevos',1,'unid',700],['Papa criolla',75,'g',6000]]}},
- {id:'avenatras',cat:'desayuno',name:'Avena trasnochada',desc:'Se prepara la noche anterior y amanece lista, fría o tibia. A: sin proteína en polvo (va en el snack). C: con el scoop del día.',
+ {id:'avenatras',mom:['desayuno'],momPref:'desayuno',cat:'desayuno',name:'Avena trasnochada',desc:'Se prepara la noche anterior y amanece lista, fría o tibia. A: sin proteína en polvo (va en el snack). C: con el scoop del día.',
   prep:["La noche anterior, mezcla la avena con la leche en un frasco o recipiente con tapa.","Agrega la mantequilla de maní (A) o la chía (C) y revuelve.","Tapa y refrigera toda la noche.","Cami: agrega el scoop de whey y revuelve bien justo antes de comer para que no se apelmace.","Corona con el banano en rodajas antes de servir."],
   dif:1,
   a:{pg:13,cg:55,fg:12,kc:380,ing:[['Avena en hojuelas',50,'g',8000],['Leche',150,'ml',4.5],['Banano',60,'g',3500],['Mantequilla de maní',15,'g',40000]]},
   c:{pg:30,cg:45,fg:12,kc:400,ing:[['Avena en hojuelas',40,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Leche',120,'ml',4.5],['Chía',10,'g',30000]]}},
- {id:'huevosarepa',cat:'desayuno',name:'Huevos pericos + arepa',desc:'Huevos revueltos con tomate y cebolla, con arepa al lado. El desayuno más rápido cuando no hay avena remojada.',
+ {id:'huevosarepa',mom:['desayuno','cena'],momPref:'desayuno',cat:'desayuno',name:'Huevos pericos + arepa',desc:'Huevos revueltos con tomate y cebolla, con arepa al lado. El desayuno más rápido cuando no hay avena remojada.',
   prep:["Pica el tomate y la cebolla larga en cubos pequeños.","Sofríelos en un sartén con poco aceite 2-3 minutos.","Agrega los huevos batidos y revuelve a fuego medio hasta que cuajen.","Tuesta la arepa aparte y sirve junto a los huevos."],
   dif:1,
   a:{pg:24,cg:30,fg:16,kc:370,ing:[['Huevos',3,'unid',700],['Arepas',1,'unid',800],['Tomate',30,'g',4000],['Cebolla larga',15,'g',3500]]},
   c:{pg:16,cg:24,fg:11,kc:260,ing:[['Huevos',2,'unid',700],['Arepas',1,'unid',800],['Tomate',25,'g',4000],['Cebolla larga',10,'g',3500]]}},
- {id:'pancakesavena',cat:'desayuno',name:'Pancakes de avena y banano',desc:'Avena licuada con huevo y banano, cocinados como tortitas. Sin proteína en polvo, para cuando no quieres la avena fría.',
+ {id:'pancakesavena',mom:['desayuno','snack'],momPref:'desayuno',cat:'desayuno',name:'Pancakes de avena y banano',desc:'Avena licuada con huevo y banano, cocinados como tortitas. Sin proteína en polvo, para cuando no quieres la avena fría.',
   prep:["Licúa la avena, el huevo y el banano hasta obtener una mezcla homogénea.","Calienta un sartén antiadherente a fuego medio con un poco de aceite.","Vierte porciones de la mezcla y cocina 2 minutos por lado hasta dorar.","Sirve calientes, solas o con canela."],
   dif:1,
   a:{pg:18,cg:48,fg:10,kc:350,ing:[['Avena en hojuelas',50,'g',8000],['Huevos',2,'unid',700],['Banano',70,'g',3500]]},
   c:{pg:14,cg:36,fg:8,kc:270,ing:[['Avena en hojuelas',35,'g',8000],['Huevos',1,'unid',700],['Banano',60,'g',3500]]}},
- {id:'calentadofit',cat:'desayuno',name:'Calentado fit',desc:'Con las sobras del meal prep: arroz y fríjol de un día antes, con huevo frito en poco aceite.',
+ {id:'calentadofit',mom:['desayuno'],momPref:'desayuno',cat:'desayuno',name:'Calentado fit',desc:'Con las sobras del meal prep: arroz y fríjol de un día antes, con huevo frito en poco aceite.',
   prep:["Calienta el arroz y el fríjol del día anterior en un sartén con un chorrito de aceite.","Revuelve bien hasta que estén calientes parejo.","Aparte, fríe los huevos en poco aceite al punto que prefieras.","Sirve el calentado con el huevo encima."],
   dif:1,
   a:{pg:26,cg:58,fg:14,kc:460,ing:[['Arroz (crudo)',60,'g',4500],['Fríjol (crudo)',40,'g',8000],['Huevos',2,'unid',700]]},
   c:{pg:18,cg:43,fg:9,kc:320,ing:[['Arroz (crudo)',45,'g',4500],['Fríjol (crudo)',30,'g',8000],['Huevos',1,'unid',700]]}},
- {id:'huevosbened',cat:'desayuno',name:'Huevos benedictinos livianos',desc:'Huevo pochado sobre pan integral con salsa holandesa aligerada de yogur. A: 3 huevos · C: 2.',
+ {id:'huevosbened',mom:['desayuno'],momPref:'desayuno',cat:'desayuno',name:'Huevos benedictinos livianos',desc:'Huevo pochado sobre pan integral con salsa holandesa aligerada de yogur. A: 3 huevos · C: 2.',
   prep:['Pon a hervir agua con un chorrito de vinagre en una olla pequeña.','Casca cada huevo en un pocillo aparte y deslízalo suavemente en el agua caliente (sin hervor fuerte) para pocharlo 3 minutos.','Retira los huevos pochados con una espumadera y escurre sobre papel absorbente.','Mezcla el yogur griego con un chorrito de limón y sal para la salsa holandesa aligerada.','Tuesta el pan integral.','Sirve el huevo pochado sobre el pan tostado y baña con la salsa.'],
   dif:3,
   a:{pg:32,cg:28,fg:17,kc:393,ing:[['Huevos',3,'unid',700],['Pan integral (tajada)',2,'unid',600],['Yogur griego',60,'g',22000]]},
   c:{pg:20,cg:15,fg:11,kc:239,ing:[['Huevos',2,'unid',700],['Pan integral (tajada)',1,'unid',600],['Yogur griego',40,'g',22000]]}},
- {id:'avenafrutos',cat:'desayuno',name:'Avena overnight con frutos rojos y chía',desc:'Se prepara la noche anterior con chía y frutos rojos. A: porción grande · C: más liviana.',
+ {id:'avenafrutos',mom:['desayuno'],momPref:'desayuno',cat:'desayuno',name:'Avena overnight con frutos rojos y chía',desc:'Se prepara la noche anterior con chía y frutos rojos. A: porción grande · C: más liviana.',
   prep:['La noche anterior, mezcla la avena con la leche y la chía en un frasco con tapa.','Agrega los frutos rojos congelados y revuelve.','Tapa y refrigera toda la noche.','Sirve fría directo de la nevera, revolviendo antes de comer.'],
   dif:1,
   a:{pg:16,cg:58,fg:14,kc:422,ing:[['Avena en hojuelas',60,'g',8000],['Leche',180,'ml',4.5],['Frutos rojos congelados',60,'g',15000],['Chía',10,'g',30000]]},
   c:{pg:12,cg:44,fg:11,kc:323,ing:[['Avena en hojuelas',45,'g',8000],['Leche',140,'ml',4.5],['Frutos rojos congelados',50,'g',15000],['Chía',8,'g',30000]]}},
- {id:'wrapespinaca',cat:'desayuno',name:'Wrap de huevo revuelto con espinaca',desc:'Huevo revuelto con espinaca salteada, envuelto en tortilla integral. A: 3 huevos · C: 2.',
+ {id:'wrapespinaca',mom:['desayuno','cena'],momPref:'desayuno',cat:'desayuno',name:'Wrap de huevo revuelto con espinaca',desc:'Huevo revuelto con espinaca salteada, envuelto en tortilla integral. A: 3 huevos · C: 2.',
   prep:['Lava la espinaca y sécala bien.','Saltea la espinaca en un sartén con un poco de aceite hasta que se marchite, 2 minutos.','Bate los huevos y agrégalos al sartén, revuelve hasta que cuajen.','Calienta la tortilla integral unos segundos en un sartén o al fuego directo.','Rellena la tortilla con el huevo revuelto y el queso, enróllala y sirve.'],
   dif:2,
   a:{pg:37,cg:49,fg:24,kc:560,ing:[['Tortilla integral (wrap)',2,'unid',900],['Huevos',3,'unid',700],['Espinaca',60,'g',6000],['Queso bajo en grasa',30,'g',16000]]},
   c:{pg:23,cg:25,fg:15,kc:327,ing:[['Tortilla integral (wrap)',1,'unid',900],['Huevos',2,'unid',700],['Espinaca',40,'g',6000],['Queso bajo en grasa',20,'g',16000]]}},
- {id:'panquequesclaras',cat:'desayuno',name:'Panqueques proteicos de avena y huevo',desc:'Avena, huevo y proteína en polvo licuados, con frutos rojos. A: porción doble · C: sencilla.',
+ {id:'panquequesclaras',mom:['desayuno','snack'],momPref:'desayuno',cat:'desayuno',name:'Panqueques proteicos de avena y huevo',desc:'Avena, huevo y proteína en polvo licuados, con frutos rojos. A: porción doble · C: sencilla.',
   prep:['Licúa la avena, los huevos y la proteína en polvo hasta obtener una mezcla homogénea.','Deja reposar la mezcla 5 minutos para que la avena se hidrate.','Calienta un sartén antiadherente a fuego medio con un poco de aceite.','Vierte porciones de la mezcla y cocina 2 minutos por lado hasta dorar.','Sirve con los frutos rojos encima.'],
   dif:2,
   a:{pg:39,cg:40,fg:15,kc:451,ing:[['Avena en hojuelas',50,'g',8000],['Huevos',2,'unid',700],['Proteína en polvo (whey)',25,'g',220000],['Frutos rojos congelados',50,'g',15000]]},
   c:{pg:27,cg:28,fg:9,kc:301,ing:[['Avena en hojuelas',35,'g',8000],['Huevos',1,'unid',700],['Proteína en polvo (whey)',20,'g',220000],['Frutos rojos congelados',40,'g',15000]]}},
- {id:'tostadaguacate',cat:'desayuno',name:'Tostadas de aguacate con huevo',desc:'Pan integral tostado con aguacate machacado y huevo. A: 2 huevos · C: 1.',
+ {id:'tostadaguacate',mom:['desayuno','cena'],momPref:'desayuno',cat:'desayuno',name:'Tostadas de aguacate con huevo',desc:'Pan integral tostado con aguacate machacado y huevo. A: 2 huevos · C: 1.',
   prep:['Tuesta las tajadas de pan integral.','Machaca el aguacate con un tenedor, sal y limón.','Cocina el huevo al gusto (frito con poco aceite o pochado).','Unta el aguacate sobre el pan tostado y corona con el huevo.'],
   dif:2,
   a:{pg:26,cg:45,fg:27,kc:527,ing:[['Pan integral (tajada)',3,'unid',600],['Aguacate',90,'g',9000],['Huevos',2,'unid',700]]},
   c:{pg:15,cg:30,fg:16,kc:324,ing:[['Pan integral (tajada)',2,'unid',600],['Aguacate',60,'g',9000],['Huevos',1,'unid',700]]}},
- {id:'omeletteclaras',cat:'desayuno',name:'Omelette de huevo con champiñones y queso',desc:'Huevo con champiñones salteados y queso bajo en grasa. A: 3 huevos · C: 2.',
+ {id:'omeletteclaras',mom:['desayuno','cena'],momPref:'desayuno',cat:'desayuno',name:'Omelette de huevo con champiñones y queso',desc:'Huevo con champiñones salteados y queso bajo en grasa. A: 3 huevos · C: 2.',
   prep:['Saltea los champiñones en un sartén con poco aceite hasta que doren, 3-4 minutos.','Bate los huevos con sal y pimienta.','Vierte el huevo sobre los champiñones, agrega el queso y cocina a fuego medio hasta cuajar.','Dobla por la mitad y sirve caliente.'],
   dif:1,
   a:{pg:28,cg:5,fg:18,kc:294,ing:[['Huevos',3,'unid',700],['Champiñones',80,'g',12000],['Queso bajo en grasa',30,'g',16000]]},
   c:{pg:19,cg:3,fg:12,kc:196,ing:[['Huevos',2,'unid',700],['Champiñones',60,'g',12000],['Queso bajo en grasa',20,'g',16000]]}},
- {id:'lomoromero',cat:'res',name:'Lomo de res al horno con costra de romero y ajo',desc:'Lomo horneado a temperatura controlada con romero y ajo, jugoso por dentro. A: 220 g · C: 140 g.',
+ {id:'lomoromero',mom:['almuerzo','cena'],momPref:'cena',cat:'res',name:'Lomo de res al horno con costra de romero y ajo',desc:'Lomo horneado a temperatura controlada con romero y ajo, jugoso por dentro. A: 220 g · C: 140 g.',
   prep:['Saca el lomo de la nevera 20 minutos antes para que tome temperatura ambiente.','Precalienta el horno a 200 grados.','Machaca el ajo con el romero, sal, pimienta y un poco de aceite hasta formar una pasta.','Unta el lomo con la pasta de romero y ajo por todos lados.','Sella el lomo en un sartén caliente 1 minuto por cada lado antes de hornear.','Hornea 20-25 minutos según el punto que prefieras, hasta que el centro esté a tu gusto.','Deja reposar 5 minutos antes de tajar y sirve con la papa criolla y la ensalada.'],
   dif:3,
   a:{pg:65,cg:35,fg:20,kc:580,ing:[['Lomo de res',220,'g',32000],['Papa criolla',180,'g',6000],['Ensalada verde',150,'g',5000]]},
   c:{pg:42,cg:26,fg:13,kc:389,ing:[['Lomo de res',140,'g',32000],['Papa criolla',130,'g',6000],['Ensalada verde',120,'g',5000]]}},
- {id:'bifechimichurri',cat:'res',name:'Bife de res a la parrilla con chimichurri',desc:'Punta de anca a la parrilla con chimichurri fresco de cilantro y perejil. A: 230 g · C: 140 g.',
+ {id:'bifechimichurri',mom:['almuerzo','cena'],momPref:'cena',cat:'res',name:'Bife de res a la parrilla con chimichurri',desc:'Punta de anca a la parrilla con chimichurri fresco de cilantro y perejil. A: 230 g · C: 140 g.',
   prep:['Saca la carne de la nevera 15 minutos antes.','Sazona con sal gruesa y pimienta.','Asa a la parrilla o en sartén de fondo grueso 4-5 minutos por lado.','Prepara el chimichurri picando cilantro y perejil, mezcla con aceite, vinagre y ajo.','Deja reposar la carne 5 minutos, tájala y báñala con el chimichurri. Sirve con la papa criolla y la ensalada.'],
   dif:2,
   a:{pg:53,cg:30,fg:35,kc:647,ing:[['Punta de anca',230,'g',38000],['Papa criolla',150,'g',6000],['Ensalada verde',150,'g',5000]]},
   c:{pg:33,cg:22,fg:21,kc:409,ing:[['Punta de anca',140,'g',38000],['Papa criolla',110,'g',6000],['Ensalada verde',120,'g',5000]]}},
- {id:'carnevino',cat:'res',name:'Res al vino tinto con champiñones',desc:'Trozos de lomo de res estofados en vino tinto y champiñones. A: 220 g · C: 140 g.',
+ {id:'carnevino',mom:['almuerzo','cena'],momPref:'cena',cat:'res',name:'Res al vino tinto con champiñones',desc:'Trozos de lomo de res estofados en vino tinto y champiñones. A: 220 g · C: 140 g.',
   prep:['Corta el lomo de res en trozos medianos y sazona con sal y pimienta.','Sella los trozos en una olla caliente con un poco de aceite hasta dorar por todos lados, retira y reserva.','En la misma olla, saltea los champiñones hasta que suelten su agua.','Agrega el vino tinto y deja reducir 2-3 minutos raspando el fondo de la olla.','Regresa la carne a la olla, tapa y cocina a fuego bajo 20 minutos hasta que esté tierna.','Mientras tanto, cocina la papa en agua con sal hasta que esté blanda.','Sirve la carne con su salsa sobre la papa.'],
   dif:3,
   a:{pg:67,cg:34,fg:20,kc:584,ing:[['Lomo de res',220,'g',32000],['Champiñones',120,'g',12000],['Vino tinto (cocción)',100,'ml',20],['Papa',180,'g',3000]]},
   c:{pg:43,cg:25,fg:13,kc:389,ing:[['Lomo de res',140,'g',32000],['Champiñones',90,'g',12000],['Vino tinto (cocción)',70,'ml',20],['Papa',130,'g',3000]]}},
- {id:'brochetasres',cat:'res',name:'Brochetas de res con pimentón y piña',desc:'Cubos de lomo de res marinados, a la parrilla con pimentón, cebolla y piña. A: 220 g · C: 140 g.',
+ {id:'brochetasres',mom:['almuerzo','cena'],momPref:'cena',cat:'res',name:'Brochetas de res con pimentón y piña',desc:'Cubos de lomo de res marinados, a la parrilla con pimentón, cebolla y piña. A: 220 g · C: 140 g.',
   prep:['Corta el lomo de res, el pimentón, la piña y la cebolla en cubos parejos.','Marina la carne con sal, pimienta y un poco de limón 15 minutos.','Arma las brochetas alternando carne, pimentón, piña y cebolla.','Asa a la parrilla o plancha 3-4 minutos por lado hasta dorar.','Cocina el arroz aparte según el paquete.','Sirve las brochetas calientes con el arroz.'],
   dif:2,
   a:{pg:66,cg:79,fg:21,kc:769,ing:[['Lomo de res',220,'g',32000],['Pimentón',60,'g',6000],['Piña',60,'g',4000],['Cebolla cabezona',40,'g',3500],['Arroz (crudo)',80,'g',4500]]},
   c:{pg:43,cg:59,fg:13,kc:525,ing:[['Lomo de res',140,'g',32000],['Pimentón',45,'g',6000],['Piña',45,'g',4000],['Cebolla cabezona',30,'g',3500],['Arroz (crudo)',60,'g',4500]]}},
- {id:'sudadores',cat:'res',name:'Sudado de falda de res con papa y zanahoria',desc:'Falda de res guisada lenta con papa y zanahoria, un solo sartén. A: 200 g · C: 130 g.',
+ {id:'sudadores',mom:['almuerzo'],momPref:'almuerzo',cat:'res',name:'Sudado de falda de res con papa y zanahoria',desc:'Falda de res guisada lenta con papa y zanahoria, un solo sartén. A: 200 g · C: 130 g.',
   prep:['Sofríe la cebolla larga y el tomate en una olla con aceite hasta armar el hogao.','Agrega la falda de res en trozos y sella por todos lados.','Cubre con agua, tapa y cocina a fuego medio-bajo 30-35 minutos hasta que la carne esté blanda.','Añade la papa y la zanahoria en trozos, cocina 15 minutos más hasta que estén blandas.','Sazona al gusto y sirve caliente con su caldo.'],
   dif:1,
   a:{pg:57,cg:41,fg:24,kc:608,ing:[['Falda de res',200,'g',20000],['Papa',180,'g',3000],['Zanahoria',60,'g',3500],['Tomate',60,'g',4000],['Cebolla larga',25,'g',3500]]},
   c:{pg:38,cg:30,fg:16,kc:416,ing:[['Falda de res',130,'g',20000],['Papa',130,'g',3000],['Zanahoria',45,'g',3500],['Tomate',50,'g',4000],['Cebolla larga',20,'g',3500]]}},
- {id:'currygarbanzo',cat:'pollo',name:'Curry de garbanzo con pollo',desc:'Cubos de pechuga y garbanzo en leche de coco light con curry. A: 180 g pollo · C: 110 g.',
+ {id:'currygarbanzo',mom:['almuerzo'],momPref:'almuerzo',cat:'pollo',name:'Curry de garbanzo con pollo',desc:'Cubos de pechuga y garbanzo en leche de coco light con curry. A: 180 g pollo · C: 110 g.',
   prep:['Corta la pechuga en cubos.','Sella el pollo en un sartén con un poco de aceite 3-4 minutos.','Agrega el garbanzo ya cocido y el curry en polvo, mezcla bien.','Incorpora la leche de coco light y deja hervir a fuego bajo 8-10 minutos.','Cocina el arroz aparte según el paquete.','Sirve el curry sobre el arroz.'],
   dif:2,
   a:{pg:62,cg:110,fg:14,kc:814,ing:[['Pechuga de pollo',180,'g',17000],['Garbanzo (crudo)',70,'g',7000],['Leche de coco light',100,'ml',15],['Arroz (crudo)',80,'g',4500]]},
   c:{pg:40,cg:81,fg:10,kc:574,ing:[['Pechuga de pollo',110,'g',17000],['Garbanzo (crudo)',50,'g',7000],['Leche de coco light',80,'ml',15],['Arroz (crudo)',60,'g',4500]]}},
- {id:'polloasiatico',cat:'pollo',name:'Pollo salteado estilo asiático con salsa de ostras',desc:'Cubos de pechuga salteados con brócoli y pimentón en salsa de ostras. A: 200 g · C: 120 g.',
+ {id:'polloasiatico',mom:['almuerzo','cena'],momPref:'cena',cat:'pollo',name:'Pollo salteado estilo asiático con salsa de ostras',desc:'Cubos de pechuga salteados con brócoli y pimentón en salsa de ostras. A: 200 g · C: 120 g.',
   prep:['Corta la pechuga en cubos y el brócoli en floretes pequeños.','Calienta un wok o sartén amplio a fuego alto con aceite.','Sella el pollo 3-4 minutos hasta dorar, retira y reserva.','En el mismo sartén saltea el brócoli y el pimentón 3-4 minutos.','Regresa el pollo, agrega la salsa de ostras y mezcla 1-2 minutos.','Cocina el arroz aparte y sirve todo junto.'],
   dif:2,
   a:{pg:59,cg:83,fg:6,kc:622,ing:[['Pechuga de pollo',200,'g',17000],['Brócoli',150,'g',6000],['Pimentón',50,'g',6000],['Salsa de ostras',25,'ml',25],['Arroz (crudo)',80,'g',4500]]},
   c:{pg:37,cg:62,fg:4,kc:432,ing:[['Pechuga de pollo',120,'g',17000],['Brócoli',120,'g',6000],['Pimentón',40,'g',6000],['Salsa de ostras',15,'ml',25],['Arroz (crudo)',60,'g',4500]]}},
- {id:'pechugarellena',cat:'pollo',name:'Pechuga rellena de espinaca y queso al horno',desc:'Pechuga abierta en mariposa, rellena y horneada, sin fritura. A: 220 g · C: 140 g.',
+ {id:'pechugarellena',mom:['almuerzo','cena'],momPref:'cena',cat:'pollo',name:'Pechuga rellena de espinaca y queso al horno',desc:'Pechuga abierta en mariposa, rellena y horneada, sin fritura. A: 220 g · C: 140 g.',
   prep:['Precalienta el horno a 200 grados.','Abre la pechuga en mariposa con un cuchillo, sin cortarla del todo.','Saltea la espinaca en un sartén con poco aceite hasta que se marchite.','Rellena la pechuga con la espinaca y el queso, cierra con palillos.','Sella la pechuga rellena en un sartén caliente 1-2 minutos por lado.','Termina de cocinar en el horno 20-22 minutos hasta que esté bien cocida por dentro.','Cocina la papa en agua con sal y sirve junto a la pechuga.'],
   dif:3,
   a:{pg:67,cg:35,fg:9,kc:489,ing:[['Pechuga de pollo',220,'g',17000],['Espinaca',80,'g',6000],['Queso bajo en grasa',40,'g',16000],['Papa',180,'g',3000]]},
   c:{pg:43,cg:25,fg:6,kc:326,ing:[['Pechuga de pollo',140,'g',17000],['Espinaca',60,'g',6000],['Queso bajo en grasa',25,'g',16000],['Papa',130,'g',3000]]}},
- {id:'bowlpoke',cat:'pollo',name:'Bowl estilo poke de pollo',desc:'Pechuga en cubos sobre arroz con aguacate, pepino y zanahoria. A: 200 g · C: 120 g.',
+ {id:'bowlpoke',mom:['almuerzo','cena'],momPref:'cena',cat:'pollo',name:'Bowl estilo poke de pollo',desc:'Pechuga en cubos sobre arroz con aguacate, pepino y zanahoria. A: 200 g · C: 120 g.',
   prep:['Cocina el arroz aparte según el paquete y deja enfriar un poco.','Sella la pechuga en un sartén con sal y pimienta 4-5 minutos por lado, luego corta en cubos.','Corta el pepino, la zanahoria y el aguacate en cubos pequeños.','Arma el bowl con el arroz de base.','Agrega el pollo, el pepino, la zanahoria y el aguacate encima y sirve.'],
   dif:1,
   a:{pg:54,cg:76,fg:15,kc:655,ing:[['Pechuga de pollo',200,'g',17000],['Arroz (crudo)',80,'g',4500],['Aguacate',70,'g',9000],['Pepino',60,'g',3000],['Zanahoria',40,'g',3500]]},
   c:{pg:33,cg:57,fg:11,kc:459,ing:[['Pechuga de pollo',120,'g',17000],['Arroz (crudo)',60,'g',4500],['Aguacate',50,'g',9000],['Pepino',45,'g',3000],['Zanahoria',30,'g',3500]]}},
- {id:'pollopiccata',cat:'pollo',name:'Pollo piccata con limón y alcaparras',desc:'Pechuga en salsa de limón y alcaparras, con pasta. A: 200 g pollo · C: 120 g.',
+ {id:'pollopiccata',mom:['almuerzo','cena'],momPref:'cena',cat:'pollo',name:'Pollo piccata con limón y alcaparras',desc:'Pechuga en salsa de limón y alcaparras, con pasta. A: 200 g pollo · C: 120 g.',
   prep:['Aplana ligeramente la pechuga entre dos plásticos para que quede pareja.','Sazona con sal y pimienta y pásala por un poco de harina (opcional).','Sella la pechuga en un sartén con aceite y mantequilla, 3-4 minutos por lado, retira y reserva.','En el mismo sartén agrega jugo de limón, las alcaparras y un poco de agua, deja reducir 2 minutos.','Regresa la pechuga a la salsa y cocina 1-2 minutos más.','Cocina la pasta aparte según el paquete.','Sirve el pollo con su salsa sobre la pasta.'],
   dif:3,
   a:{pg:58,cg:68,fg:6,kc:558,ing:[['Pechuga de pollo',200,'g',17000],['Alcaparras',20,'g',60000],['Pasta (seca)',90,'g',6000]]},
   c:{pg:36,cg:49,fg:4,kc:376,ing:[['Pechuga de pollo',120,'g',17000],['Alcaparras',15,'g',60000],['Pasta (seca)',65,'g',6000]]}},
- {id:'lomomostaza',cat:'cerdo',name:'Lomo de cerdo con costra de mostaza y miel al horno',desc:'Lomo horneado con mostaza y un toque de miel, jugoso y sin fritura. A: 220 g · C: 140 g.',
+ {id:'lomomostaza',mom:['almuerzo','cena'],momPref:'cena',cat:'cerdo',name:'Lomo de cerdo con costra de mostaza y miel al horno',desc:'Lomo horneado con mostaza y un toque de miel, jugoso y sin fritura. A: 220 g · C: 140 g.',
   prep:['Precalienta el horno a 200 grados.','Mezcla mostaza, un poco de miel, sal y pimienta en un pocillo.','Unta el lomo de cerdo con la mezcla por todos lados.','Sella el lomo en un sartén caliente 1 minuto por cada lado.','Hornea 25-30 minutos hasta que esté cocido por dentro.','Deja reposar 5 minutos, taja y sirve con la papa y la ensalada.'],
   dif:3,
   a:{pg:52,cg:39,fg:14,kc:490,ing:[['Lomo de cerdo',220,'g',18000],['Papa',200,'g',3000],['Ensalada verde',150,'g',5000]]},
   c:{pg:34,cg:29,fg:9,kc:333,ing:[['Lomo de cerdo',140,'g',18000],['Papa',150,'g',3000],['Ensalada verde',120,'g',5000]]}},
- {id:'cerdoagridulce',cat:'cerdo',name:'Cerdo agridulce con piña',desc:'Tiras de lomo salteadas con piña y pimentón, salsa agridulce casera. A: 200 g · C: 120 g.',
+ {id:'cerdoagridulce',mom:['almuerzo','cena'],momPref:'cena',cat:'cerdo',name:'Cerdo agridulce con piña',desc:'Tiras de lomo salteadas con piña y pimentón, salsa agridulce casera. A: 200 g · C: 120 g.',
   prep:['Corta el lomo de cerdo en tiras delgadas y la piña y el pimentón en trozos.','Calienta un wok o sartén a fuego alto con aceite.','Sella el cerdo 3-4 minutos hasta dorar, retira y reserva.','Saltea el pimentón y la piña en el mismo sartén 2-3 minutos.','Regresa el cerdo, agrega la salsa soya y mezcla bien.','Cocina el arroz aparte y sirve todo junto.'],
   dif:2,
   a:{pg:50,cg:83,fg:13,kc:649,ing:[['Lomo de cerdo',200,'g',18000],['Piña',100,'g',4000],['Pimentón',60,'g',6000],['Salsa soya',20,'ml',12],['Arroz (crudo)',80,'g',4500]]},
   c:{pg:31,cg:61,fg:8,kc:440,ing:[['Lomo de cerdo',120,'g',18000],['Piña',70,'g',4000],['Pimentón',45,'g',6000],['Salsa soya',15,'ml',12],['Arroz (crudo)',60,'g',4500]]}},
- {id:'costillasbbq',cat:'cerdo',name:'Costillas de cerdo BBQ al horno',desc:'Costillas horneadas lento con salsa BBQ casera. A: 250 g · C: 160 g.',
+ {id:'costillasbbq',mom:['almuerzo'],momPref:'almuerzo',cat:'cerdo',name:'Costillas de cerdo BBQ al horno',desc:'Costillas horneadas lento con salsa BBQ casera. A: 250 g · C: 160 g.',
   prep:['Precalienta el horno a 160 grados (fuego bajo, para que queden jugosas).','Sazona las costillas con sal, pimienta y ajo en polvo.','Envuelve en papel aluminio y hornea 45 minutos para que se ablanden.','Retira el papel aluminio, unta con la salsa BBQ y sube el horno a 200 grados.','Hornea 10-15 minutos más hasta que la salsa caramelice.','Cocina la papa criolla en agua con sal.','Sirve las costillas con la papa criolla y la ensalada.'],
   dif:3,
   a:{pg:49,cg:40,fg:45,kc:761,ing:[['Costillas de cerdo',250,'g',22000],['Salsa BBQ',40,'ml',18],['Papa criolla',150,'g',6000],['Ensalada verde',150,'g',5000]]},
   c:{pg:32,cg:29,fg:29,kc:505,ing:[['Costillas de cerdo',160,'g',22000],['Salsa BBQ',25,'ml',18],['Papa criolla',110,'g',6000],['Ensalada verde',120,'g',5000]]}},
- {id:'cerdocurryrojo',cat:'cerdo',name:'Cerdo al curry rojo con verduras',desc:'Lomo en leche de coco light con curry y verduras mixtas. A: 190 g · C: 120 g.',
+ {id:'cerdocurryrojo',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'cerdo',name:'Cerdo al curry rojo con verduras',desc:'Lomo en leche de coco light con curry y verduras mixtas. A: 190 g · C: 120 g.',
   prep:['Corta el lomo de cerdo en cubos.','Sella el cerdo en un sartén con un poco de aceite 3-4 minutos.','Agrega la pasta o el polvo de curry rojo y mezcla bien con el cerdo.','Incorpora la leche de coco light y las verduras mixtas.','Cocina tapado a fuego medio 10-12 minutos hasta que espese.','Cocina el arroz aparte y sirve el curry encima.'],
   dif:2,
   a:{pg:50,cg:82,fg:19,kc:699,ing:[['Lomo de cerdo',190,'g',18000],['Leche de coco light',120,'ml',15],['Verduras mixtas',200,'g',5000],['Arroz (crudo)',80,'g',4500]]},
   c:{pg:33,cg:61,fg:13,kc:493,ing:[['Lomo de cerdo',120,'g',18000],['Leche de coco light',90,'ml',15],['Verduras mixtas',150,'g',5000],['Arroz (crudo)',60,'g',4500]]}},
- {id:'medallonesmanzana',cat:'cerdo',name:'Medallones de cerdo con manzana',desc:'Medallones de lomo sellados con manzana verde y un toque de romero. A: 210 g · C: 130 g.',
+ {id:'medallonesmanzana',mom:['almuerzo','cena'],momPref:'cena',cat:'cerdo',name:'Medallones de cerdo con manzana',desc:'Medallones de lomo sellados con manzana verde y un toque de romero. A: 210 g · C: 130 g.',
   prep:['Corta el lomo de cerdo en medallones de 2-3 cm de grosor.','Sazona con sal, pimienta y romero.','Sella los medallones en un sartén con un poco de aceite, 3-4 minutos por lado.','Retira el cerdo y en el mismo sartén saltea la manzana en gajos 2-3 minutos.','Cocina la papa en agua con sal hasta que esté blanda.','Sirve los medallones con la manzana salteada y la papa.'],
   dif:2,
   a:{pg:48,cg:45,fg:13,kc:489,ing:[['Lomo de cerdo',210,'g',18000],['Manzana verde',100,'g',5000],['Papa',180,'g',3000]]},
   c:{pg:30,cg:32,fg:8,kc:320,ing:[['Lomo de cerdo',130,'g',18000],['Manzana verde',70,'g',5000],['Papa',130,'g',3000]]}},
- {id:'salmonhierbas',cat:'pescado',name:'Salmón con costra de hierbas al horno',desc:'Filete de salmón horneado con costra de hierbas frescas, espárragos y papa criolla. A: 220 g · C: 140 g.',
+ {id:'salmonhierbas',mom:['almuerzo','cena'],momPref:'cena',cat:'pescado',name:'Salmón con costra de hierbas al horno',desc:'Filete de salmón horneado con costra de hierbas frescas, espárragos y papa criolla. A: 220 g · C: 140 g.',
   prep:['Precalienta el horno a 200 grados.','Pica finamente perejil, eneldo u otras hierbas frescas que tengas.','Sazona el salmón con sal, pimienta y limón, y cubre con las hierbas picadas.','Pon el salmón en una bandeja con los espárragos alrededor, con un chorrito de aceite.','Hornea 12-15 minutos hasta que el salmón esté firme pero jugoso por dentro.','Cocina la papa criolla en agua con sal aparte.','Sirve el salmón con los espárragos y la papa criolla.'],
   dif:3,
   a:{pg:50,cg:30,fg:29,kc:581,ing:[['Salmón (filete)',220,'g',58000],['Espárragos',120,'g',12000],['Papa criolla',150,'g',6000]]},
   c:{pg:32,cg:22,fg:18,kc:378,ing:[['Salmón (filete)',140,'g',58000],['Espárragos',90,'g',12000],['Papa criolla',110,'g',6000]]}},
- {id:'pescadopapillote',cat:'pescado',name:'Pescado en papillote con verduras',desc:'Filete de tilapia al vapor propio en papel aluminio, con verduras y limón. A: 250 g · C: 160 g.',
+ {id:'pescadopapillote',mom:['almuerzo','cena'],momPref:'cena',cat:'pescado',name:'Pescado en papillote con verduras',desc:'Filete de tilapia al vapor propio en papel aluminio, con verduras y limón. A: 250 g · C: 160 g.',
   prep:['Precalienta el horno a 200 grados.','Corta un cuadrado grande de papel aluminio o papel para hornear.','Pon el filete de tilapia en el centro con las verduras y la zanahoria en juliana alrededor.','Agrega sal, pimienta, limón y un chorrito de aceite.','Cierra el papillote bien sellado y hornea 15-18 minutos.','Abre con cuidado (sale vapor caliente) y sirve directo del paquete.'],
   dif:2,
   a:{pg:56,cg:17,fg:6,kc:346,ing:[['Tilapia (filete)',250,'g',24000],['Verduras mixtas',150,'g',5000],['Zanahoria',60,'g',3500]]},
   c:{pg:36,cg:13,fg:4,kc:232,ing:[['Tilapia (filete)',160,'g',24000],['Verduras mixtas',120,'g',5000],['Zanahoria',45,'g',3500]]}},
- {id:'cevichetilapia',cat:'pescado',name:'Ceviche de tilapia estilo peruano-colombiano',desc:'Tilapia curada en limón con cebolla, tomate y aguacate. A: 220 g · C: 140 g.',
+ {id:'cevichetilapia',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'pescado',name:'Ceviche de tilapia estilo peruano-colombiano',desc:'Tilapia curada en limón con cebolla, tomate y aguacate. A: 220 g · C: 140 g.',
   prep:['Corta la tilapia en cubos pequeños.','Cúbrela con jugo de limón fresco y deja marinar en la nevera 15-20 minutos hasta que la carne se vuelva opaca.','Pica la cebolla cabezona en pluma fina y el tomate en cubos pequeños.','Mezcla la tilapia curada con la cebolla y el tomate, sazona con sal y cilantro.','Sirve frío con el aguacate en tajadas al lado.'],
   dif:2,
   a:{pg:49,cg:12,fg:15,kc:379,ing:[['Tilapia (filete)',220,'g',24000],['Cebolla cabezona',40,'g',3500],['Tomate',60,'g',4000],['Aguacate',70,'g',9000]]},
   c:{pg:31,cg:9,fg:10,kc:250,ing:[['Tilapia (filete)',140,'g',24000],['Cebolla cabezona',30,'g',3500],['Tomate',50,'g',4000],['Aguacate',50,'g',9000]]}},
- {id:'camaronesajillo',cat:'pescado',name:'Camarones al ajillo con arroz',desc:'Camarones salteados con ajo y un toque de pimentón, sobre arroz. A: 220 g camarón · C: 140 g.',
+ {id:'camaronesajillo',mom:['almuerzo','cena'],momPref:'cena',cat:'pescado',name:'Camarones al ajillo con arroz',desc:'Camarones salteados con ajo y un toque de pimentón, sobre arroz. A: 220 g camarón · C: 140 g.',
   prep:['Pela y limpia los camarones si no vienen listos.','Calienta un sartén con aceite y ajo picado a fuego medio hasta que aromatice (sin quemar).','Sube el fuego, agrega los camarones y el pimentón, saltea 3-4 minutos hasta que los camarones estén rosados.','Cocina el arroz aparte según el paquete.','Sirve los camarones calientes sobre el arroz.'],
   dif:2,
   a:{pg:49,cg:77,fg:3,kc:531,ing:[['Camarones (crudos, pelados)',220,'g',45000],['Arroz (crudo)',90,'g',4500],['Pimentón',50,'g',6000]]},
   c:{pg:32,cg:56,fg:2,kc:370,ing:[['Camarones (crudos, pelados)',140,'g',45000],['Arroz (crudo)',65,'g',4500],['Pimentón',35,'g',6000]]}},
- {id:'truchaalmendras',cat:'pescado',name:'Trucha al ajillo con almendras',desc:'Filete de trucha sellado con láminas de almendra tostada. A: 220 g · C: 140 g.',
+ {id:'truchaalmendras',mom:['almuerzo','cena'],momPref:'cena',cat:'pescado',name:'Trucha al ajillo con almendras',desc:'Filete de trucha sellado con láminas de almendra tostada. A: 220 g · C: 140 g.',
   prep:['Sazona el filete de trucha con sal, pimienta y limón.','Calienta un sartén con un poco de mantequilla o aceite y ajo.','Sella la trucha 3-4 minutos por cada lado hasta que esté dorada.','Tuesta las almendras en el mismo sartén los últimos minutos hasta que doren.','Cocina la papa criolla aparte y sirve todo junto, con las almendras encima de la trucha.'],
   dif:2,
   a:{pg:57,cg:31,fg:32,kc:640,ing:[['Trucha',220,'g',28000],['Almendras',25,'g',60000],['Papa criolla',150,'g',6000]]},
   c:{pg:36,cg:22,fg:20,kc:412,ing:[['Trucha',140,'g',28000],['Almendras',15,'g',60000],['Papa criolla',110,'g',6000]]}},
- {id:'risottoquinoa',cat:'pescado',name:'Risotto de quinua con camarones y champiñones',desc:'Quinua cocida cremosa al estilo risotto, con camarones, champiñones y parmesano. A: 180 g camarón · C: 110 g.',
+ {id:'risottoquinoa',mom:['almuerzo','cena'],momPref:'cena',cat:'pescado',name:'Risotto de quinua con camarones y champiñones',desc:'Quinua cocida cremosa al estilo risotto, con camarones, champiñones y parmesano. A: 180 g camarón · C: 110 g.',
   prep:['Enjuaga bien la quinua para quitar el amargor.','Cocina la quinua en caldo o agua caliente, agregando poco a poco y revolviendo seguido, como un risotto, hasta que esté cremosa (18-20 minutos).','Mientras tanto, limpia y corta los champiñones en láminas.','En un sartén aparte, saltea los champiñones con un poco de aceite hasta dorar.','Agrega los camarones al sartén y cocina 3-4 minutos hasta que estén rosados.','Incorpora los camarones y champiñones a la quinua ya cremosa.','Agrega el queso parmesano rallado y mezcla bien.','Sirve caliente, con un poco más de parmesano encima si quieres.'],
   dif:3,
   a:{pg:60,cg:70,fg:14,kc:646,ing:[['Quinua (cruda)',100,'g',18000],['Camarones (crudos, pelados)',180,'g',45000],['Champiñones',100,'g',12000],['Queso parmesano',25,'g',45000]]},
   c:{pg:38,cg:49,fg:9,kc:429,ing:[['Quinua (cruda)',70,'g',18000],['Camarones (crudos, pelados)',110,'g',45000],['Champiñones',80,'g',12000],['Queso parmesano',15,'g',45000]]}},
- {id:'huevosrancheros',cat:'huevo',name:'Huevos rancheros',desc:'Huevos fritos sobre arepa con fríjol y salsa de tomate picante. A: 3 huevos · C: 2.',
+ {id:'huevosrancheros',mom:['desayuno','almuerzo'],momPref:'desayuno',cat:'huevo',name:'Huevos rancheros',desc:'Huevos fritos sobre arepa con fríjol y salsa de tomate picante. A: 3 huevos · C: 2.',
   prep:['Cocina el fríjol en agua hasta que esté blando (más rápido en olla a presión).','Sofríe el tomate picado con sal y un poco de picante para la salsa ranchera.','Tuesta o asa la arepa.','Fríe los huevos en poco aceite al punto que prefieras.','Sirve los huevos sobre la arepa, bañados con la salsa de tomate.','Acompaña con el fríjol y el aguacate al lado.'],
   dif:2,
   a:{pg:32,cg:67,fg:24,kc:612,ing:[['Huevos',3,'unid',700],['Fríjol (crudo)',45,'g',8000],['Arepas',1,'unid',800],['Tomate',60,'g',4000],['Aguacate',50,'g',9000]]},
   c:{pg:23,cg:56,fg:18,kc:478,ing:[['Huevos',2,'unid',700],['Fríjol (crudo)',30,'g',8000],['Arepas',1,'unid',800],['Tomate',50,'g',4000],['Aguacate',40,'g',9000]]}},
- {id:'frittataveg',cat:'huevo',name:'Frittata de huevo con espinaca y tomate',desc:'Huevo horneado con espinaca, tomate y queso, en tajadas como torta salada. A: 3 huevos · C: 2.',
+ {id:'frittataveg',mom:['desayuno','cena'],momPref:'desayuno',cat:'huevo',name:'Frittata de huevo con espinaca y tomate',desc:'Huevo horneado con espinaca, tomate y queso, en tajadas como torta salada. A: 3 huevos · C: 2.',
   prep:['Precalienta el horno a 190 grados.','Saltea la espinaca y el tomate en un sartén apto para horno hasta que la espinaca se marchite.','Bate los huevos con sal y pimienta.','Vierte el huevo batido sobre las verduras en el sartén.','Agrega el queso encima y lleva al horno 10-12 minutos hasta que cuaje.','Deja reposar unos minutos, corta en tajadas y sirve.'],
   dif:2,
   a:{pg:28,cg:8,fg:18,kc:306,ing:[['Huevos',3,'unid',700],['Espinaca',80,'g',6000],['Tomate',60,'g',4000],['Queso bajo en grasa',30,'g',16000]]},
   c:{pg:19,cg:6,fg:12,kc:208,ing:[['Huevos',2,'unid',700],['Espinaca',60,'g',6000],['Tomate',50,'g',4000],['Queso bajo en grasa',20,'g',16000]]}},
- {id:'shakshuka',cat:'huevo',name:'Shakshuka: huevos pochados en salsa de tomate especiada',desc:'Huevos cocidos directamente en una salsa de tomate, pimentón y cebolla, un solo sartén. A: 3 huevos · C: 2.',
+ {id:'shakshuka',mom:['desayuno','cena'],momPref:'desayuno',cat:'huevo',name:'Shakshuka: huevos pochados en salsa de tomate especiada',desc:'Huevos cocidos directamente en una salsa de tomate, pimentón y cebolla, un solo sartén. A: 3 huevos · C: 2.',
   prep:['Sofríe la cebolla cabezona y el pimentón en un sartén con aceite hasta que ablanden.','Agrega el tomate picado y cocina 8-10 minutos hasta formar una salsa espesa.','Sazona con comino, pimentón en polvo y un toque de picante.','Haz pequeños huecos en la salsa y casca los huevos directamente ahí.','Tapa el sartén y cocina a fuego bajo 6-8 minutos hasta que la clara cuaje y la yema quede a tu gusto.','Sirve caliente directo del sartén.'],
   dif:2,
   a:{pg:20,cg:15,fg:16,kc:284,ing:[['Huevos',3,'unid',700],['Tomate',150,'g',4000],['Pimentón',60,'g',6000],['Cebolla cabezona',40,'g',3500]]},
   c:{pg:14,cg:11,fg:10,kc:190,ing:[['Huevos',2,'unid',700],['Tomate',110,'g',4000],['Pimentón',45,'g',6000],['Cebolla cabezona',30,'g',3500]]}},
- {id:'wrappollo',cat:'cena',name:'Wrap de pollo y vegetales',desc:'Pechuga desmechada con vegetales frescos en tortilla integral. A: 180 g pollo · C: 110 g.',
+ {id:'wrappollo',mom:['almuerzo','cena'],momPref:'cena',cat:'cena',name:'Wrap de pollo y vegetales',desc:'Pechuga desmechada con vegetales frescos en tortilla integral. A: 180 g pollo · C: 110 g.',
   prep:['Calienta o desmecha la pechuga de pollo (ideal con las sobras del meal prep).','Calienta la tortilla integral unos segundos en un sartén.','Rellena con el pollo, las verduras mixtas y el aguacate.','Enróllala bien apretada y sirve.'],
   dif:1,
   a:{pg:55,cg:56,fg:19,kc:615,ing:[['Tortilla integral (wrap)',2,'unid',900],['Pechuga de pollo',180,'g',17000],['Verduras mixtas',100,'g',5000],['Aguacate',60,'g',9000]]},
   c:{pg:33,cg:32,fg:12,kc:368,ing:[['Tortilla integral (wrap)',1,'unid',900],['Pechuga de pollo',110,'g',17000],['Verduras mixtas',80,'g',5000],['Aguacate',45,'g',9000]]}},
- {id:'sopapollo',cat:'cena',name:'Sopa de pollo y verduras',desc:'Sopa espesa de pechuga con papa, zanahoria y verduras. A: 180 g pollo · C: 110 g.',
+ {id:'sopapollo',mom:['almuerzo','cena'],momPref:'cena',cat:'cena',name:'Sopa de pollo y verduras',desc:'Sopa espesa de pechuga con papa, zanahoria y verduras. A: 180 g pollo · C: 110 g.',
   prep:['Pon a hervir agua con sal en una olla grande.','Agrega la pechuga entera y cocina 15 minutos.','Incorpora la papa y la zanahoria en trozos, cocina 15 minutos más.','Desmecha o corta el pollo dentro de la olla, agrega las verduras mixtas y cocina 5 minutos más.','Sazona al gusto y sirve caliente.'],
   dif:2,
   a:{pg:47,cg:39,fg:4,kc:380,ing:[['Pechuga de pollo',180,'g',17000],['Papa',150,'g',3000],['Zanahoria',60,'g',3500],['Verduras mixtas',100,'g',5000]]},
   c:{pg:30,cg:29,fg:3,kc:263,ing:[['Pechuga de pollo',110,'g',17000],['Papa',110,'g',3000],['Zanahoria',45,'g',3500],['Verduras mixtas',80,'g',5000]]}},
- {id:'ensaladatun',cat:'cena',name:'Ensalada de atún y garbanzo',desc:'Atún con garbanzo, tomate y cebolla, fría y lista en minutos. A: 2 latas · C: 1 lata.',
+ {id:'ensaladatun',mom:['almuerzo','cena'],momPref:'cena',cat:'cena',name:'Ensalada de atún y garbanzo',desc:'Atún con garbanzo, tomate y cebolla, fría y lista en minutos. A: 2 latas · C: 1 lata.',
   prep:['Escurre el atún y cocina el garbanzo si no lo tienes ya listo del meal prep.','Pica el tomate y la cebolla cabezona en cubos pequeños.','Mezcla el atún, el garbanzo, el tomate y la cebolla en un bowl.','Agrega el aguacate en cubos, sazona con sal y limón, y sirve frío.'],
   dif:1,
   a:{pg:74,cg:46,fg:13,kc:597,ing:[['Atún en lata',2,'unid',6500],['Garbanzo (crudo)',60,'g',7000],['Tomate',60,'g',4000],['Cebolla cabezona',30,'g',3500],['Aguacate',50,'g',9000]]},
   c:{pg:41,cg:35,fg:10,kc:394,ing:[['Atún en lata',1,'unid',6500],['Garbanzo (crudo)',45,'g',7000],['Tomate',50,'g',4000],['Cebolla cabezona',25,'g',3500],['Aguacate',40,'g',9000]]}},
- {id:'bowlmediterraneo',cat:'cena',name:'Bowl mediterráneo de pollo con garbanzo',desc:'Pechuga con garbanzo, tomate, pepino y aguacate estilo mediterráneo. A: 180 g pollo · C: 110 g.',
+ {id:'bowlmediterraneo',mom:['almuerzo','cena'],momPref:'cena',cat:'cena',name:'Bowl mediterráneo de pollo con garbanzo',desc:'Pechuga con garbanzo, tomate, pepino y aguacate estilo mediterráneo. A: 180 g pollo · C: 110 g.',
   prep:['Sella la pechuga en la plancha con sal y pimienta 4-5 minutos por lado, luego córtala en tajadas.','Cocina el garbanzo si no lo tienes ya listo.','Pica el tomate y el pepino en cubos.','Arma el bowl con el garbanzo de base.','Agrega el pollo, el tomate, el pepino y el aguacate encima, sazona con sal, limón y aceite de oliva.'],
   dif:2,
   a:{pg:53,cg:40,fg:14,kc:498,ing:[['Pechuga de pollo',180,'g',17000],['Garbanzo (crudo)',50,'g',7000],['Tomate',60,'g',4000],['Pepino',60,'g',3000],['Aguacate',50,'g',9000]]},
   c:{pg:34,cg:29,fg:10,kc:342,ing:[['Pechuga de pollo',110,'g',17000],['Garbanzo (crudo)',35,'g',7000],['Tomate',50,'g',4000],['Pepino',45,'g',3000],['Aguacate',40,'g',9000]]}},
- {id:'hummuszanahoria',cat:'snack',name:'Hummus casero con zanahoria y apio',desc:'Garbanzo licuado con limón, para mojar con zanahoria y apio. A: porción grande · C: sencilla.',
+ {id:'hummuszanahoria',mom:['snack'],momPref:'snack',cat:'snack',name:'Hummus casero con zanahoria y apio',desc:'Garbanzo licuado con limón, para mojar con zanahoria y apio. A: porción grande · C: sencilla.',
   prep:['Cocina el garbanzo en agua hasta que esté bien blando (o usa el ya cocido del meal prep).','Licúa el garbanzo con un chorrito de limón, ajo y aceite hasta que quede cremoso.','Corta la zanahoria y el apio en bastones.','Sirve el hummus con los bastones de zanahoria y apio para mojar.'],
   dif:1,
   a:{pg:13,cg:46,fg:4,kc:272,ing:[['Garbanzo (crudo)',60,'g',7000],['Zanahoria',80,'g',3500],['Apio',60,'g',4000]]},
   c:{pg:9,cg:32,fg:3,kc:191,ing:[['Garbanzo (crudo)',40,'g',7000],['Zanahoria',60,'g',3500],['Apio',45,'g',4000]]}},
- {id:'bolasenergia',cat:'snack',name:'Bolas de avena, maní y proteína',desc:'Energy balls sin horno: avena, mantequilla de maní y proteína en polvo. A: 4 bolas · C: 3.',
+ {id:'bolasenergia',mom:['snack','desayuno'],momPref:'snack',cat:'snack',name:'Bolas de avena, maní y proteína',desc:'Energy balls sin horno: avena, mantequilla de maní y proteína en polvo. A: 4 bolas · C: 3.',
   prep:['Mezcla la avena, la mantequilla de maní y la proteína en polvo en un bowl.','Agrega un chorrito de agua o leche si la mezcla queda muy seca, hasta que compacte.','Forma bolitas del tamaño de un bocado con las manos.','Ponlas en un plato o recipiente y refrigera 20-30 minutos para que endurezcan.','Guárdalas en la nevera y come 3-4 al día como snack.'],
   dif:1,
   a:{pg:33,cg:40,fg:18,kc:454,ing:[['Avena en hojuelas',50,'g',8000],['Mantequilla de maní',25,'g',40000],['Proteína en polvo (whey)',25,'g',220000]]},
@@ -7783,6 +7818,33 @@ function autoWeekGen(){
   if(prefs.desayuno){ const d=pickFor('desayuno'); if(d) elegidas.push(d); else avisos.push('No había desayuno disponible con esos filtros.'); }
   if(!elegidas.length) return {ok:false, avisos: avisos.length?avisos:['No quedaron recetas disponibles con esos filtros.']};
 
+  /* cobertura de momentos (pedido del dueno): que "armame la semana" no proponga una
+     semana con huecos. Si Andres o Cami desayunan o tienen snack segun comidasDe
+     (su numero de comidas al dia), la propuesta debe traer por lo menos una receta
+     apta para ese momento, no solo para las proteinas que se eligieron arriba.
+     Mismos filtros que pickFor (evitar, dificultad, no repetir la ultima rotacion,
+     favoritos primero) pero buscando por mom en vez de por cat: una receta de otra
+     categoria (huevo, cerdo...) tambien sirve si su mom incluye el momento. Si ni
+     asi aparece ninguna, se avisa en vez de entregar el hueco sin decir nada. */
+  const pickForMom=mom=>{
+    const base=RECIPES.filter(r=>r.mom&&r.mom.includes(mom) && !elegidas.includes(r) && !evitar.includes(r.id) && r.dif<=dificultad);
+    if(!base.length) return null;
+    let pool=base.filter(r=>!lastAuto.includes(r.id));
+    if(!pool.length) pool=base;
+    const favPool=pool.filter(r=>favs[r.id]);
+    const candidatos=favPool.length?favPool:pool;
+    return candidatos[Math.floor(Math.random()*candidatos.length)];
+  };
+  const necesitaMomento=mom=>['andres','cami'].some(uid=>comidasDe(uid).some(m=>momentosDeEtiqueta(m.label).includes(mom)));
+  const MOM_NOMBRE={desayuno:'desayuno', snack:'snack'};
+  ['desayuno','snack'].forEach(mom=>{
+    if(!necesitaMomento(mom)) return;
+    if(elegidas.some(r=>r.mom&&r.mom.includes(mom))) return;
+    const r=pickForMom(mom);
+    if(r) elegidas.push(r);
+    else avisos.push('Ninguna receta de '+MOM_NOMBRE[mom]+' encaja con las proteínas o la dificultad elegidas: agrega una a mano para no dejar ese momento sin opciones.');
+  });
+
   /* bug de UX arreglado: con "aprovechar lo que tengo" activo NO se pisan staples ni
      checklist (antes autoWeek los reseteaba siempre sin avisar). Se decide ANTES del
      costo para que el estimado ya refleje lo que va a mostrar vLista() despues. */
@@ -8160,29 +8222,40 @@ function weekResFromSelected(){
 }
 /* candidatas del selector: todo el catalogo menos la receta que se va a reemplazar,
    con el mismo buscador y filtro de dificultad de Recetas (difMatch), pero con su
-   propio estado (UI.recSwapDif) para no pisar el filtro de esa pestana */
+   propio estado (UI.recSwapDif) para no pisar el filtro de esa pestana.
+   Punto momentos: si el selector se abrio con un momento en mente (UI.recSwap.momento,
+   ver recSwapAddFor y el aviso "sin receta adecuada" de gestPlanHTML), las aptas para
+   ese momento van primero. No se ocultan las demas: el dueno manda si igual quiere
+   otra cosa ahi, solo se ordena para que lo sensato quede a mano. */
 function recSwapCandidatas(){
   const q=(UI.recSwapQ||'').trim().toLowerCase();
-  const oldId=UI.recSwap&&UI.recSwap.id;
-  return RECIPES.filter(r=>r.id!==oldId && difMatch(r,UI.recSwapDif) && (!q||r.name.toLowerCase().includes(q)));
+  const st=UI.recSwap||{};
+  const oldId=st.id;
+  const momentos=st.momento?[st.momento]:null;
+  const cands=RECIPES.filter(r=>r.id!==oldId && difMatch(r,UI.recSwapDif) && (!q||r.name.toLowerCase().includes(q)));
+  if(!momentos) return cands;
+  return cands.slice().sort((a,b)=>(recetaApta(a,momentos)?0:1)-(recetaApta(b,momentos)?0:1));
 }
 function recSwapBoxHTML(){
   const st=UI.recSwap; if(!st) return '';
-  const old=RECIPES.find(r=>r.id===st.id);
+  const old=st.id?RECIPES.find(r=>r.id===st.id):null;
   const cands=recSwapCandidatas();
   const targets=[['both','Los dos'],['a','Andrés'],['c','Cami']];
+  const modoAgregar=!st.id;
+  const momentos=st.momento?[st.momento]:null;
   return `<div class="fboxin">
-    <div class="flex between mb8"><b class="t-h2">Cambiar receta</b><button class="btn sm" data-a="recSwapClose" aria-label="cerrar">${ic('x',14)}</button></div>
+    <div class="flex between mb8"><b class="t-h2">${modoAgregar?'Agregar receta':'Cambiar receta'}</b><button class="btn sm" data-a="recSwapClose" aria-label="cerrar">${ic('x',14)}</button></div>
     ${old?`<div class="small dim mb12">Vas a reemplazar <b style="color:var(--ink)">${esc(old.name)}</b> por otra del catálogo</div>`:''}
-    <span class="lbl">Aplica el cambio a</span>
-    <div class="seg cols3 mt8 mb12">${targets.map(([v,lb])=>`<button class="${(st.target||'both')===v?'on':''}" data-a="recSwapTarget" data-v="${v}" aria-label="Aplicar a ${lb}">${lb}</button>`).join('')}</div>
+    ${modoAgregar&&momentos?`<div class="small dim mb12">Buscando algo para <b style="color:var(--ink)">${fraseMomento(momentos)}</b> de ${st.target==='c'?'Cami':'Andrés'}: se suma a su rotación.</div>`:''}
+    ${modoAgregar?'':`<span class="lbl">Aplica el cambio a</span>
+    <div class="seg cols3 mt8 mb12">${targets.map(([v,lb])=>`<button class="${(st.target||'both')===v?'on':''}" data-a="recSwapTarget" data-v="${v}" aria-label="Aplicar a ${lb}">${lb}</button>`).join('')}</div>`}
     <div class="inwrap mb8"><span style="left:13px">${ic('search',16)}</span><input class="in has-ic" placeholder="Buscar receta…" value="${esc(UI.recSwapQ||'')}" data-ch="recSwapQ" style="padding-right:12px"></div>
     <div class="flex wrapf mb12" style="gap:6px">${DIF_OPTS.map(([v,lb])=>`<button class="chip ${UI.recSwapDif===v?'fill':''}" data-a="recSwapDifSet" data-v="${v}" aria-label="Filtrar por dificultad ${lb}">${lb}</button>`).join('')}</div>
     ${cands.length?cands.slice(0,50).map(r=>`
       <div class="row" data-a="recSwapPick" data-id="${r.id}" role="button" style="cursor:pointer">
         <span class="badge cat-${r.cat}">${catIco(r.cat,20)}</span>
         <div class="grow" style="min-width:0"><b style="font-size:14.5px">${esc(r.name)}</b>
-          <div class="small dim">A: ${macroLine(r.a)} · C: ${macroLine(r.c)}</div>
+          <div class="small dim">A: ${macroLine(r.a)} · C: ${macroLine(r.c)}${momentos&&!recetaApta(r,momentos)?' · no es lo típico ahí':''}</div>
         </div>
       </div>`).join(''):'<div class="small dim" style="padding:12px 0">Nada con esa búsqueda.</div>'}
   </div>`;
@@ -8479,15 +8552,28 @@ function gestPlanHTML(){
   const uids=['andres','cami'];
   const comidaRow=(uid,dl,i,cm)=>{
     const ca=comidaArmada(uid,dl,i,cm); if(!ca) return '';
-    const opciones=recetasActivas(uid==='andres'?'a':'c');
+    const key=uid==='andres'?'a':'c';
+    const activas=recetasActivas(key);
+    /* Punto momentos: el select se reordena con las aptas para el momento de esta
+       comida primero (no se quitan las demas: reasignar a mano sigue siendo libre,
+       solo que ahora lo sensato queda a la vista sin adivinar). */
+    const opciones=activas.slice().sort((a,b)=>{
+      const rA=RECIPES.find(x=>x.id===a), rB=RECIPES.find(x=>x.id===b);
+      return (recetaApta(rA,ca.momentos)?0:1)-(recetaApta(rB,ca.momentos)?0:1);
+    });
+    const sinApta = !ca.r && activas.length>0;       // hay rotacion pero nada encaja aqui
+    const foraDeLugar = ca.r && ca.apto===false;      // eleccion manual que no encaja
     return `<div class="row" style="align-items:flex-start;flex-wrap:wrap">
       <span class="badge">${ca.cubre?ic('check',16):ic('alert',16)}</span>
       <div class="grow" style="min-width:180px">
         <div class="flex between"><b style="font-size:14.5px">${ca.m.label}</b><span class="small dim">meta ${ca.m.pg} g prot</span></div>
+        ${sinApta?`<div class="small dim mt4" style="color:var(--gold)">Sin receta adecuada para ${fraseMomento(ca.momentos)}: ninguna receta activa encaja ahí.</div>
+          <button class="btn sm ghost mt6" data-a="recSwapAddFor" data-u="${key}" data-mom="${ca.momentos[0]}">${ic('plus',12)} Agregar receta para ${fraseMomento([ca.momentos[0]])}</button>`:''}
+        ${foraDeLugar?`<div class="small dim mt4" style="color:var(--gold)">Fuera de lugar: elegiste esto a mano, pero no es lo típico para ${fraseMomento(ca.momentos)}.</div>`:''}
         ${cm.length>1?`<div class="flex between mt6" style="align-items:center"><span class="small dim">% del día para esta comida</span>
           <input class="in ctr" style="width:60px;font-size:14px;padding:6px 8px" inputmode="numeric" data-ch="mealPct" data-u="${uid}" data-i="${i}" value="${Math.round(repartoEfectivo(uid==='andres'?'a':'c', cm.length)[i])}"></div>`:''}
         ${opciones.length?`<select class="in mt6" style="font-size:13.5px" data-ch="planRec" data-u="${uid}" data-d="${dl}" data-m="${i}">
-          ${opciones.map(id=>{const rr=RECIPES.find(x=>x.id===id); return rr?`<option value="${id}" ${id===ca.rid?'selected':''}>${esc(rr.name)}</option>`:'';}).join('')}
+          ${opciones.map(id=>{const rr=RECIPES.find(x=>x.id===id); if(!rr) return ''; const apt=recetaApta(rr,ca.momentos); return `<option value="${id}" ${id===ca.rid?'selected':''}>${esc(rr.name)}${apt?'':' (no es lo típico aquí)'}</option>`;}).join('')}
         </select>`:'<div class="small dim mt4">Sin recetas en la rotación</div>'}
         ${ca.es?`<div class="small dim mt6">${ca.es.factor>1?'Porción × '+fmt1(ca.es.factor)+' · ':''}${ca.es.ing.map(([n,q,u])=>esc(n)+' '+fmtQty(q,u)).join(' · ')}</div>`:''}
         <div class="macroline mt6">${ca.totalMac.pg}P · ${ca.totalMac.cg}C · ${ca.totalMac.fg}G · ~${ca.totalMac.kc} kcal${ca.scoops?' · +'+ca.scoops+' scoop'+(ca.scoops>1?'s':''):''}</div>
@@ -10151,14 +10237,33 @@ const ACTIONS = {
   /* Punto B: abrir/cerrar/operar el selector de cambio de receta (ver recSwapApply
      y weekResFromSelected mas arriba) */
   recSwapOpen(d){ UI.recSwap={id:d.id, target:'both'}; UI.recSwapQ=''; UI.recSwapDif=null; recSwapOpenBox(); },
+  /* momentos (pedido del dueno): abre el mismo selector pero en "modo agregar" (sin
+     id viejo que reemplazar) filtrado/ordenado por el momento que quedo sin receta
+     apta en gestPlanHTML. target queda fijo en la persona del hueco (no "both"):
+     la receta se suma solo a su rotacion, ver recSwapPick. */
+  recSwapAddFor(d){ UI.recSwap={id:null, target:d.u, momento:d.mom}; UI.recSwapQ=''; UI.recSwapDif=null; recSwapOpenBox(); },
   recSwapClose(){ recSwapRemove(); },
   recSwapTarget(d){ if(UI.recSwap) UI.recSwap.target=d.v; recSwapRedraw(); },
   recSwapDifSet(d){ const v=+d.v; UI.recSwapDif=(UI.recSwapDif===v)?null:v; recSwapRedraw(); },
   recSwapPick(d){
     if(!UI.recSwap) return;
-    const oldId=UI.recSwap.id, newId=d.id, target=UI.recSwap.target||'both';
-    const oldR=RECIPES.find(r=>r.id===oldId), newR=RECIPES.find(r=>r.id===newId);
-    if(!oldR||!newR||oldId===newId){ recSwapRemove(); return; }
+    const newId=d.id, newR=RECIPES.find(r=>r.id===newId);
+    if(!newR){ recSwapRemove(); return; }
+    if(!UI.recSwap.id){
+      /* modo agregar: no hay receta vieja, se suma esta a la rotacion de la
+         persona del hueco (target aqui es 'a' o 'c', ver recSwapAddFor) */
+      const key=UI.recSwap.target==='c'?'c':'a';
+      S.meal.selected[newId]=S.meal.selected[newId]||{a:0,c:0};
+      S.meal.selected[newId][key]=(S.meal.selected[newId][key]||0)+1;
+      save('meal');
+      recSwapRemove();
+      render();
+      toast('Agregaste '+newR.name+' a la rotación');
+      return;
+    }
+    const oldId=UI.recSwap.id, target=UI.recSwap.target||'both';
+    const oldR=RECIPES.find(r=>r.id===oldId);
+    if(!oldR||oldId===newId){ recSwapRemove(); return; }
     recSwapApply(oldId,newId,target);
     recSwapRemove();
     /* si el picker se abrio dentro del resumen de la semana (fbox.weekform), lo

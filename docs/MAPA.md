@@ -22,6 +22,7 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - I2a Entreno ("Ir a entrenar" + check que completa la rutina)
   - I2b Pasos · I2c Agua · I2d Check-in · I2e Foto del día
 - **I3** Caja rotativa "Para ti": pendiente de hoy, coach del día, versículos, datos, hitos (`homeRotator`, `rotcard`)
+  - I3a Cápsula "Tu próximo entreno": recomendación según planeación del día antes, se abre como ventana flotante con insights de la jornada (`proxEntreno`, `proxBoxOpen`, `ACTIONS.proxBox`)
 - **I4** Nutrición del día (`nutriDay`)
   - I4a Anillo de proteína + mensaje del día
   - I4b Caja "Con qué cerrar" (sugerencias sueltas y combinaciones) (`sugBox`)
@@ -39,6 +40,11 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - E2b Divisor de descanso entre series (`.restdiv`)
   - E2c Opciones del ejercicio: nota, cambiar, discos (`exOpts`)
   - E2d Botón "Empezar entreno" / finalizar sesión
+  - E2e Círculos de verificación por serie en la cabecera de cada ejercicio: tocar uno
+    marca/desmarca esa serie sola (misma lógica que el check de la tabla, reusa
+    `ACTIONS.mark`) (`exDots`)
+  - E2f Ventana "Series sin marcar" al finalizar con pendientes: completar todas y
+    finalizar, finalizar solo con lo hecho, o seguir entrenando (`finishPendBox`)
 - **E3** Importar entreno pegando texto (Strong, etc.) (`impTgl`)
 - **E4** Historial de entrenos
 - **E5** Sub-pestaña Ejercicios: catálogo EXCAT completo (`vExcat`)
@@ -53,19 +59,31 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - A2a Caja "Días de cada rutina" (planificador: rutina/movilidad/descanso por día) (`#schedbox`)
   - A2b Campo de hora de entreno + "Crear alerta en el calendario" (.ics) (`trainHour`, `downloadTrainICS`)
 - **A3** Vista Mes (rejilla del calendario)
-- **A4** Detalle de un día: pasos, agua, comidas, entreno de ese día (`vDia`)
+- **A4** Detalle de un día: pasos, entreno de ese día (`vDia` → `calEditor`)
+  - A4a Panel de nutrición completo de ese día: mismo panel que Inicio (I4), anillo
+    de proteína, franjas Mañana/Tarde/Noche con buscador y loggeo real, "con qué
+    cerrar" y semana de proteína, pero con textos en pasado y sin autoabrir
+    sugerencias por hora (`nutriDay(sel)`, contexto de fecha en `nutriT()`/
+    `UI.nutriDate`, fijado por `calEditor()`)
+  - A4b Chips "Comidas del plan" para marcar sin detallar (no duplican macro si esa
+    franja ya tiene loggeo detallado, ver `eatenOn`) (`mealAt`)
+  - A4c Agua, peso, inyección y foto de ese día
 - **A5** Modo foto: las tarjetas de los días se giran y muestran la foto (`calFotoTgl`, `.flip3d`)
 
 ## C · Comida (`vComida`, sub-pestañas Recetas / Mercado / Plan día)
 
 - **C1** Selector de sub-pestañas (Recetas · Mercado · Plan día)
 - **C2** Recetas (`vRecetas`)
-  - C2a CTA "Ármame la semana" + banner de rotación activa
+  - C2a CTA "Ármame la semana" + banner de rotación activa (abre C2g)
   - C2b Buscador de recetas
   - C2c Rejilla de categorías (res, pollo, pescado, desayunos, etc.)
   - C2d Tarjeta de receta abierta: ingredientes, costos, sección "Preparación" (`recCard`)
   - C2e Caja "Sugerir receta" + lista "Ideas de recetas" (`vIdeasReceta`)
   - C2f Proteína de la semana
+  - C2g Formulario "Arma la semana": proteínas, porciones por persona, desayuno,
+    presupuesto/aprovechar lo de casa, tiempo de cocina, antojos y descartes; genera con
+    `autoWeekGen()` y muestra un resumen antes de ir al mercado (`weekFormOpen`,
+    `weekFormHTML`, `weekSummaryHTML`, preferencias en `S.meal.prefs`)
 - **C3** Mercado (`vLista`)
   - C3a Toggle Ambos/Andrés/Cami + periodo (semanal/quincenal/mensual)
   - C3b Barra de suma parcial: $ marcado vs total

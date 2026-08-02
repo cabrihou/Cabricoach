@@ -23,13 +23,19 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - I2b Pasos · I2c Agua · I2d Check-in · I2e Foto del día
 - **I3** Caja rotativa "Para ti": pendiente de hoy, coach del día, versículos, datos, hitos (`homeRotator`, `rotcard`)
   - I3a Cápsula "Tu próximo entreno": recomendación según planeación del día antes, se abre como ventana flotante con insights de la jornada (`proxEntreno`, `proxBoxOpen`, `ACTIONS.proxBox`)
-- **I4** Nutrición del día (`nutriDay`)
+- **I4** Nutrición del día (`nutriDay(t)`, modo completo)
   - I4a Anillo de proteína + mensaje del día
   - I4b Caja "Con qué cerrar" (sugerencias sueltas y combinaciones) (`sugBox`)
   - I4c Fila de macros: Carbo / Grasa / Proteína (`.macrow`)
   - I4d Franjas Mañana/Tarde/Noche + buscador de loggeo (`nlogPanel`)
   - I4e Barras de proteína de los últimos 7 días (`.pweek`)
-- **I5** Tarjeta del ciclo (solo Cami) (`cyccard`)
+- **I5** Tarjeta del ciclo (solo Cami, `cycHome`): anillo de los días del ciclo con el
+  tramo de sangrado resaltado y el día actual marcado (`.cycmod`, `cycGradient`), texto
+  central con la fecha del próximo período (`cycleInfo` trae `next`/`toNext`), fase y
+  cabrita debajo con el consejo del momento (tip/food/animo rotan según la hora). Toca
+  la tarjeta y abre el detalle en una `.fbox` (`ACTIONS.cycDetail` → `cycBox`) con las
+  cuatro fases del mes (`cycFasesStrip`). Sin `cycStart` muestra un estado vacío que
+  lleva a M6 (`ACTIONS.cycCfgGo`).
 
 ## E · Entrenar (`vEntrenar`)
 
@@ -60,11 +66,12 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - A2b Campo de hora de entreno + "Crear alerta en el calendario" (.ics) (`trainHour`, `downloadTrainICS`)
 - **A3** Vista Mes (rejilla del calendario)
 - **A4** Detalle de un día: pasos, entreno de ese día (`vDia` → `calEditor`)
-  - A4a Panel de nutrición completo de ese día: mismo panel que Inicio (I4), anillo
-    de proteína, franjas Mañana/Tarde/Noche con buscador y loggeo real, "con qué
-    cerrar" y semana de proteína, pero con textos en pasado y sin autoabrir
-    sugerencias por hora (`nutriDay(sel)`, contexto de fecha en `nutriT()`/
-    `UI.nutriDate`, fijado por `calEditor()`)
+  - A4a Panel de nutrición de ese día, en modo compacto (un día pasado no necesita el
+    aparato completo de Inicio): resumen de una línea (proteína y kcal), franjas
+    Mañana/Tarde/Noche con lo ya registrado y su buscador/borrador de loggeo real. Sin
+    anillo, sin cabritas, sin "con qué cerrar" ni barra de 7 días
+    (`nutriDay(sel, {compacto:true})`, contexto de fecha en `nutriT()`/`UI.nutriDate`,
+    fijado por `calEditor()`)
   - A4b Chips "Comidas del plan" para marcar sin detallar (no duplican macro si esa
     franja ya tiene loggeo detallado, ver `eatenOn`) (`mealAt`)
   - A4c Agua, peso, inyección y foto de ese día

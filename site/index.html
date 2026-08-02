@@ -1305,7 +1305,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 107';
+const APPREV='REV 108';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -7854,21 +7854,61 @@ function autoWeekGen(){
     avisos,
   };
 }
+/* factor real de escalado para el mercado (pedido del dueno): antes esta lista
+   compraba las porciones "de fabrica" de cada receta aunque comidaArmada ya
+   escala el plato real a la meta de proteina de la comida donde cae, asi que la
+   comida no alcanzaba. No se inventa otra formula: se recorre la MISMA rotacion
+   semanal que arma recetaDeComida (7 dias x comidas del dia de esa persona) y se
+   promedia escalaReceta().factor en cada ocurrencia real de esa receta. Una misma
+   receta puede caer en el desayuno unos dias y en el almuerzo otros, con metas de
+   proteina distintas: promediar las ocurrencias (en vez de una sola cuenta) deja
+   el promedio ponderado por cuantas veces cae en cada franja sin sumar pesos a
+   mano. Si la receta nunca aparece en la rotacion visible (mas recetas activas
+   que espacios de la semana) se compra sin escalar (factor 1): no se compra para
+   un plato que la app no va a proponer. Mismo resultado de antes si no hay
+   comidas configuradas o la rotacion esta vacia, porque ahi no hay ocurrencias.
+*/
+function factorMercado(rid, key){
+  const uid = key==='a' ? 'andres' : 'cami';
+  const r = RECIPES.find(x=>x.id===rid); if(!r) return 1;
+  const cm = comidasDe(uid), nDia = cm.length;
+  let suma=0, n=0;
+  DLETRAS.forEach(dl=>{
+    for(let i=0;i<nDia;i++){
+      if(recetaDeComida(uid, dl, i, nDia)===rid){ suma += escalaReceta(r, key, cm[i].pg).factor; n++; }
+    }
+  });
+  return n ? suma/n : 1;
+}
 function vLista(){
   const mult=PERIODS.find(p=>p.id===S.meal.period).mult;
   const view=S.meal.view||'both';
   const agg={};
+  const escalados=new Set();
   const addIng=(n,q,u,c)=>{ const k=n+'|'+u; agg[k]=agg[k]||{n,u,q:0,c}; agg[k].q+=q; };
+  let pesoFactor=0, pesoPor=0;
   Object.entries(S.meal.selected).forEach(([id,por])=>{
     const r=RECIPES.find(x=>x.id===id); if(!r) return;
     ['a','c'].forEach(w=>{
       if(view!=='both'&&view!==w) return;
       if(!por[w]) return;
-      r[w].ing.forEach(([n,q,u,c])=>addIng(n,q*por[w]*mult,u,c));
+      const factor=factorMercado(id,w);
+      pesoFactor+=factor*por[w]; pesoPor+=por[w];
+      r[w].ing.forEach(([n,q,u,c])=>{
+        if(factor!==1) escalados.add(n+'|'+u);
+        addIng(n, q*factor*por[w]*mult, u, c);
+      });
     });
   });
   if(S.meal.staples) STAPLES.forEach(([n,q,u,c,who])=>{ if(view==='both'||who===view) addIng(n,q*mult,u,c); });
   const list=Object.values(agg).sort((a,b)=>a.n.localeCompare(b.n));
+  /* solo redondea los ingredientes que de verdad se escalaron (factor!=1) y sobre
+     la cantidad ya agregada (no cada aporte por separado): a los que ningun
+     factor les toco quedan exactamente igual que antes (mismo numero, sin
+     residuos de redondeo), y el costo se calcula sobre esta misma cantidad
+     final asi el total cuadra con lo que se ve */
+  list.forEach(it=>{ if(escalados.has(it.n+'|'+it.u)) it.q=redondeaCantidad(it.q,it.u); });
+  const factorProm = pesoPor ? pesoFactor/pesoPor : 1;
   const total=list.reduce((a,it)=>a+costOf(it.q,it.u,it.c),0) + (S.meal.extras||[]).reduce((a,it)=>a+(it.c||0),0);
   const bought=list.filter(it=>ckOn(it.n)).length;
   const boughtCost=list.filter(it=>ckOn(it.n)).reduce((a,it)=>a+costOf(it.q,it.u,it.c),0)
@@ -7880,7 +7920,8 @@ function vLista(){
     <span class="lbl mint">Mercado · ${vlabel.toUpperCase()}</span>
     <div class="flex between mt8" style="align-items:flex-end">
       <div><h2 class="${list.length?'t-metric-md':'t-h2'}">${list.length?fmtCOP(total):'Arma tu lista'}</h2>
-      <span class="small" style="color:var(--ink2)">${list.length?list.length+' ítems · estimado, referencia jul 2026'+(view==='both'?' · ref. plan: $200-260 mil/sem los dos':''):'elige recetas en el catálogo y esto se llena solo'}</span></div>
+      <span class="small" style="color:var(--ink2)">${list.length?list.length+' ítems · estimado, referencia jul 2026'+(view==='both'?' · ref. plan: $200-260 mil/sem los dos':''):'elige recetas en el catálogo y esto se llena solo'}</span>
+      ${list.length&&factorProm>1.02?`<div class="small dim">Cantidades ajustadas a tus metas (x${fmt1(factorProm)} en promedio)</div>`:''}</div>
       ${list.length?`<span class="chip ${bought===list.length?'fill':''}">${bought}/${list.length}</span>`:''}
     </div></div></div>
   <section class="mod">

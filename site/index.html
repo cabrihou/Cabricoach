@@ -742,8 +742,15 @@ svg .acc{fill:var(--mint);stroke:none}
 .exthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .exthumb i{font:600 14px var(--num);color:var(--smoke);font-style:normal}
 .exbadge{flex:none;font:600 10.5px var(--ui);letter-spacing:.04em;color:var(--ink2);background:var(--paper2);border:1px solid var(--line2);border-radius:8px;padding:4px 7px}
-.exdetimg{width:100%;height:180px;border-radius:14px;overflow:hidden;margin-top:4px;background:var(--card2)}
-.exdetimg img{width:100%;height:100%;object-fit:cover}
+/* ficha del ejercicio en dos columnas: la foto manda a la izquierda en marco
+   cuadrado y sin redondear (la imagen ya viene cuadrada, redondearla la recortaba),
+   y a la derecha los chips con una descripcion corta */
+.exdet2{display:grid;grid-template-columns:minmax(120px,40%) 1fr;gap:12px;align-items:start;margin-top:4px}
+.exdetimg{width:100%;aspect-ratio:1/1;border-radius:0;overflow:hidden;background:var(--card2)}
+.exdetimg img{width:100%;height:100%;object-fit:cover;display:block}
+.exdetinfo{min-width:0;display:flex;flex-direction:column;gap:8px}
+.exdetinfo .flex{gap:6px}
+@media (max-width:340px){.exdet2{grid-template-columns:1fr}}
 .accgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .accbox{display:flex;flex-direction:column;align-items:flex-start;gap:6px;background:var(--card2);border:1px solid var(--line2);border-radius:16px;padding:13px;color:var(--ink);text-align:left;transition:border-color .15s}
 .accbox b{font:600 16px var(--ui)}
@@ -6402,6 +6409,17 @@ function vExcat(){
   }).join('');
 }
 /* ventana flotante de detalle de un ejercicio del catalogo (patron G5, igual a exStats) */
+/* descripcion corta armada con lo que ya sabemos del ejercicio: el catalogo no trae
+   texto propio, asi que se compone con tipo, grupo y equipo en una frase natural */
+function excatDesc(x){
+  const grupo=(EXCAT_LABELS[x.cat]||x.cat||'').toLowerCase();
+  const equipo={barra:'con barra', mancuerna:'con mancuernas', maquina:'en máquina', polea:'en polea',
+    banda:'con banda', peso_corporal:'con tu propio peso', kettlebell:'con pesa rusa', smith:'en máquina Smith', otro:''}[x.equip]||'';
+  if(x.tipo==='cardio') return ('Trabajo de cardio '+equipo).trim()+'. Suma para el corazón y el gasto del día.';
+  const t=x.tipo==='compuesto'?'Ejercicio compuesto':'Ejercicio de aislamiento';
+  const cierre=x.tipo==='compuesto'?' Mueve varias articulaciones, va de primero en la sesión.':' Trabajo puntual, va al final de la sesión.';
+  return (t+' de '+grupo+' '+equipo).replace(/\s+/g,' ').trim()+'.'+cierre;
+}
 function excatDetailBox(id){
   const x=excatById(id); if(!x) return;
   const emId=Object.keys(EXMAP).find(k=>EXMAP[k].name===x.name);
@@ -6413,13 +6431,18 @@ function excatDetailBox(id){
   const box=document.createElement('div'); box.className='fbox';
   box.innerHTML=`<div class="fboxin">
     <div class="flex between mb8"><b class="t-h2" style="min-width:0">${esc(x.name)}</b><button class="btn sm" id="fcls" aria-label="cerrar">${ic('x',14)}</button></div>
-    <div class="exdetimg"><img loading="lazy" src="assets/ej/${x.img}" alt="" decoding="async" onerror="this.closest('.exdetimg').remove()"></div>
-    <div class="flex wrapf mt12" style="gap:6px">
-      <span class="chip">${EXCAT_LABELS[x.cat]||x.cat}</span>
-      <span class="chip">${EXCAT_EQUIP_BADGE[x.equip]||x.equip}</span>
-      <span class="chip">${tipoLbl}</span>
+    <div class="exdet2">
+      <div class="exdetimg"><img loading="lazy" src="assets/ej/${x.img}" alt="" decoding="async" onerror="this.closest('.exdetimg').style.visibility='hidden'"></div>
+      <div class="exdetinfo">
+        <div class="flex wrapf">
+          <span class="chip">${EXCAT_LABELS[x.cat]||x.cat}</span>
+          <span class="chip">${EXCAT_EQUIP_BADGE[x.equip]||x.equip}</span>
+          <span class="chip">${tipoLbl}</span>
+        </div>
+        <div class="small dim">${excatDesc(x)}</div>
+        ${last?`<div class="small dim">Última vez: <b style="color:var(--ink)">${fmt1(lastTop)} kg</b> · ${fmtD(last.d)}</div>`:`<div class="small dim">Sin historial todavía con este ejercicio.</div>`}
+      </div>
     </div>
-    ${last?`<div class="small dim mt12">Última vez: <b style="color:var(--ink)">${fmt1(lastTop)} kg</b> · ${fmtD(last.d)}</div>`:`<div class="small dim mt12">Sin historial todavía con este ejercicio.</div>`}
     ${canAdd?`<button class="btn primary full mt12" id="fadd">${ic('plus',14)} Agregar a la sesión de hoy</button>`:''}
   </div>`;
   document.body.appendChild(box);

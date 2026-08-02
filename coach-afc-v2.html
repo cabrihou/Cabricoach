@@ -1296,7 +1296,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 105';
+const APPREV='REV 106';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -1615,6 +1615,105 @@ function comidasDe(uid){
   const labels = MEAL_LABELS(n);
   const pgs=repartirMacro(plan.prot,pcts), cgs=repartirMacro(plan.carb,pcts), fgs=repartirMacro(plan.fat,pcts), kcs=repartirMacro(plan.kcal,pcts);
   return labels.map((label,i)=>({k:'m'+(i+1), label, pg:pgs[i], cg:cgs[i], fg:fgs[i], kc:kcs[i]}));
+}
+
+/* ============ ESCALADO DE RECETAS A LA META (pedido del dueno) ============
+   Antes cada receta aportaba lo que traia de fabrica: si no llegaba a la proteina
+   de esa comida, se quedaba corta. Ahora se calcula un factor entre lo que pide la
+   comida (comidasDe) y lo que da la porcion de la receta, y se escalan los
+   INGREDIENTES (no solo los macros) para que el plato real tenga esa cantidad.
+   Nunca se escala hacia abajo: una porcion de mas no es el problema, quedarse
+   corto si lo es. Tope FACTOR_TOPE (2.5x) porque mas que eso ya no es un plato
+   real de una sentada; ahi se corta el escalado (excede:true) para que la UI
+   proponga dividir en dos comidas, sumar un scoop u otra fuente de proteina, o
+   cambiar de receta, en vez de mostrar una cantidad absurda sin avisar. */
+const FACTOR_TOPE = 2.5;
+/* redondea una cantidad ya escalada a un paso manejable: 5 g/ml si es chico, 10 si
+   es grande, cuarto de unidad si se cuenta por unidades (huevos, latas...). Asi
+   nunca se muestra un "137,4 g" */
+function redondeaCantidad(q, u){
+  if(u==='g'||u==='ml'){ const paso = q>=100?10:5; return Math.max(paso, Math.round(q/paso)*paso); }
+  if(u==='unid') return Math.max(0.25, Math.round(q*4)/4);
+  return Math.round(q*100)/100;
+}
+/* escala una receta (r[w]) contra el objetivo de proteina de UNA comida puntual */
+function escalaReceta(r, w, objetivoP){
+  const base=r[w];
+  const factorCrudo = base.pg>0 ? objetivoP/base.pg : 1;
+  const factor = clamp(factorCrudo, 1, FACTOR_TOPE);
+  const excede = factorCrudo > FACTOR_TOPE;
+  const ing = base.ing.map(([n,q,u,c])=>[n, redondeaCantidad(q*factor,u), u, c]);
+  const macros = {
+    pg:Math.round(base.pg*factor), cg:Math.round(base.cg*factor),
+    fg:Math.round(base.fg*factor), kc:Math.round(base.kc*factor),
+  };
+  return {factor, factorCrudo, excede, ing, macros, base};
+}
+/* macros del "scoop de proteina" (Punto C): reusa el alimento real del catalogo
+   ('wheyagua', 24 g prot / ~122 kcal) para no inventar una cifra aparte */
+function scoopMac(){ const f=foodOf('wheyagua'); return f?foodMac(f):{pg:24,cg:3,fg:1.5,kc:122}; }
+
+/* ============ ASIGNACION DE RECETAS A COMIDAS, DIA POR DIA ============
+   S.meal.plan[key][letraDia][mK] = recetaId elegida a mano para esa comida
+   (opcional). S.meal.scoops[key][letraDia][mK] = cuantos scoops se le sumaron.
+   letraDia usa fromISO(d).getDay() indexado en DLETRAS (D L M X J V S), porque la
+   rotacion de recetas es semanal (se repite cada semana) y no depende de una fecha
+   calendario puntual, igual que el resto del sistema de comidas (comidasDe, meal
+   prep). Sin eleccion a mano se reparte por rotacion (round robin) entre las
+   recetas activas de esa persona, en el orden en que aparecen en S.meal.selected:
+   asi la semana completa queda cubierta sin que el usuario tenga que asignar
+   receta por receta antes de ver algo util. */
+const DLETRAS=['D','L','M','X','J','V','S'];
+function recetasActivas(key){
+  const sel=S.meal.selected||{};
+  return Object.keys(sel).filter(id=>(sel[id][key]||0)>0 && RECIPES.some(r=>r.id===id));
+}
+function recetaDeComida(uid, dl, i, nDia){
+  const key=uid==='andres'?'a':'c';
+  const activas=recetasActivas(key);
+  if(!activas.length) return null;
+  const manual=(S.meal.plan&&S.meal.plan[key]&&S.meal.plan[key][dl]) ? S.meal.plan[key][dl]['m'+(i+1)] : null;
+  if(manual && activas.includes(manual)) return manual;
+  const diaIdx=Math.max(0,DLETRAS.indexOf(dl));
+  const idx=(diaIdx*Math.max(1,nDia)+i) % activas.length;
+  return activas[idx];
+}
+function scoopsDeComida(uid, dl, i){
+  const key=uid==='andres'?'a':'c', mk='m'+(i+1);
+  return (S.meal.scoops&&S.meal.scoops[key]&&S.meal.scoops[key][dl]&&S.meal.scoops[key][dl][mk])||0;
+}
+/* comida ya armada: la receta que le toca, escalada a su propia meta, mas los
+   scoops que se le hayan agregado. Pieza central que usan gestPlanHTML (la semana
+   comida por comida), gestData (el resumen por persona) y el chip de meal prep del
+   registro de comida. */
+function comidaArmada(uid, dl, i, comidas){
+  const cm=comidas||comidasDe(uid);
+  const m=cm[i]; if(!m) return null;
+  const key=uid==='andres'?'a':'c';
+  const rid=recetaDeComida(uid, dl, i, cm.length);
+  const r=rid?RECIPES.find(x=>x.id===rid):null;
+  const scoops=scoopsDeComida(uid, dl, i);
+  const sc=scoopMac();
+  if(!r){
+    const totalMac={pg:scoops*sc.pg, cg:scoops*sc.cg, fg:scoops*sc.fg, kc:scoops*sc.kc};
+    return {m, i, dl, r:null, rid:null, es:null, scoops, totalMac, falta:Math.max(0,m.pg-totalMac.pg), cubre:false};
+  }
+  const es=escalaReceta(r, key, m.pg);
+  const totalMac={
+    pg: es.macros.pg + scoops*sc.pg, cg: es.macros.cg + scoops*sc.cg,
+    fg: es.macros.fg + scoops*sc.fg, kc: es.macros.kc + scoops*sc.kc,
+  };
+  const falta=Math.max(0, m.pg-totalMac.pg);
+  return {m, i, dl, r, rid, es, scoops, totalMac, falta, cubre:falta<=0};
+}
+/* objetivo de proteina/macros de una franja del dia (m/t/n), sumando las comidas
+   de comidasDe() que caen ahi (mismo mapeo que usan eatenOn/mealStatus). Lo usa el
+   chip de meal prep del registro (Punto F) para escalar la receta elegida contra
+   lo que esa franja necesita. */
+function objetivoFranja(uid, slotKey){
+  const cm=comidasDe(uid), out={pg:0,cg:0,fg:0,kc:0};
+  cm.forEach((m,i)=>{ if(franjaDe(i,cm.length)===slotKey){ out.pg+=m.pg; out.cg+=m.cg; out.fg+=m.fg; out.kc+=m.kc; } });
+  return out;
 }
 
 /* paleta efectiva: el tab Comida colorea según lo que se mira (compartido=verde, a=azul, c=amarillo) */
@@ -2622,6 +2721,11 @@ function normalizeMeal(meal){
     a:(pr.reparto&&pr.reparto.a&&pr.reparto.a.length===prA)?pr.reparto.a:repartoIguales(prA),
     c:(pr.reparto&&pr.reparto.c&&pr.reparto.c.length===prC)?pr.reparto.c:repartoIguales(prC),
   };
+  /* Punto E/C: asignacion manual de receta por comida y scoops de proteina extra,
+     por usuario (a/c) y por letra de dia (ver DLETRAS). Default vacio: cae al
+     round robin automatico (recetaDeComida) */
+  meal.plan = meal.plan || {};
+  meal.scoops = meal.scoops || {};
   return meal;
 }
 function ckOn(n){ const c=S.meal.checklist[n]; return !!(c&&c.v!==undefined?c.v:c); }
@@ -5902,6 +6006,11 @@ function nlogPanel(slot){
           ${i.comp&&i.comp.length?`<div class="ncompwrap">${i.comp.map(c=>`<div class="ncomp"><span>${esc(c[0])}</span>${c[1]!=null?`<span>${c[1]}P · ${c[2]} kcal</span>`:'<span class="dim">·</span>'}</div>`).join('')}</div>`:''}`;}).join('')}
       </div>`;}).join('')}`:''}
     <span class="lbl" style="display:block;margin-top:${slot.es.length?12:0}px">NUEVO LOGGEO · ${slot.lb.toUpperCase()}</span>
+    ${(()=>{ const act=recetasActivas(w); if(!act.length) return '';
+      return `<div class="small dim mt8 mb4">Cocinaste esto esta semana · toca para registrar la porción ajustada</div>
+      <div class="flex wrapf">${act.map(id=>{ const rr=RECIPES.find(x=>x.id===id); if(!rr) return '';
+        return `<button class="chip catchip" data-a="nlogPickMP" data-r="${id}" aria-label="Registrar ${esc(rr.name)}">${ic('book',12)} ${esc(rr.name.split(' ').slice(0,3).join(' '))}</button>`; }).join('')}</div>`;
+    })()}
     <input class="in mt8" data-ch="nlogq" placeholder="busca: hamburguesa, huevos, arepa, café…" value="${esc(UI.nlogQ||'')}">
     <div class="flex wrapf mt8">${FOODCATS.map(([id,lb,icn])=>{const im=CAB[LOGCATIMG[id]]; return `<button class="chip catchip ${cat===id?'fill':''}" data-a="nlogCat" data-c="${id}">${im?`<img loading="lazy" class="catimg" src="${im}" alt="" decoding="async">`:`<span class="cati">${ic(icn,12)}</span>`} ${lb}</button>`;}).join('')}</div>
     ${rows?`<div class="nfoodlist mt8">${rows}</div>`:'<div class="small dim mt8">Busca por nombre o abre una categoría. Las macros son aproximadas; tus recetas son precisas.</div>'}
@@ -7560,11 +7669,13 @@ function weekSummaryHTML(res){
   }
   return `<div class="fboxin">
     <div class="flex between mb8"><b class="t-h2">Así quedó la semana</b><button class="btn sm" data-a="wkFormClose" aria-label="cerrar">${ic('x',14)}</button></div>
-    ${res.recetas.map((r,i)=>`<div class="row"><div class="grow"><b style="font-size:15px">${esc(r.name)}</b><div class="small dim">Andrés × ${res.porA[i]} · Cami × ${res.porC[i]}</div></div></div>`).join('')}
-    <div class="grid1px cols2 mt12 mb8">
+    ${res.recetas.map((r,i)=>`<div class="row"><div class="grow"><b style="font-size:15px">${esc(r.name)}</b><div class="small dim">Andrés × ${res.porA[i]} · Cami × ${res.porC[i]}</div>
+      <div class="small dim mt2">A: ${macroLine(r.a)} · C: ${macroLine(r.c)}</div></div></div>`).join('')}
+    <div class="grid1px cols2 mt12 mb4">
       <div class="stat"><span class="lbl">Proteína/día Andrés</span><div class="v" style="font-size:16px">${fmtInt(res.protDiaA)}</div><span class="u">g · meta ${PLANS.andres.prot}</span></div>
       <div class="stat"><span class="lbl">Proteína/día Cami</span><div class="v" style="font-size:16px">${fmtInt(res.protDiaC)}</div><span class="u">g · meta ${PLANS.cami.prot}</span></div>
     </div>
+    <div class="small dim mb8">Andrés: ${res.cgDiaA}C · ${res.fgDiaA}G /día (meta ${PLANS.andres.carb}C · ${PLANS.andres.fat}G) · Cami: ${res.cgDiaC}C · ${res.fgDiaC}G /día (meta ${PLANS.cami.carb}C · ${PLANS.cami.fat}G)</div>
     <div class="small dim mb12">Costo estimado: <b style="color:var(--ink)">${fmtCOP(res.costo)}</b>${res.presupuesto?(res.costo>res.presupuesto?' de '+fmtCOP(res.presupuesto)+' · se pasa por '+fmtCOP(res.costo-res.presupuesto):' de '+fmtCOP(res.presupuesto)+' · dentro del presupuesto'):''}</div>
     ${res.avisos.length?`<div class="small dim mb12">${esc(res.avisos.join(' · '))}</div>`:''}
     <div class="flex mt8" style="gap:8px">
@@ -7659,12 +7770,35 @@ function autoWeekGen(){
   S.meal.selected=selected;
   S.meal.lastAuto=elegidas.map(r=>r.id);
   S.meal.lastAutoAt=TODAY();
+  /* Punto A: limpia asignaciones manuales viejas de dia->receta y scoops. Con la
+     rotacion nueva, el round robin por defecto (recetaDeComida) ya escala cada
+     comida a su propia meta (comidaArmada), asi que no hace falta que el usuario
+     reasigne nada para que la propuesta cumpla la proteina */
+  S.meal.plan={}; S.meal.scoops={};
   save('meal');
 
-  const protTotal=w=>elegidas.reduce((t,r,i)=>t+r[w].pg*(w==='a'?porA[i]:porC[i]),0);
+  /* cuanto cumple de verdad la propuesta ya escalada (Punto A), no solo lo que las
+     recetas dan de fabrica: promedia sobre los 7 dias de la semana (el round robin
+     varia dia a dia) y avisa si algun dia se queda corto incluso con el tope de
+     escalado (Punto A: "no escales sin avisar") */
+  const semanaEsc=uid=>{
+    const key=uid==='andres'?'a':'c', cm=comidasDe(uid), plan=PLANS[uid];
+    let totP=0, totC=0, totF=0, diasCumplen=0;
+    DLETRAS.forEach(dl=>{
+      let dp=0,dc=0,df=0;
+      cm.forEach((m,i)=>{ const ca=comidaArmada(uid,dl,i,cm); if(!ca) return; dp+=ca.totalMac.pg; dc+=ca.totalMac.cg; df+=ca.totalMac.fg; });
+      totP+=dp; totC+=dc; totF+=df; if(dp>=plan.prot) diasCumplen++;
+    });
+    return {protDia:Math.round(totP/7), cgDia:Math.round(totC/7), fgDia:Math.round(totF/7), diasCumplen};
+  };
+  const escA=semanaEsc('andres'), escC=semanaEsc('cami');
+  if(escA.diasCumplen<7) avisos.push('La proteína de Andrés no llega a la meta '+(7-escA.diasCumplen)+' día(s) de la semana incluso escalando las porciones: prueba agregar un scoop en el desayuno o sumar otra receta.');
+  if(escC.diasCumplen<7) avisos.push('La proteína de Cami no llega a la meta '+(7-escC.diasCumplen)+' día(s) de la semana incluso escalando las porciones: prueba sumar otra receta.');
   return {
     ok:true, recetas:elegidas, porA, porC, costo, presupuesto:prefs.presupuesto,
-    protDiaA: protTotal('a')/7, protDiaC: protTotal('c')/7, avisos,
+    protDiaA: escA.protDia, protDiaC: escC.protDia,
+    cgDiaA: escA.cgDia, fgDiaA: escA.fgDia, cgDiaC: escC.cgDia, fgDiaC: escC.fgDia,
+    avisos,
   };
 }
 function vLista(){
@@ -8034,7 +8168,20 @@ function gestData(){
     const plan=PLANS[uid];
     const protDia=Math.round(protSemana/7), kcDia=Math.round(kcSemana/7);
     const grande=comidas.slice().sort((a,b)=>b.pg-a.pg)[0]||null;
-    return {uid, key, comidas, nDia, porciones, protSemana, kcSemana, comidasSemana, faltanComidas, diasCubiertos, diasSinNada, plan, protDia, kcDia, grande};
+    /* pedido del dueno: cuanto cumple de verdad la semana si cada comida se cocina
+       con la receta que le toca YA ESCALADA a su propia meta (comidaArmada), no
+       solo lo que las recetas dan de fabrica (protDia de arriba). Promedio sobre
+       los 7 dias porque el round robin varia dia a dia. */
+    let pEsc=0,cEsc=0,fEsc=0,kEsc=0,diasCumplen=0;
+    DLETRAS.forEach(dl=>{
+      let dp=0,dc=0,df=0,dk=0;
+      comidas.forEach((m,i)=>{ const ca=comidaArmada(uid,dl,i,comidas); if(!ca) return;
+        dp+=ca.totalMac.pg; dc+=ca.totalMac.cg; df+=ca.totalMac.fg; dk+=ca.totalMac.kc; });
+      pEsc+=dp; cEsc+=dc; fEsc+=df; kEsc+=dk;
+      if(dp>=plan.prot) diasCumplen++;
+    });
+    const protDiaEsc=Math.round(pEsc/7), cgDiaEsc=Math.round(cEsc/7), fgDiaEsc=Math.round(fEsc/7), kcDiaEsc=Math.round(kEsc/7);
+    return {uid, key, comidas, nDia, porciones, protSemana, kcSemana, comidasSemana, faltanComidas, diasCubiertos, diasSinNada, plan, protDia, kcDia, grande, protDiaEsc, cgDiaEsc, fgDiaEsc, kcDiaEsc, diasCumplen};
   };
   return {recetas, andres:per('andres'), cami:per('cami')};
 }
@@ -8050,18 +8197,24 @@ function gestSemanaHTML(){
   }
   const nombre={andres:'Andrés',cami:'Cami'}, col={andres:'#5C8DFF',cami:'#FFC94D'};
   const personCard=p=>{
-    const pctP=clamp(p.protDia/p.plan.prot*100,0,100), pctK=clamp(p.kcDia/p.plan.kcal*100,0,100);
+    const pctP=clamp(p.protDiaEsc/p.plan.prot*100,0,100), pctK=clamp(p.kcDiaEsc/p.plan.kcal*100,0,100);
+    const cumple=p.diasCumplen>=7;
     return `<div class="recperson" style="--pc:${col[p.uid]}">
       <div class="recph"><i class="pdot" style="background:${col[p.uid]}"></i><b>${nombre[p.uid]}</b>
         <span class="recmc p">${p.porciones} porciones</span><span class="recmc">${p.nDia}/día</span></div>
       <div class="flex" style="gap:14px;align-items:center;margin-top:6px">
-        ${ring(pctP, String(p.protDia), 'g PROT/DÍA', 74, 8)}
+        ${ring(pctP, String(p.protDiaEsc), 'g PROT/DÍA', 74, 8)}
         <div class="grow" style="min-width:0">
-          <div class="small">Cubre <b>${p.diasCubiertos} de 7 días</b> con lo cocinado</div>
+          <div class="small">Ya escalado: ${cumple?'<b>cumple los 7 días</b>':'cumple <b>'+p.diasCumplen+' de 7 días</b>'} la meta de ${p.plan.prot} g</div>
           <div class="bar mt8"><i style="width:${pctK.toFixed(0)}%"></i></div>
-          <div class="small dim mt4">${p.kcDia} de ${p.plan.kcal} kcal/día · meta ${p.plan.prot} g prot/día</div>
+          <div class="small dim mt4">${p.kcDiaEsc} de ${p.plan.kcal} kcal/día · ${p.diasCubiertos} de 7 días con inventario cocinado</div>
           ${p.grande?`<div class="small dim mt4">Comida más grande: <b style="color:var(--ink)">${p.grande.label}</b> · ${p.grande.pg}P · ${p.grande.kc} kcal</div>`:''}
         </div>
+      </div>
+      <div class="macrow mt10">
+        <span class="macbox ${cumple?'done':'prot'}"><b>${p.protDiaEsc}</b><span class="mn">Proteína</span><span class="mt">meta ${p.plan.prot} g</span></span>
+        <span class="macbox"><b>${p.cgDiaEsc}</b><span class="mn">Carbo</span><span class="mt">meta ${p.plan.carb} g</span></span>
+        <span class="macbox"><b>${p.fgDiaEsc}</b><span class="mn">Grasa</span><span class="mt">meta ${p.plan.fat} g</span></span>
       </div>
     </div>`;
   };
@@ -8071,9 +8224,9 @@ function gestSemanaHTML(){
     if(p.faltanComidas>0) huecos.push({icon:'alert',
       txt:`Faltan <b>${p.faltanComidas} comida${p.faltanComidas>1?'s':''}</b> de ${nm} para cubrir toda la semana: cocinaste ${p.porciones} porciones y necesita ${p.comidasSemana} (${p.nDia}/día × 7 días).`,
       action:'autoWeek', label:'Ármame la semana'});
-    if(p.protDia < p.plan.prot*0.85) huecos.push({icon:'food',
-      txt:`Lo que cocinaste no cubre la proteína de ${nm}: ${p.protDia} de ${p.plan.prot} g por día si se reparte en la semana.`,
-      action:'foodSub', data:{s:'recetas'}, label:'Agregar recetas'});
+    if(p.diasCumplen<7) huecos.push({icon:'food',
+      txt:`Incluso escalando las porciones, la proteína de ${nm} no llega a la meta todos los días: cumple ${p.diasCumplen} de 7. Mira la semana comida por comida para ver dónde.`,
+      action:'gestVista', data:{v:'semana'}, label:'Ver la semana'});
     if(p.diasSinNada>0) huecos.push({icon:'cal',
       txt:`${p.diasSinNada} día${p.diasSinNada>1?'s':''} de la semana de ${nm} quedan sin nada cocinado asignado.`,
       action:'repartoBoxTgl', label:'Ajustar comidas por día'});
@@ -8081,12 +8234,17 @@ function gestSemanaHTML(){
   return `
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('book',16)} Qué elegiste · ${g.recetas.length} receta${g.recetas.length>1?'s':''}</span></div>
-    ${g.recetas.map(x=>`<div class="row">
+    ${g.recetas.map(x=>`<div class="row" style="align-items:flex-start;flex-wrap:wrap">
       <span class="badge cat-${x.r.cat}">${catIco(x.r.cat,22)}</span>
-      <div class="grow" style="min-width:0"><b style="font-size:15px">${esc(x.r.name)}</b>
-        <div class="recmac"><i class="pdot" style="background:${col.andres}"></i>Andrés × ${x.p.a||0} · <b>${x.r.a.pg} g prot</b>/porción · ${x.r.a.kc} kcal</div>
-        <div class="recmac"><i class="pdot" style="background:${col.cami}"></i>Cami × ${x.p.c||0} · <b>${x.r.c.pg} g prot</b>/porción · ${x.r.c.kc} kcal</div>
+      <div class="grow" style="min-width:200px"><b style="font-size:15px">${esc(x.r.name)}</b>
+        <div class="recmac"><i class="pdot" style="background:${col.andres}"></i>Andrés · <b>${x.r.a.pg} g prot</b> · ${x.r.a.cg}C · ${x.r.a.fg}G · ${x.r.a.kc} kcal</div>
+        <div class="flex between mt4" style="max-width:210px"><span class="small dim">porciones/semana</span>
+          <div class="qty"><button data-a="port" data-r="${x.id}" data-w="a" data-n="-1" aria-label="menos porciones Andrés">−</button><span class="n">${x.p.a||0}</span><button data-a="port" data-r="${x.id}" data-w="a" data-n="1" aria-label="más porciones Andrés">+</button></div></div>
+        <div class="recmac mt8"><i class="pdot" style="background:${col.cami}"></i>Cami · <b>${x.r.c.pg} g prot</b> · ${x.r.c.cg}C · ${x.r.c.fg}G · ${x.r.c.kc} kcal</div>
+        <div class="flex between mt4" style="max-width:210px"><span class="small dim">porciones/semana</span>
+          <div class="qty"><button data-a="port" data-r="${x.id}" data-w="c" data-n="-1" aria-label="menos porciones Cami">−</button><span class="n">${x.p.c||0}</span><button data-a="port" data-r="${x.id}" data-w="c" data-n="1" aria-label="más porciones Cami">+</button></div></div>
       </div></div>`).join('')}
+    <button class="btn ghost full mt8" data-a="foodSub" data-s="recetas">${ic('plus',13)} Agregar otra receta</button>
   </section>
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('food',16)} Cómo se distribuye</span></div>
@@ -8100,15 +8258,82 @@ function gestSemanaHTML(){
       <div class="grow" style="min-width:180px">${h.txt}</div>
       <button class="btn sm primary" style="flex:none" data-a="${h.action}"${h.data?Object.entries(h.data).map(([k,v])=>` data-${k}="${esc(String(v))}"`).join(''):''}>${h.label}</button>
     </div>`).join('')}
-  </section>`:`<section class="mod tight"><div class="flex">${ic('check',18)}<div class="small"><b>Tu semana está cubierta.</b> Las porciones alcanzan para los 7 días con las comidas que tiene configuradas cada uno.</div></div></section>`}`;
+  </section>`:`<section class="mod tight"><div class="flex">${ic('check',18)}<div class="small"><b>Tu semana está cubierta.</b> Las porciones alcanzan para los 7 días y, ya escalado, la proteína cumple la meta los 7 días.</div></div></section>`}`;
 }
 /* vista principal de Comida > Gestion: la semana con lo elegido (Tarea 2), el registro
    del dia (Tarea 3, nutriExtras venia de Inicio) y el meal prep del domingo colapsado
    (Tarea 1). El registro de hoy no depende de que haya rotacion: siempre se muestra. */
+/* ============ VISTA: LA SEMANA COMIDA POR COMIDA (Punto E) ============
+   Junta comidasDe(uid) (el objetivo de cada comida) con la receta que le toca segun
+   la rotacion (recetaDeComida) y la escala a esa meta (comidaArmada, que ya reusa
+   escalaReceta del Punto A y suma los scoops del Punto C). Selector Dia/Semana:
+   en Semana se ven los 7 dias con sus comidas en orden (primera comida del lunes,
+   segunda del lunes...); en Dia, el detalle de un solo dia con el total contra la
+   meta. La receta de cada comida se puede reasignar (select) entre las recetas
+   activas de esa persona; la eleccion se guarda en S.meal.plan (ver recetaDeComida
+   mas arriba), que vive dentro de S.meal y por eso viaja con el resto de la
+   informacion compartida entre los dos. */
+function gestPlanHTML(){
+  if(!recetasActivas('a').length && !recetasActivas('c').length) return '';
+  const view=UI.gestView||'semana';
+  const hoyLetra=DLETRAS[fromISO(TODAY()).getDay()];
+  const diaSel=UI.gestDay||hoyLetra;
+  const nombreDia={D:'Domingo',L:'Lunes',M:'Martes',X:'Miércoles',J:'Jueves',V:'Viernes',S:'Sábado'};
+  const uids=['andres','cami'];
+  const comidaRow=(uid,dl,i,cm)=>{
+    const ca=comidaArmada(uid,dl,i,cm); if(!ca) return '';
+    const opciones=recetasActivas(uid==='andres'?'a':'c');
+    return `<div class="row" style="align-items:flex-start;flex-wrap:wrap">
+      <span class="badge">${ca.cubre?ic('check',16):ic('alert',16)}</span>
+      <div class="grow" style="min-width:180px">
+        <div class="flex between"><b style="font-size:14.5px">${ca.m.label}</b><span class="small dim">meta ${ca.m.pg} g prot</span></div>
+        ${opciones.length?`<select class="in mt6" style="font-size:13.5px" data-ch="planRec" data-u="${uid}" data-d="${dl}" data-m="${i}">
+          ${opciones.map(id=>{const rr=RECIPES.find(x=>x.id===id); return rr?`<option value="${id}" ${id===ca.rid?'selected':''}>${esc(rr.name)}</option>`:'';}).join('')}
+        </select>`:'<div class="small dim mt4">Sin recetas en la rotación</div>'}
+        ${ca.es?`<div class="small dim mt6">${ca.es.factor>1?'Porción × '+fmt1(ca.es.factor)+' · ':''}${ca.es.ing.map(([n,q,u])=>esc(n)+' '+fmtQty(q,u)).join(' · ')}</div>`:''}
+        <div class="macroline mt6">${ca.totalMac.pg}P · ${ca.totalMac.cg}C · ${ca.totalMac.fg}G · ~${ca.totalMac.kc} kcal${ca.scoops?' · +'+ca.scoops+' scoop'+(ca.scoops>1?'s':''):''}</div>
+        ${ca.es&&ca.es.excede?`<div class="small dim mt4" style="color:var(--gold)">La porción ya quedó grande (×${FACTOR_TOPE}) y aun así falta proteína: ${uid==='andres'?'agrega un scoop, ':''}cambia de receta o divide en dos comidas.</div>`:''}
+        ${uid==='andres'&&ca.r?`<div class="flex mt6" style="gap:6px">
+          <button class="chip" data-a="planScoop" data-u="${uid}" data-d="${dl}" data-m="${i}" data-n="1">${ic('plus',10)} scoop</button>
+          ${ca.scoops?`<button class="chip" data-a="planScoop" data-u="${uid}" data-d="${dl}" data-m="${i}" data-n="-1">${ic('minus',10)} scoop</button>`:''}
+        </div>`:''}
+      </div>
+    </div>`;
+  };
+  const diaBlock=(uid,dl)=>{
+    const cm=comidasDe(uid);
+    const tot=cm.reduce((a,m,i)=>{ const ca=comidaArmada(uid,dl,i,cm); if(!ca) return a;
+      return {pg:a.pg+ca.totalMac.pg, cg:a.cg+ca.totalMac.cg, fg:a.fg+ca.totalMac.fg, kc:a.kc+ca.totalMac.kc}; },{pg:0,cg:0,fg:0,kc:0});
+    const plan=PLANS[uid], cumple=tot.pg>=plan.prot;
+    return `<div class="mb12">
+      <div class="flex between mb4"><b style="font-size:15px">${USERS[uid].name}</b>
+        <span class="chip ${cumple?'fill':'red'}">${tot.pg} / ${plan.prot} g</span></div>
+      ${cm.map((m,i)=>comidaRow(uid,dl,i,cm)).join('')}
+    </div>`;
+  };
+  return `<section class="mod" id="gestplan">
+    <div class="mod-head"><span class="ttl">${ic('vsemana',16)} La semana comida por comida</span></div>
+    <div class="flex wrapf mb12" style="gap:6px">
+      <button class="chip ${view==='semana'?'fill':''}" data-a="gestVista" data-v="semana">${ic('vsemana',13)} Semana</button>
+      <button class="chip ${view==='dia'?'fill':''}" data-a="gestVista" data-v="dia">${ic('cal',13)} Día</button>
+    </div>
+    ${view==='dia'?`
+      <div class="flex wrapf mb12" style="gap:6px">${DLETRAS.map(dl=>`<button class="chip ${diaSel===dl?'fill':''}" data-a="gestDaySel" data-d="${dl}" aria-label="Ver ${nombreDia[dl]}">${nombreDia[dl].slice(0,3)}${dl===hoyLetra?' · hoy':''}</button>`).join('')}</div>
+      <h3 class="t-h2 mb8">${nombreDia[diaSel]}</h3>
+      ${uids.map(uid=>diaBlock(uid,diaSel)).join('')}
+    `:`
+      ${DLETRAS.map(dl=>`<details class="catgroup mb8" ${dl===hoyLetra?'open':''}>
+        <summary><b style="font-size:15px">${nombreDia[dl]}</b>${dl===hoyLetra?' <span class="chip fill">hoy</span>':''}<span class="chev">${ic('chevR',14)}</span></summary>
+        <div style="padding:8px 2px 4px">${uids.map(uid=>diaBlock(uid,dl)).join('')}</div>
+      </details>`).join('')}
+    `}
+  </section>`;
+}
 function vGestion(){
   return `
   <h2 class="t-h1" style="margin:6px 2px 12px">Gestión alimentación</h2>
   ${gestSemanaHTML()}
+  ${gestPlanHTML()}
   ${nutriExtras()}
   ${mealPrepBoxHTML()}`;
 }
@@ -10299,6 +10524,35 @@ const ACTIONS = {
     if(!p.a && !p.c) delete S.meal.selected[d.r];
     S.meal.checklist={}; save('meal'); render();
   },
+  /* Punto E: cambia entre ver la semana completa o un dia puntual, dentro de
+     Gestion > la semana comida por comida */
+  gestVista(d){ UI.gestView=d.v; render(); irACaja('gestplan'); },
+  gestDaySel(d){ UI.gestDay=d.d; render(); },
+  /* Punto C: scoop de proteina (24 g, ver scoopMac) sumado a una comida puntual de
+     la semana planeada. Pensado para Andres pero no se bloquea si se usa desde
+     otro lado */
+  planScoop(d){
+    const key=d.u==='andres'?'a':'c', dl=d.d, mk='m'+(+d.m+1);
+    S.meal.scoops=S.meal.scoops||{}; S.meal.scoops[key]=S.meal.scoops[key]||{};
+    S.meal.scoops[key][dl]=S.meal.scoops[key][dl]||{};
+    const cur=S.meal.scoops[key][dl][mk]||0, next=clamp(cur+(+d.n),0,3);
+    if(next) S.meal.scoops[key][dl][mk]=next; else delete S.meal.scoops[key][dl][mk];
+    save('meal'); render();
+  },
+  /* Punto F: chip de meal prep en el registro de comida. Agrega la receta a la
+     franja abierta con su porcion ya escalada al objetivo de esa franja */
+  nlogPickMP(d){
+    const r=RECIPES.find(x=>x.id===d.r); if(!r) return;
+    if(!UI.nlogSlot){ UI.nlogSlot=slotNow(); UI.nlogQ=''; UI.nlogCat=null; UI.nlogDraft=[]; }
+    const w=UID==='andres'?'a':'c';
+    const obj=objetivoFranja(UID, UI.nlogSlot);
+    const es=escalaReceta(r, w, obj.pg||r[w].pg);
+    if(!UI.nlogDraft) UI.nlogDraft=[];
+    UI.nlogDraft.push({n:r.name, q:1, u:'porción', pg:es.macros.pg, cg:es.macros.cg, fg:es.macros.fg, kc:es.macros.kc,
+      comp: es.ing.map(([nm,qq,un])=>[nm+' ('+fmtQty(qq,un)+')',null,null])});
+    UI.nlogQ=''; render();
+    toast(es.factor>1?'Receta agregada · porción ajustada a esta comida':'Receta agregada');
+  },
   period(d){ S.meal.period=d.p; S.meal.checklist={}; save('meal'); render(); },
   staples(){ S.meal.staples=!S.meal.staples; S.meal.checklist={}; save('meal'); render(); },
   checkitem(d){ const c=S.meal.checklist[d.n], cur=c&&c.v!==undefined?c.v:!!c;
@@ -10545,6 +10799,13 @@ const CHANGES = {
     const F={pollo:[0.31,'g'],res:[0.28,'g'],cerdo:[0.30,'g'],pescado:[0.26,'g'],huevo:[6.5,'unid'],atun:[26,'unid'],yogur:[0.09,'g'],whey:[24,'unid']};
     const f=F[$('#pcFood').value], q=parseFloat(($('#pcQty').value||'').replace(',','.'))||0;
     const out=$('#pcOut'); if(out) out.textContent = q? (Math.round(f[0]*q))+' g ('+q+' '+f[1]+')' : '·';
+  },
+  /* Punto E: reasigna que receta cubre una comida puntual de la semana planeada */
+  planRec(el){
+    const {u,d,m}=el.dataset, key=u==='andres'?'a':'c';
+    S.meal.plan=S.meal.plan||{}; S.meal.plan[key]=S.meal.plan[key]||{}; S.meal.plan[key][d]=S.meal.plan[key][d]||{};
+    S.meal.plan[key][d]['m'+(+m+1)]=el.value;
+    save('meal'); render();
   },
 };
 

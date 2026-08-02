@@ -1334,7 +1334,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 112';
+const APPREV='REV 113';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -1766,11 +1766,15 @@ function recetaApta(r, momentos){ return !!(r && r.mom && momentos && r.mom.some
    cambiar de receta, en vez de mostrar una cantidad absurda sin avisar. */
 const FACTOR_TOPE = 2.5;
 /* redondea una cantidad ya escalada a un paso manejable: 5 g/ml si es chico, 10 si
-   es grande, cuarto de unidad si se cuenta por unidades (huevos, latas...). Asi
-   nunca se muestra un "137,4 g" */
+   es grande, medio si se cuenta por unidades (huevos, bananos, scoops...). Asi
+   nunca se muestra un "137,4 g" ni un "1,3 unid" (nadie compra 1,3 bananos).
+   Antes se redondeaba a cuartos (paso 0,25): matematicamente prolijo, pero al
+   mostrarse con un decimal (fmt1) 1,25 se leia "1,3" y 1,75 se leia "1,8", que
+   es justo el numero raro que se queria evitar. Con paso de medio (0,5) todo
+   cae en 1 / 1,5 / 2, que son cantidades que de verdad se compran o se sirven. */
 function redondeaCantidad(q, u){
   if(u==='g'||u==='ml'){ const paso = q>=100?10:5; return Math.max(paso, Math.round(q/paso)*paso); }
-  if(u==='unid') return Math.max(0.25, Math.round(q*4)/4);
+  if(u==='unid') return Math.max(0.5, Math.round(q*2)/2);
   return Math.round(q*100)/100;
 }
 /* escala una receta (r[w]) contra el objetivo de proteina de UNA comida puntual */
@@ -8790,6 +8794,25 @@ function gestPlanHTML(){
   const diaSel=UI.gestDay||hoyLetra;
   const nombreDia={D:'Domingo',L:'Lunes',M:'Martes',X:'Miércoles',J:'Jueves',V:'Viernes',S:'Sábado'};
   const uids=['andres','cami'];
+  /* Tarea 2 (pedido del dueno 02/08, segunda pasada de jerarquia: "todo es muy
+     plano"). Dos paletas fijas, independientes de --mint/--gold (esas variables
+     cambian de significado segun el tema del usuario activo via data-user/
+     data-scope, y aca se pintan LOS DOS a la vez sobre la misma pantalla, asi
+     que no sirven para identificar personas ni estados de forma estable):
+       PERSCOL = el azul y el dorado que la app ya usa para diferenciar a
+       Andres/Cami en otros lados (recPersonRow, retoCard), como identidad
+       de PERSONA: punto, nombre y borde lateral del bloque.
+       ESTCOL = semaforo fijo verde/ambar/rojo para el ESTADO de una comida
+       (cumple/corta/corta feo), igual en cualquier tema: fondo sutil + borde
+       de la tarjeta, ademas del numero (antes solo el numero cambiaba). Verde
+       fijo en vez de var(--mint) para que nunca se confunda con el dorado de
+       identidad de Cami cuando su tema esta activo. */
+  const PERSCOL={andres:'#5C8DFF', cami:'#FFC94D'};
+  const ESTCOL={
+    mint:{c:'#58DFA3', bg:'rgba(88,223,163,.10)', bd:'rgba(88,223,163,.4)'},
+    gold:{c:'#FFC94D', bg:'rgba(255,201,77,.10)', bd:'rgba(255,201,77,.4)'},
+    red:{c:'#FF5257', bg:'rgba(255,82,87,.10)', bd:'rgba(255,82,87,.4)'},
+  };
   /* Punto jerarquia (pedido del dueno, ver captura de "Gestión alimentación"):
      antes nombre, meta, receta, %dia, ingredientes y macros salian casi todos
      del mismo gris y tamano ("un muro plano"). Ahora tres niveles por tarjeta:
@@ -8819,13 +8842,18 @@ function gestPlanHTML(){
     const sinApta = !ca.r && activas.length>0;       // hay rotacion pero nada encaja aqui
     const foraDeLugar = ca.r && ca.apto===false;      // eleccion manual que no encaja
     const eP=estadoPct(ca.totalMac.pg, ca.m.pg);
+    const ec=ESTCOL[eP.txt];
     const rowId=uid+'|'+dl+'|'+ca.m.k;
     const ingOpen=!!(UI.gestIngOpen && UI.gestIngOpen[rowId]);
     const mAttr=isExtra?`data-x="${ca.exId}"`:`data-m="${i}"`;
-    return `<div class="mealrow">
+    /* Tarea 2: el estado (cumple/corta/corta feo) ya no vive solo en el numero,
+       vive en toda la tarjeta (fondo sutil + borde), asi se lee de reojo sin
+       tener que leer la cifra. Ver nota de ESTCOL arriba: colores fijos, no
+       dependen de --mint/--gold porque esos cambian de significado por tema. */
+    return `<div class="mealrow" style="background:${ec.bg};border:1px solid ${ec.bd};border-radius:14px;padding:12px 14px;margin:10px 0">
       <div class="flex between" style="align-items:baseline;gap:8px">
         <b class="t-body" style="font-size:16px;color:var(--ink)">${ca.m.label}${isExtra?' <span class="t-label" style="letter-spacing:0">extra</span>':''}</b>
-        <span class="t-metric-md ${eP.txt}" style="font-size:24px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px">${ic(eP.txt==='mint'?'check':'alert',13)}${ca.totalMac.pg}<span class="t-unit"> / ${ca.m.pg} g</span></span>
+        <span class="t-metric-md" style="font-size:24px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;color:${ec.c}">${ic(eP.txt==='mint'?'check':'alert',13)}${ca.totalMac.pg}<span class="t-unit"> / ${ca.m.pg} g</span></span>
       </div>
       <div class="flex between" style="align-items:center;gap:8px;margin-top:4px">
         ${opciones.length?`<select class="in" style="flex:1;min-width:0;padding:8px 10px" data-ch="planRec" data-u="${uid}" data-d="${dl}" ${mAttr}>
@@ -8852,7 +8880,7 @@ function gestPlanHTML(){
            arriba (ca.r, la de este dia puntual), no de una llamada aparte */
         const piso=pisoPctDeReceta(ca.r, uid, metasDe(uid).prot);
         return `<div class="flex between" style="align-items:center;gap:8px;margin-top:8px">
-        <span class="t-label">% día para esta comida</span>
+        <span class="t-label" style="white-space:nowrap">% del día</span>
         <span class="pctstep">
           <button class="pctb" data-a="mealPctStep" data-u="${uid}" data-i="${i}" data-n="-5" aria-label="Bajar el porcentaje de ${esc(ca.m.label)}">−</button>
           <input class="in ctr" inputmode="numeric" data-ch="mealPct" data-u="${uid}" data-i="${i}" value="${Math.round(repartoEfectivo(key,nDia)[i])}" aria-label="Porcentaje del día para ${esc(ca.m.label)}">
@@ -8895,21 +8923,30 @@ function gestPlanHTML(){
        cumple. Punto macros: si las extras empujaron el dia por encima de las
        kcal meta, se avisa en vez de escondelo (el usuario decide si compensa). */
     const eP=estadoPct(tot.pg,plan.prot);
+    const ecTot=ESTCOL[eP.txt];
+    const pc=PERSCOL[uid];
     /* el aviso de kcal sobre la meta solo aplica si HAY extras: sin extras el
        escalado normal de porciones (Punto A, pedido viejo del dueno) ya podia
        superar un poco las kcal meta al perseguir la proteina, y avisar de eso
        aca seria una alarma nueva sin relacion con lo que se esta agregando */
     const sobreKc=(extras.length && tot.kc>plan.kcal) ? tot.kc-plan.kcal : 0;
-    return `<div class="mb12">
+    /* Tarea 2: borde lateral + punto + nombre en su color son el mismo dato
+       (de quien es este bloque) repetido tres veces para que se vea de reojo
+       sin tener que leer "Andrés"/"Cami" letra por letra. */
+    return `<div style="margin-bottom:16px;border-left:3px solid ${pc}66;border-radius:8px;padding:4px 0 4px 12px">
       <div class="flex between" style="align-items:center">
-        <b class="t-body" style="font-size:17px;font-weight:600;color:var(--ink)">${USERS[uid].name}</b>
+        <span class="flex" style="align-items:center;gap:7px">
+          <i class="pdot" style="background:${pc}"></i>
+          <b class="t-body" style="font-size:18px;font-weight:700;color:${pc}">${USERS[uid].name}</b>
+        </span>
         <span class="t-body-sm dim">${tot.kc} <span style="opacity:.7">/ ${plan.kcal} kcal</span></span>
       </div>
-      <div style="margin-top:2px;margin-bottom:8px">
-        <span class="t-metric-md ${eP.txt}" style="font-size:30px;display:inline-flex;align-items:center;gap:5px">${ic(eP.txt==='mint'?'check':'alert',15)}${tot.pg}<span class="t-unit"> / ${plan.prot} g prot</span></span>
+      <div style="margin-top:4px;margin-bottom:10px">
+        <span class="t-metric-md" style="font-size:30px;display:inline-flex;align-items:center;gap:5px;color:${ecTot.c}">${ic(eP.txt==='mint'?'check':'alert',15)}${tot.pg}<span class="t-unit"> / ${plan.prot} g prot</span></span>
         ${sobreKc?`<div class="t-body-sm" style="color:var(--gold);margin-top:2px">+${sobreKc} kcal por encima de la meta del día</div>`:''}
       </div>
       ${filas.map(f=>f.ca?comidaCardHTML(f.ca, uid, dl, f.i, cm.length):'').join('')}
+      <button class="btn sm ghost full mt12" data-a="planApplyWeek" data-u="${uid}" data-d="${dl}" aria-label="Copiar la receta, los scoops${extras.length?' y las comidas extra':''} de este día de ${USERS[uid].name} a los otros 6 días">${ic('repeat',13)} Aplicar este día a toda la semana</button>
       ${mostrarAgregar?addExtraRowHTML(uid,dl):''}
     </div>`;
   };
@@ -8921,12 +8958,12 @@ function gestPlanHTML(){
     </div>
     ${view==='dia'?`
       <div class="flex wrapf mb12" style="gap:6px">${DLETRAS.map(dl=>`<button class="chip ${diaSel===dl?'fill':''}" data-a="gestDaySel" data-d="${dl}" aria-label="Ver ${nombreDia[dl]}">${nombreDia[dl].slice(0,3)}${dl===hoyLetra?' · hoy':''}</button>`).join('')}</div>
-      <h3 class="t-h2 mb8">${nombreDia[diaSel]}</h3>
+      <h3 class="t-h2" style="margin:6px 0 14px">${nombreDia[diaSel]}</h3>
       ${uids.map(uid=>diaBlock(uid,diaSel,true)).join('')}
     `:`
       ${DLETRAS.map(dl=>`<details class="catgroup mb8" data-dia="${dl}" ${((UI.gestDiasOpen&&UI.gestDiasOpen[dl]!==undefined)?UI.gestDiasOpen[dl]:dl===hoyLetra)?'open':''}>
-        <summary><b style="font-size:15px">${nombreDia[dl]}</b>${dl===hoyLetra?' <span class="chip fill">hoy</span>':''}<span class="chev">${ic('chevR',14)}</span></summary>
-        <div style="padding:8px 2px 4px">${uids.map(uid=>diaBlock(uid,dl,false)).join('')}</div>
+        <summary><b class="t-h2" style="font-size:19px">${nombreDia[dl]}</b>${dl===hoyLetra?' <span class="chip fill">hoy</span>':''}<span class="chev">${ic('chevR',14)}</span></summary>
+        <div style="padding:12px 2px 6px">${uids.map(uid=>diaBlock(uid,dl,false)).join('')}</div>
       </details>`).join('')}
     `}
   </section>`;
@@ -11224,6 +11261,66 @@ const ACTIONS = {
     }
     if(S.meal.plan && S.meal.plan[key] && S.meal.plan[key][dl]) delete S.meal.plan[key][dl][id];
     if(S.meal.scoops && S.meal.scoops[key] && S.meal.scoops[key][dl]) delete S.meal.scoops[key][dl][id];
+    save('meal'); render();
+  },
+  /* Tarea 1 (pedido del dueno 02/08): "los cambios de un dia comida por comida
+     los aplico a todos los dias". Se penso en un interruptor fijo ("modo
+     aplicar a todos los dias") que quedara prendido y afectara los cambios
+     siguientes, pero un interruptor que sigue vivo despues de usarse es facil
+     de olvidar prendido y termina pisando un dia que el usuario ni miro. Un
+     boton por dia con confirmacion explicita es un toque mas por cada vez que
+     se usa, pero es imposible de disparar sin querer: el usuario ve la lista
+     exacta de lo que se va a copiar antes de aceptar.
+     Copia lo que REALMENTE se ve hoy (recetaDeComida/recetaDeComidaExtra ya
+     resuelven manual o rotacion), no solo si hay una eleccion manual guardada:
+     asi "aplicar a la semana" es sencillo de explicar, "que los otros dias
+     queden como hoy", sin importar si hoy la receta salio de una eleccion a
+     mano o de la rotacion automatica. Las comidas extra (S.meal.extras2) solo
+     se copian si el dia de origen tiene alguna: si no tiene, los otros dias
+     conservan las suyas sin tocarlas (nada que "aplicar" si no hay extra hoy).
+     No hay deshacer con un boton (pedido igual pide "al menos que la
+     confirmacion sea explicita"): revertir es editar cada dia de nuevo. */
+  planApplyWeek(d){
+    const uid=d.u, key=uid==='andres'?'a':'c', dl=d.d;
+    const cm=comidasDe(uid), nDia=cm.length;
+    const nombreDia={D:'domingo',L:'lunes',M:'martes',X:'miércoles',J:'jueves',V:'viernes',S:'sábado'};
+    const extrasOrig=extrasDeDia(key,dl);
+    const filas=[];
+    for(let i=0;i<nDia;i++){
+      const rid=recetaDeComida(uid,dl,i,nDia);
+      if(!rid) continue;
+      filas.push({mk:'m'+(i+1), rid, scoops:scoopsDeComida(uid,dl,i), label:cm[i].label});
+    }
+    const extraFilas=extrasOrig.map(ex=>{
+      const rid=recetaDeComidaExtra(uid,dl,ex);
+      const sc=(S.meal.scoops&&S.meal.scoops[key]&&S.meal.scoops[key][dl]&&S.meal.scoops[key][dl][ex.id])||0;
+      return {id:ex.id, tipo:ex.tipo, rid, scoops:sc};
+    });
+    if(!filas.length && !extraFilas.length){ alert('No hay ninguna receta asignada este día para copiar.'); return; }
+    let msg='Vas a copiar el '+nombreDia[dl]+' de '+USERS[uid].name+' a los otros 6 días de la semana:\n'
+      +filas.map(f=>{ const r=RECIPES.find(x=>x.id===f.rid); return '- '+f.label+': '+(r?r.name:f.rid)+(f.scoops?' +'+f.scoops+' scoop'+(f.scoops>1?'s':''):''); }).join('\n');
+    if(extraFilas.length) msg+='\n'+extraFilas.map(f=>{ const r=f.rid?RECIPES.find(x=>x.id===f.rid):null; return '- '+(EXTRA_LABEL[f.tipo]||f.tipo)+' (extra): '+(r?r.name:'sin receta')+(f.scoops?' +'+f.scoops+' scoop'+(f.scoops>1?'s':''):''); }).join('\n');
+    msg+='\n\nEsto reemplaza la receta y los scoops que ya tenían los otros días'+(extraFilas.length?', y sus comidas extra':'')+'. No se puede deshacer con un botón: si te arrepientes, edita cada día de nuevo a mano.\n\n¿Aplicar a toda la semana?';
+    if(!confirm(msg)) return;
+    DLETRAS.forEach(other=>{
+      if(other===dl) return;
+      S.meal.plan=S.meal.plan||{}; S.meal.plan[key]=S.meal.plan[key]||{}; S.meal.plan[key][other]=S.meal.plan[key][other]||{};
+      S.meal.scoops=S.meal.scoops||{}; S.meal.scoops[key]=S.meal.scoops[key]||{}; S.meal.scoops[key][other]=S.meal.scoops[key][other]||{};
+      filas.forEach(f=>{
+        S.meal.plan[key][other][f.mk]=f.rid;
+        if(f.scoops) S.meal.scoops[key][other][f.mk]=f.scoops; else delete S.meal.scoops[key][other][f.mk];
+      });
+      if(extraFilas.length){
+        const viejas=extrasDeDia(key,other);
+        viejas.forEach(ex=>{ delete S.meal.plan[key][other][ex.id]; delete S.meal.scoops[key][other][ex.id]; });
+        S.meal.extras2=S.meal.extras2||{}; S.meal.extras2[key]=S.meal.extras2[key]||{};
+        S.meal.extras2[key][other]=extraFilas.map(f=>({id:f.id, tipo:f.tipo}));
+        extraFilas.forEach(f=>{
+          if(f.rid) S.meal.plan[key][other][f.id]=f.rid;
+          if(f.scoops) S.meal.scoops[key][other][f.id]=f.scoops;
+        });
+      }
+    });
     save('meal'); render();
   },
   /* pliega/despliega la linea de ingredientes de una comida dentro de la vista

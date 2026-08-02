@@ -156,12 +156,30 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
     embebidos en `RECIPE_PREP`, alineados índice a índice con `RECIPES[].prep`
   - **C5d** "La semana comida por comida" (`gestPlanHTML`, id `gestplan`), con toggle
     Semana/Día (`gestVista`/`gestDaySel`). Cada comida es una tarjeta (`.mealrow`,
-    `comidaCardHTML`) con jerarquía en tres niveles (fase de jerarquía visual, ver
-    `docs/DESIGN-STANDARDS.md`): 1) nombre + proteína real vs meta en `--num` con color
-    de estado; 2) receta asignada (select) + kcal; 3) carbos/grasa y la lista de
-    ingredientes, apagados y plegados tras "ver ingredientes" (`gestIngTgl`), con el
-    factor de porción como chip aparte. El % del día es un control angosto (label
-    corta), nunca compite con las cifras
+    `comidaCardHTML`) con jerarquía en tres niveles (segunda pasada de jerarquía
+    visual, ver `docs/DESIGN-STANDARDS.md`): 1) nombre + proteína real vs meta en
+    `--num` con color de estado; 2) receta asignada (select) + kcal; 3) carbos/grasa
+    y la lista de ingredientes, apagados y plegados tras "ver ingredientes"
+    (`gestIngTgl`), con el factor de porción como chip aparte. El % del día es un
+    control angosto (label corta), nunca compite con las cifras
+    - **Color por persona y por estado** (segunda pasada, pedido del dueño "todo es
+      muy plano"): cada bloque de persona lleva borde lateral + punto + nombre en su
+      color propio (`PERSCOL`, azul Andrés `#5C8DFF` / dorado Cami `#FFC94D`, mismo
+      par que ya usan `recPersonRow`/`retoCard`); cada tarjeta de comida lleva fondo
+      sutil + borde en el color de su estado (`ESTCOL`, verde/ámbar/rojo fijos,
+      independientes de `--mint`/`--gold` porque esas variables cambian de
+      significado según el tema del usuario activo y aquí se pintan las dos personas
+      a la vez). Día (`t-h2`, Outfit) > Persona (Instrument Sans 700, color de
+      persona) > Comida (Instrument Sans 400, `--ink`) quedan en tres tamaños/pesos
+      distintos
+    - **Aplicar un día a toda la semana** (pedido del dueño, botón "Aplicar este día
+      a toda la semana" al final de cada bloque de persona, `ACTIONS.planApplyWeek`):
+      copia a los otros 6 días la receta que se ve en cada comida de ese día (manual
+      o de rotación, vía `recetaDeComida`/`recetaDeComidaExtra`), sus scoops, y sus
+      comidas extra solo si el día de origen tiene alguna. Pide confirmación
+      explícita con la lista de lo que va a copiar (no hay deshacer con botón); se
+      eligió un botón por día en vez de un interruptor fijo para que no quede
+      "prendido" y pise un día sin que el usuario lo note
     - **Comidas extra por día** (pedido del dueño): botones "Agregar comida a este
       día" (Desayuno/Almuerzo/Cena/Snack, `ACTIONS.addExtra`) solo en la vista Día.
       Viven en `S.meal.extras2[key][dl]` (no confundir con `S.meal.extras`, del
@@ -173,6 +191,10 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
       meta se avisa (`sobreKc` en `diaBlock`) solo cuando hay al menos una extra ese
       día, para no encender una alarma nueva en días sin extras (ver comentario largo
       en `extrasDeDia`, coach-afc-v2.html)
+    - **Redondeo de ingredientes contables** (`redondeaCantidad`): unidades (huevos,
+      bananos, scoops de whey) redondean a medios (1 / 1,5 / 2), no a cuartos, porque
+      a cuartos un valor como 1,25 se mostraba como "1,3" (con un decimal) y nadie
+      compra 1,3 bananos. Gramos y mililitros siguen igual (pasos de 5/10)
 
 ## P · Progreso (`vProgreso`)
 

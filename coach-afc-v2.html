@@ -814,10 +814,10 @@ svg .acc{fill:var(--mint);stroke:none}
 .cycmarkpos{position:absolute;top:50%;left:50%;width:0;height:0}
 .cycmark{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:var(--cyc);color:#081128;display:flex;align-items:center;justify-content:center;font:700 12px var(--num);font-variant-numeric:tabular-nums;border:2px solid var(--paper);box-shadow:0 2px 6px rgba(0,0,0,.4)}
 .cycfoot{padding:8px 6px 0;text-align:left}
-.cycline{display:flex;gap:6px}
-.cycstep{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.4;border-radius:12px;padding:6px 2px;border:1px solid transparent}
+.cycline{display:flex;gap:4px}
+.cycstep{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.4;border-radius:12px;padding:6px 1px;border:1px solid transparent}
 .cycstep img{width:38px;height:38px;object-fit:contain}
-.cycstep span{display:block;width:100%;font:500 10.5px var(--ui);letter-spacing:.05em;text-transform:uppercase;color:var(--smoke);text-align:center;overflow-wrap:anywhere}
+.cycstep span{display:block;width:100%;font:500 clamp(8px,2.55vw,10.5px) var(--ui);letter-spacing:.02em;text-transform:uppercase;color:var(--smoke);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cycstep.on{opacity:1;background:color-mix(in srgb,var(--sc) 14%,transparent);border-color:color-mix(in srgb,var(--sc) 45%,transparent)}
 .cycstep.on span{color:var(--sc)}
 .mrow{display:flex;align-items:center;gap:9px;width:100%;padding:8px 0;border-bottom:1px dashed var(--line);color:var(--ink);text-align:left}
@@ -1334,7 +1334,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 114';
+const APPREV='REV 115';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -6353,7 +6353,6 @@ function vInicio(){
     </div>
     ${daystrip()}
   </section>
-  ${cycHome()}
   ${ckSection()}
   ${homeRotator()}
   ${(()=>{
@@ -6374,6 +6373,7 @@ function vInicio(){
   ${injectToday?`<section class="mod tight"><div class="flex between"><div class="flex">${ic('syringe',18)}<div><b style="font-size:16px">Hoy: inyección semanal</b><div class="small dim">Retatrutida · registra la aplicación</div></div></div><button class="btn sm" data-a="inject">Hecha</button></div></section>`:''}
 
   ${nutriDay(t)}
+  ${cycHome()}
 
   <div class="tc" style="margin-top:16px"><span class="lbl">CABRICOACH · ${APPREV} · ${CU().name.toUpperCase()}${DEMO?' · DEMO':''}</span></div>
   <div class="stripe"></div>`;
@@ -6523,6 +6523,14 @@ function ckSection(){
 `;
 }
 
+/* paleta de las 4 fases del ciclo (pedido del dueno 02/08: "mejora los colores pues no
+   parece de la app"). Antes eran 4 tonos sueltos de Clue (rosa/verde/dorado/lila) que no
+   existian en ningun otro lado de la app. Ahora es UNA sola familia (el dorado de Cami,
+   PERSCOL.cami / --gold = #FFC94D) variando intensidad y luminosidad: mens y lute quedan
+   mas apagados (fases de menor energia), foli sube, y ovul es el dorado exacto de la app
+   (el pico, el acento fuerte). Fuente unica: la usan cycGradient, cycFasesStrip, cycBox
+   y el resumen de ciclo en vPerfil, para que ninguna pantalla se desalinee de las demas. */
+const CYCCOL={mens:'#AE8529', foli:'#F6B728', ovul:'#FFC94D', lute:'#D9A326'};
 /* fase del ciclo de Cami: día, etiqueta, consejo de carga y comida, imagen y color de la fase.
    Tambien trae len/bleed (para dibujar el anillo) y next/toNext (fecha del proximo periodo),
    calculados una sola vez aqui para que nadie mas duplique esta cuenta. */
@@ -6536,19 +6544,19 @@ function cycleInfo(){
   const toNext=len-(diff%len);
   const next=addDays(S.cfg.cycStart, len*(Math.floor(diff/len)+1));
   const base={day, len, bleed, toNext, next};
-  if(day<=bleed) return {...base, key:'mens', fase:'Menstrual', img:CAB.cycMens, col:'#E8637A',
+  if(day<=bleed) return {...base, key:'mens', fase:'Menstrual', img:CAB.cycMens, col:CYCCOL.mens,
     tip:'Cargas suaves o movilidad: escucha el cuerpo, no pelees con la báscula (la retención es normal).',
     food:'Hierro: carne roja, lentejas, espinaca. Agua de sobra.',
     animo:'Días de bajarle al ritmo sin culpa. Tu cuerpo está trabajando.'};
-  if(day<=13) return {...base, key:'foli', fase:'Folicular', img:CAB.cycFoli, col:'#58DFA3',
+  if(day<=13) return {...base, key:'foli', fase:'Folicular', img:CAB.cycFoli, col:CYCCOL.foli,
     tip:'Tu mejor momento del mes: sube cargas y busca récords, la fuerza está de tu lado.',
     food:'El carbohidrato pre-entreno rinde doble esta semana.',
     animo:'Ventana de poder: aprovéchala, es cuando más rinde el gym.'};
-  if(day<=15) return {...base, key:'ovul', fase:'Ovulación', img:CAB.cycOvul, col:'#FFC94D',
+  if(day<=15) return {...base, key:'ovul', fase:'Ovulación', img:CAB.cycOvul, col:CYCCOL.ovul,
     tip:'Energía alta pero laxitud articular: técnica limpia, nada de ego en los kg.',
     food:'Proteína como siempre; hidrata más si entrenas fuerte.',
     animo:'Radiante y fuerte. Cuida la técnica y disfruta el pico.'};
-  return {...base, key:'lute', fase:'Lútea', img:CAB.cycLute, col:'#C98BFF',
+  return {...base, key:'lute', fase:'Lútea', img:CAB.cycLute, col:CYCCOL.lute,
     tip:'Si se siente pesado, baja 10-15% la carga sin culpa: es fisiología, no pereza.',
     food:'Antojos: sube proteína y magnesio (chocolate 85% + almendras del mercado).',
     animo:'Puede pesar más de lo normal. Sé amable contigo: sigues avanzando.'};
@@ -6559,8 +6567,7 @@ function fmtDiaMes(d){ const dt=fromISO(d); return dt.getDate()+' de '+MESES[dt.
    Mismos cortes que cycleInfo (bleed, 13, 15) para que el anillo y el calculo de fase no diverjan. */
 function cycGradient(c){
   const P=d=>(Math.min(c.len,Math.max(0,d))/c.len*360).toFixed(1)+'deg';
-  const cols={mens:'#E8637A',foli:'#58DFA3',ovul:'#FFC94D',lute:'#C98BFF'};
-  const stops=[]; const push=(col,from,to)=>{ if(to<=from) return; stops.push(cols[col]+' '+P(from), cols[col]+' '+P(to)); };
+  const stops=[]; const push=(col,from,to)=>{ if(to<=from) return; stops.push(CYCCOL[col]+' '+P(from), CYCCOL[col]+' '+P(to)); };
   const foliEnd=Math.min(13,c.len), ovulEnd=Math.min(15,c.len);
   push('mens',0,c.bleed);
   push('foli',c.bleed,foliEnd);
@@ -6611,8 +6618,8 @@ function cycHome(){
 }
 /* tira de las 4 fases con la actual resaltada, reusada en la ventana de detalle del ciclo */
 function cycFasesStrip(c){
-  const fases=[['mens','Menstrual',CAB.cycMens,'#E8637A'],['foli','Folicular',CAB.cycFoli,'#58DFA3'],['ovul','Ovulación',CAB.cycOvul,'#FFC94D'],['lute','Lútea',CAB.cycLute,'#C98BFF']];
-  return `<div class="cycline mt12">${fases.map(([k,nm,img,col])=>`<div class="cycstep ${k===c.key?'on':''}" style="--sc:${col}"><img loading="lazy" decoding="async" src="${img}" alt=""><span>${nm}</span></div>`).join('')}</div>`;
+  const fases=[['mens','Menstrual',CAB.cycMens],['foli','Folicular',CAB.cycFoli],['ovul','Ovulación',CAB.cycOvul],['lute','Lútea',CAB.cycLute]];
+  return `<div class="cycline mt12">${fases.map(([k,nm,img])=>`<div class="cycstep ${k===c.key?'on':''}" style="--sc:${CYCCOL[k]}"><img loading="lazy" decoding="async" src="${img}" alt=""><span>${nm}</span></div>`).join('')}</div>`;
 }
 /* ventana flotante con el detalle de la fase (tocando la tarjeta del Inicio). Sigue el mismo
    patron que pesoWindow/impBox: se cuelga de document.body, no pasa por render(). */
@@ -9211,7 +9218,6 @@ function vPerfil(){
     const c=cycleInfo();
     if(!c) return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('heart',16)} Tu ciclo</span><button class="btn sm ghost" data-a="tab" data-t="mas">Configurar</button></div>
       <div class="small dim">Registra tu última menstruación en MÁS y aquí te acompaño fase por fase: cargas, comida y ánimo.</div></section>`;
-    const fases=[['mens','Menstrual',CAB.cycMens,'#E8637A'],['foli','Folicular',CAB.cycFoli,'#58DFA3'],['ovul','Ovulación',CAB.cycOvul,'#FFC94D'],['lute','Lútea',CAB.cycLute,'#C98BFF']];
     return `<section class="mod" style="border-color:${c.col}55">
     <div class="mod-head"><span class="ttl">${ic('heart',16)} Tu ciclo · día ${c.day}</span><button class="btn sm ghost" data-a="tab" data-t="mas">Ajustar</button></div>
     <div class="flex" style="gap:14px;align-items:center">
@@ -9223,7 +9229,7 @@ function vPerfil(){
     </div>
     <div class="row" style="margin-top:10px"><span class="badge" style="background:${c.col}22;color:${c.col}">${ic('barbell',15)}</span><div class="grow small"><b>Entreno:</b> ${c.tip}</div></div>
     <div class="row"><span class="badge" style="background:${c.col}22;color:${c.col}">${ic('food',15)}</span><div class="grow small"><b>Comida:</b> ${c.food}</div></div>
-    <div class="cycline mt12">${fases.map(([k,nm,img,col])=>`<div class="cycstep ${k===c.key?'on':''}" style="--sc:${col}"><img loading="lazy" decoding="async" src="${img}" alt=""><span>${nm}</span></div>`).join('')}</div>
+    ${cycFasesStrip(c)}
     <div class="small dim mt8">Orientativo y con cariño, no es consejo médico. Tu ciclo solo lo ves tú.</div>
   </section>`})()}
   ${(()=>{const pal=palmaresData(); const side=UID==='andres'?'a':'b';

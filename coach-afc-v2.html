@@ -343,6 +343,16 @@ details.rec .body{border-top:1px solid var(--line2);padding:12px 14px}
 .recmc.p{color:var(--pc);background:color-mix(in srgb,var(--pc) 16%,transparent)}
 .recmc.kc{color:var(--ink2)}
 .recmc.cost{color:var(--mint);background:rgba(88,223,163,.12)}
+/* fila por persona en listas de recetas (Tarea 4): antes A y C corrian en la
+   misma linea, chorizo ilegible. Ahora una fila por persona con su punto de
+   color, y la proteina es el unico dato que manda (var(--num), mas grande);
+   carbo/grasa/kcal quedan chicos y apagados detras, sin competir. */
+.recwline{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px 7px;margin-top:6px}
+.recwline .recwname{font:600 13px var(--ui);color:var(--ink2);flex:none}
+.recwline .recwport{font:500 12px var(--num);color:var(--smoke);font-variant-numeric:tabular-nums;flex:none}
+.recwline .recwprot{font:700 17px var(--num);color:var(--ink);letter-spacing:-.01em;font-variant-numeric:tabular-nums;flex:none}
+.recwline .recwprot i{font-size:.55em;font-weight:500;font-style:normal;margin-left:1px;color:var(--ink2)}
+.recwline .recwrest{font:500 12px var(--num);color:var(--dim);font-variant-numeric:tabular-nums}
 
 .qty{display:flex;align-items:center;gap:2px;border:1px solid var(--line);background:var(--paper2);border-radius:999px;overflow:hidden}
 .qty button{width:38px;height:38px;font:700 16px var(--mono);display:flex;align-items:center;justify-content:center;color:var(--mint)}
@@ -1316,7 +1326,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 110';
+const APPREV='REV 111';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -1548,7 +1558,10 @@ const PLANS = {
   andres:{
     title:'Plan continuo', start:'2026-07-13', end:'2027-12-31', weeks:156, block:true,
     wStart:94.4, wGoal:89.5, metaNote:'meta: 89-90 kg @ 14-15% de grasa',
-    kcal:2200, prot:195, fat:75, carb:180, waterGoal:2500,
+    /* kcal/prot/fat/carb ya NO viven aca fijos: se calculan por peso (metasDe,
+       mas abajo). kcalKg conserva el nivel de kcal/kg de hoy (2200/94,4) para que
+       el recalculo no le cambie el deficit de golpe cuando baje de peso. */
+    kcalKg:2200/94.4, waterGoal:2500,
     rateGoal:0.8, rateLabel:'0,75-0,9', lossAlert:1.0,
     lossAdvice:'Pérdida >1 kg/sem sostenida: sube las calorías un 10% (≈2.420 kcal).',
     injectDay:3,
@@ -1558,7 +1571,7 @@ const PLANS = {
   cami:{
     title:'Recomposición', start:'2026-07-27', end:'2027-12-31', weeks:156, block:true,
     wStart:59.5, wGoal:56.5, metaNote:'meta real: 26-27% de grasa manteniendo músculo (~56-57 kg, 4-6 meses)',
-    kcal:1700, prot:115, fat:50, carb:195, waterGoal:2000,
+    kcalKg:1700/59.5, waterGoal:2000,
     rateGoal:0.3, rateLabel:'0,2-0,4', lossAlert:0.7,
     lossAdvice:'Pérdida >0,7 kg/sem sostenida: sube a 1.850 kcal para no perder músculo.',
     injectDay:3,
@@ -1569,6 +1582,65 @@ const PLANS = {
 let UID='andres';
 let PLAN=PLANS.andres;
 const CU=()=>USERS[UID];
+/* ============ METAS DE MACROS POR PESO (pedido del dueno: "si estoy bajando de
+   peso, los requerimientos tambien deberian bajar") ============
+   Unica fuente de prot/kcal/fat/carb: nadie mas los calcula aparte. Todo lo que
+   antes leia PLAN.prot/kcal/carb/fat (comidasDe, nutriDay, gestData,
+   weekSummaryHTML, escalaReceta via el objetivo de cada comida, el mercado,
+   dayState/checkpoint, sugerencias, barras) pasa por metasDe(uid). */
+let _metasCache={};
+/* invalida el cache de metas: se llama al registrar un peso nuevo o cerrar el
+   check-in, para que el numero se actualice ya mismo sin esperar al lunes */
+function metasInvalidar(uid){ if(uid) delete _metasCache[uid]; else _metasCache={}; }
+/* peso base de las metas: promedio de los pesajes de los ultimos 7 dias (un dia
+   hinchado no mueve la dieta). Sin pesajes esta semana, el ultimo conocido; sin
+   ninguno, el peso de arranque del plan. El usuario activo lee su propio S; el
+   otro se lee via partnerState porque S solo tiene los datos de quien tiene la
+   sesion abierta (mismo mecanismo del duelo semanal). */
+function pesoSemanaDe(uid){
+  const pesos = uid===UID ? ((S&&S.weights)||[]) : (partnerState('weights')||[]);
+  const t=TODAY(), w7=pesos.filter(w=>w.d>addDays(t,-7));
+  if(w7.length) return w7.reduce((a,b)=>a+b.kg,0)/w7.length;
+  if(pesos.length) return pesos[pesos.length-1].kg;
+  return PLANS[uid].wStart;
+}
+/* metas del uid: prot = peso×1,8, grasa = peso×0,8, kcal = peso×kcalKg (el nivel
+   de siempre de cada quien), carbo = lo que sobra de esas kcal (minimo 0).
+   Recalculo semanal (clave = lunes de hoy), cacheado para no recalcular en cada
+   render; metasInvalidar fuerza el recalculo antes del proximo lunes. */
+function metasDe(uid){
+  const mon=mondayOf(TODAY());
+  const c=_metasCache[uid];
+  if(c && c.mon===mon) return c.val;
+  const plan=PLANS[uid];
+  const pesoBase=Math.round(pesoSemanaDe(uid)*10)/10;
+  const prot=Math.round(pesoBase*1.8);
+  const fat=Math.round(pesoBase*0.8);
+  const kcal=Math.round(pesoBase*plan.kcalKg);
+  const carb=Math.max(0, Math.round((kcal-prot*4-fat*9)/4));
+  const val={kcal, prot, fat, carb, pesoBase};
+  _metasCache[uid]={mon, val};
+  return val;
+}
+/* piso real del % de una comida (Tarea 6, pedido del dueno): la receta que le
+   toca hoy nunca escala hacia abajo (ver escalaReceta), asi que esa comida SIEMPRE
+   entrega al menos su porcion base. Bajarle el % mas que eso mentiria: el numero
+   diria menos de lo que en realidad va a llegar al plato. null = sin receta
+   asignada, sin piso (se comporta como antes). */
+function pisoPctDeReceta(r, uid, metaP){
+  if(!r || !metaP) return null;
+  const pg=r[uid==='andres'?'a':'c'].pg;
+  return {pct:Math.min(95, Math.max(0,Math.ceil(pg/metaP*100))), pg, nombre:r.name};
+}
+/* piso de la comida i de hoy (para la ventana "Comidas y reparto", que no es por
+   dia): usa la receta que le toca HOY via comidaArmada, misma fuente que ya usa
+   la vista dia por dia */
+function pisoComida(uid, i, comidas){
+  const dl=DLETRAS[fromISO(TODAY()).getDay()];
+  const ca=comidaArmada(uid, dl, i, comidas||comidasDe(uid));
+  if(!ca || !ca.r) return null;
+  return pisoPctDeReceta(ca.r, uid, metasDe(uid).prot);
+}
 
 /* ============ COMIDAS POR DIA Y REPARTO DE MACROS ============
    Antes las comidas de cada quien estaban escritas a mano en USERS (3 fijas + extras).
@@ -1636,7 +1708,7 @@ function repartoPreset(labels, kind){
    ckSection (via ellas), calEditor y la tabla de Inicio. */
 function comidasDe(uid){
   const key = uid==='andres'?'a':'c';
-  const plan = PLANS[uid];
+  const plan = metasDe(uid);
   const prefs = (S && S.meal && S.meal.prefs) || {};
   const n = clamp((prefs.comidas && prefs.comidas[key]) || 3, 1, 5);
   let pcts = repartoEfectivo(key, n);
@@ -1790,7 +1862,7 @@ const EXTRA_LABEL={desayuno:'Desayuno', almuerzo:'Almuerzo', cena:'Cena', snack:
    se calcula como el promedio de una comida normal de ese usuario (mitad si es
    snack, que suele ser mas chico) para que tenga contra que medirse */
 function metaExtra(uid, tipo){
-  const plan=PLANS[uid], n=comidasDe(uid).length||1, peso=tipo==='snack'?0.5:1;
+  const plan=metasDe(uid), n=comidasDe(uid).length||1, peso=tipo==='snack'?0.5:1;
   return {
     pg:Math.round(plan.prot/n*peso), cg:Math.round(plan.carb/n*peso),
     fg:Math.round(plan.fat/n*peso), kc:Math.round(plan.kcal/n*peso),
@@ -5832,7 +5904,7 @@ function pesoWindow(){
   const step=d=>setVal(val+d,'rng');
   const mn=q('#pmMinus'); if(mn) mn.onclick=()=>step(-0.1);
   const pl=q('#pmPlus'); if(pl) pl.onclick=()=>step(0.1);
-  const sv=q('#pmSave'); if(sv) sv.onclick=()=>{ const v=clampV(num?num.value:val); S.weights=S.weights.filter(w=>w.d!==t).concat([{d:t,kg:v}]).sort((a,b)=>a.d<b.d?-1:1); save('weights'); box.remove(); render(); toast('Peso de hoy: '+fmt1(v)+' kg'); };
+  const sv=q('#pmSave'); if(sv) sv.onclick=()=>{ const v=clampV(num?num.value:val); S.weights=S.weights.filter(w=>w.d!==t).concat([{d:t,kg:v}]).sort((a,b)=>a.d<b.d?-1:1); save('weights'); metasInvalidar(UID); box.remove(); render(); toast('Peso de hoy: '+fmt1(v)+' kg'); };
   const xb=q('#pmX'); if(xb) xb.onclick=()=>box.remove();
   box.onclick=e=>{ if(e.target===box) box.remove(); };
 }
@@ -6104,6 +6176,7 @@ function nutriDay(t, opts){
           <div class="t-metric-md" style="line-height:1">${eat.pg}<span class="t-unit"> / ${goal} g</span></div>
           <div class="small dim" style="margin-top:5px">≈ ${eat.kc} <span style="opacity:.6">/ ${PLAN.kcal} kcal</span></div>
           <div class="nutnudge mt8 ${alerta?'alert':''}">${nudge}</div>
+          <div class="small dim mt4">Meta calculada con ${fmt1(PLAN.pesoBase)} kg de promedio de la semana · 1,8 g/kg</div>
         </div>
       </div>
     </div>
@@ -6665,19 +6738,33 @@ function excatRow(x){
     <span class="exbadge">${EXCAT_EQUIP_BADGE[x.equip]||'OTRO'}</span>
   </button>`;
 }
+/* Tarea 2 (pedido del dueno: "permiteme filtrar por tipo de ejercicio: barra,
+   mancuerna, peso libre, etc"). Chips por equip, combinables con el buscador y
+   con las cajas por categoria: el filtro se aplica ANTES de contar/buscar, asi
+   que los conteos de cada categoria ya reflejan el equipo elegido. */
+const EXCAT_EQUIP_ORDER=['barra','mancuerna','maquina','polea','banda','peso_corporal','kettlebell','smith','otro'];
+const EXCAT_EQUIP_LABELS={barra:'Barra', mancuerna:'Mancuerna', maquina:'Máquina', polea:'Polea', banda:'Banda', peso_corporal:'Peso corporal', kettlebell:'Kettlebell', smith:'Smith', otro:'Otro'};
 function vExcat(){
   const q=(UI.excatQ||'').trim();
+  const eq=UI.excatEquip||null;
+  const base=eq?EXCAT.filter(x=>x.equip===eq):EXCAT;
+  const equipRow=`<section class="mod tight">
+    <div class="flex wrapf" style="gap:6px">
+      ${EXCAT_EQUIP_ORDER.map(id=>`<button class="chip ${eq===id?'fill':''}" data-a="excatEquip" data-eq="${id}" aria-label="Filtrar por ${EXCAT_EQUIP_LABELS[id]}" aria-pressed="${eq===id?'true':'false'}">${EXCAT_EQUIP_LABELS[id]}</button>`).join('')}
+      ${eq?`<button class="chip" data-a="excatEquipClear" aria-label="Quitar filtro de equipo">${ic('x',10)} Quitar filtro</button>`:''}
+    </div>
+  </section>`;
   const searchBox=`<section class="mod tight">
     <div class="inwrap">${ic('search',16)}<input class="in has-ic" placeholder="Busca un ejercicio…" value="${esc(q)}" data-ch="excatq"></div>
   </section>`;
   if(q){
-    const found=EXCAT.filter(x=>excatMatch(q,x.name));
-    return searchBox+`<section class="mod tight">
+    const found=base.filter(x=>excatMatch(q,x.name));
+    return equipRow+searchBox+`<section class="mod tight">
       ${found.length?found.map(excatRow).join(''):'<div class="small dim" style="padding:10px 2px">Nada con esa búsqueda.</div>'}
     </section>`;
   }
-  return searchBox+EXCAT_ORDER.map(cat=>{
-    const items=excatByCat(cat); if(!items.length) return '';
+  return equipRow+searchBox+EXCAT_ORDER.map(cat=>{
+    const items=base.filter(x=>x.cat===cat); if(!items.length) return '';
     const open=UI.excatCat===cat;
     return `<section class="mod tight">
       <button class="schedhead ${open?'open':''}" data-a="excatCatTgl" data-cat="${cat}">
@@ -7584,6 +7671,14 @@ function vComida(){
 }
 function recCost(r,w){ return r[w].ing.reduce((a,[n,q,u,c])=>a+costOf(q,u,c),0); }
 function macroLine(m){ return `${m.pg}P · ${m.cg}C · ${m.fg}G · ~${m.kc} kcal`; }
+/* fila de una persona dentro de una receta de la lista (Tarea 4, pedido del
+   dueno con captura: A y C en la misma linea corrida era ilegible). Un color de
+   persona (el punto), y un solo dato manda: la proteina en tabla grande; el
+   resto (porciones, carbo, grasa, kcal) queda chico y apagado detras, sin chip
+   nuevo. por=null cuando las porciones ya se ven aparte (ver gestSemanaHTML). */
+function recPersonRow(who, col, por, m){
+  return `<div class="recwline"><i class="pdot" style="background:${col}"></i><b class="recwname">${who}</b>${por!=null?`<span class="recwport">× ${por}</span>`:''}<b class="recwprot">${m.pg}<i>P</i></b><span class="recwrest">${m.cg}C · ${m.fg}G · ~${m.kc} kcal</span></div>`;
+}
 /* Punto E: un solo criterio de color de estado para toda la vista de comida (el
    resumen de la semana, "como se distribuye" y la semana comida por comida): verde
    si cumple la meta, ambar si esta cerca (85-99%), rojo solo si falta de verdad
@@ -7789,9 +7884,9 @@ function weekFormHTML(){
     <span class="lbl">Porciones de la semana por receta</span>
     <div class="small dim mt8 mb4">Cuántas veces a la semana come cada uno de estas recetas (ver "comidas al día" arriba para saber cuánto pesa cada porción)</div>
     <div class="flex mt8 mb12" style="gap:10px">
-      <div class="grow"><div class="small dim mb4">Andrés · meta ${PLANS.andres.prot} g prot/día</div>
+      <div class="grow"><div class="small dim mb4">Andrés · meta ${metasDe('andres').prot} g prot/día</div>
         <div class="qty"><button data-a="wkPor" data-k="a" data-n="-1" aria-label="menos porciones Andrés">−</button><span class="n">${p.porciones.a}</span><button data-a="wkPor" data-k="a" data-n="1" aria-label="más porciones Andrés">+</button></div></div>
-      <div class="grow"><div class="small dim mb4">Cami · meta ${PLANS.cami.prot} g prot/día</div>
+      <div class="grow"><div class="small dim mb4">Cami · meta ${metasDe('cami').prot} g prot/día</div>
         <div class="qty"><button data-a="wkPor" data-k="c" data-n="-1" aria-label="menos porciones Cami">−</button><span class="n">${p.porciones.c}</span><button data-a="wkPor" data-k="c" data-n="1" aria-label="más porciones Cami">+</button></div></div>
     </div>
 
@@ -7818,15 +7913,28 @@ function weekFormHTML(){
       <div class="grow"><b style="font-size:15px">Hago meal prep el domingo</b></div>
     </button>
 
-    ${recs.length?`<span class="lbl">ANTOJOS Y DESCARTES</span>
-    <div class="mt8 mb12">${recs.map(r=>`
-      <div class="row" style="align-items:flex-start">
-        <div class="grow" style="min-width:0"><b style="font-size:14.5px">${esc(r.name)}</b></div>
-        <div class="flex" style="gap:6px;flex:none">
-          <button class="chip ${(S.meal.favs||{})[r.id]?'fill':''}" data-a="wkFav" data-v="${r.id}" aria-label="antojo, quiero esta">★</button>
-          <button class="chip ${p.evitar.includes(r.id)?'red':''}" data-a="wkEvitar" data-v="${r.id}" aria-label="no me la repitas">${ic('x',11)}</button>
-        </div>
-      </div>`).join('')}</div>`:''}
+    ${recs.length?(()=>{
+      /* caja colapsada (Tarea 3, pedido del dueno: la lista de antojos empujaba
+         todo el formulario hacia abajo). Mismo patron schedhead/schedbody que
+         Meal prep del domingo: cerrada por defecto, el dato clave (cuantos
+         antojos/descartes hay) en la cabecera aunque este cerrada. */
+      const favN=recs.filter(r=>(S.meal.favs||{})[r.id]).length;
+      const evitN=recs.filter(r=>p.evitar.includes(r.id)).length;
+      const open=!!UI.wkAntojosOpen;
+      return `<button class="schedhead ${open?'open':''}" data-a="wkAntojosTgl" style="margin-bottom:${open?'8px':'12px'}">
+        <span class="grow tl" style="min-width:0"><b class="schedt" style="display:block">Antojos y descartes</b>
+          <span class="small dim" style="display:block">${favN} antojo${favN===1?'':'s'} · ${evitN} descarte${evitN===1?'':'s'}</span></span>
+        <span class="nfchev">${ic('chevR',16)}</span>
+      </button>
+      ${open?`<div class="schedbody" style="margin-bottom:12px">${recs.map(r=>`
+        <div class="row" style="align-items:flex-start">
+          <div class="grow" style="min-width:0"><b style="font-size:14.5px">${esc(r.name)}</b></div>
+          <div class="flex" style="gap:6px;flex:none">
+            <button class="chip ${(S.meal.favs||{})[r.id]?'fill':''}" data-a="wkFav" data-v="${r.id}" aria-label="antojo, quiero esta">★</button>
+            <button class="chip ${p.evitar.includes(r.id)?'red':''}" data-a="wkEvitar" data-v="${r.id}" aria-label="no me la repitas">${ic('x',11)}</button>
+          </div>
+        </div>`).join('')}</div>`:''}`;
+    })():''}
 
     <button class="btn primary full mt8" data-a="wkGen">${ic('zap',14)} Ármame la semana</button>
   </div>`;
@@ -7857,17 +7965,18 @@ function weekSummaryHTML(res){
     <div class="flex between mb8"><b class="t-h2">Así quedó la semana</b><button class="btn sm" data-a="wkFormClose" aria-label="cerrar">${ic('x',14)}</button></div>
     <div class="small dim mb8">Toca una receta para cambiarla.</div>
     ${res.recetas.map((r,i)=>`<div class="row" data-a="recSwapOpen" data-id="${r.id}" role="button" style="cursor:pointer;align-items:flex-start;flex-wrap:wrap">
-      <div class="grow"><b style="font-size:15px">${esc(r.name)}</b><div class="small dim">Andrés × ${res.porA[i]} · Cami × ${res.porC[i]}</div>
-      <div class="small dim mt2">A: ${macroLine(r.a)} · C: ${macroLine(r.c)}</div></div>
+      <div class="grow" style="min-width:0"><b style="font-size:15px">${esc(r.name)}</b>
+      ${recPersonRow('Andrés','#5C8DFF',res.porA[i],r.a)}
+      ${recPersonRow('Cami','#FFC94D',res.porC[i],r.c)}</div>
       <span class="chip" style="flex:none">${ic('repeat',11)} Cambiar</span>
     </div>`).join('')}
     <div class="mt8">
-      ${filaMetrica('Proteína/día Andrés', fmtInt(res.protDiaA), 'g', PLANS.andres.prot, true)}
-      ${filaMetrica('Kcal/día Andrés', fmtInt(res.kcDiaA||0), 'kcal', PLANS.andres.kcal, false)}
-      ${filaMetrica('Proteína/día Cami', fmtInt(res.protDiaC), 'g', PLANS.cami.prot, true)}
-      ${filaMetrica('Kcal/día Cami', fmtInt(res.kcDiaC||0), 'kcal', PLANS.cami.kcal, false)}
+      ${filaMetrica('Proteína/día Andrés', fmtInt(res.protDiaA), 'g', metasDe('andres').prot, true)}
+      ${filaMetrica('Kcal/día Andrés', fmtInt(res.kcDiaA||0), 'kcal', metasDe('andres').kcal, false)}
+      ${filaMetrica('Proteína/día Cami', fmtInt(res.protDiaC), 'g', metasDe('cami').prot, true)}
+      ${filaMetrica('Kcal/día Cami', fmtInt(res.kcDiaC||0), 'kcal', metasDe('cami').kcal, false)}
     </div>
-    <div class="small dim mt8 mb8">Andrés: ${res.cgDiaA}C · ${res.fgDiaA}G /día (meta ${PLANS.andres.carb}C · ${PLANS.andres.fat}G) · Cami: ${res.cgDiaC}C · ${res.fgDiaC}G /día (meta ${PLANS.cami.carb}C · ${PLANS.cami.fat}G)</div>
+    <div class="small dim mt8 mb8">Andrés: ${res.cgDiaA}C · ${res.fgDiaA}G /día (meta ${metasDe('andres').carb}C · ${metasDe('andres').fat}G) · Cami: ${res.cgDiaC}C · ${res.fgDiaC}G /día (meta ${metasDe('cami').carb}C · ${metasDe('cami').fat}G)</div>
     <div class="small dim mb12">Costo estimado: <b style="color:var(--ink)">${fmtCOP(res.costo)}</b>${res.presupuesto?(res.costo>res.presupuesto?' de '+fmtCOP(res.presupuesto)+' · se pasa por '+fmtCOP(res.costo-res.presupuesto):' de '+fmtCOP(res.presupuesto)+' · dentro del presupuesto'):''}</div>
     ${res.avisos.length?`<div class="small dim mb12">${esc(res.avisos.join(' · '))}</div>`:''}
     <div class="flex mt8" style="gap:8px">
@@ -8001,7 +8110,7 @@ function autoWeekGen(){
      varia dia a dia) y avisa si algun dia se queda corto incluso con el tope de
      escalado (Punto A: "no escales sin avisar") */
   const semanaEsc=uid=>{
-    const key=uid==='andres'?'a':'c', cm=comidasDe(uid), plan=PLANS[uid];
+    const key=uid==='andres'?'a':'c', cm=comidasDe(uid), plan=metasDe(uid);
     let totP=0, totC=0, totF=0, totK=0, diasCumplen=0;
     DLETRAS.forEach(dl=>{
       let dp=0,dc=0,df=0,dk=0;
@@ -8230,13 +8339,19 @@ function pcalBox(){
    siempre da 100 exacto sin normalizar aparte). */
 function repBoxHTML(){
   const secUser=uid=>{
-    const key=uid==='andres'?'a':'c', plan=PLANS[uid];
+    const key=uid==='andres'?'a':'c', plan=metasDe(uid);
     const n=clamp((S.meal.prefs.comidas&&S.meal.prefs.comidas[key])||3,1,5);
     const pcts=repartoEfectivo(key,n);
     const labels=MEAL_LABELS(n);
+    /* Tarea 6: piso real de cada comida (lo que su receta de hoy ya aporta) y si
+       la suma de los pisos ya no cabe en 100, avisar en vez de dejarlo mudo */
+    const comidas=comidasDe(uid);
+    const mins=labels.map((_,i)=>pisoComida(uid,i,comidas));
+    const sumMin=mins.reduce((a,m)=>a+(m?m.pct:0),0);
     const pgs=repartirMacro(plan.prot,pcts), cgs=repartirMacro(plan.carb,pcts), fgs=repartirMacro(plan.fat,pcts), kcs=repartirMacro(plan.kcal,pcts);
     return `<div class="mb16">
       <div class="flex between mb8"><b style="font-size:15px">${USERS[uid].name}</b><span class="small dim">meta ${plan.prot} g prot · ${plan.kcal} kcal</span></div>
+      ${sumMin>100?`<div class="small" style="color:var(--gold);margin-bottom:8px">Los mínimos de las comidas de ${USERS[uid].name} ya suman ${sumMin}%: no caben en 100. Cambia una receta por algo más liviano o sube su meta de proteína.</div>`:''}
       <div class="flex between mb8" style="align-items:center">
         <span class="small dim">Comidas al día</span>
         <div class="qty"><button data-a="repComidas" data-u="${key}" data-n="-1" aria-label="menos comidas ${USERS[uid].name}">−</button><span class="n">${n}</span><button data-a="repComidas" data-u="${key}" data-n="1" aria-label="más comidas ${USERS[uid].name}">+</button></div>
@@ -8247,10 +8362,11 @@ function repBoxHTML(){
         <button class="chip" data-a="repPreset" data-u="${key}" data-v="cena">Cena fuerte</button>
         <button class="chip" data-a="repPreset" data-u="${key}" data-v="desayuno">Desayuno fuerte</button>
       </div>`:''}
-      ${labels.map((lb,i)=>`
-      <div class="row"><div class="grow"><b style="font-size:15px">${lb}</b><div class="small dim">${pgs[i]}P · ${cgs[i]}C · ${fgs[i]}G · ~${kcs[i]} kcal</div></div>
-        ${n>1?`<div class="qty"><button data-a="repPct" data-u="${key}" data-i="${i}" data-n="-5" aria-label="menos porcentaje ${lb}">−</button><span class="n">${Math.round(pcts[i])}%</span><button data-a="repPct" data-u="${key}" data-i="${i}" data-n="5" aria-label="más porcentaje ${lb}">+</button></div>`:`<span class="chip fill">100%</span>`}
-      </div>`).join('')}
+      ${labels.map((lb,i)=>{ const m=mins[i];
+      return `<div class="row"><div class="grow"><b style="font-size:15px">${lb}</b><div class="small dim">${pgs[i]}P · ${cgs[i]}C · ${fgs[i]}G · ~${kcs[i]} kcal</div>
+        ${m?`<div class="small dim mt2">mínimo ${m.pct}% porque ${esc(m.nombre.split(' ').slice(0,3).join(' '))} ya aporta ${m.pg} g</div>`:''}</div>
+        ${n>1?`<div class="qty"><button data-a="repPct" data-u="${key}" data-i="${i}" data-n="-5" aria-label="menos porcentaje ${lb}" ${m&&pcts[i]<=m.pct?'disabled':''}>−</button><span class="n">${Math.round(pcts[i])}%</span><button data-a="repPct" data-u="${key}" data-i="${i}" data-n="5" aria-label="más porcentaje ${lb}">+</button></div>`:`<span class="chip fill">100%</span>`}
+      </div>`;}).join('')}
     </div>`;
   };
   return `<div class="fboxin">
@@ -8528,7 +8644,7 @@ function gestData(){
     const faltanComidas=Math.max(0,comidasSemana-porciones);
     const diasCubiertos=Math.min(7,Math.floor(porciones/nDia));
     const diasSinNada=Math.max(0,7-diasCubiertos);
-    const plan=PLANS[uid];
+    const plan=metasDe(uid);
     const protDia=Math.round(protSemana/7), kcDia=Math.round(kcSemana/7);
     const grande=comidas.slice().sort((a,b)=>b.pg-a.pg)[0]||null;
     /* pedido del dueno: cuanto cumple de verdad la semana si cada comida se cocina
@@ -8574,6 +8690,7 @@ function gestSemanaHTML(){
         ${ring(pctP, String(p.protDiaEsc), 'g PROT/DÍA', 74, 8)}
         <div class="grow" style="min-width:0">
           <div class="small">Ya escalado: ${cumple?'<b>cumple los 7 días</b>':'cumple <b>'+p.diasCumplen+' de 7 días</b>'} la meta de ${p.plan.prot} g</div>
+          <div class="small dim mt2">Meta calculada con ${fmt1(p.plan.pesoBase)} kg de promedio de la semana · 1,8 g/kg</div>
           <div class="flex between mt8" style="align-items:baseline">
             <span class="num ${eK.txt}">${p.kcDiaEsc}<span class="t-unit"> kcal</span></span>
             <span class="small dim">meta ${p.plan.kcal}</span>
@@ -8612,10 +8729,10 @@ function gestSemanaHTML(){
         <div class="flex between" style="gap:8px"><b style="font-size:15px">${esc(x.r.name)}</b>
           <button class="chip" style="flex:none" data-a="recSwapOpen" data-id="${x.id}" aria-label="Cambiar receta ${esc(x.r.name)}">${ic('repeat',11)} Cambiar</button>
         </div>
-        <div class="recmac"><i class="pdot" style="background:${col.andres}"></i>Andrés · <b>${x.r.a.pg} g prot</b> · ${x.r.a.cg}C · ${x.r.a.fg}G · ${x.r.a.kc} kcal</div>
+        ${recPersonRow('Andrés',col.andres,null,x.r.a)}
         <div class="flex between mt4" style="max-width:210px"><span class="small dim">porciones/semana</span>
           <div class="qty"><button data-a="port" data-r="${x.id}" data-w="a" data-n="-1" aria-label="menos porciones Andrés">−</button><span class="n">${x.p.a||0}</span><button data-a="port" data-r="${x.id}" data-w="a" data-n="1" aria-label="más porciones Andrés">+</button></div></div>
-        <div class="recmac mt8"><i class="pdot" style="background:${col.cami}"></i>Cami · <b>${x.r.c.pg} g prot</b> · ${x.r.c.cg}C · ${x.r.c.fg}G · ${x.r.c.kc} kcal</div>
+        ${recPersonRow('Cami',col.cami,null,x.r.c)}
         <div class="flex between mt4" style="max-width:210px"><span class="small dim">porciones/semana</span>
           <div class="qty"><button data-a="port" data-r="${x.id}" data-w="c" data-n="-1" aria-label="menos porciones Cami">−</button><span class="n">${x.p.c||0}</span><button data-a="port" data-r="${x.id}" data-w="c" data-n="1" aria-label="más porciones Cami">+</button></div></div>
       </div></div>`).join('')}
@@ -8712,10 +8829,16 @@ function gestPlanHTML(){
         ${uid==='andres'&&ca.r&&ca.scoops?`<button class="chip" data-a="planScoop" data-u="${uid}" data-d="${dl}" ${mAttr} data-n="-1">${ic('minus',10)} scoop</button>`:''}
         ${isExtra?`<button class="chip" data-a="rmExtra" data-u="${uid}" data-d="${dl}" data-x="${ca.exId}" aria-label="Quitar ${esc(ca.m.label)} extra">${ic('x',10)} quitar</button>`:''}
       </div>
-      ${!isExtra&&nDia>1?`<div class="flex between" style="align-items:center;gap:8px;margin-top:8px">
+      ${!isExtra&&nDia>1?(()=>{
+        /* Tarea 6: el piso de esta comida sale de la MISMA receta que ya se ve
+           arriba (ca.r, la de este dia puntual), no de una llamada aparte */
+        const piso=pisoPctDeReceta(ca.r, uid, metasDe(uid).prot);
+        return `<div class="flex between" style="align-items:center;gap:8px;margin-top:8px">
         <span class="t-label">% día para esta comida</span>
         <input class="in ctr" style="width:56px;padding:6px 4px" inputmode="numeric" data-ch="mealPct" data-u="${uid}" data-i="${i}" value="${Math.round(repartoEfectivo(key,nDia)[i])}">
-      </div>`:''}
+      </div>
+      ${piso?`<div class="t-body-sm dim mt4">mínimo ${piso.pct}% porque ${esc(ca.r.name.split(' ').slice(0,3).join(' '))} ya aporta ${piso.pg} g</div>`:''}`;
+      })():''}
     </div>`;
   };
   /* fila de chips para agregar una comida extra a ESTE dia puntual (pedido del
@@ -8744,7 +8867,7 @@ function gestPlanHTML(){
        ni repartir nada entre las demas. */
     const tot=filas.reduce((a,f)=>{ if(!f.ca) return a;
       return {pg:a.pg+f.ca.totalMac.pg, cg:a.cg+f.ca.totalMac.cg, fg:a.fg+f.ca.totalMac.fg, kc:a.kc+f.ca.totalMac.kc}; },{pg:0,cg:0,fg:0,kc:0});
-    const plan=PLANS[uid];
+    const plan=metasDe(uid);
     /* Punto D: kcal del dia junto a la proteina, tambien aca. Punto E: color de
        estado en el numero de proteina (verde/ambar/rojo), no solo cumple/no
        cumple. Punto macros: si las extras empujaron el dia por encima de las
@@ -9946,6 +10069,12 @@ function render(){
 function renderReal(){
   hideTip();
   clearDayCache();
+  /* PLAN (el usuario activo) se deriva cada render: config estatica de PLANS[UID]
+     + las 4 metas calculadas de metasDe (cacheadas por semana, no se recalculan
+     de verdad salvo cambio de lunes o metasInvalidar). Asi todo lo que lee
+     PLAN.prot/kcal/carb/fat (dayState, nutriDay, sugerencias, barras...) ve
+     siempre el numero vigente sin que cada uno tenga que llamar metasDe aparte. */
+  PLAN=Object.assign({}, PLANS[UID], metasDe(UID));
   /* T2: las ventanas flotantes de Entrenar (impBox/rmBox) solo tienen sentido en
      esa pestaña sin sesion activa; si render() nos manda a otra parte, se cierran
      solas (cubre cambio de tab, inicio de sesion, deep-link, boton atras, etc). */
@@ -10372,31 +10501,45 @@ const ACTIONS = {
     if(UI._repBox){ repBoxRemove(); return; }
     UI._repBox=repBoxOpen(); if(el) el.classList.add('on');
   },
-  repartoClose(){ repBoxRemove(); },
+  /* Tarea 5 (bug reportado por el dueno): repBoxRedraw() solo repinta la ventana
+     flotante "Comidas y reparto"; la vista de atras (gestPlanHTML/vGestion, que
+     lee el mismo S.meal.prefs.reparto via comidasDe) se quedaba con los numeros
+     viejos hasta que algo mas disparara un render(). Ahora las tres acciones que
+     cambian el reparto (y el cierre de la ventana) tambien llaman render(): el
+     render tiene guardia de reentrada y ancla el scroll/foco, asi que repintar
+     #view detras de la ventana flotante (que vive fuera de #view) es seguro. */
+  repartoClose(){ repBoxRemove(); render(); },
   repComidas(d){
     const key=d.u, cur=(S.meal.prefs.comidas&&S.meal.prefs.comidas[key])||3, next=clamp(cur+(+d.n),1,5);
     if(next===cur) return;
     S.meal.prefs.comidas[key]=next;
     S.meal.prefs.reparto[key]=repartoIguales(next);
-    save('meal'); repBoxRedraw();
+    save('meal'); repBoxRedraw(); render();
   },
   repPreset(d){
     const key=d.u, n=(S.meal.prefs.comidas&&S.meal.prefs.comidas[key])||3;
     S.meal.prefs.reparto[key]=repartoPreset(MEAL_LABELS(n), d.v);
-    save('meal'); repBoxRedraw();
+    save('meal'); repBoxRedraw(); render();
   },
+  /* Tarea 6 (pedido del dueno): el % de una comida no puede bajar de lo que su
+     receta asignada de hoy ya aporta (pisoComida/pisoPctDeReceta, ver PLANS): la
+     receta nunca escala hacia abajo, asi que esa comida siempre entrega por lo
+     menos su porcion base. Se limita tanto al mover +/- entre vecinas (aca) como
+     al escribir el numero a mano (mealPct, mas abajo). */
   repPct(d){
-    const key=d.u, i=+d.i, delta=+d.n;
+    const key=d.u, i=+d.i, delta=+d.n, uid=key==='a'?'andres':'cami';
     const arr=(S.meal.prefs.reparto[key]||[]).slice(), n=arr.length;
     if(n<2) return;
     const j=(i+1)%n;
+    const comidas=comidasDe(uid);
+    const minI=(pisoComida(uid,i,comidas)||{}).pct||5, minJ=(pisoComida(uid,j,comidas)||{}).pct||5;
     let applied=delta;
-    if(applied>0) applied=Math.min(applied, arr[j]-5, 90-arr[i]);
-    else if(applied<0) applied=Math.max(applied, -(arr[i]-5), -(90-arr[j]));
+    if(applied>0) applied=Math.min(applied, arr[j]-minJ, 90-arr[i]);
+    else if(applied<0) applied=Math.max(applied, -(arr[i]-minI), -(90-arr[j]));
     if(!applied) return;
     arr[i]+=applied; arr[j]-=applied;
     S.meal.prefs.reparto[key]=arr;
-    save('meal'); repBoxRedraw();
+    save('meal'); repBoxRedraw(); render();
   },
   /* Punto B: abrir/cerrar/operar el selector de cambio de receta (ver recSwapApply
      y weekResFromSelected mas arriba) */
@@ -10560,6 +10703,8 @@ const ACTIONS = {
   mobilOpen(){ UI.mobilOpen=!UI.mobilOpen; render(); },
   /* pestana Ejercicios (catalogo EXCAT) dentro de Entrenar */
   excatCatTgl(d){ UI.excatCat = UI.excatCat===d.cat ? null : d.cat; render(); },
+  excatEquip(d){ UI.excatEquip = UI.excatEquip===d.eq ? null : d.eq; render(); },
+  excatEquipClear(){ UI.excatEquip=null; render(); },
   excatOpen(d){ excatDetailBox(d.id); },
   excatAdd(d){
     if(!S.draft){ toast('No hay una sesión activa hoy'); return; }
@@ -10971,6 +11116,7 @@ const ACTIONS = {
   wkPrepDom(){ S.meal.prefs.mealprepDom=!S.meal.prefs.mealprepDom; save('meal'); weekFormRedraw(); },
   wkFav(d){ S.meal.favs=S.meal.favs||{}; if(S.meal.favs[d.v]) delete S.meal.favs[d.v]; else S.meal.favs[d.v]=1; save('meal'); weekFormRedraw(); },
   wkEvitar(d){ const arr=S.meal.prefs.evitar, i=arr.indexOf(d.v); if(i>=0) arr.splice(i,1); else arr.push(d.v); save('meal'); weekFormRedraw(); },
+  wkAntojosTgl(){ UI.wkAntojosOpen=!UI.wkAntojosOpen; weekFormRedraw(); },
   wkGen(){
     const res=autoWeekGen();
     if(res.avisos.length) toast(res.avisos.join(' · '));
@@ -11081,7 +11227,7 @@ const ACTIONS = {
     S.meal.checklist[d.n]={v:!cur, t:Date.now()}; save('meal'); render(); },
   favTgl(d){ S.meal.favs=S.meal.favs||{}; if(S.meal.favs[d.r]) delete S.meal.favs[d.r]; else S.meal.favs[d.r]=1; save('meal'); render(); },
   wAvgTgl(d){ UI.wAvg=d.v==='1'; render(); },
-  wQuick(){ const el=$('#wIn'); const v=parseFloat((el&&el.value||'').replace(',','.')); if(!(v>=40&&v<=200)){ toast('Peso entre 40 y 200 kg'); return; } const t=TODAY(); S.weights=S.weights.filter(w=>w.d!==t).concat([{d:t,kg:Math.round(v*10)/10}]).sort((a,b)=>a.d<b.d?-1:1); save('weights'); render(); toast('Peso de hoy: '+fmt1(v)+' KG'); },
+  wQuick(){ const el=$('#wIn'); const v=parseFloat((el&&el.value||'').replace(',','.')); if(!(v>=40&&v<=200)){ toast('Peso entre 40 y 200 kg'); return; } const t=TODAY(); S.weights=S.weights.filter(w=>w.d!==t).concat([{d:t,kg:Math.round(v*10)/10}]).sort((a,b)=>a.d<b.d?-1:1); save('weights'); metasInvalidar(UID); render(); toast('Peso de hoy: '+fmt1(v)+' KG'); },
   progRange(d){ UI.progRange=+d.n; render(); },
   backupNow(){ ACTIONS.export(); S.cfg.lastBackup=TODAY(); save('cfg'); render(); },
   resetchecks(){ S.meal.checklist={}; save('meal'); render(); },
@@ -11182,12 +11328,12 @@ const ACTIONS = {
     const v=parseFloat(($('#wIn').value||'').replace(',','.'));
     if(!v||v<40||v>200){ toast('Peso fuera de rango'); return; }
     S.weights=S.weights.filter(w=>w.d!==TODAY()).concat([{d:TODAY(),kg:v}]).sort((a,b)=>a.d<b.d?-1:1);
-    save('weights'); toast('Peso guardado: '+fmt1(v)+' KG'); render();
+    save('weights'); metasInvalidar(UID); toast('Peso guardado: '+fmt1(v)+' KG'); render();
   },
   delWeight(){
     const last=S.weights[S.weights.length-1]; if(!last) return;
     if(!confirm('¿Borrar el pesaje del '+fmtD(last.d)+' ('+fmt1(last.kg)+' kg)?')) return;
-    S.weights.pop(); save('weights'); render();
+    S.weights.pop(); save('weights'); metasInvalidar(UID); render();
   },
   addSteps(){
     const v=parseInt(($('#stIn')?.value||'').replace(/\D/g,''),10);
@@ -11209,7 +11355,7 @@ const ACTIONS = {
     /* un check-in por día: el del mismo día se sobreescribe */
     const same=S.checkins.findIndex(c=>c.d===row.d);
     if(same>=0) S.checkins[same]=row; else S.checkins.push(row);
-    save('checkins');
+    save('checkins'); metasInvalidar(UID);
     let msg=same>=0?'Check-in de hoy actualizado':'Check-in guardado';
     if(prev){
       const dts=[];
@@ -11314,7 +11460,7 @@ const CHANGES = {
     const v=parseFloat(el.value.replace(',','.'));
     S.weights=S.weights.filter(w=>w.d!==UI.calSel);
     if(v>40&&v<200) S.weights.push({d:UI.calSel,kg:Math.round(v*10)/10});
-    S.weights.sort((a,b)=>a.d<b.d?-1:1); save('weights'); render();
+    S.weights.sort((a,b)=>a.d<b.d?-1:1); save('weights'); metasInvalidar(UID); render();
   },
   sched(el){ S.sched[el.dataset.rid]=+el.value; save('sched'); render(); },
   pcal(){
@@ -11346,7 +11492,8 @@ const CHANGES = {
     if(n<2 || i<0 || i>=n) return;
     let v=parseInt(String(el.value).replace(/\D/g,''),10);
     if(isNaN(v)){ render(); return; }
-    v=clamp(v,5,95);
+    const piso=(pisoComida(u,i,comidasDe(u))||{}).pct||5;
+    v=clamp(v,piso,95);
     const arr=repartoEfectivo(key,n).slice();
     const sumaOtros=arr.reduce((a,p,j)=>j===i?a:a+p,0)||1;
     const restoNuevo=100-v;

@@ -209,6 +209,11 @@ input[type=time].in{text-align:left}
 .row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line2)}
 .row:last-child{border-bottom:none}
 .row .grow{flex:1;min-width:0}
+/* tarjeta de una comida en la vista por dia de Gestion (Punto jerarquia): aire
+   y hairline entre una comida y la siguiente para que se lean como bloques,
+   sin envolverlas en un .mod anidado (seria una tarjeta dentro de otra) */
+.mealrow{padding:14px 0;border-bottom:1px solid var(--line2)}
+.mealrow:last-child{border-bottom:none}
 .ck{width:26px;height:26px;border:1.5px solid rgba(255,255,255,.22);border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--paper2);transition:background .15s,border-color .15s}
 .ck.on{background:var(--grad);color:var(--onmint);border-color:transparent}
 .strike{text-decoration:line-through;color:var(--smoke)}
@@ -752,10 +757,16 @@ svg .acc{fill:var(--mint);stroke:none}
    cuadrado y sin redondear (la imagen ya viene cuadrada, redondearla la recortaba),
    y a la derecha los chips con una descripcion corta */
 .exdet2{display:grid;grid-template-columns:minmax(120px,40%) 1fr;gap:12px;align-items:start;margin-top:4px}
-.exdetimg{width:100%;aspect-ratio:1/1;border-radius:0;overflow:hidden;background:var(--card2)}
-.exdetimg img{width:100%;height:100%;object-fit:cover;display:block}
+/* la foto vive en una caja con el mismo tratamiento que el resto de tarjetas
+   (degradado, borde y esquinas redondeadas): el cuadrado pelado con esquinas
+   rectas rompia el lenguaje visual de la app */
+.exdetimg{width:100%;aspect-ratio:1/1;border-radius:16px;overflow:hidden;padding:6px;
+  background:linear-gradient(180deg,#1A212A 0%,#0A0D11 100%);border:1px solid rgba(255,255,255,.07);
+  box-shadow:0 6px 16px rgba(0,0,0,.3)}
+.exdetimg img{width:100%;height:100%;object-fit:cover;display:block;border-radius:11px}
 .exdetinfo{min-width:0;display:flex;flex-direction:column;gap:8px}
 .exdetinfo .flex{gap:6px}
+.exdet2.sinfoto{grid-template-columns:1fr}
 @media (max-width:340px){.exdet2{grid-template-columns:1fr}}
 .accgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .accbox{display:flex;flex-direction:column;align-items:flex-start;gap:6px;background:var(--card2);border:1px solid var(--line2);border-radius:16px;padding:13px;color:var(--ink);text-align:left;transition:border-color .15s}
@@ -1305,7 +1316,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 109';
+const APPREV='REV 110';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -1757,6 +1768,75 @@ function comidaArmada(uid, dl, i, comidas){
   };
   const falta=Math.max(0, m.pg-totalMac.pg);
   return {m, i, dl, r, rid, es, scoops, totalMac, falta, cubre:falta<=0, momentos, apto};
+}
+/* ============ COMIDAS EXTRA DE UN DIA PUNTUAL ============
+   Pedido del dueno: agregar una comida (Desayuno/Almuerzo/Cena/Snack) a UN dia
+   de UNA persona, sin cambiar el numero de comidas de toda la semana. Viven en
+   S.meal.extras2[key][dl], separado de S.meal.extras (eso es del Mercado).
+
+   Decision de macros (a documentar, pedida por el dueno): la comida extra SUMA
+   por encima de la meta del dia en vez de repartir la meta existente entre mas
+   comidas. Si se repartiera, cada comida bajaria en silencio cada vez que se
+   agrega una extra, y Andres (cuyo riesgo real es comer de MENOS proteina, no
+   de mas) veria su meta por comida encogerse sin haberlo pedido. Sumar arriba
+   deja el numero de la meta principal intacto, sube el total real del dia a la
+   vista (diaBlock) y avisa si el dia se pasa de las kcal meta, en vez de
+   esconder el exceso repartiendolo. */
+function extrasDeDia(key, dl){
+  return (S.meal.extras2 && S.meal.extras2[key] && S.meal.extras2[key][dl]) || [];
+}
+const EXTRA_LABEL={desayuno:'Desayuno', almuerzo:'Almuerzo', cena:'Cena', snack:'Snack'};
+/* meta propia de una comida extra: no reparte la de las demas (ver nota arriba),
+   se calcula como el promedio de una comida normal de ese usuario (mitad si es
+   snack, que suele ser mas chico) para que tenga contra que medirse */
+function metaExtra(uid, tipo){
+  const plan=PLANS[uid], n=comidasDe(uid).length||1, peso=tipo==='snack'?0.5:1;
+  return {
+    pg:Math.round(plan.prot/n*peso), cg:Math.round(plan.carb/n*peso),
+    fg:Math.round(plan.fat/n*peso), kc:Math.round(plan.kcal/n*peso),
+  };
+}
+/* receta de una comida extra: mismo mecanismo que recetaDeComida (eleccion
+   manual en S.meal.plan si encaja, si no rotacion determinista entre las aptas
+   para su tipo), pero el momento sale directo de ex.tipo en vez de MEAL_LABELS,
+   porque una extra no tiene posicion dentro de las comidas normales del dia. */
+function recetaDeComidaExtra(uid, dl, ex){
+  const key=uid==='andres'?'a':'c';
+  const activas=recetasActivas(key);
+  if(!activas.length) return null;
+  const manual=(S.meal.plan&&S.meal.plan[key]&&S.meal.plan[key][dl]) ? S.meal.plan[key][dl][ex.id] : null;
+  if(manual && activas.includes(manual)) return manual;
+  const momentos=momentosDeEtiqueta(ex.tipo);
+  const aptas=activas.filter(id=>recetaApta(RECIPES.find(r=>r.id===id), momentos));
+  if(!aptas.length) return null;
+  const diaIdx=Math.max(0,DLETRAS.indexOf(dl));
+  const j=Math.max(0, extrasDeDia(key,dl).findIndex(e=>e.id===ex.id));
+  const idx=((diaIdx + j*2 + 3) % aptas.length + aptas.length) % aptas.length; // +3: se desfasa de la rotacion de las comidas normales del mismo dia
+  return aptas[idx];
+}
+/* comida extra ya armada: mismo shape que comidaArmada (misma UI las pinta
+   igual), con extra:true y exId para que el borrado/scoop/receta manual sepan
+   con que id de S.meal.plan/scoops hablar. */
+function comidaArmadaExtra(uid, dl, ex){
+  const key=uid==='andres'?'a':'c';
+  const momentos=momentosDeEtiqueta(ex.tipo);
+  const m={k:ex.id, label:EXTRA_LABEL[ex.tipo]||'Extra', ...metaExtra(uid,ex.tipo)};
+  const rid=recetaDeComidaExtra(uid, dl, ex);
+  const r=rid?RECIPES.find(x=>x.id===rid):null;
+  const apto = r ? recetaApta(r, momentos) : null;
+  const scoops=(S.meal.scoops&&S.meal.scoops[key]&&S.meal.scoops[key][dl]&&S.meal.scoops[key][dl][ex.id])||0;
+  const sc=scoopMac();
+  if(!r){
+    const totalMac={pg:scoops*sc.pg, cg:scoops*sc.cg, fg:scoops*sc.fg, kc:scoops*sc.kc};
+    return {m, i:null, dl, r:null, rid:null, es:null, scoops, totalMac, falta:Math.max(0,m.pg-totalMac.pg), cubre:false, momentos, apto, extra:true, exId:ex.id};
+  }
+  const es=escalaReceta(r, key, m.pg);
+  const totalMac={
+    pg: es.macros.pg + scoops*sc.pg, cg: es.macros.cg + scoops*sc.cg,
+    fg: es.macros.fg + scoops*sc.fg, kc: es.macros.kc + scoops*sc.kc,
+  };
+  const falta=Math.max(0, m.pg-totalMac.pg);
+  return {m, i:null, dl, r, rid, es, scoops, totalMac, falta, cubre:falta<=0, momentos, apto, extra:true, exId:ex.id};
 }
 /* objetivo de proteina/macros de una franja del dia (m/t/n), sumando las comidas
    de comidasDe() que caen ahi (mismo mapeo que usan eatenOn/mealStatus). Lo usa el
@@ -2373,11 +2453,11 @@ const RECIPES = [
   dif:2,
   a:{pg:51,cg:28,fg:28,kc:565,ing:[['Pechuga de pollo',180,'g',17000],['Ensalada verde',200,'g',5000],['Aguacate',80,'g',9000],['Huevos',1,'unid',700],['Papa criolla',100,'g',6000]]},
   c:{pg:35,cg:22,fg:22,kc:420,ing:[['Pechuga de pollo',110,'g',17000],['Ensalada verde',160,'g',5000],['Aguacate',65,'g',9000],['Huevos',1,'unid',700],['Papa criolla',75,'g',6000]]}},
- {id:'avenatras',mom:['desayuno'],momPref:'desayuno',cat:'desayuno',name:'Avena trasnochada',desc:'Se prepara la noche anterior y amanece lista, fría o tibia. A: sin proteína en polvo (va en el snack). C: con el scoop del día.',
-  prep:["La noche anterior, mezcla la avena con la leche en un frasco o recipiente con tapa.","Agrega la mantequilla de maní (A) o la chía (C) y revuelve.","Tapa y refrigera toda la noche.","Cami: agrega el scoop de whey y revuelve bien justo antes de comer para que no se apelmace.","Corona con el banano en rodajas antes de servir."],
+ {id:'avenatras',mom:['desayuno'],momPref:'desayuno',cat:'desayuno',name:'Avena trasnochada',desc:'Se prepara la noche anterior y amanece lista, fría o tibia. Sin proteína en polvo: si la quieres con scoop, elige la versión con proteína.',
+  prep:["La noche anterior, mezcla la avena con la leche en un frasco o recipiente con tapa.","Agrega la mantequilla de maní (A) o la chía (C) y revuelve.","Tapa y refrigera toda la noche.","Corona con el banano en rodajas antes de servir."],
   dif:1,
   a:{pg:13,cg:55,fg:12,kc:380,ing:[['Avena en hojuelas',50,'g',8000],['Leche',150,'ml',4.5],['Banano',60,'g',3500],['Mantequilla de maní',15,'g',40000]]},
-  c:{pg:30,cg:45,fg:12,kc:400,ing:[['Avena en hojuelas',40,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Leche',120,'ml',4.5],['Chía',10,'g',30000]]}},
+  c:{pg:8,cg:43,fg:11,kc:280,ing:[['Avena en hojuelas',40,'g',8000],['Leche',120,'ml',4.5],['Chía',10,'g',30000]]}},
  {id:'huevosarepa',mom:['desayuno','cena'],momPref:'desayuno',cat:'desayuno',name:'Huevos pericos + arepa',desc:'Huevos revueltos con tomate y cebolla, con arepa al lado. El desayuno más rápido cuando no hay avena remojada.',
   prep:["Pica el tomate y la cebolla larga en cubos pequeños.","Sofríelos en un sartén con poco aceite 2-3 minutos.","Agrega los huevos batidos y revuelve a fuego medio hasta que cuajen.","Tuesta la arepa aparte y sirve junto a los huevos."],
   dif:1,
@@ -2572,7 +2652,22 @@ const RECIPES = [
   prep:['Mezcla la avena, la mantequilla de maní y la proteína en polvo en un bowl.','Agrega un chorrito de agua o leche si la mezcla queda muy seca, hasta que compacte.','Forma bolitas del tamaño de un bocado con las manos.','Ponlas en un plato o recipiente y refrigera 20-30 minutos para que endurezcan.','Guárdalas en la nevera y come 3-4 al día como snack.'],
   dif:1,
   a:{pg:33,cg:40,fg:18,kc:454,ing:[['Avena en hojuelas',50,'g',8000],['Mantequilla de maní',25,'g',40000],['Proteína en polvo (whey)',25,'g',220000]]},
-  c:{pg:23,cg:28,fg:13,kc:321,ing:[['Avena en hojuelas',35,'g',8000],['Mantequilla de maní',18,'g',40000],['Proteína en polvo (whey)',18,'g',220000]]}}
+  c:{pg:23,cg:28,fg:13,kc:321,ing:[['Avena en hojuelas',35,'g',8000],['Mantequilla de maní',18,'g',40000],['Proteína en polvo (whey)',18,'g',220000]]}},
+ {id:'avenatrasp',mom:['desayuno'],momPref:'desayuno',cat:'desayuno',name:'Avena trasnochada con proteína',desc:'La misma de siempre pero con un scoop de whey para los dos: el desayuno que sí cierra la proteína.',
+  prep:["La noche anterior, mezcla la avena con la leche en un frasco con tapa.","Agrega la mantequilla de maní y revuelve.","Tapa y refrigera toda la noche.","Justo antes de comer agrega el scoop de whey y revuelve bien para que no se apelmace.","Corona con el banano en rodajas."],
+  dif:1,
+  a:{pg:37,cg:57,fg:13,kc:502,ing:[['Avena en hojuelas',50,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Leche',150,'ml',4.5],['Banano',60,'g',3500],['Mantequilla de maní',15,'g',40000]]},
+  c:{pg:32,cg:45,fg:12,kc:402,ing:[['Avena en hojuelas',40,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Leche',120,'ml',4.5],['Chía',10,'g',30000]]}},
+ {id:'avenafrutosp',mom:['desayuno','snack'],momPref:'desayuno',cat:'desayuno',name:'Avena overnight con frutos rojos y proteína',desc:'La overnight de frutos rojos con su scoop de whey, para los dos.',
+  prep:["Mezcla la avena con la leche y la chía en un frasco con tapa.","Tapa y refrigera toda la noche.","Antes de comer agrega el scoop de whey y revuelve bien.","Corona con los frutos rojos."],
+  dif:1,
+  a:{pg:40,cg:57,fg:12,kc:496,ing:[['Avena en hojuelas',50,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Leche',150,'ml',4.5],['Frutos rojos congelados',80,'g',15000],['Chía',10,'g',30000]]},
+  c:{pg:34,cg:45,fg:10,kc:406,ing:[['Avena en hojuelas',40,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Leche',120,'ml',4.5],['Frutos rojos congelados',70,'g',15000],['Chía',8,'g',30000]]}},
+ {id:'pancakesavenap',mom:['desayuno'],momPref:'desayuno',cat:'desayuno',name:'Pancakes de avena con proteína',desc:'Los pancakes de siempre con un scoop en la mezcla: quedan más esponjosos y cierran la proteína.',
+  prep:["Licúa la avena con el banano, los huevos y el scoop de whey hasta que quede una mezcla homogénea.","Calienta una sartén antiadherente a fuego medio.","Vierte porciones pequeñas y cocina 2 minutos por lado, hasta que doren.","Sirve con el yogur encima."],
+  dif:1,
+  a:{pg:42,cg:60,fg:14,kc:534,ing:[['Avena en hojuelas',60,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Huevos',2,'unid',700],['Banano',80,'g',3500],['Yogur griego',80,'g',22000]]},
+  c:{pg:33,cg:45,fg:11,kc:411,ing:[['Avena en hojuelas',45,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Huevos',1,'unid',700],['Banano',60,'g',3500],['Yogur griego',60,'g',22000]]}}
 ];
 /* metadatos de meal prep por receta (tiempos, utensilios, conservacion, pasos con atencion activo/pasivo).
    se generaron aparte con los mismos pasos de RECIPES[].prep, en el mismo orden (indice a indice).
@@ -2778,6 +2873,16 @@ function normalizeMeal(meal){
      round robin automatico (recetaDeComida) */
   meal.plan = meal.plan || {};
   meal.scoops = meal.scoops || {};
+  /* comidas extra agregadas a un dia puntual (pedido del dueno: "en el dia
+     individual permiteme agregar comidas, tipo Desayuno o Snack") sin tocar el
+     numero de comidas de toda la semana (eso sigue siendo meal.prefs.comidas).
+     extras2[key][dl] = [{id, tipo}], tipo en desayuno|almuerzo|cena|snack. id es
+     unico (timestamp), no un indice, para que borrar una extra no le corra el
+     id a las demas y su receta manual/scoops guardados (que viven en meal.plan/
+     meal.scoops con esa misma clave id, igual que las comidas normales usan
+     'm1'..'m5') no queden pisados. Ojo: NO es meal.extras (eso es del Mercado,
+     no se toca aca). */
+  meal.extras2 = meal.extras2 || {};
   return meal;
 }
 function ckOn(n){ const c=S.meal.checklist[n]; return !!(c&&c.v!==undefined?c.v:c); }
@@ -6607,7 +6712,7 @@ function excatDetailBox(id){
   box.innerHTML=`<div class="fboxin">
     <div class="flex between mb8"><b class="t-h2" style="min-width:0">${esc(x.name)}</b><button class="btn sm" id="fcls" aria-label="cerrar">${ic('x',14)}</button></div>
     <div class="exdet2">
-      <div class="exdetimg"><img loading="lazy" src="assets/ej/${x.img}" alt="" decoding="async" onerror="this.closest('.exdetimg').style.visibility='hidden'"></div>
+      <div class="exdetimg"><img loading="lazy" src="assets/ej/${x.img}" alt="" decoding="async" onerror="const c=this.closest('.exdet2'); if(c) c.classList.add('sinfoto'); this.closest('.exdetimg').remove()"></div>
       <div class="exdetinfo">
         <div class="flex wrapf">
           <span class="chip">${EXCAT_LABELS[x.cat]||x.cat}</span>
@@ -8550,10 +8655,25 @@ function gestPlanHTML(){
   const diaSel=UI.gestDay||hoyLetra;
   const nombreDia={D:'Domingo',L:'Lunes',M:'Martes',X:'Miércoles',J:'Jueves',V:'Viernes',S:'Sábado'};
   const uids=['andres','cami'];
-  const comidaRow=(uid,dl,i,cm)=>{
-    const ca=comidaArmada(uid,dl,i,cm); if(!ca) return '';
+  /* Punto jerarquia (pedido del dueno, ver captura de "Gestión alimentación"):
+     antes nombre, meta, receta, %dia, ingredientes y macros salian casi todos
+     del mismo gris y tamano ("un muro plano"). Ahora tres niveles por tarjeta:
+       1) nombre de la comida + la proteina real que aporta vs su meta, en
+          var(--num) tamano metrica-mediana, con color de estado (verde/ambar/
+          rojo, el mismo criterio de estadoPct que ya usaba el resto de Comida).
+       2) la receta asignada (el select) + las kcal, un escalon mas chico.
+       3) carbos/grasa y la lista de ingredientes, apagados y compactos: el
+          factor de porcion ("Porción × 1,1") va en un chip aparte que tambien
+          pliega/despliega los ingredientes, nunca mezclado en su misma linea.
+     El % del dia queda como control angosto de un solo numero (etiqueta corta
+     en mayuscula de label, no un dato), para que no compita con las cifras.
+     Sirve igual para una comida normal (i numerico) y para una extra (ver
+     comidaArmadaExtra): ambas devuelven el mismo shape, la unica diferencia es
+     el atributo data-x/data-m que decide donde escribe planRec/planScoop. */
+  const comidaCardHTML=(ca, uid, dl, i, nDia)=>{
     const key=uid==='andres'?'a':'c';
     const activas=recetasActivas(key);
+    const isExtra=!!ca.extra;
     /* Punto momentos: el select se reordena con las aptas para el momento de esta
        comida primero (no se quitan las demas: reasignar a mano sigue siendo libre,
        solo que ahora lo sensato queda a la vista sin adivinar). */
@@ -8563,45 +8683,89 @@ function gestPlanHTML(){
     });
     const sinApta = !ca.r && activas.length>0;       // hay rotacion pero nada encaja aqui
     const foraDeLugar = ca.r && ca.apto===false;      // eleccion manual que no encaja
-    return `<div class="row" style="align-items:flex-start;flex-wrap:wrap">
-      <span class="badge">${ca.cubre?ic('check',16):ic('alert',16)}</span>
-      <div class="grow" style="min-width:180px">
-        <div class="flex between"><b style="font-size:14.5px">${ca.m.label}</b><span class="small dim">meta ${ca.m.pg} g prot</span></div>
-        ${sinApta?`<div class="small dim mt4" style="color:var(--gold)">Sin receta adecuada para ${fraseMomento(ca.momentos)}: ninguna receta activa encaja ahí.</div>
-          <button class="btn sm ghost mt6" data-a="recSwapAddFor" data-u="${key}" data-mom="${ca.momentos[0]}">${ic('plus',12)} Agregar receta para ${fraseMomento([ca.momentos[0]])}</button>`:''}
-        ${foraDeLugar?`<div class="small dim mt4" style="color:var(--gold)">Fuera de lugar: elegiste esto a mano, pero no es lo típico para ${fraseMomento(ca.momentos)}.</div>`:''}
-        ${cm.length>1?`<div class="flex between mt6" style="align-items:center"><span class="small dim">% del día para esta comida</span>
-          <input class="in ctr" style="width:60px;font-size:14px;padding:6px 8px" inputmode="numeric" data-ch="mealPct" data-u="${uid}" data-i="${i}" value="${Math.round(repartoEfectivo(uid==='andres'?'a':'c', cm.length)[i])}"></div>`:''}
-        ${opciones.length?`<select class="in mt6" style="font-size:13.5px" data-ch="planRec" data-u="${uid}" data-d="${dl}" data-m="${i}">
-          ${opciones.map(id=>{const rr=RECIPES.find(x=>x.id===id); if(!rr) return ''; const apt=recetaApta(rr,ca.momentos); return `<option value="${id}" ${id===ca.rid?'selected':''}>${esc(rr.name)}${apt?'':' (no es lo típico aquí)'}</option>`;}).join('')}
-        </select>`:'<div class="small dim mt4">Sin recetas en la rotación</div>'}
-        ${ca.es?`<div class="small dim mt6">${ca.es.factor>1?'Porción × '+fmt1(ca.es.factor)+' · ':''}${ca.es.ing.map(([n,q,u])=>esc(n)+' '+fmtQty(q,u)).join(' · ')}</div>`:''}
-        <div class="macroline mt6">${ca.totalMac.pg}P · ${ca.totalMac.cg}C · ${ca.totalMac.fg}G · ~${ca.totalMac.kc} kcal${ca.scoops?' · +'+ca.scoops+' scoop'+(ca.scoops>1?'s':''):''}</div>
-        ${ca.es&&ca.es.excede?`<div class="small dim mt4" style="color:var(--gold)">La porción ya quedó grande (×${FACTOR_TOPE}) y aun así falta proteína: ${uid==='andres'?'agrega un scoop, ':''}cambia de receta o divide en dos comidas.</div>`:''}
-        ${uid==='andres'&&ca.r?`<div class="flex mt6" style="gap:6px">
-          <button class="chip" data-a="planScoop" data-u="${uid}" data-d="${dl}" data-m="${i}" data-n="1">${ic('plus',10)} scoop</button>
-          ${ca.scoops?`<button class="chip" data-a="planScoop" data-u="${uid}" data-d="${dl}" data-m="${i}" data-n="-1">${ic('minus',10)} scoop</button>`:''}
-        </div>`:''}
+    const eP=estadoPct(ca.totalMac.pg, ca.m.pg);
+    const rowId=uid+'|'+dl+'|'+ca.m.k;
+    const ingOpen=!!(UI.gestIngOpen && UI.gestIngOpen[rowId]);
+    const mAttr=isExtra?`data-x="${ca.exId}"`:`data-m="${i}"`;
+    return `<div class="mealrow">
+      <div class="flex between" style="align-items:baseline;gap:8px">
+        <b class="t-body" style="font-size:16px;color:var(--ink)">${ca.m.label}${isExtra?' <span class="t-label" style="letter-spacing:0">extra</span>':''}</b>
+        <span class="t-metric-md ${eP.txt}" style="font-size:24px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px">${ic(eP.txt==='mint'?'check':'alert',13)}${ca.totalMac.pg}<span class="t-unit"> / ${ca.m.pg} g</span></span>
       </div>
+      <div class="flex between" style="align-items:center;gap:8px;margin-top:4px">
+        ${opciones.length?`<select class="in" style="flex:1;min-width:0;padding:8px 10px" data-ch="planRec" data-u="${uid}" data-d="${dl}" ${mAttr}>
+          ${opciones.map(id=>{const rr=RECIPES.find(x=>x.id===id); if(!rr) return ''; const apt=recetaApta(rr,ca.momentos); return `<option value="${id}" ${id===ca.rid?'selected':''}>${esc(rr.name)}${apt?'':' (no es lo típico aquí)'}</option>`;}).join('')}
+        </select>`:'<span class="t-body-sm dim">Sin recetas en la rotación</span>'}
+        <span class="t-body-sm dim" style="white-space:nowrap">~${ca.totalMac.kc} kcal</span>
+      </div>
+      ${sinApta?`<div class="t-body-sm" style="color:var(--gold);margin-top:4px">Sin receta adecuada para ${fraseMomento(ca.momentos)}.</div>
+        <button class="btn sm ghost" style="margin-top:6px" data-a="recSwapAddFor" data-u="${key}" data-mom="${ca.momentos[0]}">${ic('plus',12)} Agregar receta para ${fraseMomento([ca.momentos[0]])}</button>`:''}
+      ${foraDeLugar?`<div class="t-body-sm" style="color:var(--gold);margin-top:4px">Fuera de lugar: elegiste esto a mano, pero no es lo típico para ${fraseMomento(ca.momentos)}.</div>`:''}
+      ${ca.es&&ca.es.excede?`<div class="t-body-sm" style="color:var(--gold);margin-top:4px">La porción ya quedó grande (×${FACTOR_TOPE}) y aun así falta proteína: ${uid==='andres'?'agrega un scoop, ':''}cambia de receta o divide en dos comidas.</div>`:''}
+      <div class="flex between" style="align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px">
+        ${ca.es?`<button class="chip" data-a="gestIngTgl" data-k="${rowId}" aria-label="${ingOpen?'Ocultar':'Ver'} los ingredientes de esta comida">${ca.es.factor>1?'Porción × '+fmt1(ca.es.factor)+' · ':''}${ingOpen?'ocultar ingredientes':'ver ingredientes'}</button>`:'<span></span>'}
+        <span class="t-body-sm dim" style="font-size:13px">${ca.totalMac.cg}C · ${ca.totalMac.fg}G${ca.scoops?' · +'+ca.scoops+' scoop'+(ca.scoops>1?'s':''):''}</span>
+      </div>
+      ${ingOpen&&ca.es?`<div class="t-body-sm dim" style="margin-top:4px;font-size:13px">${ca.es.ing.map(([n,q,u])=>esc(n)+' '+fmtQty(q,u)).join(' · ')}</div>`:''}
+      <div class="flex wrapf" style="gap:6px;margin-top:8px">
+        ${uid==='andres'&&ca.r?`<button class="chip" data-a="planScoop" data-u="${uid}" data-d="${dl}" ${mAttr} data-n="1">${ic('plus',10)} scoop</button>`:''}
+        ${uid==='andres'&&ca.r&&ca.scoops?`<button class="chip" data-a="planScoop" data-u="${uid}" data-d="${dl}" ${mAttr} data-n="-1">${ic('minus',10)} scoop</button>`:''}
+        ${isExtra?`<button class="chip" data-a="rmExtra" data-u="${uid}" data-d="${dl}" data-x="${ca.exId}" aria-label="Quitar ${esc(ca.m.label)} extra">${ic('x',10)} quitar</button>`:''}
+      </div>
+      ${!isExtra&&nDia>1?`<div class="flex between" style="align-items:center;gap:8px;margin-top:8px">
+        <span class="t-label">% día para esta comida</span>
+        <input class="in ctr" style="width:56px;padding:6px 4px" inputmode="numeric" data-ch="mealPct" data-u="${uid}" data-i="${i}" value="${Math.round(repartoEfectivo(key,nDia)[i])}">
+      </div>`:''}
     </div>`;
   };
-  const diaBlock=(uid,dl)=>{
+  /* fila de chips para agregar una comida extra a ESTE dia puntual (pedido del
+     dueno: "en el dia individual permiteme agregar comidas, tipo Desayuno o
+     Snack"). Solo se muestra en la vista por Día: en la vista Semana cada dia
+     ya vive colapsado en su <details>, y agregar ahi obligaria a elegir el dia
+     dos veces (abrir el details Y tocar el boton). Las extra que ya existan SI
+     se pintan en ambas vistas (son parte real de ese dia), solo el control
+     para crear una nueva vive aca. */
+  const addExtraRowHTML=(uid,dl)=>`<div style="margin-top:10px">
+    <span class="t-label">agregar comida a este día</span>
+    <div class="flex wrapf" style="gap:6px;margin-top:6px">
+      ${[['desayuno','Desayuno'],['almuerzo','Almuerzo'],['cena','Cena'],['snack','Snack']].map(([t,lb])=>
+        `<button class="chip" data-a="addExtra" data-u="${uid}" data-d="${dl}" data-t="${t}" aria-label="Agregar ${lb.toLowerCase()} a este día">${ic('plus',10)} ${lb}</button>`).join('')}
+    </div>
+  </div>`;
+  const diaBlock=(uid,dl,mostrarAgregar)=>{
+    const key=uid==='andres'?'a':'c';
     const cm=comidasDe(uid);
-    const tot=cm.reduce((a,m,i)=>{ const ca=comidaArmada(uid,dl,i,cm); if(!ca) return a;
-      return {pg:a.pg+ca.totalMac.pg, cg:a.cg+ca.totalMac.cg, fg:a.fg+ca.totalMac.fg, kc:a.kc+ca.totalMac.kc}; },{pg:0,cg:0,fg:0,kc:0});
+    const extras=extrasDeDia(key,dl);
+    const filas=cm.map((m,i)=>({ca:comidaArmada(uid,dl,i,cm), i}))
+      .concat(extras.map(ex=>({ca:comidaArmadaExtra(uid,dl,ex), i:null})));
+    /* Punto macros de la comida extra: SUMA por encima de la meta del dia (ver
+       nota larga en extrasDeDia); por eso el total de aca simplemente agrega
+       ca.totalMac de la extra al de las comidas normales, sin tocar plan.prot
+       ni repartir nada entre las demas. */
+    const tot=filas.reduce((a,f)=>{ if(!f.ca) return a;
+      return {pg:a.pg+f.ca.totalMac.pg, cg:a.cg+f.ca.totalMac.cg, fg:a.fg+f.ca.totalMac.fg, kc:a.kc+f.ca.totalMac.kc}; },{pg:0,cg:0,fg:0,kc:0});
     const plan=PLANS[uid];
     /* Punto D: kcal del dia junto a la proteina, tambien aca. Punto E: color de
-       estado en el numero de proteina (verde/ambar/rojo), no solo cumple/no cumple. */
+       estado en el numero de proteina (verde/ambar/rojo), no solo cumple/no
+       cumple. Punto macros: si las extras empujaron el dia por encima de las
+       kcal meta, se avisa en vez de escondelo (el usuario decide si compensa). */
     const eP=estadoPct(tot.pg,plan.prot);
+    /* el aviso de kcal sobre la meta solo aplica si HAY extras: sin extras el
+       escalado normal de porciones (Punto A, pedido viejo del dueno) ya podia
+       superar un poco las kcal meta al perseguir la proteina, y avisar de eso
+       aca seria una alarma nueva sin relacion con lo que se esta agregando */
+    const sobreKc=(extras.length && tot.kc>plan.kcal) ? tot.kc-plan.kcal : 0;
     return `<div class="mb12">
-      <div class="flex between mb4" style="align-items:flex-end">
-        <b style="font-size:15px">${USERS[uid].name}</b>
-        <div style="text-align:right">
-          <span class="num ${eP.txt}" style="font-size:18px">${tot.pg}<span class="t-unit"> / ${plan.prot} g</span></span>
-          <div class="small dim">${tot.kc} / ${plan.kcal} kcal</div>
-        </div>
+      <div class="flex between" style="align-items:center">
+        <b class="t-body" style="font-size:17px;font-weight:600;color:var(--ink)">${USERS[uid].name}</b>
+        <span class="t-body-sm dim">${tot.kc} <span style="opacity:.7">/ ${plan.kcal} kcal</span></span>
       </div>
-      ${cm.map((m,i)=>comidaRow(uid,dl,i,cm)).join('')}
+      <div style="margin-top:2px;margin-bottom:8px">
+        <span class="t-metric-md ${eP.txt}" style="font-size:30px;display:inline-flex;align-items:center;gap:5px">${ic(eP.txt==='mint'?'check':'alert',15)}${tot.pg}<span class="t-unit"> / ${plan.prot} g prot</span></span>
+        ${sobreKc?`<div class="t-body-sm" style="color:var(--gold);margin-top:2px">+${sobreKc} kcal por encima de la meta del día</div>`:''}
+      </div>
+      ${filas.map(f=>f.ca?comidaCardHTML(f.ca, uid, dl, f.i, cm.length):'').join('')}
+      ${mostrarAgregar?addExtraRowHTML(uid,dl):''}
     </div>`;
   };
   return `<section class="mod" id="gestplan">
@@ -8613,11 +8777,11 @@ function gestPlanHTML(){
     ${view==='dia'?`
       <div class="flex wrapf mb12" style="gap:6px">${DLETRAS.map(dl=>`<button class="chip ${diaSel===dl?'fill':''}" data-a="gestDaySel" data-d="${dl}" aria-label="Ver ${nombreDia[dl]}">${nombreDia[dl].slice(0,3)}${dl===hoyLetra?' · hoy':''}</button>`).join('')}</div>
       <h3 class="t-h2 mb8">${nombreDia[diaSel]}</h3>
-      ${uids.map(uid=>diaBlock(uid,diaSel)).join('')}
+      ${uids.map(uid=>diaBlock(uid,diaSel,true)).join('')}
     `:`
       ${DLETRAS.map(dl=>`<details class="catgroup mb8" ${dl===hoyLetra?'open':''}>
         <summary><b style="font-size:15px">${nombreDia[dl]}</b>${dl===hoyLetra?' <span class="chip fill">hoy</span>':''}<span class="chev">${ic('chevR',14)}</span></summary>
-        <div style="padding:8px 2px 4px">${uids.map(uid=>diaBlock(uid,dl)).join('')}</div>
+        <div style="padding:8px 2px 4px">${uids.map(uid=>diaBlock(uid,dl,false)).join('')}</div>
       </details>`).join('')}
     `}
   </section>`;
@@ -10862,15 +11026,41 @@ const ACTIONS = {
   gestDaySel(d){ UI.gestDay=d.d; render(); },
   /* Punto C: scoop de proteina (24 g, ver scoopMac) sumado a una comida puntual de
      la semana planeada. Pensado para Andres pero no se bloquea si se usa desde
-     otro lado */
+     otro lado. d.x (id de una comida extra, ver extrasDeDia) manda sobre d.m
+     (indice de una comida normal) cuando ambos podrian aplicar. */
   planScoop(d){
-    const key=d.u==='andres'?'a':'c', dl=d.d, mk='m'+(+d.m+1);
+    const key=d.u==='andres'?'a':'c', dl=d.d, mk=d.x||('m'+(+d.m+1));
     S.meal.scoops=S.meal.scoops||{}; S.meal.scoops[key]=S.meal.scoops[key]||{};
     S.meal.scoops[key][dl]=S.meal.scoops[key][dl]||{};
     const cur=S.meal.scoops[key][dl][mk]||0, next=clamp(cur+(+d.n),0,3);
     if(next) S.meal.scoops[key][dl][mk]=next; else delete S.meal.scoops[key][dl][mk];
     save('meal'); render();
   },
+  /* agrega una comida extra a un dia puntual de una persona (Desayuno/Almuerzo/
+     Cena/Snack). Id por timestamp: ver comentario en normalizeMeal. */
+  addExtra(d){
+    const key=d.u==='andres'?'a':'c', dl=d.d, tipo=d.t;
+    if(!EXTRA_LABEL[tipo]) return;
+    S.meal.extras2=S.meal.extras2||{}; S.meal.extras2[key]=S.meal.extras2[key]||{};
+    S.meal.extras2[key][dl]=S.meal.extras2[key][dl]||[];
+    const id='x'+Date.now().toString(36)+Math.floor(Math.random()*36).toString(36);
+    S.meal.extras2[key][dl].push({id, tipo});
+    save('meal'); render();
+  },
+  /* quita una comida extra de ese dia puntual; limpia tambien su receta manual
+     y sus scoops guardados para no dejar basura huerfana en S.meal.plan/scoops */
+  rmExtra(d){
+    const key=d.u==='andres'?'a':'c', dl=d.d, id=d.x;
+    if(S.meal.extras2 && S.meal.extras2[key] && S.meal.extras2[key][dl]){
+      S.meal.extras2[key][dl]=S.meal.extras2[key][dl].filter(e=>e.id!==id);
+    }
+    if(S.meal.plan && S.meal.plan[key] && S.meal.plan[key][dl]) delete S.meal.plan[key][dl][id];
+    if(S.meal.scoops && S.meal.scoops[key] && S.meal.scoops[key][dl]) delete S.meal.scoops[key][dl][id];
+    save('meal'); render();
+  },
+  /* pliega/despliega la linea de ingredientes de una comida dentro de la vista
+     por dia (Punto jerarquia): UI transitoria, no se persiste */
+  gestIngTgl(d){ UI.gestIngOpen=UI.gestIngOpen||{}; UI.gestIngOpen[d.k]=!UI.gestIngOpen[d.k]; render(); },
   /* Punto F: chip de meal prep en el registro de comida. Agrega la receta a la
      franja abierta con su porcion ya escalada al objetivo de esa franja */
   nlogPickMP(d){
@@ -11132,11 +11322,12 @@ const CHANGES = {
     const f=F[$('#pcFood').value], q=parseFloat(($('#pcQty').value||'').replace(',','.'))||0;
     const out=$('#pcOut'); if(out) out.textContent = q? (Math.round(f[0]*q))+' g ('+q+' '+f[1]+')' : '·';
   },
-  /* Punto E: reasigna que receta cubre una comida puntual de la semana planeada */
+  /* Punto E: reasigna que receta cubre una comida puntual de la semana planeada.
+     data-x (id de una comida extra) manda sobre data-m (indice de una normal). */
   planRec(el){
-    const {u,d,m}=el.dataset, key=u==='andres'?'a':'c';
+    const {u,d,m,x}=el.dataset, key=u==='andres'?'a':'c', mk=x||('m'+(+m+1));
     S.meal.plan=S.meal.plan||{}; S.meal.plan[key]=S.meal.plan[key]||{}; S.meal.plan[key][d]=S.meal.plan[key][d]||{};
-    S.meal.plan[key][d]['m'+(+m+1)]=el.value;
+    S.meal.plan[key][d][mk]=el.value;
     save('meal'); render();
   },
   /* Punto B: buscador del selector de cambio de receta (ventana flotante, no vive

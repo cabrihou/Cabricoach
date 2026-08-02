@@ -154,6 +154,25 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
       `xpEntrenoExterno('mealprep', …)`)
   - Metadatos por receta (tiempos, utensilios, conservación, pasos activo/pasivo)
     embebidos en `RECIPE_PREP`, alineados índice a índice con `RECIPES[].prep`
+  - **C5d** "La semana comida por comida" (`gestPlanHTML`, id `gestplan`), con toggle
+    Semana/Día (`gestVista`/`gestDaySel`). Cada comida es una tarjeta (`.mealrow`,
+    `comidaCardHTML`) con jerarquía en tres niveles (fase de jerarquía visual, ver
+    `docs/DESIGN-STANDARDS.md`): 1) nombre + proteína real vs meta en `--num` con color
+    de estado; 2) receta asignada (select) + kcal; 3) carbos/grasa y la lista de
+    ingredientes, apagados y plegados tras "ver ingredientes" (`gestIngTgl`), con el
+    factor de porción como chip aparte. El % del día es un control angosto (label
+    corta), nunca compite con las cifras
+    - **Comidas extra por día** (pedido del dueño): botones "Agregar comida a este
+      día" (Desayuno/Almuerzo/Cena/Snack, `ACTIONS.addExtra`) solo en la vista Día.
+      Viven en `S.meal.extras2[key][dl]` (no confundir con `S.meal.extras`, del
+      Mercado), con id propio por comida extra que reutiliza `S.meal.plan`/
+      `S.meal.scoops` para receta manual/scoop (mismas claves que las comidas
+      normales, solo que con ese id en vez de `mN`). Se quitan con `ACTIONS.rmExtra`
+      (chip "quitar"). Decisión de macros: la extra SUMA por encima de la meta del
+      día (no reparte la de las demás), y si el total del día se pasa de las kcal
+      meta se avisa (`sobreKc` en `diaBlock`) solo cuando hay al menos una extra ese
+      día, para no encender una alarma nueva en días sin extras (ver comentario largo
+      en `extrasDeDia`, coach-afc-v2.html)
 
 ## P · Progreso (`vProgreso`)
 

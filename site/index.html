@@ -1336,7 +1336,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 119';
+const APPREV='REV 120';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -8126,7 +8126,7 @@ function recListing(recs,q){
       ${rs.map(recCard).join('')||'<div class="small dim">Nada aquí con ese filtro de dificultad.</div>'}`;
   }
   const sel=RECIPES.filter(r=>S.meal.selected[r.id]);
-  return `${sel.length?`<div class="small dim mb8">En el mercado · ${sel.length}</div><div class="catgrid mb12">${sel.slice(0,4).map(r=>`<button class="reccard" data-a="foodCat" data-c="${r.cat}"><span class="badge cat-${r.cat}">${catIco(r.cat,18)}</span><b>${esc(r.name.split(' ').slice(0,3).join(' '))}</b><span class="small mint">en el mercado</span></button>`).join('')}</div>`:''}
+  return `${sel.length?`<div class="flex between mb8" style="align-items:center"><span class="small dim">En el mercado · ${sel.length}</span><button class="chip" data-a="mercadoVaciar">${ic('x',10)} Vaciar mercado</button></div><div class="catgrid mb12">${sel.slice(0,4).map(r=>`<button class="reccard" data-a="foodCat" data-c="${r.cat}"><span class="badge cat-${r.cat}">${catIco(r.cat,18)}</span><b>${esc(r.name.split(' ').slice(0,3).join(' '))}</b><span class="small mint">en el mercado</span></button>`).join('')}</div>`:''}
     <div class="small dim mb8">Categorías de recetas</div>
     <div class="catgrid">
     ${CATS.map(c=>{ const rs=RECIPES.filter(r=>r.cat===c.id && difMatch(r)); if(!rs.length) return '';
@@ -11885,6 +11885,17 @@ const ACTIONS = {
     const nom=d.n; render();
     snackUndo('Fuera de la lista', ()=>{ delete S.meal.hide[nom]; save('meal'); render(); }); },
   mkUnhide(){ S.meal.hide={}; save('meal'); render(); },
+  /* vaciar el mercado = deseleccionar todas las recetas. Con confirmacion y deshacer,
+     porque tumba la semana armada de los dos de un toque. Los cambios de ingrediente,
+     scoops y asignaciones manuales quedan guardados por si la receta vuelve. */
+  mercadoVaciar(){
+    const n=Object.keys(S.meal.selected||{}).length;
+    if(!n) return;
+    if(!confirm('¿Vacío el mercado? Se quitan las '+n+' recetas elegidas (de ambos) y la semana queda sin armar. Se puede deshacer.')) return;
+    const copia=S.meal.selected;
+    S.meal.selected={}; save('meal'); render();
+    snackUndo('Mercado vacío', ()=>{ S.meal.selected=copia; save('meal'); render(); });
+  },
   /* preset "semana practica": el desvare mas grande de la casa, proteina asada
      + papas a la francesa en air fryer para todos los almuerzos y cenas.
      Reemplaza lo elegido de almuerzo/cena (desayuno y snacks quedan igual). */

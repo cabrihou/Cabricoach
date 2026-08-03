@@ -1336,7 +1336,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 122';
+const APPREV='REV 123';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -6085,10 +6085,13 @@ function lineChart(o){
   const vals=pts.map(p=>p.v).concat(o.goal!=null?[o.goal]:[]).concat(o.proj!=null?[o.proj.v]:[]);
   let mn=Math.min(...vals), mx=Math.max(...vals);
   const padV=Math.max((mx-mn)*0.12, 0.5); mn-=padV; mx+=padV;
-  /* desdeCero (pedido del dueno): un peso que va de 94 a 89 pintado con el eje
-     autoescalado parece estar tocando el piso de la grafica, como si ya no
-     pudiera bajar mas. Con el eje desde 0 la linea guarda su proporcion real. */
-  if(o.desdeCero){ mn=0; mx=Math.max(...vals)+padV; }
+  /* piso con sentido (pedido del dueno, refinado): el eje autoescalado hacia que
+     94->89 kg pareciera tocar el piso, pero el cero literal aplastaba la linea
+     (nadie va a pesar 0). El piso es el minimo VEROSIMIL de esa metrica (p. ej.
+     90% de la meta de peso: ~80 kg para Andres) y si algun dato real queda por
+     debajo, el dato manda: nunca se recorta la serie. */
+  if(o.piso!=null){ mn=Math.min(o.piso, Math.min(...vals)-padV); mx=Math.max(...vals)+padV; }
+  else if(o.desdeCero){ mn=0; mx=Math.max(...vals)+padV; }
   const n=pts.length + (o.proj?1:0);
   /* escala de TIEMPO real cuando los puntos traen fecha (d): el eje X respeta los días */
   const timeMode = !!(pts[0]&&pts[0].d) && pts.length>1;
@@ -9931,7 +9934,7 @@ function rendimientoCard(sub){
       <div><div class="bignum" style="line-height:1">${big}<small class="t-unit"> ${unit}</small></div>
         <div class="small ${deltaCls}" style="font-weight:600;margin-top:6px">${deltaTxt}</div></div>
     </div>
-    ${pts?`<div class="mt8">${lineChart({pts, fmt:v=>mode==='peso'?fmt1(v)+' kg':mode==='general'?v+'/4':mode==='tiempo'?v+' min':fmtInt(v)+' kg', trend:mode!=='general', h:120, bands:pts.length?deloadBands(pts[0].d, pts[pts.length-1].d):[], series2, horizonte:N, desdeCero:mode==='peso'})}</div>`:''}
+    ${pts?`<div class="mt8">${lineChart({pts, fmt:v=>mode==='peso'?fmt1(v)+' kg':mode==='general'?v+'/4':mode==='tiempo'?v+' min':fmtInt(v)+' kg', trend:mode!=='general', h:120, bands:pts.length?deloadBands(pts[0].d, pts[pts.length-1].d):[], series2, horizonte:N, piso:mode==='peso'?Math.round((PLAN.wGoal||0)*0.9):null})}</div>`:''}
     <div class="kgrid k3 mt12">
       ${trio.map(x=>`<div class="kbox"><span class="lbl">${x.lbl}</span><div class="kv ${x.cls||''}">${x.val}</div></div>`).join('')}
     </div>
@@ -10463,7 +10466,7 @@ function vCheckin(){
     ${lineChart({pts:cs.map(c=>({x:fmtD(c.d), d:c.d, v:c.cint, tip:fmtD(c.d)+' · '+fmt1(c.cint)+' cm'})), fmt:v=>fmt1(v)+' cm', trend:true, h:150})}</section>`})()}
   ${(()=>{const cs=S.checkins.filter(c=>c.fat); if(cs.length<2) return '';
     return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('target',16)} Grasa corporal</span><span class="cross">+</span></div>
-    ${lineChart({pts:cs.map(c=>({x:fmtD(c.d), d:c.d, v:c.fat, tip:fmtD(c.d)+' · '+fmt1(c.fat)+'%'})), goal:UID==='andres'?14.5:26.5, goalLabel:'META', horizonte:UI.progRange||30, desdeCero:true, fmt:v=>fmt1(v)+'%', trend:true, h:150})}</section>`})()}
+    ${lineChart({pts:cs.map(c=>({x:fmtD(c.d), d:c.d, v:c.fat, tip:fmtD(c.d)+' · '+fmt1(c.fat)+'%'})), goal:UID==='andres'?14.5:26.5, goalLabel:'META', horizonte:UI.progRange||30, piso:(UID==='andres'?14.5:26.5)-5, fmt:v=>fmt1(v)+'%', trend:true, h:150})}</section>`})()}
   ${S.checkins.length?`<section class="mod">
     <div class="mod-head"><span class="ttl">${ic('cal',16)} Evolución</span><span class="cross">+</span></div>
     <div class="tbwrap"><table class="tb">

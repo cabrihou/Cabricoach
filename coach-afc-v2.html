@@ -1336,7 +1336,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 121';
+const APPREV='REV 122';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -5021,7 +5021,7 @@ function proxCardRich(p){
     <b style="font:600 17px var(--ui)">${esc(titulo)}</b>
     <span class="small dim" style="flex:none">${cuando}</span></div>
   ${cuerpo}${fallback}
-  <div class="small mt4" style="color:var(--blue)">Análisis completo ${ic('chevR',10)}</div>`;
+  <div class="small mt4" style="color:var(--blue);display:inline-flex;align-items:center;gap:2px;white-space:nowrap">Análisis completo ${ic('chevR',10)}</div>`;
 }
 /* N4: ventana flotante de la capsula "Tu proximo entreno" (patron G5, igual a exStats).
    Solo muestra datos reales: si un ejercicio no tiene historial no aparece su fila, y si

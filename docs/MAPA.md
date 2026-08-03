@@ -22,7 +22,12 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - I2a Entreno ("Ir a entrenar" + check que completa la rutina)
   - I2b Pasos · I2c Agua · I2d Check-in · I2e Foto del día
 - **I3** Caja rotativa "Para ti": pendiente de hoy, coach del día, versículos, datos, hitos (`homeRotator`, `rotcard`)
-  - I3a Cápsula "Tu próximo entreno": recomendación según planeación del día antes, se abre como ventana flotante con insights de la jornada (`proxEntreno`, `proxBoxOpen`, `ACTIONS.proxBox`)
+  - I3a Cápsula "Tu próximo entreno": desde REV 121 la tarjeta trae jerarquía propia
+    (rutina como título, hora, hasta 2 líneas de análisis de las últimas sesiones:
+    días sin esa rutina, récords cerca, estancados, series incompletas) y la ventana
+    lleva ese análisis arriba (`proxEntreno`, `proxAnalisis`, `proxCardRich`,
+    `proxBoxOpen`). Enganche de IA: `afc2:u:<uid>:proxIA` con `{d, txt}` (mismo patrón
+    que `coachDaily`) reemplaza el análisis local mientras esté fresco (`proxIA`)
 - **I4** Nutrición del día (`nutriDay(t)`, modo completo, + `nutriExtras()`)
   - I4a Anillo de proteína + mensaje del día
   - I4b Caja "Con qué cerrar" (sugerencias sueltas y combinaciones) (`sugBox`)
@@ -114,7 +119,10 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 - **C5** Gestión alimentación (`vGestion`, antes "Meal prep"; Tarea 1/2/3 de la fase de
     Gestión). Sin rotación activa (`S.meal.selected` vacío) toda la vista es un estado
     vacío que invita a "Ármame la semana"; el registro libre (C5b) se muestra siempre,
-    tenga o no rotación
+    tenga o no rotación. Desde REV 121 las tres zonas grandes (Resumen y recetas, La
+    semana comida por comida, Registro libre) son cajas colapsables con memoria por
+    usuario (`gestCaja`, `S.cfg.gestOpen`); por defecto solo la semana está abierta y
+    el contenido de una caja cerrada ni se construye
   - C5a "La semana con lo que elegiste" (Tarea 2, `gestData`/`gestSemanaHTML`): cruza
     `S.meal.selected` (recetas + porciones `{a,c}`) con `comidasDe(uid)` (comidas al día
     según meta y reparto de cada uno). Tres bloques:

@@ -1336,7 +1336,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 120';
+const APPREV='REV 121';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -4946,6 +4946,53 @@ function proxEntreno(){
   if(tokManana==='mov'||tokManana==='rest') return {cuando:'manana', r:null, tok:tokManana};
   return null;
 }
+/* enganche para el agente de IA del dueno (mismo mecanismo que coachDaily): un
+   proceso externo escribe en localStorage la clave afc2:u:<uid>:proxIA con
+   {d:'YYYY-MM-DD', txt:'...'} y la capsula lo muestra como analisis principal
+   mientras este fresco (hoy o ayer). Sin eso, manda el analisis local de abajo. */
+function proxIA(){
+  try{
+    const v=JSON.parse(localStorage.getItem('afc2:u:'+UID+':proxIA')||'null');
+    if(v && v.txt && (v.d===TODAY() || v.d===addDays(TODAY(),-1))) return v;
+  }catch(e){}
+  return null;
+}
+/* analisis local de las ultimas sesiones para la rutina que viene (pedido del
+   dueno: "que analice sesiones previas y de informacion mas relevante"). Solo
+   dice cosas que salen de datos reales; sin historial, no inventa. */
+function proxAnalisis(r){
+  if(!r) return [];
+  const out=[];
+  /* dias desde la ultima vez que se hizo ESTA rutina */
+  const ult=[...S.sessions].reverse().find(s=>s.rid===r.id);
+  if(ult){
+    const dias=Math.round((fromISO(TODAY())-fromISO(ult.d))/864e5);
+    if(dias>=10) out.push({ic:'cal', cls:'gold', txt:`Hace ${dias} días no haces esta rutina: entra suave la primera serie`});
+    else if(dias>=1) out.push({ic:'cal', cls:'', txt:`Última vez: hace ${dias} día${dias>1?'s':''}`});
+  } else out.push({ic:'zap', cls:'mint', txt:'Primera vez con esta rutina: registra todo para calibrar las cargas'});
+  /* records cerca y ejercicios estancados, sobre el historial de SUS ejercicios */
+  let cerca=[], estancados=[], incompletos=[];
+  (r.ex||[]).forEach(e=>{
+    const hist=(S.logs[e.id]||[]).filter(h=>!h.alt);
+    const last=hist[hist.length-1];
+    if(!last||!last.sets.length) return;
+    const tops=hist.map(h=>Math.max(...h.sets.map(s=>+s.w||0)));
+    const top=tops[tops.length-1], mejor=Math.max(...tops);
+    if(mejor>0 && top>=mejor-2 && hist.length>=2) cerca.push({n:e.name, falta:Math.max(0,mejor-top)});
+    if(hist.length>=3){
+      const u3=tops.slice(-3);
+      if(u3[0]===u3[1] && u3[1]===u3[2] && u3[0]>0) estancados.push(e.name);
+    }
+    const need=(((S&&S.custom)||{})[e.id])??e.sets;
+    if(need && last.sets.length<need) incompletos.push({n:e.name, hizo:last.sets.length, need});
+  });
+  if(cerca.length){ const c=cerca[0];
+    out.push({ic:'trophy', cls:'mint', txt: c.falta===0 ? `Vas a defender tu récord en ${c.n}` : `A ${fmt1(c.falta)} kg de tu récord en ${c.n}: hoy puede caer`}); }
+  if(estancados.length) out.push({ic:'chart', cls:'gold', txt:`${estancados[0]} lleva 3 sesiones en el mismo peso: prueba subir 2,5 kg o una repetición más`});
+  if(incompletos.length){ const x=incompletos[0];
+    out.push({ic:'clip', cls:'', txt:`La última vez dejaste ${x.n} en ${x.hizo}/${x.need} series: complétalo hoy`}); }
+  return out.slice(0,3);
+}
 /* texto corto de la tarjeta rotativa (el detalle completo va en ACTIONS.proxBox) */
 function proxCardTxt(p){
   if(!p) return '';
@@ -4956,6 +5003,25 @@ function proxCardTxt(p){
   if(p.r) return `<b>Mañana toca ${esc(p.r.name)}.</b> Hoy cierra la proteína y duerme bien: el rendimiento de mañana se decide hoy.`;
   if(p.tok==='mov') return '<b>Mañana es día de movilidad.</b> Aprovecha hoy para dormir bien y bajarle al estrés: la recuperación también suma.';
   return '<b>Mañana descansas.</b> El músculo crece en el descanso, no en el gym: aprovecha para dormir bien.';
+}
+/* la tarjeta del rotador, rediseñada (pedido del dueno: "diagramemos mejor esa
+   isla, se ve muy simple, basate en el home"): nombre de la rutina con jerarquia
+   de titulo, la hora como dato secundario, y hasta dos lineas de analisis real
+   (IA si el agente escribio hoy, local si no) en vez de una frase generica. */
+function proxCardRich(p){
+  const ia=proxIA();
+  const titulo = p.r ? p.r.name : (p.tok==='mov'?'Movilidad':'Descanso');
+  const cuando = p.cuando==='hoy'
+    ? (p.faltanHoras>0 ? 'Hoy · '+p.hora : 'Hoy · aún cuenta')
+    : 'Mañana';
+  const lineas = ia ? [{ic:'zap', cls:'mint', txt:ia.txt}] : (p.r?proxAnalisis(p.r):[]);
+  const cuerpo = lineas.slice(0,2).map(l=>`<div class="flex" style="gap:6px;align-items:flex-start;margin-top:4px">${ic(l.ic,12)}<span class="small ${l.cls}" style="line-height:1.4">${esc(l.txt)}</span></div>`).join('');
+  const fallback = !lineas.length ? `<div class="small dim mt4">${p.r?'Sin historial todavía: hoy se estrena.':(p.tok==='mov'?'Estira con calma: también suma.':'El músculo crece descansando.')}</div>` : '';
+  return `<div class="flex between" style="gap:8px;align-items:baseline">
+    <b style="font:600 17px var(--ui)">${esc(titulo)}</b>
+    <span class="small dim" style="flex:none">${cuando}</span></div>
+  ${cuerpo}${fallback}
+  <div class="small mt4" style="color:var(--blue)">Análisis completo ${ic('chevR',10)}</div>`;
 }
 /* N4: ventana flotante de la capsula "Tu proximo entreno" (patron G5, igual a exStats).
    Solo muestra datos reales: si un ejercicio no tiene historial no aparece su fila, y si
@@ -4991,6 +5057,17 @@ function proxBoxOpen(){
   box.innerHTML=`<div class="fboxin">
     <div class="flex between mb8"><b class="t-h2" style="min-width:0">${esc(titulo)}</b><button class="btn sm" id="fcls" aria-label="cerrar">${ic('x',14)}</button></div>
     <div class="small dim mb12">${cuandoTxt}</div>
+    ${(()=>{ /* analisis arriba: la IA del dueno si escribio hoy, el local si no */
+      const ia=proxIA();
+      if(ia) return `<div class="mod tight mb12" style="border-color:rgba(var(--acc-rgb),.4)">
+        <div class="flex" style="gap:8px;align-items:flex-start">${ic('zap',15)}
+        <div class="grow"><b style="font-size:14px;color:var(--mint)">Tu coach analizó tus sesiones</b>
+        <div class="small mt4" style="line-height:1.55">${esc(ia.txt)}</div></div></div></div>`;
+      const an=r?proxAnalisis(r):[];
+      if(!an.length) return '';
+      return `<div class="mod tight mb12"><div class="mod-head" style="padding:0 0 6px"><span class="ttl" style="font-size:14px">${ic('chart',14)} De tus últimas sesiones</span></div>
+        ${an.map(l=>`<div class="flex" style="gap:8px;align-items:flex-start;margin-top:6px">${ic(l.ic,13)}<span class="small ${l.cls}" style="line-height:1.5">${esc(l.txt)}</span></div>`).join('')}</div>`;
+    })()}
     ${exRows?`<div class="prlist mb12">${exRows}</div>`:''}
     <div class="small dim mb12">Semana ${((wk2-1)%6)+1} del ciclo · ${fase.toLowerCase()}: ${regla}.</div>
     <div class="mod-head" style="padding:0 0 6px"><span class="ttl" style="font-size:14px">${ic('food',14)} Antes de hoy</span></div>
@@ -5016,7 +5093,7 @@ function rotPool(){
   const rr=rachaRisk();
   if(rr) pool.push({t:'todo', x:(rr.stk>0?`<b>Racha de ${rr.stk} en riesgo.</b> `:'<b>El día aún no cierra.</b> ')+`Te falta: ${rr.falta.slice(0,3).join(' · ')}. Cierra eso y el día cuenta${rr.bonus?' (entrenar = bonus)':''}.`});
   const pe=proxEntreno();
-  if(pe) pool.push({t:'prox', go:'proxBox', x:proxCardTxt(pe)});
+  if(pe) pool.push({t:'prox', go:'proxBox', img:pe.r?entrenoImg(pe.r):null, x:proxCardRich(pe)});
   pool.push({t:'semanal', go:'remGo', x:'<b>Programa tu repaso semanal.</b> Elige un día fijo para pesarte, tomar tu foto y ajustar el plan. Toca para configurar el recordatorio.'});
   pool.push({t:'plan', go:'planGo', x:'<b>Planea tu semana.</b> Asigna a cada día su rutina, movilidad o descanso. Toca para armarla.'});
   /* hitos (antes vivían en el hero) */
@@ -5058,7 +5135,7 @@ function rotImg(t){
 function rotCardHTML(c){
   const lbl={todo:'Pendiente de hoy',prox:'Tu próximo entreno',semanal:'Recordatorio semanal',plan:'Planea tu semana',hito:'Tu progreso',frase:'Motivación',verso:'Versículo'+(c.ref?' · '+c.ref:''),dato:'Dato útil',curioso:'Dato curioso',foto:'Foto de registro',coach:'Coach del día'}[c.t]||'';
   const col={todo:'var(--gold)',prox:'var(--blue)',semanal:'var(--blue)',plan:'var(--blue)',hito:'#58DFA3',frase:'var(--mint)',verso:'var(--blue)',dato:'var(--mint)',curioso:'var(--mint)',foto:'var(--gold)',coach:'#58DFA3'}[c.t]||'var(--mint)';
-  const img=rotImg(c.t);
+  const img=c.img||rotImg(c.t);
   const act=c.go||'rotNext';
   return `<section class="mod tight rotcard" id="rotcard" data-a="${act}" role="button" style="cursor:pointer" aria-label="${c.go?lbl:'ver siguiente'}">
     <img loading="lazy" class="rotimg" src="${img}" alt="" decoding="async">
@@ -9395,12 +9472,30 @@ function gestPlanHTML(){
     `}
   </section>`;
 }
+/* cajas colapsables de Gestion (pedido del dueno: la pestana quedo demasiado
+   extensa). Cabecera tipo schedhead con memoria por usuario (S.cfg.gestOpen) y el
+   contenido pesado SOLO se construye si la caja esta abierta: gestPlanHTML arma 42
+   comidas con escalado; pintarla cerrada era pagar todo eso para no mostrarla. */
+function gestCaja(id, titulo, sub, fnInner, defecto){
+  const abierto=(S.cfg.gestOpen && S.cfg.gestOpen[id]!==undefined) ? !!S.cfg.gestOpen[id] : defecto;
+  return `<section class="mod tight">
+    <button class="schedhead ${abierto?'open':''}" data-a="gestCajaTgl" data-id="${id}" aria-expanded="${abierto?'true':'false'}">
+      <span class="grow tl" style="min-width:0"><b class="schedt" style="display:block">${titulo}</b>
+        <span class="small dim" style="display:block">${sub}</span></span>
+      <span class="nfchev">${ic('chevR',16)}</span>
+    </button>
+  </section>` + (abierto ? fnInner() : '');
+}
 function vGestion(){
+  const hayRotacion = recetasActivas('a').length || recetasActivas('c').length;
+  const nRec=Object.keys(S.meal.selected||{}).length;
   return `
   <h2 class="t-h1" style="margin:6px 2px 12px">Gestión alimentación</h2>
-  ${gestSemanaHTML()}
-  ${gestPlanHTML()}
-  ${nutriExtras()}
+  ${hayRotacion
+    ? gestCaja('resumen','Resumen y recetas', nRec+' receta'+(nRec===1?'':'s')+' en rotación · por persona', gestSemanaHTML, false)
+    : gestSemanaHTML() /* sin rotacion, gestSemanaHTML ES el estado vacio con su invitacion: se muestra directo */}
+  ${hayRotacion ? gestCaja('plan','La semana comida por comida','recetas, % del día, scoops y cambios por día', gestPlanHTML, true) : ''}
+  ${gestCaja('libre','Registro libre','apunta lo que comiste fuera del plan', nutriExtras, false)}
   ${mealPrepBoxHTML()}`;
 }
 /* ============ VISTA: PROGRESO ============ */
@@ -11885,6 +11980,12 @@ const ACTIONS = {
     const nom=d.n; render();
     snackUndo('Fuera de la lista', ()=>{ delete S.meal.hide[nom]; save('meal'); render(); }); },
   mkUnhide(){ S.meal.hide={}; save('meal'); render(); },
+  gestCajaTgl(d){
+    S.cfg.gestOpen=S.cfg.gestOpen||{};
+    const abierto=(S.cfg.gestOpen[d.id]!==undefined) ? !!S.cfg.gestOpen[d.id]
+      : (d.id==='plan'); /* espejo de los 'defecto' de vGestion */
+    S.cfg.gestOpen[d.id]=!abierto; save('cfg'); render();
+  },
   /* vaciar el mercado = deseleccionar todas las recetas. Con confirmacion y deshacer,
      porque tumba la semana armada de los dos de un toque. Los cambios de ingrediente,
      scoops y asignaciones manuales quedan guardados por si la receta vuelve. */
@@ -12284,7 +12385,7 @@ document.addEventListener('click', e=>{
      #view: lo de las ventanas flotantes no se reconstruye. */
   if(el.closest('#view')){
     const ds=el.dataset;
-    const sel='[data-a="'+ds.a+'"]'+['u','i','n','d','k','t','v','x','m'].filter(k=>ds[k]!==undefined)
+    const sel='[data-a="'+ds.a+'"]'+['u','i','n','d','k','t','v','x','m','id','rid','ix','r','w','u2'].filter(k=>ds[k]!==undefined)
       .map(k=>'[data-'+k+'="'+String(ds[k]).replace(/"/g,'')+'"]').join('');
     /* el mismo control se repite (los 7 dias de la semana tienen identicos data-*):
        se guarda ADEMAS cual de las apariciones es, para volver a la misma */

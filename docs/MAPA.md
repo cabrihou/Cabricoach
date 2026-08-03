@@ -21,6 +21,11 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 - **I2** Checkpoint del día: tarjetas de atajos (`ckSection`)
   - I2a Entreno ("Ir a entrenar" + check que completa la rutina)
   - I2b Pasos · I2c Agua · I2d Check-in · I2e Foto del día
+- **I2x** Isla semanal de entrenos: tocar la CAJA de entrenamiento (junto a pasos)
+  abre una fbox con los 7 días y su rutina/movilidad/descanso sobre el mismo
+  `S.week` del calendario, más botón "Entrenar: rutina de hoy" y plantilla base
+  (`islaSemanaHTML`, `ACTIONS.islaSemana`). La semana se reinicia sola cada
+  domingo 8 pm (`weekAutoReset`, sello en `S.cfg.weekResetStamp`)
 - **I3** Caja rotativa "Para ti": pendiente de hoy, coach del día, versículos, datos, hitos (`homeRotator`, `rotcard`)
   - I3a Cápsula "Tu próximo entreno": desde REV 121 la tarjeta trae jerarquía propia
     (rutina como título, hora, hasta 2 líneas de análisis de las últimas sesiones:
@@ -101,6 +106,8 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 - **C2** Recetas (`vRecetas`)
   - C2a CTA "Ármame la semana" + banner de rotación activa (abre C2g)
   - C2b Buscador de recetas
+  - C2h Caja "En el mercado · N" con botón "Vaciar mercado" (confirm + deshacer,
+    `ACTIONS.mercadoVaciar`); vaciar no borra cambios de ingrediente ni scoops
   - C2c Rejilla de categorías (res, pollo, pescado, desayunos, etc.)
   - C2d Tarjeta de receta abierta: ingredientes, costos, sección "Preparación" (`recCard`)
   - C2e Caja "Sugerir receta" + lista "Ideas de recetas" (`vIdeasReceta`)
@@ -114,7 +121,10 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 - **C3** Mercado (`vLista`)
   - C3a Toggle Ambos/Andrés/Cami + periodo (semanal/quincenal/mensual)
   - C3b Barra de suma parcial: $ marcado vs total
-  - C3c Checklist agrupado: Proteínas / Vegetales y frutas / Despensa (`mktCat`)
+  - C3c Checklist agrupado: Proteínas / Vegetales y frutas / Despensa (`mktCat`).
+    Cada fila `.mktrow` se quita con la X o deslizando a la izquierda ("ya lo
+    tengo": `S.meal.hide`, `ACTIONS.mkHide`), con deshacer y chip de restaurar.
+    Las cantidades salen de la SEMANA REAL del plan (ver ARQUITECTURA §5)
   - C3d Caja "Precios y facturas": registrar precio, foto, pegar texto de factura, histórico (`vFacturas`)
 - **C5** Gestión alimentación (`vGestion`, antes "Meal prep"; Tarea 1/2/3 de la fase de
     Gestión). Sin rotación activa (`S.meal.selected` vacío) toda la vista es un estado
@@ -123,6 +133,11 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
     semana comida por comida, Registro libre) son cajas colapsables con memoria por
     usuario (`gestCaja`, `S.cfg.gestOpen`); por defecto solo la semana está abierta y
     el contenido de una caja cerrada ni se construye
+  - C5x Cambio de acompañamiento/salsa por receta: en la semana comida por comida,
+    abrir ingredientes muestra los cambiables como chips con flechas
+    (`.swapchip`); tocar abre la ventana de alternativas con cantidad convertida
+    por carbohidratos equivalentes y costo (`swapBoxHTML`, `S.meal.swaps`,
+    `recetaEfectiva`). Por persona y por receta; el mercado lo refleja
   - C5a "La semana con lo que elegiste" (Tarea 2, `gestData`/`gestSemanaHTML`): cruza
     `S.meal.selected` (recetas + porciones `{a,c}`) con `comidasDe(uid)` (comidas al día
     según meta y reparto de cada uno). Tres bloques:

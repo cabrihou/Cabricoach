@@ -1,0 +1,85 @@
+# Contexto del proyecto · estado y pendientes
+
+> Actualizado: 03/08/2026, corte en REV 123. Este es el documento de aterrizaje:
+> qué es esto, en qué está, qué falta y dónde está todo lo demás.
+
+## Qué es
+
+CabriCoach: la app de entrenamiento y nutrición de Andrés y Cami (pareja, Bogotá).
+PWA de archivo único instalada en sus iPhones desde Netlify (cabricoach.netlify.app).
+No es un producto: es SU app, a la medida, y las decisiones se toman con ese lente.
+
+Los dos perfiles y la regla de oro de nutrición están en
+[ARQUITECTURA.md](ARQUITECTURA.md) §1 y §5 (Andrés usa retatrutida: el riesgo es
+comer de menos, la app empuja a alcanzar la proteína). Metas de macros DINÁMICAS
+por peso desde REV 111 (1,8 g/kg de proteína, promedio semanal de pesajes): el
+"195 g" que aparece en documentos viejos ya no es fijo.
+
+## Mapa de documentos
+
+| Doc | Para qué |
+|---|---|
+| [ARQUITECTURA.md](ARQUITECTURA.md) | cómo funciona por dentro, con los porqués |
+| [PRUEBAS.md](PRUEBAS.md) | receta completa de verificación (estático + CDP) |
+| [MAPA.md](MAPA.md) | código corto por zona de pantalla (I4b, C3d...) para señalar sin ambigüedad |
+| [DESIGN-STANDARDS.md](DESIGN-STANDARDS.md) | estándar visual REV 4.0 "Night Gym" (lo escribió Andy; manda) |
+| [PROYECTO-COACH-AFC.md](PROYECTO-COACH-AFC.md) | especificación original (perfiles, plan, rutinas). Histórico: los macros fijos que menciona ya son dinámicos |
+| [INDICACIONES.md](INDICACIONES.md) | registro histórico de pedidos de la sesión del 30/07 |
+| `../CLAUDE.md` | arranque para Claude Code (estructura, trampas, publicación) |
+| `../.claude/agents/cabricoach.md` | contexto que carga el agente de trabajo |
+
+## Cómo arrancar en un computador nuevo
+
+```bash
+git clone https://github.com/cabrihou/Cabricoach.git && cd Cabricoach
+zsh herramientas/setup.sh     # revisa python3, jsc, claude, hooks, credenciales
+```
+
+Lo que NO viaja por git: `~/.config/cabritos.env` (credenciales de nube) y la
+programación del coach diario (`zsh herramientas/coach-diario/instalar.sh`).
+Regla que evita el dolor: `git pull --rebase` ANTES de tocar nada (el archivo es
+uno solo; un conflicto es irresoluble a mano).
+
+## Estado al corte (REV 123)
+
+Fase reciente (REV 101 → 123, jul 31 - ago 3): motor de escalado por ingrediente
+con techo de kcal, mercado que compra la semana real del plan, rotación gobernada
+por porciones, precios verificados contra mercado colombiano, cambios de
+acompañamiento/salsa por receta, recetas del desvare (proteína asada + papas a la
+francesa), Gestión en cajas colapsables, ciclo de Cami al final del inicio con la
+paleta propia, isla semanal de entrenos con reinicio dominical 8 pm, cápsula del
+próximo entreno con análisis del historial y enganche de IA, estabilizador de
+scroll (la causa raíz de "los saltos" era content-visibility), gráficas con piso
+verosímil y proyección del periodo elegido, metas dinámicas por peso.
+
+## Pendientes que requieren a Andy
+
+1. **Push bloqueado en el computador principal**: git quedó autenticado como
+   `afcastrocc` (sin permiso de escritura en `cabrihou/Cabricoach`). Arreglo:
+   `gh auth login` como `cabrihou`. Hasta entonces los commits se acumulan localmente.
+2. **Netlify llegó a publicar REV 104 con versiones más nuevas ya en GitHub**:
+   si el sitio no refleja el último REV tras un push exitoso, revisar el panel de
+   Deploys en app.netlify.com.
+
+## Deuda técnica conocida
+
+- ~50 botones solo-icono sin `aria-label`; 28 labels bajo 12,5 px por espacio.
+- La tabla de evolución del check-in scrollea horizontal a 320 px.
+- "Leche" puede duplicarse en la lista de compras (recetas en ml, básicos en L).
+- 22 avisos heredados del verificador (la línea base; no crecerla).
+- Los macros declarados de ~13 recetas no cuadran del todo con sus ingredientes
+  (sobre todo grasa por aceite de cocción no listado); el detalle está en
+  `validacion-macros.md` del scratchpad de la sesión del 02/08. El motor de
+  escalado ancla a los declarados precisamente para no arrastrar eso a la pantalla.
+
+## Proyectos satélite
+
+- **Base nutricional Colombia**: `Personal/nutricion-co/` (fuera de este repo).
+  Cosecha de Open Food Facts (~7.100 productos con Colombia), tubería
+  `cosechar_api.py` + vigilantes, entregables CSV/JSONL/reporte con validación de
+  cuadre calórico y marcas propias por cadena derivadas de los datos. Licencia
+  ODbL con atribución (ver su `ATRIBUCION.md`). Candidata a alimentar el buscador
+  de alimentos de la app.
+- **Coach diario**: `herramientas/coach-diario/` escribe `afc2:u:coach:daily`.
+  El MISMO patrón sirve para el agente del próximo entreno
+  (`afc2:u:<uid>:proxIA`, ver ARQUITECTURA §6): Andy definirá ese agente.

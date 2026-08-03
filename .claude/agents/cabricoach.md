@@ -7,11 +7,18 @@ Eres el agente de **CabriCoach**, la app de entrenamiento y nutrición de André
 
 ## Qué es
 
-Una PWA de **archivo único**: `coach-afc-v2.html` (~4,8 MB, HTML+CSS+JS vanilla). Sin build step, sin node, sin dependencias. Todo va embebido: imágenes y fuentes como data-URI en base64. Se instala en iPhone desde Netlify.
+Una PWA de **archivo único**: `coach-afc-v2.html` (~1,1 MB, HTML+CSS+JS vanilla; las
+imágenes de interfaz viven en `assets/cab/` y las de ejercicios en `assets/ej/`, las
+fuentes siguen embebidas en base64). Sin build step, sin node, sin dependencias. Se
+instala en iPhone desde Netlify.
 
 Dos usuarios con planes distintos:
-- **Andrés**: corte de 94,4 a 89,5 kg. 2200 kcal, **195 g de proteína**. Usa retatrutida, así que el riesgo NO es pasarse: es **comer de menos**. Cualquier función de nutrición debe empujar a alcanzar la proteína, no a restringir.
-- **Cami**: recomposición. 1700 kcal, 115 g de proteína. Tiene seguimiento de ciclo menstrual que informa entreno y comida.
+- **Andrés**: corte de 94,4 a 89,5 kg. Usa retatrutida, así que el riesgo NO es pasarse: es **comer de menos**. Cualquier función de nutrición debe empujar a alcanzar la proteína, no a restringir.
+- **Cami**: recomposición. Tiene seguimiento de ciclo menstrual que informa entreno y comida.
+
+Las metas de macros son **DINÁMICAS por peso** desde REV 111 (`metasDe`: proteína
+1,8 g/kg, grasa 0,8 g/kg, kcal por ratio personal, sobre el promedio de pesajes de
+7 días). No asumas cifras fijas de documentos viejos.
 
 Vive en Bogotá (2.640 m), precios en COP, español de Colombia.
 
@@ -28,6 +35,15 @@ Vive en Bogotá (2.640 m), precios en COP, español de Colombia.
 2. **Un solo agente a la vez sobre este archivo.** Dos agentes en paralelo se pisan las ediciones.
 
 3. **Edita con la herramienta Edit**, quirúrgicamente, leyendo el bloque antes.
+
+4. **content-visibility miente**: las `.mod` fuera de pantalla miden un placeholder
+   de 240px tras cada render y se inflan después por frames. Nunca midas layout una
+   sola vez recién renderizado; el estabilizador de scroll de `renderReal` ya
+   compensa (ancla + vigilante por frames): no lo pelees con scrolls manuales.
+   Y `innerText` de secciones no renderizadas devuelve vacío: usa `textContent`.
+
+5. **Tras editar el archivo, el navegador de prueba NO se recarga solo**: navega de
+   nuevo (con limpieza de service workers) o estarás probando el código viejo.
 
 ## Verificación (no hay tests)
 
@@ -80,6 +96,15 @@ Reglas duras:
 
 Ver `docs/DESIGN-STANDARDS.md` para color, componentes y el resto del lenguaje visual.
 
+## Documentación de fondo
+
+- `docs/ARQUITECTURA.md`: cómo funciona todo por dentro (estado, render y
+  estabilizador de scroll, cadena del sistema de comida: metasDe → comidasDe →
+  rotación ponderada → recetaEfectiva/swaps → escalaReceta → comidaArmada →
+  mercado, entreno, gráficas, enganches de IA). Léelo antes de tocar el motor.
+- `docs/PRUEBAS.md`: la receta de verificación completa y las trampas de prueba.
+- `docs/CONTEXTO.md`: estado actual, pendientes y proyectos satélite.
+
 ## Mapa de zonas
 
 `docs/MAPA.md` define un código corto por caja (I1, I4b, C3d, P2d…). Andy los usa para señalar exactamente dónde está algo. **Manténlo actualizado** cuando agregues o muevas secciones: los códigos se quedan con la zona, no con la posición.
@@ -95,10 +120,13 @@ Ver `docs/DESIGN-STANDARDS.md` para color, componentes y el resto del lenguaje v
 
 1. Bump de `APPREV` (`const APPREV='REV N'`).
 2. Bump del cache en `sw.js` **y** `site/sw.js` (`cabritos-vN`), si no los teléfonos no actualizan.
-3. `./publicar.sh` copia la fuente a `site/index.html` y verifica.
-4. Commit. El push a `main` del remoto `cabrihou/Cabricoach` dispara el despliegue en Netlify.
+3. Commit: el hook `.githooks/pre-commit` verifica la app, avisa si el REV no subió,
+   exige que los dos sw.js coincidan y sincroniza `site/index.html` dentro del mismo
+   commit. (`./publicar.sh` sigue existiendo para sincronizar a mano sin commit.)
+4. Push a `main` de `cabrihou/Cabricoach` dispara Netlify (cabricoach.netlify.app).
 
-Nunca dejes `site/index.html` desincronizado de la fuente.
+Si agregas una imagen de interfaz nueva: va como archivo en `assets/cab/` Y en la
+lista `UI_IMGS` de ambos sw.js (precarga offline), nunca embebida en base64.
 
 ## Deuda conocida
 

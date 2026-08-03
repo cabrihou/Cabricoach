@@ -1334,7 +1334,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 117';
+const APPREV='REV 118';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -1815,6 +1815,7 @@ const ING_MACROS={
   "Pan integral (tajada)|unid":{pg:3,cg:12,fg:1.5,por:1,rol:'carb'},
   "Papa criolla|g":{pg:2,cg:18,fg:0.1,por:100,rol:'carb'},
   "Papa|g":{pg:2,cg:17,fg:0.1,por:100,rol:'carb'},
+  "Papas a la francesa (congeladas)|g":{pg:2.5,cg:22,fg:4.5,por:100,rol:'carb'},
   "Pasta (seca)|g":{pg:13,cg:75,fg:1.5,por:100,rol:'carb'},
   "Piña|g":{pg:0.5,cg:13,fg:0.1,por:100,rol:'carb'},
   "Plátano verde|g":{pg:1.3,cg:28,fg:7,por:100,rol:'carb'},
@@ -3000,7 +3001,15 @@ const RECIPES = [
   prep:["Licúa la avena con el banano, los huevos y el scoop de whey hasta que quede una mezcla homogénea.","Calienta una sartén antiadherente a fuego medio.","Vierte porciones pequeñas y cocina 2 minutos por lado, hasta que doren.","Sirve con el yogur encima."],
   dif:1,
   a:{pg:42,cg:60,fg:14,kc:534,ing:[['Avena en hojuelas',60,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Huevos',2,'unid',700],['Banano',80,'g',3500],['Yogur griego',80,'g',35000]]},
-  c:{pg:33,cg:45,fg:11,kc:411,ing:[['Avena en hojuelas',45,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Huevos',1,'unid',700],['Banano',60,'g',3500],['Yogur griego',60,'g',35000]]}}
+  c:{pg:33,cg:45,fg:11,kc:411,ing:[['Avena en hojuelas',45,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Huevos',1,'unid',700],['Banano',60,'g',3500],['Yogur griego',60,'g',35000]]}},
+ {id:'tilapiafran',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'pescado',name:'Tilapia al limón + papas a la francesa',desc:'El desvare rápido de la casa: todo al air fryer, sin complicarse. A: 250 g · 200 g papas. C: 180 g · 150 g papas.',prep:["Sazona los filetes de tilapia con sal, pimienta y jugo de limón.","Pon las papas a la francesa congeladas directo al air fryer a 200°C por 15 minutos, moviendo la canasta a la mitad.","En los últimos minutos agrega la tilapia sazonada al air fryer, o cocínala aparte en sartén a fuego medio-alto hasta que esté firme.","Sirve la tilapia con más limón al gusto junto a las papas recién salidas del air fryer."],
+  dif:1,
+  a:{pg:55,cg:44,fg:13.3,kc:515,ing:[['Tilapia (filete)',250,'g',37000],['Papas a la francesa (congeladas)',200,'g',10000]]},
+  c:{pg:39.8,cg:33,fg:9.8,kc:379,ing:[['Tilapia (filete)',180,'g',37000],['Papas a la francesa (congeladas)',150,'g',10000]]}},
+ {id:'pechugafran',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'pollo',name:'Pechuga asada + papas a la francesa',desc:'El otro desvare de la casa: pechuga sazonada y papas al air fryer, listo en minutos. A: 250 g · 200 g papas. C: 180 g · 150 g papas.',prep:["Sazona la pechuga con sal, pimienta y el sazonador de tu preferencia.","Pon las papas a la francesa congeladas directo al air fryer a 200°C por 15 minutos, moviendo la canasta a la mitad.","En los últimos minutos agrega la pechuga al air fryer, o cocínala aparte a la plancha hasta que esté bien cocida por dentro.","Sirve la pechuga junto a las papas recién salidas del air fryer."],
+  dif:1,
+  a:{pg:62.5,cg:44,fg:19,kc:597,ing:[['Pechuga de pollo',250,'g',28000],['Papas a la francesa (congeladas)',200,'g',10000]]},
+  c:{pg:45.2,cg:33,fg:14,kc:438,ing:[['Pechuga de pollo',180,'g',28000],['Papas a la francesa (congeladas)',150,'g',10000]]}}
 ];
 /* metadatos de meal prep por receta (tiempos, utensilios, conservacion, pasos con atencion activo/pasivo).
    se generaron aparte con los mismos pasos de RECIPES[].prep, en el mismo orden (indice a indice).
@@ -3083,7 +3092,9 @@ const RECIPE_PREP = {
  ensaladatun:{totalMin:29,activoMin:7,descongelar:false,utensilios:["olla pequeña (si cocinas el garbanzo)","tabla de picar","bowl"],conserva:{nevera:2,congelador:0},recalienta:"se sirve frío, no requiere recalentar",pasos:[{min:25,tipo:"olla",atencion:"pasivo",paralelo:true},{min:3,tipo:"picar",atencion:"activo",paralelo:true},{min:2,tipo:"mezclar",atencion:"activo",paralelo:false},{min:2,tipo:"emplatar",atencion:"activo",paralelo:false}]},
  bowlmediterraneo:{totalMin:28,activoMin:15,descongelar:true,utensilios:["plancha o sartén","olla pequeña","tabla de picar"],conserva:{nevera:3,congelador:45},recalienta:"el pollo se puede recalentar en sartén 2 minutos; el resto se sirve frío, arma justo antes",pasos:[{min:9,tipo:"plancha",atencion:"activo",paralelo:false},{min:25,tipo:"olla",atencion:"pasivo",paralelo:true},{min:3,tipo:"picar",atencion:"activo",paralelo:true},{min:1,tipo:"emplatar",atencion:"activo",paralelo:false},{min:2,tipo:"emplatar",atencion:"activo",paralelo:false}]},
  hummuszanahoria:{totalMin:29,activoMin:8,descongelar:false,utensilios:["olla pequeña","licuadora o procesador","tabla de picar"],conserva:{nevera:4,congelador:0},recalienta:"no se recalienta, se sirve frío",pasos:[{min:25,tipo:"olla",atencion:"pasivo",paralelo:true},{min:3,tipo:"licuar",atencion:"activo",paralelo:false},{min:4,tipo:"picar",atencion:"activo",paralelo:true},{min:1,tipo:"emplatar",atencion:"activo",paralelo:false}]},
- bolasenergia:{totalMin:35,activoMin:10,descongelar:false,utensilios:["bowl","cuchara","recipiente con tapa"],conserva:{nevera:7,congelador:30},recalienta:"no se recalienta, se come frío o a temperatura ambiente",pasos:[{min:3,tipo:"mezclar",atencion:"activo",paralelo:false},{min:2,tipo:"mezclar",atencion:"activo",paralelo:false},{min:4,tipo:"mezclar",atencion:"activo",paralelo:false},{min:25,tipo:"frio",atencion:"pasivo",paralelo:true},{min:1,tipo:"emplatar",atencion:"activo",paralelo:false}]}
+ bolasenergia:{totalMin:35,activoMin:10,descongelar:false,utensilios:["bowl","cuchara","recipiente con tapa"],conserva:{nevera:7,congelador:30},recalienta:"no se recalienta, se come frío o a temperatura ambiente",pasos:[{min:3,tipo:"mezclar",atencion:"activo",paralelo:false},{min:2,tipo:"mezclar",atencion:"activo",paralelo:false},{min:4,tipo:"mezclar",atencion:"activo",paralelo:false},{min:25,tipo:"frio",atencion:"pasivo",paralelo:true},{min:1,tipo:"emplatar",atencion:"activo",paralelo:false}]},
+ tilapiafran:{totalMin:18,activoMin:6,descongelar:false,utensilios:["air fryer","sartén (opcional)"],conserva:{nevera:2,congelador:0},recalienta:"air fryer 5 minutos a 180° para que las papas no queden blandas",pasos:[{min:1,tipo:"mezclar",atencion:"activo",paralelo:false},{min:15,tipo:"horno",atencion:"pasivo",paralelo:true},{min:4,tipo:"plancha",atencion:"activo",paralelo:true},{min:1,tipo:"emplatar",atencion:"activo",paralelo:false}]},
+ pechugafran:{totalMin:18,activoMin:6,descongelar:false,utensilios:["air fryer","sartén o plancha (opcional)"],conserva:{nevera:4,congelador:60},recalienta:"air fryer 5 minutos a 180° para que las papas no queden blandas",pasos:[{min:1,tipo:"mezclar",atencion:"activo",paralelo:false},{min:15,tipo:"horno",atencion:"pasivo",paralelo:true},{min:4,tipo:"plancha",atencion:"activo",paralelo:true},{min:1,tipo:"emplatar",atencion:"activo",paralelo:false}]}
 };
 
 /* Básicos semanales fijos, etiquetados por dueño: 'a' Andrés · 'c' Cami.
@@ -3439,6 +3450,7 @@ const NFOODS=[
  ['frijoles','Frijoles','acomp','g',5,15,0.6],
  ['lentejas','Lentejas','acomp','g',5,13.3,0.6],
  ['papasfr','Papas a la francesa','acomp','porción',4,45,17],
+ ['papasfran','Papas a la francesa (congeladas)','acomp','g',2.5,22,4.5],
  ['papacocida','Papa cocida / salada','acomp','g',1.3,13.3,0],
  ['pure','Puré de papa','acomp','porción',3,30,4],
  ['patacon','Patacón','acomp','unidad',1,20,7],
@@ -4630,6 +4642,28 @@ function e1rm(w,r){ return w*(1+r/30); }
 /* horario movible: cada rutina puede vivir en VARIOS días de la semana */
 /* plan semanal día-céntrico: cada día tiene una rutina, 'mov' (movilidad) o 'rest' (descanso) */
 function weekTok(dow){ if(S.week && S.week[dow]!==undefined) return S.week[dow]; const r=ROUTINES.find(rr=>rr.day===dow); return r?r.id:'rest'; }
+/* pedido del dueno: la semana de entrenos se reinicia sola cada domingo a las
+   8 pm, para sentarse a planear la que arranca. Se recuerda el ultimo corte en
+   S.cfg.weekResetStamp; en el primer arranque tras la actualizacion solo se
+   sella el corte (no se borra la semana que ya tenia armada). */
+function weekCorteDominical(){
+  const ahora=new Date(); const corte=new Date(ahora);
+  corte.setHours(20,0,0,0);
+  const dow=ahora.getDay();
+  const atras = dow===0 ? (ahora<corte ? 7 : 0) : dow;
+  corte.setDate(corte.getDate()-atras);
+  return corte.getFullYear()+'-'+String(corte.getMonth()+1).padStart(2,'0')+'-'+String(corte.getDate()).padStart(2,'0');
+}
+function weekAutoReset(){
+  const stamp=weekCorteDominical();
+  if(S.cfg.weekResetStamp===stamp) return false;
+  const primeraVez=!S.cfg.weekResetStamp;
+  S.cfg.weekResetStamp=stamp; save('cfg');
+  if(primeraVez || !S.week) return false;
+  const out={}; for(let d=0;d<7;d++){ const r=ROUTINES.find(rr=>rr.day===d); out[d]=r?r.id:'rest'; }
+  S.week=out; save('week');
+  return true;
+}
 function weekSet(dow, tok){ S.week=Object.assign({}, S.week); S.week[dow]=tok; save('week'); }
 function isMovDay(dow){ return weekTok(dow)==='mov'; }
 function daysOf(r){ const out=[]; for(let d=0;d<7;d++) if(weekTok(d)===r.id) out.push(d); return out; }
@@ -5905,13 +5939,19 @@ function lineChart(o){
   const vals=pts.map(p=>p.v).concat(o.goal!=null?[o.goal]:[]).concat(o.proj!=null?[o.proj.v]:[]);
   let mn=Math.min(...vals), mx=Math.max(...vals);
   const padV=Math.max((mx-mn)*0.12, 0.5); mn-=padV; mx+=padV;
+  /* desdeCero (pedido del dueno): un peso que va de 94 a 89 pintado con el eje
+     autoescalado parece estar tocando el piso de la grafica, como si ya no
+     pudiera bajar mas. Con el eje desde 0 la linea guarda su proporcion real. */
+  if(o.desdeCero){ mn=0; mx=Math.max(...vals)+padV; }
   const n=pts.length + (o.proj?1:0);
   /* escala de TIEMPO real cuando los puntos traen fecha (d): el eje X respeta los días */
   const timeMode = !!(pts[0]&&pts[0].d) && pts.length>1;
   const dnum = s=>Math.round(fromISO(s).getTime()/864e5);
   const t0 = timeMode? dnum(pts[0].d) : 0;
   const span = timeMode? Math.max(1, dnum(pts[pts.length-1].d)-t0) : 1;
-  const Fd = timeMode? ((o.trend&&pts.length>=3)? Math.max(3, Math.round(span*0.45)) : 0)
+  /* horizonte: la proyeccion se extiende tantos dias como el periodo elegido
+     (mirando 6 meses se proyectan 6 meses), no un 45% del rango de datos */
+  const Fd = timeMode? ((o.trend&&pts.length>=3)? (o.horizonte>0? Math.round(o.horizonte) : Math.max(3, Math.round(span*0.45))) : 0)
                      : ((o.trend&&pts.length>=3)? Math.max(2, Math.round(pts.length*0.45)) : 0);
   const den = timeMode? (span+Fd) : Math.max(1, n-1+Fd);
   const XT = t=>L+(t/den)*(W-L-R);
@@ -5993,9 +6033,13 @@ function lineChart(o){
   const last=pts[pts.length-1];
   s+='<text class="em" x="'+clamp(X(pts.length-1), 30, W-R-6)+'" y="'+(Y(last.v)-9)+'" text-anchor="middle">'+o.fmt(last.v)+'</text>';
   if(timeMode){
-    const nt=Math.min(4, Math.max(2, Math.round(span/5)+1));
+    /* las fechas se reparten sobre TODO el eje, horizonte de proyeccion incluido:
+       si no, al proyectar 6 meses los datos quedan comprimidos a la izquierda y
+       las fechas se montan unas sobre otras (ademas las futuras tambien informan) */
+    const tot=den;
+    const nt=Math.min(4, Math.max(2, Math.round(tot/5)+1));
     for(let k=0;k<nt;k++){
-      const t=Math.round(span*k/Math.max(1,nt-1));
+      const t=Math.round(tot*k/Math.max(1,nt-1));
       const anch=k===0?'start':k===nt-1?'end':'middle';
       s+='<text x="'+XT(t)+'" y="'+(H-8)+'" text-anchor="'+anch+'">'+fmtD(addDays(pts[0].d,t))+'</text>';
     }
@@ -6721,7 +6765,7 @@ function ckSection(){
       </div>
       `})()}
     <div class="ckgrid">
-      <div class="cktile ${st.entreno?'on':''}" style="position:relative;overflow:hidden">
+      <div class="cktile ${st.entreno?'on':''}" data-a="islaSemana" style="position:relative;overflow:hidden;cursor:pointer">
         <div class="flex between" style="width:100%"><b>${ic(st.alt?(st.act.t==='padel'?'padel':'heart'):st.isRest?'moon':'barbell',16)} ${st.alt?(st.act.t==='padel'?'Pádel':'Cardio'):st.isRest?'Descanso':'Entreno'}</b><span class="chip" style="color:var(--gold);border-color:rgba(255,201,77,.4)">Bonus</span></div>
         <span class="small dim">${st.isRest?'Día libre: camina suave':st.trained?'Sesión registrada':st.alt?'Cuenta como entreno':routine?routine.name+' te espera':'Sin rutina hoy'}</span>
         ${routine?`<img loading="lazy" src="${entrenoImg(routine)}" alt="" decoding="async" style="display:block;margin:4px auto 0;height:150px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.5))">`:''}
@@ -8113,7 +8157,7 @@ const MKT_CATS=[{id:'prot',label:'Proteínas'},{id:'veg',label:'Vegetales y frut
 const MKT_CATMAP={};
 [['prot',['Carne molida magra','Falda de res','Lomo de res','Punta de anca','Pechuga de pollo','Muslos deshuesados','Lomo de cerdo','Chuleta de cerdo','Tilapia (filete)','Trucha','Atún en lata','Atún en lata (respaldo)','Huevos','Proteína en polvo (whey)','Whey (scoop)','Yogur griego','Queso bajo en grasa','Fríjol (crudo)','Lenteja (cruda)','Garbanzo (crudo)','Salmón (filete)','Camarones (crudos, pelados)','Costillas de cerdo','Queso parmesano']],
  ['veg',['Aguacate','Banano','Brócoli','Cebolla cabezona','Cebolla larga','Champiñones','Ensalada verde','Pimentón','Plátano','Plátano verde','Tomate','Verduras mixtas','Zanahoria','Papa','Papa criolla','Yuca','Frutos rojos congelados','Fruta variada','Espinaca','Manzana verde','Espárragos','Piña','Apio','Pepino']],
- ['desp',['Arroz (crudo)','Arepas','Avena en hojuelas','Chía','Chipotle','Chocolate 85%','Granola','Leche','Leche de coco light','Mantequilla de maní','Maní natural','Almendras','Pan integral (tajada)','Pasta (seca)','Salsa soya','Quinua (cruda)','Alcaparras','Salsa de ostras','Vino tinto (cocción)','Salsa BBQ','Tortilla integral (wrap)']],
+ ['desp',['Arroz (crudo)','Arepas','Avena en hojuelas','Chía','Chipotle','Chocolate 85%','Granola','Leche','Leche de coco light','Mantequilla de maní','Maní natural','Almendras','Pan integral (tajada)','Pasta (seca)','Salsa soya','Quinua (cruda)','Alcaparras','Salsa de ostras','Vino tinto (cocción)','Salsa BBQ','Tortilla integral (wrap)','Papas a la francesa (congeladas)']],
 ].forEach(([cat,names])=>names.forEach(n=>MKT_CATMAP[nrmTxt(n)]=cat));
 function mktCat(name){ return MKT_CATMAP[nrmTxt(name)]||'otros'; }
 /* ============ N5: FORMULARIO "ARMAME LA SEMANA" ============
@@ -8652,6 +8696,36 @@ function repBoxOpen(){
   return box;
 }
 function repBoxRedraw(){ const box=document.querySelector('.fbox.repbox'); if(box) box.innerHTML=repBoxHTML(); }
+/* ============ ISLA: ASIGNAR LA SEMANA DE ENTRENO DESDE EL HOME ============
+   Pedido del dueno: tocar la caja de entrenamiento (al lado de los pasos) abre una
+   isla flotante para asignar el entreno de cada dia; es el MISMO S.week que usan el
+   calendario y la pestana Entrenar (weekSet/routineOn), asi que queda sincronizado
+   solo. El boton Entrenar si lleva directo a la rutina del dia. */
+function islaSemanaHTML(){
+  const dias=[['Lun',1],['Mar',2],['Mié',3],['Jue',4],['Vie',5],['Sáb',6],['Dom',0]];
+  const hoyDow=fromISO(TODAY()).getDay();
+  const rHoy=routineOn(hoyDow);
+  return `<div class="fboxin"><section class="mod" style="margin:0">
+    <div class="mod-head"><span class="ttl">${ic('barbell',16)} Tu semana de entreno</span>
+      <button class="btn sm ghost" data-a="islaSemanaCerrar" aria-label="Cerrar">${ic('x',14)}</button></div>
+    ${dias.map(([lb,dow])=>{
+      const tok=weekTok(dow);
+      return `<div class="row" style="align-items:center${dow===hoyDow?';border-left:3px solid var(--mint);padding-left:9px':''}">
+        <b style="min-width:44px${dow===hoyDow?';color:var(--mint)':''}">${lb}</b>
+        <select class="in grow" data-ch="islaDia" data-d="${dow}" aria-label="Entreno del ${lb}">
+          ${ROUTINES.map(r=>`<option value="${r.id}" ${tok===r.id?'selected':''}>${esc(r.name)}</option>`).join('')}
+          <option value="mov" ${tok==='mov'?'selected':''}>Movilidad</option>
+          <option value="rest" ${tok==='rest'?'selected':''}>Descanso</option>
+        </select>
+      </div>`; }).join('')}
+    <div class="small dim mt8">Sincronizada con el calendario y con Entrenar. Se reinicia cada domingo a las 8 pm para planear la semana que arranca.</div>
+    <div class="flex mt12" style="gap:8px">
+      <button class="btn ghost" data-a="islaSemanaBase">Plantilla base</button>
+      <button class="btn primary grow" data-a="islaEntrenarHoy" ${rHoy?'':'disabled'}>${ic('barbell',14)} ${rHoy?'Entrenar: '+esc(rHoy.name):'Hoy es '+(weekTok(hoyDow)==='mov'?'movilidad':'descanso')}</button>
+    </div>
+  </section></div>`;
+}
+function islaSemanaRedraw(){ const box=document.querySelector('.fbox.islasem'); if(box) box.innerHTML=islaSemanaHTML(); }
 function repBoxRemove(){
   const box=document.querySelector('.fbox.repbox'); if(box) box.remove();
   UI._repBox=null;
@@ -8990,7 +9064,8 @@ function gestSemanaHTML(){
   });
   return `
   <section class="mod">
-    <div class="mod-head"><span class="ttl">${ic('book',16)} Qué elegiste · ${g.recetas.length} receta${g.recetas.length>1?'s':''}</span></div>
+    <div class="mod-head"><span class="ttl">${ic('book',16)} Qué elegiste · ${g.recetas.length} receta${g.recetas.length>1?'s':''}</span>
+      <button class="chip" data-a="presetPractico">Semana práctica</button></div>
     ${g.recetas.map(x=>`<div class="row" style="align-items:flex-start;flex-wrap:wrap">
       <span class="badge cat-${x.r.cat}">${catIco(x.r.cat,22)}</span>
       <div class="grow" style="min-width:200px">
@@ -9661,7 +9736,7 @@ function rendimientoCard(sub){
       <div><div class="bignum" style="line-height:1">${big}<small class="t-unit"> ${unit}</small></div>
         <div class="small ${deltaCls}" style="font-weight:600;margin-top:6px">${deltaTxt}</div></div>
     </div>
-    ${pts?`<div class="mt8">${lineChart({pts, fmt:v=>mode==='peso'?fmt1(v)+' kg':mode==='general'?v+'/4':mode==='tiempo'?v+' min':fmtInt(v)+' kg', trend:mode!=='general', h:120, bands:pts.length?deloadBands(pts[0].d, pts[pts.length-1].d):[], series2})}</div>`:''}
+    ${pts?`<div class="mt8">${lineChart({pts, fmt:v=>mode==='peso'?fmt1(v)+' kg':mode==='general'?v+'/4':mode==='tiempo'?v+' min':fmtInt(v)+' kg', trend:mode!=='general', h:120, bands:pts.length?deloadBands(pts[0].d, pts[pts.length-1].d):[], series2, horizonte:N, desdeCero:mode==='peso'})}</div>`:''}
     <div class="kgrid k3 mt12">
       ${trio.map(x=>`<div class="kbox"><span class="lbl">${x.lbl}</span><div class="kv ${x.cls||''}">${x.val}</div></div>`).join('')}
     </div>
@@ -10193,7 +10268,7 @@ function vCheckin(){
     ${lineChart({pts:cs.map(c=>({x:fmtD(c.d), d:c.d, v:c.cint, tip:fmtD(c.d)+' · '+fmt1(c.cint)+' cm'})), fmt:v=>fmt1(v)+' cm', trend:true, h:150})}</section>`})()}
   ${(()=>{const cs=S.checkins.filter(c=>c.fat); if(cs.length<2) return '';
     return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('target',16)} Grasa corporal</span><span class="cross">+</span></div>
-    ${lineChart({pts:cs.map(c=>({x:fmtD(c.d), d:c.d, v:c.fat, tip:fmtD(c.d)+' · '+fmt1(c.fat)+'%'})), goal:UID==='andres'?14.5:26.5, goalLabel:'META', fmt:v=>fmt1(v)+'%', trend:true, h:150})}</section>`})()}
+    ${lineChart({pts:cs.map(c=>({x:fmtD(c.d), d:c.d, v:c.fat, tip:fmtD(c.d)+' · '+fmt1(c.fat)+'%'})), goal:UID==='andres'?14.5:26.5, goalLabel:'META', horizonte:UI.progRange||30, desdeCero:true, fmt:v=>fmt1(v)+'%', trend:true, h:150})}</section>`})()}
   ${S.checkins.length?`<section class="mod">
     <div class="mod-head"><span class="ttl">${ic('cal',16)} Evolución</span><span class="cross">+</span></div>
     <div class="tbwrap"><table class="tb">
@@ -10379,6 +10454,7 @@ function render(){
 function renderReal(){
   hideTip();
   clearDayCache();
+  if(weekAutoReset()) setTimeout(()=>toast('Semana nueva: la plantilla de entrenos volvió a la base, asígnala a tu medida'), 400);
   /* PLAN (el usuario activo) se deriva cada render: config estatica de PLANS[UID]
      + las 4 metas calculadas de metasDe (cacheadas por semana, no se recalculan
      de verdad salvo cambio de lunes o metasInvalidar). Asi todo lo que lee
@@ -11412,6 +11488,17 @@ const ACTIONS = {
   },
   schedReset(){ const out={}; for(let d=0;d<7;d++){ const r=ROUTINES.find(rr=>rr.day===d); out[d]=r?r.id:'rest'; } S.week=out; UI.wkPick=null; save('week'); render(); toast('Semana original restaurada'); },
   wkPickDay(d){ const dow=+d.d; UI.wkPick = UI.wkPick===dow ? null : dow; render(); },
+  islaSemana(){
+    let box=document.querySelector('.fbox.islasem');
+    if(!box){ box=document.createElement('div'); box.className='fbox scroll islasem'; box.innerHTML=islaSemanaHTML();
+      box.onclick=e=>{ if(e.target===box) ACTIONS.islaSemanaCerrar(); };
+      document.body.appendChild(box); }
+  },
+  islaSemanaCerrar(){ const box=document.querySelector('.fbox.islasem'); if(box) box.remove(); },
+  islaSemanaBase(){ const out={}; for(let d=0;d<7;d++){ const r=ROUTINES.find(rr=>rr.day===d); out[d]=r?r.id:'rest'; }
+    S.week=out; save('week'); islaSemanaRedraw(); render(); toast('Plantilla base puesta'); },
+  islaEntrenarHoy(){ const r=routineOn(fromISO(TODAY()).getDay()); if(!r) return;
+    ACTIONS.islaSemanaCerrar(); ACTIONS.goSession({rid:r.id}); },
   wkSet(d){ weekSet(+d.d, d.v); UI.wkPick=null; render(); const nm={mov:'Movilidad',rest:'Descanso'}[d.v]||(ROUTINES.find(r=>r.id===d.v)||{}).name||''; toast(nm); },
   injectAt(){
     const i=S.inject.indexOf(UI.calSel);
@@ -11678,6 +11765,20 @@ const ACTIONS = {
     const nom=d.n; render();
     snackUndo('Fuera de la lista', ()=>{ delete S.meal.hide[nom]; save('meal'); render(); }); },
   mkUnhide(){ S.meal.hide={}; save('meal'); render(); },
+  /* preset "semana practica": el desvare mas grande de la casa, proteina asada
+     + papas a la francesa en air fryer para todos los almuerzos y cenas.
+     Reemplaza lo elegido de almuerzo/cena (desayuno y snacks quedan igual). */
+  presetPractico(){
+    if(!confirm('¿Armo la semana práctica? Proteína asada + papas para almuerzos y cenas, se reemplazan las recetas de almuerzo/cena elegidas (el desayuno y los snacks quedan como están).')) return;
+    const sel=S.meal.selected;
+    Object.keys(sel).forEach(id=>{
+      const r=RECIPES.find(x=>x.id===id);
+      if(r && r.mom && (r.mom.includes('almuerzo')||r.mom.includes('cena'))) delete sel[id];
+    });
+    sel.tilapiafran={a:4,c:4};
+    sel.pechugafran={a:4,c:4};
+    save('meal'); render();
+  },
   /* ===== T3: sugerir receta ===== */
   ideaOpen(){
     UI.ideaOpen=!UI.ideaOpen;
@@ -11914,6 +12015,7 @@ const CHANGES = {
     S.weights.sort((a,b)=>a.d<b.d?-1:1); save('weights'); metasInvalidar(UID); render();
   },
   sched(el){ S.sched[el.dataset.rid]=+el.value; save('sched'); render(); },
+  islaDia(el){ weekSet(+el.dataset.d, el.value); islaSemanaRedraw(); render(); },
   pcal(){
     const F={pollo:[0.31,'g'],res:[0.28,'g'],cerdo:[0.30,'g'],pescado:[0.26,'g'],huevo:[6.5,'unid'],atun:[26,'unid'],yogur:[0.09,'g'],whey:[24,'unid']};
     const f=F[$('#pcFood').value], q=parseFloat(($('#pcQty').value||'').replace(',','.'))||0;

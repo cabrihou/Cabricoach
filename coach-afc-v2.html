@@ -770,6 +770,8 @@ svg .acc{fill:var(--mint);stroke:none}
    a escribir para cualquier ajuste pequeño */
 .ingline{display:none;margin-top:4px;font-size:13px}
 .ingline.on{display:block}
+.swapchip{padding:2px 8px;font-size:12px;vertical-align:baseline;gap:3px}
+.swapchip.on{border-color:rgba(var(--acc-rgb),.55);color:var(--mint)}
 .pctstep{display:inline-flex;align-items:center;gap:4px;background:var(--card2);border:1px solid var(--line2);border-radius:999px;padding:3px 8px;flex:none;margin-left:auto}
 .pctstep .pctb{width:34px;height:34px;border:none;background:none;color:var(--mint);font:600 20px/1 var(--ui);border-radius:999px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
 .pctstep .pctb:active{background:rgba(var(--acc-rgb),.16)}
@@ -1334,7 +1336,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 118';
+const APPREV='REV 119';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2074,6 +2076,66 @@ function scoopsDeComida(uid, dl, i){
   const key=uid==='andres'?'a':'c', mk='m'+(i+1);
   return (S.meal.scoops&&S.meal.scoops[key]&&S.meal.scoops[key][dl]&&S.meal.scoops[key][dl][mk])||0;
 }
+/* ============ CAMBIOS DE INGREDIENTE (pedido del dueno) ============
+   "algunas dicen que traen arroz, a veces quisiera cambiar por papas, o por yuca...
+   o me dice salsa de ostras pero quiero cambiar la salsa". Grupos de equivalencia:
+   solo se puede cambiar dentro del grupo (un carbo por otro carbo, una salsa por
+   otra), y la cantidad se CONVIERTE para aportar los mismos carbohidratos segun
+   ING_MACROS (60 g de arroz crudo no equivalen a 60 g de papa: equivalen a ~280 g).
+   Las salsas van volumen por volumen: son condimento, no fuente de macros.
+   El cambio se guarda por persona y receta (S.meal.swaps[key][rid][nombreOriginal])
+   y se aplica en recetaEfectiva, que es lo que consume comidaArmada: la semana, el
+   escalado, el piso del % y el mercado lo ven todos sin trabajo extra. */
+const SWAP_GRUPOS={
+  carb:['Arroz (crudo)','Papa','Papa criolla','Yuca','Plátano','Plátano verde','Papas a la francesa (congeladas)','Pasta (seca)','Quinua (cruda)'],
+  salsa:['Salsa de ostras','Salsa soya','Salsa BBQ'],
+};
+function swapGrupoDe(n){ for(const g in SWAP_GRUPOS){ if(SWAP_GRUPOS[g].includes(n)) return g; } return null; }
+/* precio $/kg de un ingrediente: la primera aparicion en el recetario (alli viven
+   los precios) para no duplicar la tabla */
+function precioDe(nombre){
+  for(const r of RECIPES){ for(const w of ['a','c']){ for(const ing of r[w].ing){ if(ing[0]===nombre) return ing[3]; } } }
+  return 0;
+}
+function swapsDe(key, rid){ return (S.meal.swaps&&S.meal.swaps[key]&&S.meal.swaps[key][rid])||null; }
+/* cantidad equivalente al cambiar 'de' por 'a': mismos carbohidratos para el grupo
+   carb; misma cantidad para salsas */
+function cantEquivalente(de, q, uDe, a){
+  const g=swapGrupoDe(de);
+  const uA = ingInfo(a, uDe) ? uDe : (ingInfo(a,'g') ? 'g' : 'ml');
+  if(g!=='carb') return {q, u:uA};
+  const a0=ingAporte(de, q, uDe), infoA=ingInfo(a, uA);
+  if(!a0 || !infoA || !infoA.cg) return {q, u:uA};
+  const q2=a0.cg/(infoA.cg/(infoA.por||100));
+  return {q:redondeaCantidad(q2, uA), u:uA};
+}
+/* la receta con los cambios de esta persona aplicados: clona solo el lado usado y
+   ajusta los macros declarados con el delta real del cambio, para que el motor de
+   escalado (que ancla a los declarados) siga el plato que de verdad se sirve */
+function recetaEfectiva(r, key){
+  const sw=swapsDe(key, r.id);
+  if(!sw) return r;
+  const activos=Object.entries(sw).filter(([de,a])=>a&&a!==de);
+  if(!activos.length) return r;
+  const lado=r[key];
+  let dPg=0,dCg=0,dFg=0, cambio=false;
+  const ing=lado.ing.map(([n,q,u,c])=>{
+    const a=sw[n]; if(!a||a===n) return [n,q,u,c];
+    const eq=cantEquivalente(n,q,u,a);
+    const v0=ingAporte(n,q,u), v1=ingAporte(a,eq.q,eq.u);
+    if(v0&&v1){ dPg+=v1.pg-v0.pg; dCg+=v1.cg-v0.cg; dFg+=v1.fg-v0.fg; }
+    cambio=true;
+    return [a, eq.q, eq.u, precioDe(a)||c];
+  });
+  if(!cambio) return r;
+  const out={...r};
+  out[key]={...lado, ing,
+    pg:Math.round((lado.pg+dPg)*10)/10, cg:Math.round(lado.cg+dCg),
+    fg:Math.round((lado.fg+dFg)*10)/10, kc:Math.round(lado.kc+dPg*4+dCg*4+dFg*9)};
+  out._swapped=true;
+  return out;
+}
+
 /* comida ya armada: la receta que le toca, escalada a su propia meta, mas los
    scoops que se le hayan agregado. Pieza central que usan gestPlanHTML (la semana
    comida por comida), gestData (el resumen por persona) y el chip de meal prep del
@@ -2084,7 +2146,8 @@ function comidaArmada(uid, dl, i, comidas){
   const key=uid==='andres'?'a':'c';
   const momentos=momentosDeEtiqueta(m.label);
   const rid=recetaDeComida(uid, dl, i, cm.length);
-  const r=rid?RECIPES.find(x=>x.id===rid):null;
+  const r0=rid?RECIPES.find(x=>x.id===rid):null;
+  const r=r0?recetaEfectiva(r0, key):null;
   /* apto: null si no hay receta (no aplica), true/false si la hay. Solo puede dar
      false cuando la receta viene de una eleccion manual (S.meal.plan) que no
      encaja: la rotacion automatica de recetaDeComida ya filtra por momento. */
@@ -2156,7 +2219,8 @@ function comidaArmadaExtra(uid, dl, ex){
   const momentos=momentosDeEtiqueta(ex.tipo);
   const m={k:ex.id, label:EXTRA_LABEL[ex.tipo]||'Extra', ...metaExtra(uid,ex.tipo)};
   const rid=recetaDeComidaExtra(uid, dl, ex);
-  const r=rid?RECIPES.find(x=>x.id===rid):null;
+  const r0=rid?RECIPES.find(x=>x.id===rid):null;
+  const r=r0?recetaEfectiva(r0, key):null;
   const apto = r ? recetaApta(r, momentos) : null;
   const scoops=(S.meal.scoops&&S.meal.scoops[key]&&S.meal.scoops[key][dl]&&S.meal.scoops[key][dl][ex.id])||0;
   const sc=scoopMac();
@@ -3009,7 +3073,11 @@ const RECIPES = [
  {id:'pechugafran',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'pollo',name:'Pechuga asada + papas a la francesa',desc:'El otro desvare de la casa: pechuga sazonada y papas al air fryer, listo en minutos. A: 250 g · 200 g papas. C: 180 g · 150 g papas.',prep:["Sazona la pechuga con sal, pimienta y el sazonador de tu preferencia.","Pon las papas a la francesa congeladas directo al air fryer a 200°C por 15 minutos, moviendo la canasta a la mitad.","En los últimos minutos agrega la pechuga al air fryer, o cocínala aparte a la plancha hasta que esté bien cocida por dentro.","Sirve la pechuga junto a las papas recién salidas del air fryer."],
   dif:1,
   a:{pg:62.5,cg:44,fg:19,kc:597,ing:[['Pechuga de pollo',250,'g',28000],['Papas a la francesa (congeladas)',200,'g',10000]]},
-  c:{pg:45.2,cg:33,fg:14,kc:438,ing:[['Pechuga de pollo',180,'g',28000],['Papas a la francesa (congeladas)',150,'g',10000]]}}
+  c:{pg:45.2,cg:33,fg:14,kc:438,ing:[['Pechuga de pollo',180,'g',28000],['Papas a la francesa (congeladas)',150,'g',10000]]}},
+ {id:'carnefran',mom:['almuerzo','cena'],momPref:'cena',cat:'res',name:'Carne asada + papas a la francesa',desc:'El tercer desvare de la casa: lomo de res sazonado a la plancha y papas al air fryer. A: 250 g · 200 g papas. C: 180 g · 150 g papas.',prep:["Sazona el lomo de res con sal gruesa, pimienta y el sazonador de tu preferencia.","Pon las papas a la francesa congeladas directo al air fryer a 200°C por 15 minutos, moviendo la canasta a la mitad.","Asa la carne en plancha o sartén bien caliente, 3-4 minutos por lado según el grosor y el término que te guste.","Deja reposar la carne un par de minutos y sírvela junto a las papas."],
+  dif:1,
+  a:{pg:62.5,cg:44,fg:29,kc:687,ing:[['Lomo de res',250,'g',55000],['Papas a la francesa (congeladas)',200,'g',10000]]},
+  c:{pg:45.2,cg:33,fg:21.2,kc:504,ing:[['Lomo de res',180,'g',55000],['Papas a la francesa (congeladas)',150,'g',10000]]}}
 ];
 /* metadatos de meal prep por receta (tiempos, utensilios, conservacion, pasos con atencion activo/pasivo).
    se generaron aparte con los mismos pasos de RECIPES[].prep, en el mismo orden (indice a indice).
@@ -3094,7 +3162,8 @@ const RECIPE_PREP = {
  hummuszanahoria:{totalMin:29,activoMin:8,descongelar:false,utensilios:["olla pequeña","licuadora o procesador","tabla de picar"],conserva:{nevera:4,congelador:0},recalienta:"no se recalienta, se sirve frío",pasos:[{min:25,tipo:"olla",atencion:"pasivo",paralelo:true},{min:3,tipo:"licuar",atencion:"activo",paralelo:false},{min:4,tipo:"picar",atencion:"activo",paralelo:true},{min:1,tipo:"emplatar",atencion:"activo",paralelo:false}]},
  bolasenergia:{totalMin:35,activoMin:10,descongelar:false,utensilios:["bowl","cuchara","recipiente con tapa"],conserva:{nevera:7,congelador:30},recalienta:"no se recalienta, se come frío o a temperatura ambiente",pasos:[{min:3,tipo:"mezclar",atencion:"activo",paralelo:false},{min:2,tipo:"mezclar",atencion:"activo",paralelo:false},{min:4,tipo:"mezclar",atencion:"activo",paralelo:false},{min:25,tipo:"frio",atencion:"pasivo",paralelo:true},{min:1,tipo:"emplatar",atencion:"activo",paralelo:false}]},
  tilapiafran:{totalMin:18,activoMin:6,descongelar:false,utensilios:["air fryer","sartén (opcional)"],conserva:{nevera:2,congelador:0},recalienta:"air fryer 5 minutos a 180° para que las papas no queden blandas",pasos:[{min:1,tipo:"mezclar",atencion:"activo",paralelo:false},{min:15,tipo:"horno",atencion:"pasivo",paralelo:true},{min:4,tipo:"plancha",atencion:"activo",paralelo:true},{min:1,tipo:"emplatar",atencion:"activo",paralelo:false}]},
- pechugafran:{totalMin:18,activoMin:6,descongelar:false,utensilios:["air fryer","sartén o plancha (opcional)"],conserva:{nevera:4,congelador:60},recalienta:"air fryer 5 minutos a 180° para que las papas no queden blandas",pasos:[{min:1,tipo:"mezclar",atencion:"activo",paralelo:false},{min:15,tipo:"horno",atencion:"pasivo",paralelo:true},{min:4,tipo:"plancha",atencion:"activo",paralelo:true},{min:1,tipo:"emplatar",atencion:"activo",paralelo:false}]}
+ pechugafran:{totalMin:18,activoMin:6,descongelar:false,utensilios:["air fryer","sartén o plancha (opcional)"],conserva:{nevera:4,congelador:60},recalienta:"air fryer 5 minutos a 180° para que las papas no queden blandas",pasos:[{min:1,tipo:"mezclar",atencion:"activo",paralelo:false},{min:15,tipo:"horno",atencion:"pasivo",paralelo:true},{min:4,tipo:"plancha",atencion:"activo",paralelo:true},{min:1,tipo:"emplatar",atencion:"activo",paralelo:false}]},
+ carnefran:{totalMin:20,activoMin:9,descongelar:false,utensilios:["air fryer","plancha o sartén"],conserva:{nevera:3,congelador:60},recalienta:"sartén 2 minutos por lado; las papas vuelven al air fryer 3 minutos",pasos:[{min:2,tipo:"mezclar",atencion:"activo",paralelo:false},{min:15,tipo:"horno",atencion:"pasivo",paralelo:true},{min:8,tipo:"plancha",atencion:"activo",paralelo:false},{min:2,tipo:"reposo",atencion:"pasivo",paralelo:true}]},
 };
 
 /* Básicos semanales fijos, etiquetados por dueño: 'a' Andrés · 'c' Cami.
@@ -8726,6 +8795,30 @@ function islaSemanaHTML(){
   </section></div>`;
 }
 function islaSemanaRedraw(){ const box=document.querySelector('.fbox.islasem'); if(box) box.innerHTML=islaSemanaHTML(); }
+/* ============ VENTANA DE CAMBIO DE INGREDIENTE ============ */
+function swapBoxHTML(rid, uid, ix){
+  const key=uid==='andres'?'a':'c';
+  const r=RECIPES.find(x=>x.id===rid); if(!r) return '';
+  const [orig,q,u]=r[key].ing[ix];
+  const grupo=swapGrupoDe(orig); if(!grupo) return '';
+  const sw=swapsDe(key,rid)||{};
+  const actual=sw[orig]||orig;
+  const nombreG=grupo==='carb'?'el acompañamiento':'la salsa';
+  return `<div class="fboxin"><section class="mod" style="margin:0">
+    <div class="mod-head"><span class="ttl">${ic('repeat',15)} Cambiar ${nombreG}</span>
+      <button class="btn sm ghost" data-a="swapCerrar" aria-label="Cerrar">${ic('x',14)}</button></div>
+    <div class="small dim mb8">${esc(r.name)} · para ${uid==='andres'?'Andrés':'Cami'}. ${grupo==='carb'?'La cantidad se convierte para aportar los mismos carbohidratos.':'Misma cantidad, otra salsa.'}</div>
+    ${SWAP_GRUPOS[grupo].map(op=>{
+      const eq=op===orig?{q,u}:cantEquivalente(orig,q,u,op);
+      const precio=precioDe(op);
+      return `<button class="row full" style="width:100%;text-align:left" data-a="swapSet" data-rid="${rid}" data-u2="${uid}" data-orig="${esc(orig)}" data-n="${esc(op)}">
+        <div class="ck ${actual===op?'on':''}">${actual===op?ic('check',14):''}</div>
+        <div class="grow"><b style="font-size:15px">${esc(op)}${op===orig?' <span class="small dim">(original)</span>':''}</b>
+          <div class="small dim">${fmtQty(eq.q,eq.u)}${precio?' · '+fmtCOP(costOf(eq.q,eq.u,precio)):''}</div></div>
+      </button>`; }).join('')}
+    <div class="small dim mt8">Aplica a esta receta cada vez que aparezca en tu semana, y el mercado compra lo nuevo. Se puede devolver cuando quieras.</div>
+  </section></div>`;
+}
 function repBoxRemove(){
   const box=document.querySelector('.fbox.repbox'); if(box) box.remove();
   UI._repBox=null;
@@ -9196,7 +9289,14 @@ function gestPlanHTML(){
         ${ca.es?`<button class="chip" data-a="gestIngTgl" data-k="${rowId}" data-factor="${ca.es.factor>1?'Porción × '+fmt1(ca.es.factor)+' · ':''}" aria-label="${ingOpen?'Ocultar':'Ver'} los ingredientes de esta comida">${ca.es.factor>1?'Porción × '+fmt1(ca.es.factor)+' · ':''}${ingOpen?'ocultar ingredientes':'ver ingredientes'}</button>`:'<span></span>'}
         <span class="t-body-sm dim" style="font-size:13px">${ca.totalMac.cg}C · ${ca.totalMac.fg}G${ca.scoops?' · +'+ca.scoops+' scoop'+(ca.scoops>1?'s':''):''}</span>
       </div>
-      ${ca.es?`<div class="ingline t-body-sm dim${ingOpen?' on':''}" data-ing="${rowId}">${ca.es.ing.map(([n,q,u])=>esc(n)+' '+fmtQty(q,u)).join(' · ')}</div>`:''}
+      ${ca.es?`<div class="ingline t-body-sm dim${ingOpen?' on':''}" data-ing="${rowId}">${ca.es.ing.map(([n,q,u],ix)=>{
+        const base=ca.rid?RECIPES.find(x=>x.id===ca.rid):null;
+        const orig=base?(base[key].ing[ix]||[])[0]:null;
+        const cambiable=orig&&swapGrupoDe(orig);
+        const marcado=orig&&orig!==n;
+        if(!cambiable) return esc(n)+' '+fmtQty(q,u);
+        return `<button class="chip swapchip${marcado?' on':''}" data-a="swapOpen" data-rid="${ca.rid}" data-u2="${uid}" data-ix="${ix}" aria-label="Cambiar ${esc(n)}">${esc(n)} ${fmtQty(q,u)} ${ic('repeat',9)}</button>`;
+      }).join(' · ')}</div>`:''}
       <div class="flex wrapf" style="gap:6px;margin-top:8px">
         ${uid==='andres'&&ca.r?`<button class="chip" data-a="planScoop" data-u="${uid}" data-d="${dl}" ${mAttr} data-n="1">${ic('plus',10)} scoop</button>`:''}
         ${uid==='andres'&&ca.r&&ca.scoops?`<button class="chip" data-a="planScoop" data-u="${uid}" data-d="${dl}" ${mAttr} data-n="-1">${ic('minus',10)} scoop</button>`:''}
@@ -11495,6 +11595,26 @@ const ACTIONS = {
       document.body.appendChild(box); }
   },
   islaSemanaCerrar(){ const box=document.querySelector('.fbox.islasem'); if(box) box.remove(); },
+  swapOpen(d){
+    let box=document.querySelector('.fbox.swapbox');
+    const html=swapBoxHTML(d.rid, d.u2, +d.ix);
+    if(!html) return;
+    if(!box){ box=document.createElement('div'); box.className='fbox scroll swapbox';
+      box.onclick=e=>{ if(e.target===box) ACTIONS.swapCerrar(); };
+      document.body.appendChild(box); }
+    box.innerHTML=html;
+  },
+  swapCerrar(){ const box=document.querySelector('.fbox.swapbox'); if(box) box.remove(); },
+  swapSet(d){
+    const key=d.u2==='andres'?'a':'c';
+    S.meal.swaps=S.meal.swaps||{}; S.meal.swaps[key]=S.meal.swaps[key]||{};
+    const deR=S.meal.swaps[key][d.rid]=S.meal.swaps[key][d.rid]||{};
+    if(d.n===d.orig) delete deR[d.orig]; else deR[d.orig]=d.n;
+    if(!Object.keys(deR).length) delete S.meal.swaps[key][d.rid];
+    save('meal');
+    ACTIONS.swapCerrar(); render();
+    toast(d.n===d.orig?'Vuelve el original':'Cambiado a '+d.n);
+  },
   islaSemanaBase(){ const out={}; for(let d=0;d<7;d++){ const r=ROUTINES.find(rr=>rr.day===d); out[d]=r?r.id:'rest'; }
     S.week=out; save('week'); islaSemanaRedraw(); render(); toast('Plantilla base puesta'); },
   islaEntrenarHoy(){ const r=routineOn(fromISO(TODAY()).getDay()); if(!r) return;
@@ -11775,8 +11895,9 @@ const ACTIONS = {
       const r=RECIPES.find(x=>x.id===id);
       if(r && r.mom && (r.mom.includes('almuerzo')||r.mom.includes('cena'))) delete sel[id];
     });
-    sel.tilapiafran={a:4,c:4};
-    sel.pechugafran={a:4,c:4};
+    sel.tilapiafran={a:3,c:3};
+    sel.pechugafran={a:3,c:3};
+    sel.carnefran={a:3,c:3};
     save('meal'); render();
   },
   /* ===== T3: sugerir receta ===== */

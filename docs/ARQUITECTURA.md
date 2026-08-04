@@ -203,5 +203,8 @@ eso). Por defecto solo "La semana comida por comida" abre.
   `afc2:u:coach:daily`; el rotador lo muestra (`coachDaily`).
 - Próximo entreno IA: `afc2:u:<uid>:proxIA` (ver §6).
 - Base nutricional Colombia: proyecto hermano en `Personal/nutricion-co/`
-  (Open Food Facts, ver su `reporte.md`); candidata a alimentar el buscador de
-  alimentos en el futuro.
+  (Open Food Facts, ver su `reporte.md`). Desde REV 124 alimenta el buscador de
+  alimentos: 970 productos con macros completos en `assets/paq/nutricion-co.json`,
+  carga perezosa (`paqCargar`/`PAQFOODS`), categoría "Paquetes" en el loggeo y
+  precache del service worker para offline. Regenerar: `procesar_csv.py` +
+  el exportador del catálogo (ver ese repo).

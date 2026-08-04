@@ -1,5 +1,5 @@
 /* Coach Cabritos · offline para el gimnasio sin señal */
-const CACHE = 'cabritos-v67';
+const CACHE = 'cabritos-v68';
 const CORE = ['./', 'index.html', 'manifest.webmanifest'];
 /* Las imagenes de la interfaz salieron del HTML a archivos sueltos (bajo de 4,3 MB a
    1 MB). Como el gimnasio puede no tener señal, se precargan en segundo plano al
@@ -114,7 +114,9 @@ self.addEventListener('install', e => {
       .then(c => c.addAll(CORE).catch(()=>{}))
       /* el precache de imagenes no bloquea la instalacion: si falla una, la app
          igual queda usable y esa imagen se pedira a la red cuando toque */
-      .then(() => caches.open(CACHE).then(c => Promise.allSettled(UI_IMGS.map(u => c.add(u)))))
+      /* el catalogo de paquetes va en este lote resiliente (una falla no tumba el resto),
+         no en CORE: alla addAll es todo-o-nada y por eso el JSON no entraba en dev */
+      .then(() => caches.open(CACHE).then(c => Promise.allSettled(UI_IMGS.concat(['assets/paq/nutricion-co.json']).map(u => c.add(u)))))
       .then(()=>self.skipWaiting())
   );
 });

@@ -1336,7 +1336,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 123';
+const APPREV='REV 124';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3437,7 +3437,20 @@ function applyUser(){
    simples:    [id,'Nombre',cat,'unidad', P, C, G, kcalOverride?]
    compuestos: [id,'Nombre',cat,'unidad', [[componente,P,C,G,kcalOverride?],...]]  (totales = suma del desglose; siempre modo contable) */
 const kcOf=(p,c,g)=>Math.round(p*4+c*4+g*9);
-const FOODCATS=[['beb','Bebidas','drop'],['des','Desayunos','egg'],['plato','Platos','food'],['prot','Proteínas','beef'],['acomp','Acompañantes','bowl'],['snack','Snacks y dulces','star'],['rec','Nuestras recetas','cart']];
+const FOODCATS=[['beb','Bebidas','drop'],['des','Desayunos','egg'],['plato','Platos','food'],['prot','Proteínas','beef'],['acomp','Acompañantes','bowl'],['snack','Snacks y dulces','star'],['paq','Paquetes','cart'],['rec','Nuestras recetas','cart']];
+/* ============ CATALOGO DE PAQUETES (Colombia) ============
+   970 productos de supermercado colombiano (D1, Exito, Carulla, marcas nacionales)
+   con macros por 100 g, extraidos de Open Food Facts (ODbL) y validados por cuadre
+   calorico; ver Personal/nutricion-co/. NO va embebido: se carga perezoso la
+   primera vez que el buscador lo necesita y el service worker lo precarga para
+   que funcione sin senal. Mismo formato de NFOODS: [id, nombre, cat, 'g', P, C, G]. */
+let PAQFOODS=[]; let _paqPedido=false;
+function paqCargar(){
+  if(_paqPedido) return; _paqPedido=true;
+  fetch('assets/paq/nutricion-co.json').then(r=>r.json()).then(d=>{
+    if(Array.isArray(d)){ PAQFOODS=d; if(UI.nlogSlot) render(); }
+  }).catch(()=>{ _paqPedido=false; /* sin red y sin cache: se reintenta luego */ });
+}
 const LOGCATIMG={beb:'icBeb',des:'icDes',plato:'icPlato',prot:'icProt',acomp:'icAcomp',snack:'icSnack',rec:'icRec'};
 const NFOODS=[
  ['tinto','Café solo / tinto','beb','taza',0,1,0],
@@ -4211,7 +4224,7 @@ function cdaWeight(idOrFood){
   const f=Array.isArray(idOrFood)?idOrFood:foodOf(idf);
   return (f&&f[8]!=null)?f[8]:15;
 }
-function foodOf(id){ return NFOODS.find(f=>f[0]===id) || ((S&&S.customFoods)||[]).find(f=>f[0]===id); }
+function foodOf(id){ return NFOODS.find(f=>f[0]===id) || ((S&&S.customFoods)||[]).find(f=>f[0]===id) || PAQFOODS.find(f=>f[0]===id); }
 /* macros de un alimento (si es compuesto, los totales salen del desglose) */
 function foodMac(f){
   if(Array.isArray(f[4])){
@@ -6665,7 +6678,14 @@ function nlogPanel(slot){
   if(q||cat){
     const recs=(q? RECIPES.filter(r=>nrmTxt(r.name).includes(q)) : cat==='rec'? RECIPES : []);
     const allFoods=NFOODS.concat(S.customFoods||[]);
-    const foods=(cat==='rec'&&!q)? [] : allFoods.filter(f=> q? nrmTxt(f[1]).includes(q) : f[2]===cat);
+    let foods=(cat==='rec'&&!q)? [] : allFoods.filter(f=> q? nrmTxt(f[1]).includes(q) : f[2]===cat);
+    /* paquetes: carga perezosa; con busqueda de texto se suman al final (tope 40
+       para no pintar cientos por una letra), navegando la categoria van solos */
+    if(q || cat==='paq'){
+      paqCargar();
+      const pq=PAQFOODS.filter(f=> q? nrmTxt(f[1]).includes(q) : true).slice(0, q?40:60);
+      foods = cat==='paq' ? pq : foods.concat(q?pq:[]);
+    }
     const recsHtml = recs.map(r=>`<button class="nfood" data-a="nlogPick" data-r="${r.id}">
         <span class="grow tl"><b>${esc(r.name)}</b><span class="nfsub"><b class="npro">${r[w].pg} g prot</b> · ${r[w].kc} kcal</span></span>
         <span class="chip fill" style="pointer-events:none">Precisa</span></button>`).join('');
@@ -11550,7 +11570,7 @@ const ACTIONS = {
   calcoTgl(){ UI.calcoOpen=!UI.calcoOpen; render(); },
   perfMore(){ UI.perfMore=!UI.perfMore; render(); },
   nutriFuera(){ UI.fueraOpen=!UI.fueraOpen; render(); },
-  nlogOpen(d){ UI.nlogSlot=UI.nlogSlot===d.s?null:d.s; UI.nlogQ=''; UI.nlogCat=null; UI.nlogDraft=[]; render(); },
+  nlogOpen(d){ UI.nlogSlot=UI.nlogSlot===d.s?null:d.s; UI.nlogQ=''; UI.nlogCat=null; UI.nlogDraft=[]; if(UI.nlogSlot) paqCargar(); render(); },
   nlogCat(d){ UI.nlogCat=UI.nlogCat===d.c?null:d.c; UI.nlogQ=''; render(); },
   /* barra de la semana de proteina: abre o cierra el detalle de ese dia */
   pwSel(d){ UI.pwSel = UI.pwSel===d.d ? null : d.d; render(); },

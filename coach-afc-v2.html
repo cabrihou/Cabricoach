@@ -1336,7 +1336,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 125';
+const APPREV='REV 126';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -6718,7 +6718,16 @@ function nlogPanel(slot){
     <input class="in mt8" data-ch="nlogq" placeholder="busca: hamburguesa, huevos, arepa, café…" value="${esc(UI.nlogQ||'')}">
     <div class="flex wrapf mt8">${FOODCATS.map(([id,lb,icn])=>{const im=CAB[LOGCATIMG[id]]; return `<button class="chip catchip ${cat===id?'fill':''}" data-a="nlogCat" data-c="${id}">${im?`<img loading="lazy" class="catimg" src="${im}" alt="" decoding="async">`:`<span class="cati">${ic(icn,12)}</span>`} ${lb}</button>`;}).join('')}</div>
     ${rows?`<div class="nfoodlist mt8">${rows}</div>`:'<div class="small dim mt8">Busca por nombre o abre una categoría. Las macros son aproximadas; tus recetas son precisas.</div>'}
-    ${(UI.nlogQ && !UI.nlogNew)?`<button class="nfnew mt8" data-a="nlogNewOpen">${ic('plus',13)} <span>¿No aparece? Agregar <b>"${esc(UI.nlogQ)}"</b> con sus macros</span></button>`:''}
+    ${(UI.nlogQ && !UI.nlogNew)?`<button class="nfnew mt8" data-a="nlogNewOpen">${ic('plus',13)} <span>¿No aparece? Agregar <b>"${esc(UI.nlogQ)}"</b> con sus macros</span></button>
+      <div class="flex mt8" style="gap:6px;flex-wrap:wrap">
+        <button class="chip" data-a="codigoTgl">${ic('search',11)} Por código de barras</button>
+        <a class="chip" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent('macros '+UI.nlogQ)}" aria-label="Buscar las macros de ${esc(UI.nlogQ)} en Google">${ic('zap',11)} Ver macros en Google</a>
+      </div>`:''}
+    ${UI.codigoBuscar!==undefined?`<div class="flex mt8" style="gap:6px">
+      <input class="in grow" id="codigoIn" inputmode="numeric" placeholder="código de barras del paquete (770...)" value="${esc(UI.codigoBuscar||'')}" aria-label="Código de barras">
+      <button class="btn sm primary" data-a="codigoBuscar">${UI.codigoCargando?'Buscando…':'Buscar'}</button>
+    </div>
+    <div class="small dim mt4">Lo busco en Open Food Facts (base abierta) y te dejo el formulario listo. Necesita señal.</div>`:''}
     ${(UI.nlogNew&&typeof UI.nlogNew==='object')?(()=>{ const nn=UI.nlogNew, kc=Math.round((nn.p||0)*4+(nn.c||0)*4+(nn.g||0)*9);
       const modoLb=u=>u==='g'?'100 g':u==='cda'?'cucharada':u;
       const porLb=u=>u==='g'?'por 100 g':'por 1 '+modoLb(u);
@@ -11636,6 +11645,38 @@ const ACTIONS = {
     clearDayCache();
     if(t===TODAY()) xpHabitos(t);   // un dia pasado no paga XP de habitos, misma convencion que mealAt/waterAt/stepsAt/weightAt
     render(); toast('Loggeado · +'+pg+' g de proteína');
+  },
+  codigoTgl(){ UI.codigoBuscar = UI.codigoBuscar===undefined ? '' : undefined; render();
+    setTimeout(()=>{ const el=document.getElementById('codigoIn'); if(el) el.focus({preventScroll:true}); }, 60); },
+  /* consulta EN VIVO a Open Food Facts por codigo de barras (API abierta, el limite
+     de producto-por-codigo es 100/min: sobra para uso personal). Si aparece, se
+     precarga el formulario de alimento nuevo con macros POR 100 g y el guardado
+     normal lo deja en customFoods (compartido con el otro). Sin señal: aviso. */
+  codigoBuscar(){
+    const el=document.getElementById('codigoIn');
+    const code=String((el&&el.value)||'').replace(/\D/g,'');
+    UI.codigoBuscar=code;
+    if(code.length<8){ toast('El código tiene 8-13 dígitos'); return; }
+    if(UI.codigoCargando) return;
+    UI.codigoCargando=true; render();
+    fetch('https://world.openfoodfacts.org/api/v2/product/'+code+'.json?fields=product_name,product_name_es,brands,nutriments')
+      .then(r=>r.json())
+      .then(d=>{
+        UI.codigoCargando=false;
+        const pr=d&&d.product;
+        const nut=(pr&&pr.nutriments)||{};
+        const num=x=>{ const v=parseFloat(x); return isNaN(v)?null:v; };
+        const P=num(nut['proteins_100g']), C=num(nut['carbohydrates_100g']), G=num(nut['fat_100g']);
+        if(!pr || (P===null&&C===null&&G===null)){ toast('Ese código no está en la base abierta: agrégalo a mano de la etiqueta'); render(); return; }
+        const marca=(pr.brands||'').split(',')[0].trim();
+        let nombre=(pr.product_name_es||pr.product_name||'').trim()||('Producto '+code);
+        if(marca && !nombre.toLowerCase().includes(marca.toLowerCase())) nombre+=' ('+marca+')';
+        UI.nlogNew={name:nombre.slice(0,58), u:'g', p:P!==null?Math.round(P*10)/10:0, c:C!==null?Math.round(C*10)/10:0, g:G!==null?Math.round(G*10)/10:0};
+        UI.codigoBuscar=undefined;
+        toast('Encontrado: revisa y guarda');
+        render();
+      })
+      .catch(()=>{ UI.codigoCargando=false; toast('Sin señal o la base no responde: agrégalo a mano'); render(); });
   },
   nlogNewOpen(){ UI.nlogNew = {name: UI.nlogQ||'', u:'porción', p:20, c:20, g:6}; render(); setTimeout(()=>{ const el=document.getElementById('nnName'); if(el){ el.focus({preventScroll:true}); el.setSelectionRange(el.value.length,el.value.length); } },40); },
   nlogNewCancel(){ UI.nlogNew=null; render(); },

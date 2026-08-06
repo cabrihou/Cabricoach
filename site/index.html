@@ -1337,7 +1337,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 127';
+const APPREV='REV 128';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2355,6 +2355,34 @@ const EXMEDIA_ALIAS={pullup2:'pullup', lcurl2:'lcurl', c_abd2:'c_abd', c_calf2:'
      tipo:  compuesto | aislado | cardio
    Las fotos van en assets/ej/<img>; muchas todavia no existen (el onerror las oculta con elegancia). */
 const EXCAT_RAW=[
+/* calistenia: progresiones y habilidades (los basicos pushup/pullup/dip/plank ya
+   viven en sus categorias). Fotos pendientes de generar en assets/ej (el onerror
+   las oculta mientras tanto). */
+["pike_pu","Pike Push Up","calistenia","peso_corporal","compuesto","pike_pu.jpg"],
+["pushup_archer","Archer Push Up","calistenia","peso_corporal","compuesto","pushup_archer.jpg"],
+["pushup_pseudo","Pseudo Planche Push Up","calistenia","peso_corporal","compuesto","pushup_pseudo.jpg"],
+["pushup_decline","Decline Push Up","calistenia","peso_corporal","compuesto","pushup_decline.jpg"],
+["hollow_hold","Hollow Body Hold","calistenia","peso_corporal","aislado","hollow_hold.jpg"],
+["lsit_floor","L-Sit (piso o paralelas)","calistenia","peso_corporal","aislado","lsit_floor.jpg"],
+["dragon_flag","Dragon Flag","calistenia","peso_corporal","compuesto","dragon_flag.jpg"],
+["wall_hs_hold","Handstand contra pared (isometrico)","calistenia","peso_corporal","aislado","wall_hs_hold.jpg"],
+["tuck_planche","Tuck Planche","calistenia","peso_corporal","aislado","tuck_planche.jpg"],
+["front_lever_tuck","Front Lever (tuck)","calistenia","peso_corporal","aislado","front_lever_tuck.jpg"],
+["back_lever_tuck","Back Lever (tuck)","calistenia","peso_corporal","aislado","back_lever_tuck.jpg"],
+["nordic_curl","Nordic Hamstring Curl","calistenia","peso_corporal","compuesto","nordic_curl.jpg"],
+/* anillas: el bloque completo, de basicos a habilidades */
+["ring_row","Ring Row (remo en anillas)","anillas","anillas","compuesto","ring_row.jpg"],
+["ring_row_archer","Ring Archer Row","anillas","anillas","compuesto","ring_row_archer.jpg"],
+["ring_pushup","Ring Push Up","anillas","anillas","compuesto","ring_pushup.jpg"],
+["ring_fly","Ring Fly","anillas","anillas","aislado","ring_fly.jpg"],
+["ring_dip","Ring Dip","anillas","anillas","compuesto","ring_dip.jpg"],
+["ring_pullup","Ring Pull Up","anillas","anillas","compuesto","ring_pullup.jpg"],
+["ring_muscleup","Ring Muscle Up","anillas","anillas","compuesto","ring_muscleup.jpg"],
+["ring_support","Ring Support Hold","anillas","anillas","aislado","ring_support.jpg"],
+["ring_lsit","Ring L-Sit","anillas","anillas","aislado","ring_lsit.jpg"],
+["ring_curl","Ring Bicep Curl","anillas","anillas","aislado","ring_curl.jpg"],
+["ring_triceps_ext","Ring Triceps Extension","anillas","anillas","aislado","ring_triceps_ext.jpg"],
+["skin_the_cat","Skin the Cat","anillas","anillas","compuesto","skin_the_cat.jpg"],
 ["bayesian","Bayesian Curl","brazos","polea","aislado","bayesian.jpg"],
 ["bench_dip","Bench Dip","brazos","peso_corporal","compuesto","bench_dip.jpg"],
 ["bench_close","Bench Press - Close Grip (Barbell)","brazos","barra","compuesto","bench_close.jpg"],
@@ -2621,7 +2649,7 @@ const EXCAT_RAW=[
 const EXCAT=EXCAT_RAW.map(a=>({id:a[0],name:a[1],cat:a[2],equip:a[3],tipo:a[4],img:a[5]}));
 function excatById(id){ return EXCAT.find(x=>x.id===id)||null; }
 function excatByCat(cat){ return EXCAT.filter(x=>x.cat===cat); }
-const EXCAT_LABELS={espalda:'Espalda', pecho:'Pecho', hombros:'Hombros', brazos:'Brazos', pierna:'Pierna', core:'Core', cardio:'Cardio', olimpicos:'Olimpicos', fullbody:'Cuerpo completo', otros:'Otros'};
+const EXCAT_LABELS={espalda:'Espalda', pecho:'Pecho', hombros:'Hombros', brazos:'Brazos', pierna:'Pierna', core:'Core', calistenia:'Calistenia', anillas:'Calistenia en anillas', cardio:'Cardio', olimpicos:'Olimpicos', fullbody:'Cuerpo completo', otros:'Otros'};
 const EXCAT_EQUIP_BADGE={barra:'BAR', mancuerna:'MAN', maquina:'MAQ', polea:'POL', banda:'BND', peso_corporal:'CORP', kettlebell:'KB', smith:'SMTH', otro:'OTRO'};
 /* miniatura circular con inicial de respaldo si la foto no existe (elegante, sin hueco) */
 function excatThumbInner(x){ const initial=esc((x.name||'?').trim().charAt(0).toUpperCase()); return '<img src="assets/ej/'+x.img+'" alt="" loading="lazy" decoding="async" onerror="this.remove()"><i>'+initial+'</i>'; }
@@ -3344,6 +3372,7 @@ function loadState(){
     meals: store.get('meals', {}),          // iso -> {m1,m2,m3}
     checkins: store.get('checkins', []),
     custom: store.get('custom', {}),        // exId -> n series preferidas
+    customRoutines: store.get('customRoutines', []),  // rutinas propias del usuario (armador)
     exnotes: store.get('exnotes', {}),      // exId -> nota de máquina/ajustes
     inject: store.get('inject', []),        // fechas iso
     meal: normalizeMeal(store.get('meal', {selected:{}, period:'semanal', staples:true, checklist:{}, view:'both'})),
@@ -3420,8 +3449,16 @@ function navIndicator(){
   nav.style.setProperty('--navi', ix==null?0:ix);
   nav.style.setProperty('--navop', ix==null?0:1);
 }
+/* rutinas propias del usuario (S.customRoutines) montadas sobre las del plan.
+   Se hidratan a la MISMA forma de las fijas para que sesiones, semana, isla,
+   calendario y XP las traten igual sin logica aparte. */
+function rutinasRefrescar(){
+  const propias=((typeof S!=='undefined'&&S&&S.customRoutines)||[]).map(r=>({tag:'Propia', day:null, ...r, custom:true}));
+  ROUTINES=ROUTINES_BY[UID].concat(propias);
+  buildExmap();
+}
 function applyUser(){
-  PLAN=PLANS[UID]; ROUTINES=ROUTINES_BY[UID]; buildExmap();
+  PLAN=PLANS[UID]; rutinasRefrescar();
   document.documentElement.setAttribute('data-user', UID);
   buildNav();
 }
@@ -4313,7 +4350,7 @@ function save(k){ clearDayCache(); if(!DEMO){ store.set(k, S[k]); sbPush(k); } }
    'draft' y 'fired' no se sincronizan (son del dispositivo). */
 let SB=null, sbState='off', sbDiagMsg='';
 try{ SB=JSON.parse(localStorage.getItem('afc2:sb')||'null'); if(SB) sbState='ok'; }catch(e){}
-const SB_KEYS=['weights','logs','sessions','steps','water','meals','checkins','inject','meal','reminders','cfg','sched','week','acts','custom','exnotes','free','nlog','customFoods','retos','fotopub','fotoSrc','mobil','retoprops','retovotes','retoreset','ideas','recipeIdeas','facturas','perso'];
+const SB_KEYS=['weights','logs','sessions','steps','water','meals','checkins','inject','meal','reminders','cfg','sched','week','acts','custom','customRoutines','exnotes','free','nlog','customFoods','retos','fotopub','fotoSrc','mobil','retoprops','retovotes','retoreset','ideas','recipeIdeas','facturas','perso'];
 const sbTimers={}, sbPending={};
 /* el payload se lee SIEMPRE del namespace correcto al momento de enviar: si el usuario cambió
    entre el save y el disparo del debounce, S ya es del otro y usarlo cruzaría los datos */
@@ -4369,7 +4406,7 @@ document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){ sbFlush(); return; }
   /* al volver a primer plano (la PWA de iOS no re-ejecuta init): bajar lo último de la nube */
   if(SB && S && sbState==='ok' && Date.now()-sbLastPull>30000){
-    sbPull().then(had=>{ if(had){ S=loadState(); applyStepsIn(); render(); } });
+    sbPull().then(had=>{ if(had){ S=loadState(); rutinasRefrescar(); applyStepsIn(); render(); } });
   }
 });
 window.addEventListener('pagehide', sbFlush);
@@ -6770,6 +6807,7 @@ function nlogPanel(slot){
       </div>`;}).join('')}
       <div class="festimate mt8"><div><b class="t-metric-md">${Math.round(dtot.pg)} <span class="t-unit">g proteína</span></b><div class="small dim">${Math.round(dtot.cg)}C · ${Math.round(dtot.fg)}G · ~${Math.round(dtot.kc)} kcal</div></div><span class="estag">Aprox</span></div>
       <button class="btn primary full mt8" data-a="nlogSave">${ic('check',14)} Guardar loggeo</button>
+      ${draft.length>=2?`<button class="btn ghost full mt8" data-a="platoGuardar">${ic('book',13)} Guardar esta combinación como plato</button>`:''}
     </div>`:''}
   </div>`;
 }
@@ -7196,13 +7234,19 @@ function vRutinas(){
     return `<button class="rcard ${today?'today':''}" data-a="routineOpen" data-rid="${r.id}">
       ${(()=>{const bn=routineBanner(r);return bn?`<div class="rbanner"><img loading="lazy" src="${bn}" alt="" decoding="async"></div>`:`<div class="rthumb"><img loading="lazy" src="${entrenoImg(r)}" alt="" decoding="async"></div>`;})()}
       <div class="flex between" style="width:100%"><b class="t-body strong">${r.name}</b><span class="chip ${today?'fill':'dim'}" style="flex:none">${today?'HOY':daysOf(r).map(d=>DAYNAMES[d].slice(0,1)).join('')||'·'}</span></div>
-      <span class="small dim" style="text-align:left">${r.ex.length} ej. · ${last?fmtD(last):'sin registrar'}</span>
+      <span class="small dim" style="text-align:left">${r.ex.length} ej. · ${last?fmtD(last):'sin registrar'}${r.custom?' · propia':''}</span>
+      ${r.custom?`<span class="setdel" role="button" tabindex="0" data-a="crBorrar" data-rid="${r.id}" aria-label="Borrar rutina ${esc(r.name)}" style="position:absolute;top:8px;right:8px">${ic('x',11)}</span>`:''}
     </button>`;
   }).join('')}
     <button class="rcard ${S.mobil[TODAY()]?'today':''}" data-a="mobilOpen">
       <div class="rthumb"><img loading="lazy" src="${UID==='andres'?CAB.andLift:CAB.camLift}" alt="" decoding="async"></div>
       <div class="flex between" style="width:100%"><b class="t-body strong">Movilidad</b><span class="chip ${S.mobil[TODAY()]?'fill':'dim'}" style="flex:none">${S.mobil[TODAY()]?'Hoy ✓':'Diaria'}</span></div>
       <span class="small dim" style="text-align:left">8-10 min · bonus de reto</span>
+    </button>
+    <button class="rcard" data-a="crAbrir">
+      <div class="rthumb" style="display:flex;align-items:center;justify-content:center"><span class="accic" style="width:52px;height:52px;border-radius:16px">${ic('plus',26)}</span></div>
+      <div class="flex between" style="width:100%"><b class="t-body strong">Crear rutina</b><span class="chip dim" style="flex:none">Propia</span></div>
+      <span class="small dim" style="text-align:left">Elige tus ejercicios del catálogo</span>
     </button>
     <button class="rcard ${UI.persoOpen?'today':''}" data-a="persoOpen">
       <div class="rthumb" style="display:flex;align-items:center;justify-content:center"><span class="accic" style="width:52px;height:52px;border-radius:16px">${ic('zap',26)}</span></div>
@@ -7221,7 +7265,7 @@ function vRutinas(){
   `;
 }
 /* ============ VISTA: EJERCICIOS (dentro de Entrenar, catalogo EXCAT) ============ */
-const EXCAT_ORDER=['pierna','espalda','pecho','hombros','brazos','core','cardio','olimpicos','fullbody','otros'];
+const EXCAT_ORDER=['pierna','espalda','pecho','hombros','brazos','core','calistenia','anillas','cardio','olimpicos','fullbody','otros'];
 function excatRow(x){
   return `<button class="actrow" data-a="excatOpen" data-id="${x.id}" aria-label="${esc(x.name)}">
     ${excatThumb(x)}
@@ -7233,8 +7277,8 @@ function excatRow(x){
    mancuerna, peso libre, etc"). Chips por equip, combinables con el buscador y
    con las cajas por categoria: el filtro se aplica ANTES de contar/buscar, asi
    que los conteos de cada categoria ya reflejan el equipo elegido. */
-const EXCAT_EQUIP_ORDER=['barra','mancuerna','maquina','polea','banda','peso_corporal','kettlebell','smith','otro'];
-const EXCAT_EQUIP_LABELS={barra:'Barra', mancuerna:'Mancuerna', maquina:'Máquina', polea:'Polea', banda:'Banda', peso_corporal:'Peso corporal', kettlebell:'Kettlebell', smith:'Smith', otro:'Otro'};
+const EXCAT_EQUIP_ORDER=['barra','mancuerna','maquina','polea','banda','peso_corporal','anillas','kettlebell','smith','otro'];
+const EXCAT_EQUIP_LABELS={barra:'Barra', mancuerna:'Mancuerna', maquina:'Máquina', polea:'Polea', banda:'Banda', peso_corporal:'Peso corporal', anillas:'Anillas', kettlebell:'Kettlebell', smith:'Smith', otro:'Otro'};
 function vExcat(){
   const q=(UI.excatQ||'').trim();
   const eq=UI.excatEquip||null;
@@ -8905,6 +8949,30 @@ function islaSemanaHTML(){
   </section></div>`;
 }
 function islaSemanaRedraw(){ const box=document.querySelector('.fbox.islasem'); if(box) box.innerHTML=islaSemanaHTML(); }
+/* ============ ARMADOR DE RUTINA PROPIA ============ */
+function crBoxHTML(){
+  const cr=UI.crear||{name:'',ex:[],q:''};
+  const q=(cr.q||'').trim();
+  const encontrados=q? EXCAT.filter(x=>excatMatch(q,x.name)).slice(0,12) : [];
+  return `<div class="fboxin"><section class="mod" style="margin:0">
+    <div class="mod-head"><span class="ttl">${ic('barbell',16)} Crear rutina</span>
+      <button class="btn sm ghost" data-a="crCerrar" aria-label="Cerrar">${ic('x',14)}</button></div>
+    <input class="in" data-ch="crNombre" placeholder="Nombre (Full body sábado, Anillas parque…)" value="${esc(cr.name||'')}" aria-label="Nombre de la rutina">
+    <div class="inwrap mt8">${ic('search',15)}<input class="in has-ic" data-ch="crBuscar" placeholder="Busca ejercicios del catálogo…" value="${esc(cr.q||'')}"></div>
+    ${encontrados.length?`<div class="mt8">${encontrados.map(x=>`<button class="row full" style="width:100%;text-align:left" data-a="crAdd" data-x="${x.id}">
+      <div class="ck ${cr.ex.some(e=>e.id===x.id)?'on':''}">${cr.ex.some(e=>e.id===x.id)?ic('check',13):''}</div>
+      <div class="grow"><b style="font-size:15px">${esc(x.name)}</b><div class="small dim">${EXCAT_LABELS[x.cat]||x.cat} · ${EXCAT_EQUIP_LABELS[x.equip]||x.equip}</div></div>
+    </button>`).join('')}</div>`:(q?'<div class="small dim mt8">Nada con esa búsqueda.</div>':'')}
+    ${cr.ex.length?`<span class="lbl" style="display:block;margin-top:12px">TU RUTINA · ${cr.ex.length} EJERCICIO${cr.ex.length===1?'':'S'}</span>
+    ${cr.ex.map((e,i)=>`<div class="row">
+      <div class="grow"><b style="font-size:15px">${esc(e.name)}</b><div class="small dim">${e.reps[0]}-${e.reps[1]} reps · descanso ${e.rest}s</div></div>
+      <div class="qty"><button data-a="crSets" data-i="${i}" data-n="-1" aria-label="menos series">−</button><span class="n">${e.sets}</span><button data-a="crSets" data-i="${i}" data-n="1" aria-label="más series">+</button></div>
+      <button class="setdel" data-a="crRm" data-i="${i}" aria-label="quitar ${esc(e.name)}">${ic('x',11)}</button>
+    </div>`).join('')}`:'<div class="small dim mt8">Busca y toca ejercicios para armarla. Las series se ajustan aquí; el peso y las reps se registran al entrenar.</div>'}
+    <button class="btn primary full mt12" data-a="crGuardar" ${cr.name&&cr.ex.length?'':'disabled'}>${ic('check',14)} Guardar rutina</button>
+  </section></div>`;
+}
+function crBoxRedraw(){ const b=document.querySelector('.fbox.crbox'); if(b) b.innerHTML=crBoxHTML(); }
 /* ============ VENTANA DE CAMBIO DE INGREDIENTE ============ */
 function swapBoxHTML(rid, uid, ix){
   const key=uid==='andres'?'a':'c';
@@ -11640,6 +11708,28 @@ const ACTIONS = {
   /* atajos 100/150/200 g del borrador: fijan la cantidad en gramos de una */
   nlogGramsSet(d){ const it=(UI.nlogDraft||[])[+d.i]; if(!it) return; it.q=clamp((+d.v)/100,0.1,20); render(); },
   nlogRm(d){ (UI.nlogDraft||[]).splice(+d.i,1); render(); },
+  /* pedido del dueno: "ayer comi algo especifico con cantidades y alimentos que ya
+     tengo, pero no pude ingresarlo". El borrador del loggeo ES el plato: se guarda
+     como alimento COMPUESTO en customFoods (formato ya existente: f[4] = lista de
+     componentes [nombre, P, C, G, kcal] que foodMac suma y nlogPick desglosa).
+     Compartido con el otro, sale en la categoria Platos y en cualquier busqueda. */
+  platoGuardar(){
+    const draft=UI.nlogDraft||[];
+    if(draft.length<2){ toast('Arma el plato con 2 o más ingredientes'); return; }
+    const sug=draft[0].n.split(' ').slice(0,2).join(' ')+' con '+draft[1].n.split(' ')[0].toLowerCase();
+    const nom=(window.prompt('Nombre del plato (una porción = lo que armaste):', sug)||'').trim();
+    if(!nom) return;
+    const fq=n=>n%1?fmt1(n):String(n);
+    const comps=draft.map(i=>{
+      const cant = (i.u==='g') ? Math.round(i.q*100)+' g' : (i.q!==1? '×'+fq(i.q) : '');
+      return [i.n+(cant?' ('+cant+')':''), Math.round(i.pg*i.q*10)/10, Math.round(i.cg*i.q*10)/10, Math.round(i.fg*i.q*10)/10, Math.round(i.kc*i.q)];
+    });
+    const id='plato'+Date.now().toString(36);
+    S.customFoods=(S.customFoods||[]).concat([[id, nom.slice(0,58), 'plato', 'porción', comps]]);
+    save('customFoods');
+    const m=foodMac([id,nom,'plato','porción',comps]);
+    render(); toast('Plato guardado: '+m.pg+' g de proteína por porción. Está en Platos.');
+  },
   nlogSave(){
     const draft=UI.nlogDraft||[]; if(!draft.length){ toast('Agrega al menos un elemento'); return; }
     const t=nutriT();
@@ -11762,6 +11852,43 @@ const ACTIONS = {
       document.body.appendChild(box); }
   },
   islaSemanaCerrar(){ const box=document.querySelector('.fbox.islasem'); if(box) box.remove(); },
+  crAbrir(){
+    UI.crear=UI.crear||{name:'',ex:[],q:''};
+    let box=document.querySelector('.fbox.crbox');
+    if(!box){ box=document.createElement('div'); box.className='fbox scroll crbox'; box.innerHTML=crBoxHTML();
+      box.onclick=e=>{ if(e.target===box) ACTIONS.crCerrar(); };
+      document.body.appendChild(box); }
+  },
+  crCerrar(){ const b=document.querySelector('.fbox.crbox'); if(b) b.remove(); },
+  crAdd(d){
+    const x=excatById(d.x); if(!x) return;
+    const cr=UI.crear;
+    const ya=cr.ex.findIndex(e=>e.id===x.id);
+    if(ya>=0){ cr.ex.splice(ya,1); }
+    else cr.ex.push({id:x.id, name:x.name, sets:3, reps:[8,12], rest:90, inc:2.5});
+    crBoxRedraw();
+  },
+  crSets(d){ const e=UI.crear.ex[+d.i]; if(!e) return; e.sets=clamp(e.sets+(+d.n),1,6); crBoxRedraw(); },
+  crRm(d){ UI.crear.ex.splice(+d.i,1); crBoxRedraw(); },
+  crGuardar(){
+    const cr=UI.crear||{};
+    const nom=(cr.name||'').trim();
+    if(!nom || !(cr.ex||[]).length){ toast('Ponle nombre y al menos un ejercicio'); return; }
+    S.customRoutines=(S.customRoutines||[]).concat([{id:'cr'+Date.now().toString(36), name:nom.slice(0,32), ex:cr.ex.map(e=>({...e}))}]);
+    save('customRoutines');
+    rutinasRefrescar();
+    UI.crear=null; ACTIONS.crCerrar(); render();
+    toast('Rutina guardada: está en Rutinas y en tu semana');
+  },
+  crBorrar(d){
+    const r=(S.customRoutines||[]).find(x=>x.id===d.rid); if(!r) return;
+    if(!confirm('¿Borro la rutina "'+r.name+'"? El historial de sus ejercicios no se toca.')) return;
+    S.customRoutines=S.customRoutines.filter(x=>x.id!==d.rid);
+    /* dias de la semana que la usaban vuelven a descanso, sin dejar tokens muertos */
+    if(S.week){ let toco=false; Object.keys(S.week).forEach(k=>{ if(S.week[k]===d.rid){ S.week[k]='rest'; toco=true; } });
+      if(toco) save('week'); }
+    save('customRoutines'); rutinasRefrescar(); render(); toast('Rutina borrada');
+  },
   swapOpen(d){
     let box=document.querySelector('.fbox.swapbox');
     const html=swapBoxHTML(d.rid, d.u2, +d.ix);
@@ -11811,7 +11938,7 @@ const ACTIONS = {
     UID=u;
     try{ localStorage.setItem('afc2:uid', UID); }catch(e){}
     applyUser();
-    S=loadState();
+    S=loadState(); rutinasRefrescar();
     /* misma página: solo se resetea lo que es de cada usuario (sesión abierta, ejercicio elegido) */
     UI.exIdx=null; UI.swapOpen=false; UI.sessList=false; UI.freeRes=null; UI.freeTxt='';
     UI.ex=ROUTINES[0].ex[0].id;
@@ -11870,14 +11997,14 @@ const ACTIONS = {
     sbPull().then(had=>{
       done=true; clearTimeout(wd);
       if(sbState==='err'){ toast('No conectó · '+(sbDiagMsg||'revisa URL, llave y señal')); try{render();}catch(_){} return; }
-      if(had){ try{ S=loadState(); }catch(e){} }
+      if(had){ try{ S=loadState(); rutinasRefrescar(); }catch(e){} }
       try{ sbPushAll(); }catch(e){}
       try{ render(); }catch(_){}
       toast(had?'Sincronizado: se aplicó lo de la nube':'Conectado: subiendo tus datos');
     }).catch(e=>{ done=true; clearTimeout(wd); sbState='err'; toast('No conectó · '+(sbDiagMsg||('error '+((e&&e.message)||e)))); try{render();}catch(_){} });
   },
   sbOff(){ SB=null; sbState='off'; try{ localStorage.removeItem('afc2:sb'); }catch(e){} render(); toast('Sync apagado · los datos locales quedan'); },
-  sbNow(){ toast('Trayendo…'); sbPull().then(had=>{ if(had) S=loadState(); render(); toast(had?'Datos de la nube aplicados':'La nube está vacía'); }); },
+  sbNow(){ toast('Trayendo…'); sbPull().then(had=>{ if(had) S=loadState(); rutinasRefrescar(); render(); toast(had?'Datos de la nube aplicados':'La nube está vacía'); }); },
   sbPushNow(){ sbPushAll(); toast('Subiendo todo…'); setTimeout(render,1500); },
   sbDiag(){
     toast('Probando la nube…'); sbDiagMsg='';
@@ -12322,6 +12449,10 @@ const CHANGES = {
   },
   sched(el){ S.sched[el.dataset.rid]=+el.value; save('sched'); render(); },
   islaDia(el){ weekSet(+el.dataset.d, el.value); islaSemanaRedraw(); render(); },
+  crNombre(el){ UI.crear=UI.crear||{name:'',ex:[],q:''}; UI.crear.name=el.value; crBoxRedraw(); },
+  crBuscar(el){ UI.crear=UI.crear||{name:'',ex:[],q:''}; UI.crear.q=el.value; crBoxRedraw();
+    setTimeout(()=>{ const i=document.querySelector('.fbox.crbox input[data-ch=crBuscar]');
+      if(i){ i.focus({preventScroll:true}); const v=i.value; i.value=''; i.value=v; } }, 30); },
   /* numeros escribibles donde antes solo habia +/- (queja del dueno): mismas
      rutas de datos que los steppers, con tope y sin sorpresas */
   portIn(el){
@@ -12554,6 +12685,7 @@ document.addEventListener('input', e=>{
   /* la calculadora solo escuchaba 'change', que en un campo de texto salta al salir del
      campo: el numero se quedaba congelado mientras se escribia. Ahora recalcula por tecla. */
   else if(ch==='pcal' && CHANGES.pcal){ CHANGES.pcal(el); }
+  else if((ch==='crBuscar'||ch==='crNombre') && CHANGES[ch]){ CHANGES[ch](el); }  /* armador de rutina: busca por tecla */
   else if(ch==='nnname'){ if(UI.nlogNew&&typeof UI.nlogNew==='object'){ UI.nlogNew.name=el.value;
     /* T6: si el texto calza exacto con algo ya diligenciado, rellena unidad y macros conocidos */
     const f=NFOODS.concat((S.customFoods||[])).find(x=>nrmTxt(x[1])===nrmTxt(el.value));
@@ -12825,7 +12957,7 @@ function seedDemo(){
   if(USERS[p.get('user')]) UID=p.get('user');
   if(p.get('demo')) UID='andres';   // el modo demo simula el corte de Andrés
   applyUser();
-  S=loadState();
+  S=loadState(); rutinasRefrescar();
   UI.ex=ROUTINES[0].ex[0].id;
   if(p.get('demo')){ seedDemo(); applyUser(); }
   /* pasos desde Atajos de iOS: ...?steps=9432 */
@@ -12888,7 +13020,7 @@ function seedDemo(){
     }, {lock:true});
   } else { render(); fotoDaysLoad(); }
   /* con la nube activa: al abrir, baja lo último y repinta */
-  if(SB) sbPull().then(had=>{ if(had){ S=loadState(); applyStepsIn(); render(); }
+  if(SB) sbPull().then(had=>{ if(had){ S=loadState(); rutinasRefrescar(); applyStepsIn(); render(); }
     try{ const al=partnerAlerts(); if(al.length) setTimeout(()=>toast('Tienes '+al.length+' aviso'+(al.length>1?'S':'')+' para revisar'),1200); }catch(e){}
   });
 })();

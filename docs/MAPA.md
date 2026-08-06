@@ -21,6 +21,9 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 - **I2** Checkpoint del día: tarjetas de atajos (`ckSection`)
   - I2a Entreno ("Ir a entrenar" + check que completa la rutina)
   - I2b Pasos · I2c Agua · I2d Check-in · I2e Foto del día
+- **I4x** Botón "Guardar esta combinación como plato" en el borrador del loggeo (2+
+  ingredientes): lo guarda como alimento compuesto en customFoods, sale en la
+  categoría Platos y se registra con su desglose (`ACTIONS.platoGuardar`)
 - **I2x** Isla semanal de entrenos: tocar la CAJA de entrenamiento (junto a pasos)
   abre una fbox con los 7 días y su rutina/movilidad/descanso sobre el mismo
   `S.week` del calendario, más botón "Entrenar: rutina de hoy" y plantilla base
@@ -55,6 +58,14 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 
 ## E · Entrenar (`vEntrenar`)
 
+- **E1x** Tarjeta "Crear rutina" (junto a Personalizado): armador propio con búsqueda
+  del catálogo, series por ejercicio, guardado en `S.customRoutines` (por usuario,
+  sincroniza a nube). Las propias entran a ROUTINES vía `rutinasRefrescar()`: lista,
+  sesiones, semana, isla y calendario las tratan igual; se borran con la X de su
+  tarjeta (los días de la semana que la usaban vuelven a descanso)
+- **E2x** Catálogo: categorías nuevas Calistenia (12 progresiones/habilidades) y
+  Calistenia en anillas (12), con equipo "Anillas" en el filtro; fotos pendientes de
+  generar (nodos EJ — <id> creados en el space, el onerror las oculta mientras)
 - **E1** Rutina del día / lista de rutinas (`.pcard`, sub-pestañas de entrenar: Rutinas · Ejercicios, `UI.sub.train`, `ACTIONS.trainSub`)
   - E1a Caja "Personalizado" junto a Movilidad en el grid de rutinas: formulario de herramientas/tiempo/grupos/intensidad, genera y arranca una sesión con `rid:'perso'` (`vPerso`, `persoGen`, `ACTIONS.persoOpen/persoRoll/persoStart`)
 - **E2** Sesión activa (modo foco)

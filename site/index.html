@@ -1337,7 +1337,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 128';
+const APPREV='REV 129';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -8899,7 +8899,7 @@ function repBoxHTML(){
       </div>`:''}
       ${labels.map((lb,i)=>{ const m=mins[i];
       return `<div class="row"><div class="grow"><b style="font-size:15px">${lb}</b><div class="small dim">${pgs[i]}P · ${cgs[i]}C · ${fgs[i]}G · ~${kcs[i]} kcal</div>
-        ${m?`<div class="small dim mt2">mínimo ${m.pct}% porque ${esc(m.nombre.split(' ').slice(0,3).join(' '))} ya aporta ${m.pg} g</div>`:''}</div>
+        ${m?`<div class="small dim mt2">mínimo ${m.pct}% porque ${esc(m.nombre.split(' ').slice(0,3).join(' '))}${m.nombre.split(' ').length>3?'…':''} ya aporta ${m.pg} g</div>`:''}</div>
         ${n>1?`<div class="qty"><button data-a="repPct" data-u="${key}" data-i="${i}" data-n="-5" aria-label="menos porcentaje ${lb}" ${m&&pcts[i]<=m.pct?'disabled':''}>−</button><input class="n qtyin" style="width:52px" inputmode="numeric" data-ch="repPctIn" data-u="${key}" data-i="${i}" value="${Math.round(pcts[i])}" aria-label="porcentaje de ${lb}"><button data-a="repPct" data-u="${key}" data-i="${i}" data-n="5" aria-label="más porcentaje ${lb}">+</button></div>`:`<span class="chip fill">100%</span>`}
       </div>`;}).join('')}
     </div>`;
@@ -9492,7 +9492,7 @@ function gestPlanHTML(){
           <button class="pctb" data-a="mealPctStep" data-u="${uid}" data-i="${i}" data-n="5" aria-label="Subir el porcentaje de ${esc(ca.m.label)}">+</button>
         </span>
       </div>
-      ${piso?`<div class="t-body-sm dim mt4">mínimo ${piso.pct}% porque ${esc(ca.r.name.split(' ').slice(0,3).join(' '))} ya aporta ${piso.pg} g</div>`:''}`;
+      ${piso?`<div class="t-body-sm dim mt4">mínimo ${piso.pct}% porque ${esc(ca.r.name.split(' ').slice(0,3).join(' '))}${ca.r.name.split(' ').length>3?'…':''} ya aporta ${piso.pg} g</div>`:''}`;
       })():''}
     </div>`;
   };
@@ -9555,21 +9555,49 @@ function gestPlanHTML(){
       ${mostrarAgregar?addExtraRowHTML(uid,dl):''}
     </div>`;
   };
+  /* la semana se lee de lunes a domingo (asi se planea y asi compra el mercado);
+     DLETRAS arranca en domingo porque getDay() lo hace, pero eso es un detalle de
+     calendario, no de lectura */
+  const ORDEN=['L','M','X','J','V','S','D'];
   return `<section class="mod" id="gestplan">
-    <div class="mod-head"><span class="ttl">${ic('vsemana',16)} La semana comida por comida</span></div>
     <div class="flex wrapf mb12" style="gap:6px">
       <button class="chip ${view==='semana'?'fill':''}" data-a="gestVista" data-v="semana">${ic('vsemana',13)} Semana</button>
       <button class="chip ${view==='dia'?'fill':''}" data-a="gestVista" data-v="dia">${ic('cal',13)} Día</button>
     </div>
     ${view==='dia'?`
-      <div class="flex wrapf mb12" style="gap:6px">${DLETRAS.map(dl=>`<button class="chip ${diaSel===dl?'fill':''}" data-a="gestDaySel" data-d="${dl}" aria-label="Ver ${nombreDia[dl]}">${nombreDia[dl].slice(0,3)}${dl===hoyLetra?' · hoy':''}</button>`).join('')}</div>
+      <div class="flex wrapf mb12" style="gap:6px">${ORDEN.map(dl=>`<button class="chip ${diaSel===dl?'fill':''}" data-a="gestDaySel" data-d="${dl}" aria-label="Ver ${nombreDia[dl]}">${nombreDia[dl].slice(0,3)}${dl===hoyLetra?' · hoy':''}</button>`).join('')}</div>
       <h3 class="t-h2" style="margin:6px 0 14px">${nombreDia[diaSel]}</h3>
       ${uids.map(uid=>diaBlock(uid,diaSel,true)).join('')}
     `:`
-      ${DLETRAS.map(dl=>`<details class="catgroup mb8" data-dia="${dl}" ${((UI.gestDiasOpen&&UI.gestDiasOpen[dl]!==undefined)?UI.gestDiasOpen[dl]:dl===hoyLetra)?'open':''}>
-        <summary><b class="t-h2" style="font-size:19px">${nombreDia[dl]}</b>${dl===hoyLetra?' <span class="chip fill">hoy</span>':''}<span class="chev">${ic('chevR',14)}</span></summary>
-        <div style="padding:12px 2px 6px">${uids.map(uid=>diaBlock(uid,dl,false)).join('')}</div>
-      </details>`).join('')}
+      <div class="small dim mb8">Toca un día para ajustarlo</div>
+      ${ORDEN.map(dl=>{
+        /* el mapa de la semana: cada dia en UNA tarjeta compacta, con las comidas
+           de cada persona en una linea y su proteina total coloreada por estado.
+           Antes eran 7 acordeones cerrados que habia que abrir uno por uno: una
+           vista "Semana" donde la semana no se veia (queja del dueno). */
+        const filas=uids.map(uid=>{
+          const key=uid==='andres'?'a':'c';
+          const cm=comidasDe(uid);
+          let pg=0, meta=0; const partes=[];
+          cm.forEach((m,i)=>{ const ca=comidaArmada(uid,dl,i,cm);
+            if(!ca) return;
+            pg+=ca.totalMac.pg; meta+=m.pg;
+            partes.push(ca.r? ca.r.name.split(' ').slice(0,2).join(' ') : '·'); });
+          const est= pg>=meta-2?'mint':(pg>=meta*0.85?'gold':'red');
+          return {uid, pg:Math.round(pg), partes, est};
+        });
+        return `<button class="row full semrow" data-a="gestVerDia" data-d="${dl}" style="width:100%;text-align:left;align-items:flex-start" aria-label="Ajustar ${nombreDia[dl]}">
+          <div class="grow" style="min-width:0">
+            <div class="flex between" style="align-items:center"><b style="font-size:16px">${nombreDia[dl]}</b>${dl===hoyLetra?'<span class="chip fill" style="pointer-events:none">hoy</span>':''}</div>
+            ${filas.map(f=>`<div class="flex" style="gap:6px;align-items:center;margin-top:3px;min-width:0">
+              <span style="width:8px;height:8px;border-radius:99px;background:${PERSCOL[f.uid]};flex:none"></span>
+              <span class="small dim" style="min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.partes.map(x=>esc(x)).join(' · ')}</span>
+              <b class="small" style="color:${ESTCOL[f.est].c};flex:none;font-variant-numeric:tabular-nums;margin-left:auto">${f.pg} g</b>
+            </div>`).join('')}
+          </div>
+          <span class="nfchev" style="margin-top:4px">${ic('chevR',14)}</span>
+        </button>`;
+      }).join('')}
     `}
   </section>`;
 }
@@ -12033,6 +12061,7 @@ const ACTIONS = {
      Gestion > la semana comida por comida */
   gestVista(d){ UI.gestView=d.v; render(); /* sin irACaja: el usuario YA esta parado
     en el chip; teletransportarlo a la caja lo lanzaba 1300px (queja del dueno) */ },
+  gestVerDia(d){ UI.gestView='dia'; UI.gestDay=d.d; render(); },
   gestDaySel(d){ UI.gestDay=d.d; render(); },
   /* Punto C: scoop de proteina (24 g, ver scoopMac) sumado a una comida puntual de
      la semana planeada. Pensado para Andres pero no se bloquea si se usa desde

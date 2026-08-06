@@ -770,6 +770,7 @@ svg .acc{fill:var(--mint);stroke:none}
    a escribir para cualquier ajuste pequeño */
 .ingline{display:none;margin-top:4px;font-size:13px}
 .ingline.on{display:block}
+.qty input.qtyin{width:40px;border:none;background:none;color:var(--ink);font:600 16px var(--num);text-align:center;font-variant-numeric:tabular-nums;padding:0}
 .swapchip{padding:2px 8px;font-size:12px;vertical-align:baseline;gap:3px}
 .swapchip.on{border-color:rgba(var(--acc-rgb),.55);color:var(--mint)}
 .pctstep{display:inline-flex;align-items:center;gap:4px;background:var(--card2);border:1px solid var(--line2);border-radius:999px;padding:3px 8px;flex:none;margin-left:auto}
@@ -1336,7 +1337,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 126';
+const APPREV='REV 127';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2841,7 +2842,7 @@ const RECIPES = [
   c:{pg:30,cg:32,fg:14,kc:380,ing:[['Atún en lata',1,'unid',6500],['Arepas',1,'unid',800],['Tomate',50,'g',4000],['Aguacate',50,'g',9000]]}},
  {id:'bowlyogur',mom:['desayuno','cena'],momPref:'cena',cat:'cena',name:'Bowl proteico de yogur',desc:'Para días sin apetito: cumple la proteína igual.',prep:["Sirve el yogur griego en un bowl.","Agrega el scoop de proteína y mezcla bien hasta disolver.","Corona con el banano en rodajas y la avena en hojuelas.","Termina con la mantequilla de maní encima."],
   dif:1,
-  a:{pg:53,cg:54,fg:31,kc:710,ing:[['Yogur griego',250,'g',35000],['Proteína en polvo (whey)',30,'g',220000],['Banano',80,'g',3500],['Avena en hojuelas',30,'g',8000],['Mantequilla de maní',15,'g',40000]]},
+  a:{pg:53,cg:54,fg:31,kc:710,ing:[['Yogur griego',250,'g',35000],['Proteína en polvo (whey)',30,'g',135000],['Banano',80,'g',3500],['Avena en hojuelas',30,'g',8000],['Mantequilla de maní',15,'g',40000]]},
   c:{pg:34,cg:37,fg:20,kc:465,ing:[['Yogur griego',150,'g',35000],['Proteína en polvo (whey)',20,'g',220000],['Banano',60,'g',3500],['Avena en hojuelas',20,'g',8000],['Mantequilla de maní',10,'g',40000]]}},
  {id:'caldo',mom:['almuerzo','cena'],momPref:'cena',cat:'cena',name:'Caldo ligero con pollo',desc:'Sancocho aligerado: una sola raíz, harto pollo.',prep:["Pon a hervir agua con sal en una olla grande.","Agrega la pechuga entera y cocina 15 minutos.","Incorpora la yuca, la papa y el plátano en trozos, cocina 20 minutos más hasta que las raíces estén blandas.","Desmecha o corta el pollo dentro de la olla antes de servir.","Sirve caliente con el caldo."],
   dif:2,
@@ -2852,10 +2853,10 @@ const RECIPES = [
   a:{pg:51,cg:28,fg:28,kc:565,ing:[['Pechuga de pollo',180,'g',28000],['Ensalada verde',200,'g',5000],['Aguacate',80,'g',9000],['Huevos',1,'unid',700],['Papa criolla',100,'g',6000]]},
   c:{pg:35,cg:22,fg:22,kc:420,ing:[['Pechuga de pollo',110,'g',28000],['Ensalada verde',160,'g',5000],['Aguacate',65,'g',9000],['Huevos',1,'unid',700],['Papa criolla',75,'g',6000]]}},
  {id:'avenatras',mom:['desayuno'],momPref:'desayuno',cat:'desayuno',name:'Avena trasnochada',desc:'Se prepara la noche anterior y amanece lista, fría o tibia. Sin proteína en polvo: si la quieres con scoop, elige la versión con proteína.',
-  prep:["La noche anterior, mezcla la avena con la leche en un frasco o recipiente con tapa.","Agrega la mantequilla de maní (A) o la chía (C) y revuelve.","Tapa y refrigera toda la noche.","Corona con el banano en rodajas antes de servir."],
+  prep:["La noche anterior, mezcla la avena con la leche en un frasco o recipiente con tapa.","Agrega el yogur griego y la mantequilla de maní (A) o la chía (C) y revuelve.","Tapa y refrigera toda la noche.","Corona con el banano en rodajas antes de servir."],
   dif:1,
-  a:{pg:13,cg:55,fg:12,kc:380,ing:[['Avena en hojuelas',50,'g',8000],['Leche',150,'ml',6.5],['Banano',60,'g',3500],['Mantequilla de maní',15,'g',40000]]},
-  c:{pg:8,cg:43,fg:11,kc:280,ing:[['Avena en hojuelas',40,'g',8000],['Leche',120,'ml',6.5],['Chía',10,'g',30000]]}},
+  a:{pg:21,cg:59,fg:20,kc:500,ing:[['Avena en hojuelas',50,'g',8000],['Yogur griego',100,'g',35000],['Leche',150,'ml',6.5],['Banano',60,'g',3500],['Mantequilla de maní',15,'g',40000]]},
+  c:{pg:14.4,cg:46,fg:17.4,kc:398,ing:[['Avena en hojuelas',40,'g',8000],['Yogur griego',80,'g',35000],['Leche',120,'ml',6.5],['Chía',10,'g',30000]]}},
  {id:'huevosarepa',mom:['desayuno','cena'],momPref:'desayuno',cat:'desayuno',name:'Huevos pericos + arepa',desc:'Huevos revueltos con tomate y cebolla, con arepa al lado. El desayuno más rápido cuando no hay avena remojada.',
   prep:["Pica el tomate y la cebolla larga en cubos pequeños.","Sofríelos en un sartén con poco aceite 2-3 minutos.","Agrega los huevos batidos y revuelve a fuego medio hasta que cuajen.","Tuesta la arepa aparte y sirve junto a los huevos."],
   dif:1,
@@ -3052,20 +3053,20 @@ const RECIPES = [
   a:{pg:33,cg:40,fg:18,kc:454,ing:[['Avena en hojuelas',50,'g',8000],['Mantequilla de maní',25,'g',40000],['Proteína en polvo (whey)',25,'g',220000]]},
   c:{pg:23,cg:28,fg:13,kc:321,ing:[['Avena en hojuelas',35,'g',8000],['Mantequilla de maní',18,'g',40000],['Proteína en polvo (whey)',18,'g',220000]]}},
  {id:'avenatrasp',mom:['desayuno'],momPref:'desayuno',cat:'desayuno',name:'Avena trasnochada con proteína',desc:'La misma de siempre pero con un scoop de whey para los dos: el desayuno que sí cierra la proteína.',
-  prep:["La noche anterior, mezcla la avena con la leche en un frasco con tapa.","Agrega la mantequilla de maní y revuelve.","Tapa y refrigera toda la noche.","Justo antes de comer agrega el scoop de whey y revuelve bien para que no se apelmace.","Corona con el banano en rodajas."],
+  prep:["La noche anterior, mezcla la avena con la leche en un frasco con tapa.","Agrega el yogur griego y la mantequilla de maní y revuelve.","Tapa y refrigera toda la noche.","Justo antes de comer agrega el scoop de whey y revuelve bien para que no se apelmace.","Corona con el banano en rodajas."],
   dif:1,
-  a:{pg:37,cg:57,fg:13,kc:502,ing:[['Avena en hojuelas',50,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Leche',150,'ml',6.5],['Banano',60,'g',3500],['Mantequilla de maní',15,'g',40000]]},
-  c:{pg:32,cg:45,fg:12,kc:402,ing:[['Avena en hojuelas',40,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Leche',120,'ml',6.5],['Chía',10,'g',30000]]}},
+  a:{pg:45,cg:61,fg:21,kc:622,ing:[['Avena en hojuelas',50,'g',8000],['Yogur griego',100,'g',35000],['Proteína en polvo (whey)',30,'g',135000],['Leche',150,'ml',6.5],['Banano',60,'g',3500],['Mantequilla de maní',15,'g',40000]]},
+  c:{pg:38.4,cg:48,fg:18.4,kc:498,ing:[['Avena en hojuelas',40,'g',8000],['Yogur griego',80,'g',35000],['Proteína en polvo (whey)',30,'g',135000],['Leche',120,'ml',6.5],['Chía',10,'g',30000]]}},
  {id:'avenafrutosp',mom:['desayuno','snack'],momPref:'desayuno',cat:'desayuno',name:'Avena overnight con frutos rojos y proteína',desc:'La overnight de frutos rojos con su scoop de whey, para los dos.',
   prep:["Mezcla la avena con la leche y la chía en un frasco con tapa.","Tapa y refrigera toda la noche.","Antes de comer agrega el scoop de whey y revuelve bien.","Corona con los frutos rojos."],
   dif:1,
-  a:{pg:40,cg:57,fg:12,kc:496,ing:[['Avena en hojuelas',50,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Leche',150,'ml',6.5],['Frutos rojos congelados',80,'g',15000],['Chía',10,'g',30000]]},
-  c:{pg:34,cg:45,fg:10,kc:406,ing:[['Avena en hojuelas',40,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Leche',120,'ml',6.5],['Frutos rojos congelados',70,'g',15000],['Chía',8,'g',30000]]}},
+  a:{pg:40,cg:57,fg:12,kc:496,ing:[['Avena en hojuelas',50,'g',8000],['Proteína en polvo (whey)',30,'g',135000],['Leche',150,'ml',6.5],['Frutos rojos congelados',80,'g',15000],['Chía',10,'g',30000]]},
+  c:{pg:34,cg:45,fg:10,kc:406,ing:[['Avena en hojuelas',40,'g',8000],['Proteína en polvo (whey)',30,'g',135000],['Leche',120,'ml',6.5],['Frutos rojos congelados',70,'g',15000],['Chía',8,'g',30000]]}},
  {id:'pancakesavenap',mom:['desayuno'],momPref:'desayuno',cat:'desayuno',name:'Pancakes de avena con proteína',desc:'Los pancakes de siempre con un scoop en la mezcla: quedan más esponjosos y cierran la proteína.',
   prep:["Licúa la avena con el banano, los huevos y el scoop de whey hasta que quede una mezcla homogénea.","Calienta una sartén antiadherente a fuego medio.","Vierte porciones pequeñas y cocina 2 minutos por lado, hasta que doren.","Sirve con el yogur encima."],
   dif:1,
-  a:{pg:42,cg:60,fg:14,kc:534,ing:[['Avena en hojuelas',60,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Huevos',2,'unid',700],['Banano',80,'g',3500],['Yogur griego',80,'g',35000]]},
-  c:{pg:33,cg:45,fg:11,kc:411,ing:[['Avena en hojuelas',45,'g',8000],['Proteína en polvo (whey)',30,'g',220000],['Huevos',1,'unid',700],['Banano',60,'g',3500],['Yogur griego',60,'g',35000]]}},
+  a:{pg:42,cg:60,fg:14,kc:534,ing:[['Avena en hojuelas',60,'g',8000],['Proteína en polvo (whey)',30,'g',135000],['Huevos',2,'unid',700],['Banano',80,'g',3500],['Yogur griego',80,'g',35000]]},
+  c:{pg:33,cg:45,fg:11,kc:411,ing:[['Avena en hojuelas',45,'g',8000],['Proteína en polvo (whey)',30,'g',135000],['Huevos',1,'unid',700],['Banano',60,'g',3500],['Yogur griego',60,'g',35000]]}},
  {id:'tilapiafran',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'pescado',name:'Tilapia al limón + papas a la francesa',desc:'El desvare rápido de la casa: todo al air fryer, sin complicarse. A: 250 g · 200 g papas. C: 180 g · 150 g papas.',prep:["Sazona los filetes de tilapia con sal, pimienta y jugo de limón.","Pon las papas a la francesa congeladas directo al air fryer a 200°C por 15 minutos, moviendo la canasta a la mitad.","En los últimos minutos agrega la tilapia sazonada al air fryer, o cocínala aparte en sartén a fuego medio-alto hasta que esté firme.","Sirve la tilapia con más limón al gusto junto a las papas recién salidas del air fryer."],
   dif:1,
   a:{pg:55,cg:44,fg:13.3,kc:515,ing:[['Tilapia (filete)',250,'g',37000],['Papas a la francesa (congeladas)',200,'g',10000]]},
@@ -8844,7 +8845,7 @@ function repBoxHTML(){
       ${sumMin>100?`<div class="small" style="color:var(--gold);margin-bottom:8px">Los mínimos de las comidas de ${USERS[uid].name} ya suman ${sumMin}%: no caben en 100. Cambia una receta por algo más liviano o sube su meta de proteína.</div>`:''}
       <div class="flex between mb8" style="align-items:center">
         <span class="small dim">Comidas al día</span>
-        <div class="qty"><button data-a="repComidas" data-u="${key}" data-n="-1" aria-label="menos comidas ${USERS[uid].name}">−</button><span class="n">${n}</span><button data-a="repComidas" data-u="${key}" data-n="1" aria-label="más comidas ${USERS[uid].name}">+</button></div>
+        <div class="qty"><button data-a="repComidas" data-u="${key}" data-n="-1" aria-label="menos comidas ${USERS[uid].name}">−</button><input class="n qtyin" inputmode="numeric" data-ch="repComidasIn" data-u="${key}" value="${n}" aria-label="comidas al día de ${USERS[uid].name}"><button data-a="repComidas" data-u="${key}" data-n="1" aria-label="más comidas ${USERS[uid].name}">+</button></div>
       </div>
       ${n>1?`<div class="flex wrapf mb8" style="gap:6px">
         <button class="chip" data-a="repPreset" data-u="${key}" data-v="igual">Iguales</button>
@@ -8855,7 +8856,7 @@ function repBoxHTML(){
       ${labels.map((lb,i)=>{ const m=mins[i];
       return `<div class="row"><div class="grow"><b style="font-size:15px">${lb}</b><div class="small dim">${pgs[i]}P · ${cgs[i]}C · ${fgs[i]}G · ~${kcs[i]} kcal</div>
         ${m?`<div class="small dim mt2">mínimo ${m.pct}% porque ${esc(m.nombre.split(' ').slice(0,3).join(' '))} ya aporta ${m.pg} g</div>`:''}</div>
-        ${n>1?`<div class="qty"><button data-a="repPct" data-u="${key}" data-i="${i}" data-n="-5" aria-label="menos porcentaje ${lb}" ${m&&pcts[i]<=m.pct?'disabled':''}>−</button><span class="n">${Math.round(pcts[i])}%</span><button data-a="repPct" data-u="${key}" data-i="${i}" data-n="5" aria-label="más porcentaje ${lb}">+</button></div>`:`<span class="chip fill">100%</span>`}
+        ${n>1?`<div class="qty"><button data-a="repPct" data-u="${key}" data-i="${i}" data-n="-5" aria-label="menos porcentaje ${lb}" ${m&&pcts[i]<=m.pct?'disabled':''}>−</button><input class="n qtyin" style="width:52px" inputmode="numeric" data-ch="repPctIn" data-u="${key}" data-i="${i}" value="${Math.round(pcts[i])}" aria-label="porcentaje de ${lb}"><button data-a="repPct" data-u="${key}" data-i="${i}" data-n="5" aria-label="más porcentaje ${lb}">+</button></div>`:`<span class="chip fill">100%</span>`}
       </div>`;}).join('')}
     </div>`;
   };
@@ -9276,7 +9277,7 @@ function gestSemanaHTML(){
         </div>
         ${recPersonRow('Andrés',col.andres,null,x.r.a)}
         <div class="flex between mt4" style="max-width:210px"><span class="small dim">porciones/semana</span>
-          <div class="qty"><button data-a="port" data-r="${x.id}" data-w="a" data-n="-1" aria-label="menos porciones Andrés">−</button><span class="n">${x.p.a||0}</span><button data-a="port" data-r="${x.id}" data-w="a" data-n="1" aria-label="más porciones Andrés">+</button></div></div>
+          <div class="qty"><button data-a="port" data-r="${x.id}" data-w="a" data-n="-1" aria-label="menos porciones Andrés">−</button><input class="n qtyin" inputmode="numeric" data-ch="portIn" data-r="${x.id}" data-w="a" value="${x.p.a||0}" aria-label="porciones de Andrés por semana"><button data-a="port" data-r="${x.id}" data-w="a" data-n="1" aria-label="más porciones Andrés">+</button></div></div>
         ${(()=>{ const v=vecesEnSemana(x.id);
           const linea=(quien,por,n)=>{ if(!por) return '';
             if(!n) return `<div class="small mt4" style="color:var(--gold)">${quien}: esta semana no aparece (sus franjas ya están ocupadas por otras recetas)</div>`;
@@ -9284,7 +9285,7 @@ function gestSemanaHTML(){
           return linea('Andrés', x.p.a, v.a) + linea('Cami', x.p.c, v.c); })()}
         ${recPersonRow('Cami',col.cami,null,x.r.c)}
         <div class="flex between mt4" style="max-width:210px"><span class="small dim">porciones/semana</span>
-          <div class="qty"><button data-a="port" data-r="${x.id}" data-w="c" data-n="-1" aria-label="menos porciones Cami">−</button><span class="n">${x.p.c||0}</span><button data-a="port" data-r="${x.id}" data-w="c" data-n="1" aria-label="más porciones Cami">+</button></div></div>
+          <div class="qty"><button data-a="port" data-r="${x.id}" data-w="c" data-n="-1" aria-label="menos porciones Cami">−</button><input class="n qtyin" inputmode="numeric" data-ch="portIn" data-r="${x.id}" data-w="c" value="${x.p.c||0}" aria-label="porciones de Cami por semana"><button data-a="port" data-r="${x.id}" data-w="c" data-n="1" aria-label="más porciones Cami">+</button></div></div>
       </div></div>`).join('')}
     <button class="btn ghost full mt8" data-a="foodSub" data-s="recetas">${ic('plus',13)} Agregar otra receta</button>
   </section>
@@ -9522,7 +9523,14 @@ function vGestion(){
   const hayRotacion = recetasActivas('a').length || recetasActivas('c').length;
   const nRec=Object.keys(S.meal.selected||{}).length;
   return `
-  <h2 class="t-h1" style="margin:6px 2px 12px">Gestión alimentación</h2>
+  <h2 class="t-h1" style="margin:6px 2px 8px">Gestión alimentación</h2>
+  <div class="flex mb12" style="gap:6px;align-items:center;flex-wrap:wrap">
+    <button class="chip" data-a="foodSub" data-s="recetas">1 · Eliges recetas</button>
+    <span class="small dim">→</span>
+    <span class="chip fill" style="pointer-events:none">2 · Ajustas tu semana aquí</span>
+    <span class="small dim">→</span>
+    <button class="chip" data-a="foodSub" data-s="lista">3 · El mercado compra el plan</button>
+  </div>
   ${hayRotacion
     ? gestCaja('resumen','Resumen y recetas', nRec+' receta'+(nRec===1?'':'s')+' en rotación · por persona', gestSemanaHTML, false)
     : gestSemanaHTML() /* sin rotacion, gestSemanaHTML ES el estado vacio con su invitacion: se muestra directo */}
@@ -11896,7 +11904,8 @@ const ACTIONS = {
   },
   /* Punto E: cambia entre ver la semana completa o un dia puntual, dentro de
      Gestion > la semana comida por comida */
-  gestVista(d){ UI.gestView=d.v; render(); irACaja('gestplan'); },
+  gestVista(d){ UI.gestView=d.v; render(); /* sin irACaja: el usuario YA esta parado
+    en el chip; teletransportarlo a la caja lo lanzaba 1300px (queja del dueno) */ },
   gestDaySel(d){ UI.gestDay=d.d; render(); },
   /* Punto C: scoop de proteina (24 g, ver scoopMac) sumado a una comida puntual de
      la semana planeada. Pensado para Andres pero no se bloquea si se usa desde
@@ -12313,6 +12322,28 @@ const CHANGES = {
   },
   sched(el){ S.sched[el.dataset.rid]=+el.value; save('sched'); render(); },
   islaDia(el){ weekSet(+el.dataset.d, el.value); islaSemanaRedraw(); render(); },
+  /* numeros escribibles donde antes solo habia +/- (queja del dueno): mismas
+     rutas de datos que los steppers, con tope y sin sorpresas */
+  portIn(el){
+    const r=el.dataset.r, w=el.dataset.w;
+    const v=clamp(parseInt(el.value,10)||0, 0, 9);
+    S.meal.selected[r]=S.meal.selected[r]||{a:0,c:0};
+    S.meal.selected[r][w]=v;
+    if(!S.meal.selected[r].a && !S.meal.selected[r].c) delete S.meal.selected[r];
+    save('meal'); render();
+  },
+  repComidasIn(el){
+    const key=el.dataset.u;
+    const v=clamp(parseInt(el.value,10)||3, 1, 5);
+    S.meal.prefs.comidas=S.meal.prefs.comidas||{}; S.meal.prefs.comidas[key]=v;
+    save('meal'); repBoxRedraw(); render();
+  },
+  repPctIn(el){
+    /* reusa la misma logica del campo % de la vista dia (mealPct): fija el valor y
+       la comida siguiente absorbe la diferencia, respetando pisos */
+    CHANGES.mealPct({dataset:{u: el.dataset.u==='a'?'andres':'cami', i: el.dataset.i}, value: el.value});
+    repBoxRedraw();
+  },
   pcal(){
     const F={pollo:[0.31,'g'],res:[0.28,'g'],cerdo:[0.30,'g'],pescado:[0.26,'g'],huevo:[6.5,'unid'],atun:[26,'unid'],yogur:[0.09,'g'],whey:[24,'unid']};
     const f=F[$('#pcFood').value], q=parseFloat(($('#pcQty').value||'').replace(',','.'))||0;

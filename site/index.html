@@ -1357,7 +1357,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 131';
+const APPREV='REV 132';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -6399,15 +6399,25 @@ function lineChart(o){
   const last=pts[pts.length-1];
   s+='<text class="em" x="'+clamp(X(pts.length-1), 30, W-R-6)+'" y="'+(Y(last.v)-9)+'" text-anchor="middle">'+o.fmt(last.v)+'</text>';
   if(timeMode){
+    const tot=den;
+    if(tot<=14){
+      /* rango corto (la semana): letras de dia L M X J V S D en vez de fechas
+         (pedido del dueno); en dias proyectados la letra sale atenuada */
+      for(let t2=0;t2<=tot;t2++){
+        const dd=addDays(pts[0].d,t2);
+        const fut=t2>span;
+        s+='<text x="'+XT(t2)+'" y="'+(H-8)+'" text-anchor="middle"'+(fut?' style="opacity:.45"':'')+'>'+DLETRAS[fromISO(dd).getDay()]+'</text>';
+      }
+    } else {
     /* las fechas se reparten sobre TODO el eje, horizonte de proyeccion incluido:
        si no, al proyectar 6 meses los datos quedan comprimidos a la izquierda y
        las fechas se montan unas sobre otras (ademas las futuras tambien informan) */
-    const tot=den;
     const nt=Math.min(4, Math.max(2, Math.round(tot/5)+1));
     for(let k=0;k<nt;k++){
       const t=Math.round(tot*k/Math.max(1,nt-1));
       const anch=k===0?'start':k===nt-1?'end':'middle';
       s+='<text x="'+XT(t)+'" y="'+(H-8)+'" text-anchor="'+anch+'">'+fmtD(addDays(pts[0].d,t))+'</text>';
+    }
     }
   } else {
     const lbEvery=Math.max(1, Math.ceil(pts.length/5));
@@ -7890,12 +7900,13 @@ function daySummary(d){
   const rn=sess.map(s=>{const r=findRoutine(s.rid); return r?r.name:null;}).filter(Boolean).join(' + ');
   const rows=entries.map(({id,h,hi})=>{ const name=h.alt?h.alt+' (sust.)':exNombre(id);
     if(!edit) return `<div class="ingrow"><span>${esc(name)}</span><span class="dim">${h.sets.map(s=>fmt1(s.w)+'×'+s.r).join('  ')}</span></div>`;
-    return `<div class="dayedex"><b class="small" style="display:block;margin-bottom:6px">${esc(name)}</b>${h.sets.map((s,i)=>`<div class="deset"><span class="desi">${i+1}</span><input class="in ctr" inputmode="decimal" value="${s.w}" data-ch="logSet" data-ex="${id}" data-hi="${hi}" data-i="${i}" data-f="w" aria-label="kg"><span class="dex">kg ×</span><input class="in ctr" inputmode="numeric" value="${s.r}" data-ch="logSet" data-ex="${id}" data-hi="${hi}" data-i="${i}" data-f="r" aria-label="reps"><span class="dex">reps</span></div>`).join('')}</div>`;
+    return `<div class="dayedex"><div class="flex between" style="margin-bottom:6px"><b class="small">${esc(name)}</b><button class="chip red" data-a="dayDelEx" data-d="${d}" data-id="${id}" data-hi="${hi}" aria-label="Quitar ${esc(name)} de este día">${ic('x',10)} quitar</button></div>${h.sets.map((s,i)=>`<div class="deset"><span class="desi">${i+1}</span><input class="in ctr" inputmode="decimal" value="${s.w}" data-ch="logSet" data-ex="${id}" data-hi="${hi}" data-i="${i}" data-f="w" aria-label="kg"><span class="dex">kg ×</span><input class="in ctr" inputmode="numeric" value="${s.r}" data-ch="logSet" data-ex="${id}" data-hi="${hi}" data-i="${i}" data-f="r" aria-label="reps"><span class="dex">reps</span></div>`).join('')}</div>`;
   }).join('');
   return `<div class="mb12" style="border:1px solid var(--line2);border-radius:14px;padding:12px">
     <div class="flex between mb8"><b style="font-size:16px">${rn||'Entreno'}</b>${edit?`<button class="btn sm primary" data-a="dayEditTgl" data-d="${d}">${ic('check',12)} Listo</button>`:`<div class="flex" style="gap:8px;align-items:center"><span class="mono small">${fmtInt(ton)} kg · ${nsets} series</span><button class="chip" data-a="dayEditTgl" data-d="${d}">${ic('clip',11)} Editar</button></div>`}</div>
     ${rows}
-    ${edit?'<div class="small dim mt8">Corrige los kg o reps si te equivocaste al escribir. Se guarda solo y actualiza las gráficas.</div>':''}
+    ${edit?`<div class="small dim mt8">Corrige los kg o reps si te equivocaste al escribir. Se guarda solo y actualiza las gráficas.</div>
+    <button class="btn ghost full mt8" data-a="dayDelAll" data-d="${d}" style="color:var(--red);border-color:rgba(255,90,90,.35)">${ic('x',13)} Borrar todos los registros de este día</button>`:''}
   </div>`;
 }
 function vDia(){
@@ -10391,6 +10402,15 @@ function goalCardHTML(g){
       ${steps.map(v=>`<span class="chip ${hoyW>=v?'fill':'dim'}" style="pointer-events:none">${hoyW>=v?'✓ ':''}${fmt1(v)}</span>`).join('')}
       <span class="chip ${done?'fill':'dim'}" style="pointer-events:none">${done?'✓ ':''}${fmt1(g.target)} kg</span>
     </div>`:''}
+    ${(()=>{ /* grafica de proyeccion (pedido del dueno): el historial convertido a
+      las reps de la meta + la tendencia extendida hasta cruzar la linea de la meta;
+      lineChart ya pinta el punto de cruce con su fecha estimada (≈ dd/mm) */
+      const hist=goalHistRM(g.ex).slice(-16);
+      if(hist.length<2) return '';
+      const pts=hist.map(p=>({d:p.d, x:'', v:rmAReps(p.v,reps), tip:fmtD(p.d)+' · '+fmt1(rmAReps(p.v,reps))+' kg × '+reps+' (est.)'}));
+      const horiz=(py&&py.sube&&py.dias)?clamp(py.dias+14,21,200):(done?14:60);
+      return `<div class="mt8">${lineChart({pts, fmt:v=>fmt1(v)+' kg', trend:!done, horizonte:horiz, goal:g.target, goalLabel:fmt1(g.target)+' kg', h:104})}</div>`;
+    })()}
     <div class="small dim mt8" style="line-height:1.5">${proyTxt}</div>
   </div>`;
 }
@@ -11814,6 +11834,27 @@ const ACTIONS = {
     return true;
   },
   exProg(d){ UI.ex=d.ex; UI.tab='progreso'; UI.sub.prog='ejercicios'; UI.progAct='ejercicios'; UI.session=null; render(); },
+  /* quitar UN ejercicio de un dia del historial (pedido del dueno: "necesito borrar
+     los que ya agregue pero no me deja"; el editor solo corregia kg/reps). El hi es
+     el indice de aparicion de ese ejercicio EN ese dia, igual que usa logSet. */
+  dayDelEx(d){
+    const arr=S.logs[d.id]||[];
+    let k=-1, cnt=-1;
+    for(let i=0;i<arr.length;i++){ if(arr[i].d===d.d){ cnt++; if(cnt===+d.hi){ k=i; break; } } }
+    if(k<0) return;
+    const nombre=arr[k].alt||exNombre(d.id);
+    if(!confirm('¿Quitar '+nombre+' del '+fmtD(d.d)+'?')) return;
+    arr.splice(k,1);
+    if(!arr.length) delete S.logs[d.id];
+    save('logs'); render(); toast('Registro quitado');
+  },
+  dayDelAll(d){
+    if(!confirm('¿Borrar TODOS los registros del '+fmtD(d.d)+'? Esto quita las series y la sesión de ese día. No hay deshacer.')) return;
+    Object.keys(S.logs).forEach(id=>{ S.logs[id]=S.logs[id].filter(h=>h.d!==d.d); if(!S.logs[id].length) delete S.logs[id]; });
+    S.sessions=S.sessions.filter(s=>s.d!==d.d);
+    UI.dayEdit=null; UI.histDay=null;
+    save('logs'); save('sessions'); render(); toast('Día borrado del historial');
+  },
   delHist(d){
     if(!confirm('¿Borrar el registro del '+fmtD(d.d)+' de este ejercicio?')) return;
     S.logs[d.ex]=(S.logs[d.ex]||[]).filter(h=>h.d!==d.d);

@@ -254,7 +254,11 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   marca hoy, barra, escalones y proyección de fecha por regresión
   (`metasCard`, `goalCardHTML`, `goalProy`, `rmAReps`; datos en `S.goals`).
   El formulario pide peso × reps y muestra un caption en vivo con el 1RM
-  equivalente y la fecha en que se lograría (`goalw`/`goalr`)
+  equivalente y la fecha en que se lograría (`goalw`/`goalr`). Cada meta con 2+
+  registros trae su gráfica: historial a las reps de la meta, línea de meta y
+  tendencia extendida con el punto "≈ fecha" del cruce (mismo `lineChart`).
+  Las gráficas de rango corto (SEM) marcan el eje con letras L M X J V S D en
+  vez de fechas; los días proyectados salen atenuados
 - **P2** Tarjeta Rendimiento (`rendimientoCard`)
   - P2a Selector de intervalo (SEM/15D/30D/6M/AÑO), esquina superior derecha
   - P2b Número grande + delta del periodo
@@ -266,7 +270,10 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 - **P3** Botonera de 6 categorías: General · Peso · Volumen · Tiempo · Fuerza · Pasos
 - **P4** Vista Peso: chips Diario/Promedio semanal, registro, historial (`vPeso`)
 - **P5** Vista Volumen (tonelaje, logros, series por grupo) (`vVolumen`)
-- **P6** Vista Tiempo (duración, frecuencia, historial) (`vTiempo`)
+- **P6** Vista Tiempo (duración, frecuencia, historial) (`vTiempo`). En el historial,
+  "Editar" además de corregir kg/reps permite QUITAR un ejercicio del día
+  (`dayDelEx`) o borrar todos los registros del día con su sesión (`dayDelAll`),
+  ambos con confirmación (pedido del dueño tras el import duplicado)
 - **P7** Vista Fuerza (por ejercicio, récords) (`vEjercicios`)
 - **P8** Vista Pasos (`vPasos`)
 - **P9** Nutrición en Progreso: adherencia, kcal, dona de macros, top alimentos (`vNutriStats`)

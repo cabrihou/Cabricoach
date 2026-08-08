@@ -64,8 +64,18 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   sesiones, semana, isla y calendario las tratan igual; se borran con la X de su
   tarjeta (los días de la semana que la usaban vuelven a descanso)
 - **E2x** Catálogo: categorías nuevas Calistenia (12 progresiones/habilidades) y
-  Calistenia en anillas (12), con equipo "Anillas" en el filtro; fotos pendientes de
-  generar (nodos EJ — <id> creados en el space, el onerror las oculta mientras)
+  Calistenia en anillas (12), con equipo "Anillas" en el filtro; las 24 fotos (set
+  Andrés-Cabrito) viven en assets/ej desde REV 130
+- **E6** Movilidad completa: tocar la tarjeta Movilidad despliega la rutina real de
+  10 ejercicios en 3 bloques (muñecas/tobillos, cadera, columna/hombros) con foto,
+  dosis y detalle (`MOV_RUTINA`, `ACTIONS.movDetail`), botón "Hecha hoy (+1)" de
+  siempre (`mobilTgl`) y "Empezar rutina guiada": player en ventana flotante con
+  temporizador que avanza solo, pausa y saltos (`movPlayerOpen`/`movPlayerRedraw`,
+  estado en `MOVP`). Al terminar marca la movilidad del día. Los 10 ejercicios
+  también están en el catálogo E5 bajo la categoría Movilidad (ids `mov_*`)
+- **E1b** Mapa muscular de cabra en Personalizado: dos siluetas (frente y espalda)
+  con zonas tocables que seleccionan los mismos grupos que los chips
+  (`cabraMapa`, mismo `ACTIONS.persoGrupo`)
 - **E1** Rutina del día / lista de rutinas (`.pcard`, sub-pestañas de entrenar: Rutinas · Ejercicios, `UI.sub.train`, `ACTIONS.trainSub`)
   - E1a Caja "Personalizado" junto a Movilidad en el grid de rutinas: formulario de herramientas/tiempo/grupos/intensidad, genera y arranca una sesión con `rid:'perso'` (`vPerso`, `persoGen`, `ACTIONS.persoOpen/persoRoll/persoStart`)
 - **E2** Sesión activa (modo foco)
@@ -233,10 +243,19 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 ## P · Progreso (`vProgreso`)
 
 - **P1** Selector grande con cabritas: Actividad física / Nutrición (`progGrpSelector`)
+- **P10** Metas de fuerza (caja colapsable arriba del Rendimiento, solo grupo
+  Actividad física): objetivos tipo "100 kg en sentadilla" con mejor marca actual,
+  barra de avance, escalones intermedios cada ~20% y proyección de fecha al ritmo
+  real de los registros (`metasCard`, `goalCardHTML`, `goalProy`; datos en
+  `S.goals`, viajan a la nube). Nueva meta con buscador en vivo del catálogo
+  (`goalq`) y peso objetivo; borrar con la X (confirma)
 - **P2** Tarjeta Rendimiento (`rendimientoCard`)
   - P2a Selector de intervalo (SEM/15D/30D/6M/AÑO), esquina superior derecha
   - P2b Número grande + delta del periodo
-  - P2c Gráfica de línea
+  - P2c Gráfica con valores en el eje Y y tres estilos: Línea, Barras (por defecto
+    en Volumen y Tiempo: son totales por día) y Suave (promedio móvil de 7 con los
+    datos crudos en punticos). Chips bajo la gráfica, elección por modo en
+    `UI.chartKind` (`lineChart` opción `estilo`)
   - P2d Trío de medidores (cambia según la categoría)
 - **P3** Botonera de 6 categorías: General · Peso · Volumen · Tiempo · Fuerza · Pasos
 - **P4** Vista Peso: chips Diario/Promedio semanal, registro, historial (`vPeso`)

@@ -57,10 +57,15 @@ Tres piezas hacen que ese re-pintado total no se sienta:
    guarda `UI._ancla` con selector construido de sus `data-*`, índice de aparición
    —los 7 días de la semana repiten atributos— y su `top` en pantalla). Tras el
    render, `aplicar()` corrige el scroll para dejar el ancla donde estaba, y un
-   `vigila()` por `requestAnimationFrame` re-aplica hasta que la altura del
-   documento se queda quieta 3 frames (o ~1,5 s), salvo que el usuario mueva el
-   scroll él mismo (guardia de 80px). Sin el vigilante, una sola medición corrige
-   sobre el layout a medio inflar y el salto vuelve.
+   `vigila()` por `requestAnimationFrame` re-aplica durante ~1,5 s vigilando la
+   POSICIÓN del ancla (no la altura del documento: content-visibility puede
+   recolocar el ancla sin mover la altura total), salvo que el usuario mueva el
+   scroll él mismo (guardia de 80px). Además cada render sube una GENERACIÓN
+   (`renderReal._gen`) y los vigilantes de renders anteriores se apagan solos: dos
+   vigilantes vivos a la vez corrigen contra fotos distintas de la pantalla y esa
+   pelea era el salto que quedaba al escribir la primera búsqueda tras abrir la app
+   (la carga perezosa de paquetes mete un segundo render a ~50 ms de la tecla; ver
+   el comentario en `paqCargar`, que también preserva el foco del campo).
 
 Si agregas un control con `data-*` nuevos y quieres que el ancla lo distinga,
 revisa la lista de atributos que arma el selector en el despachador de clicks
@@ -178,6 +183,30 @@ Reglas de negocio que no se negocian:
   dato real queda por debajo, el dato manda. `desdeCero` existe pero ya no se usa:
   el cero literal aplastaba la línea.
 - Bandas de descarga (`bands`), serie secundaria (`series2`), meta (`goal`).
+- Valores del eje Y en cada línea guía (`.ylab`, se saltan si chocan con la meta).
+- `estilo`: `linea` (clásico), `barras` (totales por día: volumen y tiempo arrancan
+  así) o `suave` (promedio móvil de 7 puntos con los crudos en punticos). El chip
+  de Rendimiento lo guarda por modo en `UI.chartKind` (solo la sesión).
+
+## 7b. Metas de fuerza (P10)
+
+`S.goals` por usuario (viaja a nube): `{id, ex, name, target, start, d}`. La caja
+`metasCard` en Progreso muestra mejor marca (`goalBest`: tope de peso por sesión de
+`S.logs`), barra desde `start`, escalones a 2,5 kg (`goalSteps`) y proyección de
+fecha (`goalProy`: regresión sobre los últimos 12 topes por sesión; si la pendiente
+no sube, lo dice en vez de inventar fecha). Alta con buscador en vivo (`goalq`)
+sobre EXMAP+EXCAT.
+
+## 7c. Movilidad guiada y gestos de navegación
+
+- `MOV_RUTINA` (10 ejercicios, 3 bloques, ids `mov_*` que también viven en EXCAT
+  categoría Movilidad con foto en `assets/ej/`). Player en fbox con temporizador
+  (`movPlayerOpen`/`movPlayerTick`, estado en `MOVP`, muere con la caja); al
+  terminar marca `S.mobil` (mismo punto de reto de siempre).
+- SWN (deslizar para navegar): zonas `data-swnav` — `cal` (mes/semana), `dia`
+  (cabecera del detalle de día), `gestdia` (día de Gestión) — y el `#rotcard`.
+  Umbral 64 px y 1.5x horizontal, nunca `preventDefault`, no arranca en el borde
+  izquierdo (gesto de atrás) ni sobre las filas de deslizar-para-borrar.
 
 ## 8. Gestión alimentación (C5)
 

@@ -40,7 +40,20 @@ programación del coach diario (`zsh herramientas/coach-diario/instalar.sh`).
 Regla que evita el dolor: `git pull --rebase` ANTES de tocar nada (el archivo es
 uno solo; un conflicto es irresoluble a mano).
 
-## Estado al corte (REV 123)
+## Estado al corte (REV 130, 07/08)
+
+REV 130: fotos de calistenia y anillas (24, set Andrés-Cabrito) conectadas al
+catálogo; rutina de movilidad real (10 ejercicios en 3 bloques con foto, detalle y
+player guiado con temporizador; categoría Movilidad en el catálogo); mapa muscular
+de cabra en Personalizado (frente/espalda tocables); metas de fuerza en Progreso
+(P10: barra, escalones, proyección de fecha por regresión); gráficas con eje Y y
+estilos Línea/Barras/Suave; deslizar para navegar (calendario, rotador, día de
+Gestión, detalle de día); y la causa raíz del salto al ingresar comida corregida
+(doble render de `paqCargar` que robaba el foco + vigilantes de scroll solapados,
+ver ARQUITECTURA §3). Verificado con CDP: por tecla ≤1,3 px, foco retenido,
+aritmética exacta, 0 errores de consola en las 10 vistas × 2 usuarios.
+
+## Estado anterior (REV 123)
 
 Fase reciente (REV 101 → 123, jul 31 - ago 3): motor de escalado por ingrediente
 con techo de kcal, mercado que compra la semana real del plan, rotación gobernada

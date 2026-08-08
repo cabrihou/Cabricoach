@@ -309,6 +309,8 @@ body.kb #nav{transition:opacity .12s,transform .18s}
 .chart .barmark.today{fill:var(--red)}
 .chart text{font-family:var(--num);font-size:10.5px;fill:var(--smoke);letter-spacing:.05em}
 .chart text.em{fill:var(--ink);font-weight:600;font-size:11.5px}
+.chart text.ylab{fill:var(--smoke);opacity:.55;font-size:9.5px}
+.chart .dot.raw{opacity:.3}
 .chart text.goalt{fill:var(--red);font-weight:700}
 .chart .hit{fill:transparent}
 .chart .dband{fill:rgba(255,201,77,.09)}
@@ -803,6 +805,24 @@ svg .acc{fill:var(--mint);stroke:none}
 .actrow{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:9px 0;border-bottom:1px dashed var(--line);color:var(--ink)}
 .actrow:last-child{border-bottom:none}
 .actic{width:36px;height:36px;border-radius:11px;background:rgba(var(--acc-rgb),.12);color:var(--mint);display:flex;align-items:center;justify-content:center;flex:none}
+.movthumb{width:46px;height:46px;border-radius:12px;overflow:hidden;flex:none;background:#10151d}
+.movthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.movpimg{border-radius:14px;overflow:hidden;background:#10151d;aspect-ratio:1/1;max-height:260px;display:flex;align-items:center;justify-content:center}
+.movpimg img{width:100%;height:100%;object-fit:cover;display:block}
+.movpbar{height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.movpbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--mint),var(--mint2));transition:width .5s linear}
+.cabramapa{display:flex;gap:18px;justify-content:center;margin:10px 0 2px}
+.cabramapa svg{width:128px;height:auto;overflow:visible}
+.cabrabody circle,.cabrabody path{fill:rgba(255,255,255,.04);stroke:var(--line);stroke-width:1.2}
+.cmz{cursor:pointer}
+.cmz .zs{fill:rgba(255,255,255,.05);stroke:var(--line);stroke-width:1.2;transition:fill .15s,stroke .15s}
+.cmz.on .zs{fill:rgba(var(--acc-rgb),.42);stroke:var(--mint)}
+.cml{font:600 10px var(--ui);fill:var(--ink3,#7a8699);letter-spacing:.5px}
+.goalcard{padding:12px 2px;border-bottom:1px dashed var(--line)}
+.goalcard:last-of-type{border-bottom:none}
+.goalcard.done{opacity:.92}
+.goalbar{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.goalbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--mint),var(--mint2));transition:width .3s ease}
 .actkcal{font:600 13px var(--num);color:var(--mint);flex:none}
 .cycmod{cursor:pointer;text-align:center;border-color:color-mix(in srgb,var(--cyc) 35%,var(--line))}
 .cycringwrap{display:flex;justify-content:center;margin:2px 0 4px}
@@ -1337,7 +1357,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 129';
+const APPREV='REV 130';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2346,6 +2366,88 @@ const PH_A={push:'a-push',pull:'a-pull',legs:'a-legs'};
 function shortEx(n){ n=String(n).split('(')[0].split(' / ')[0].trim(); return n.length>18 ? n.slice(0,17)+'…' : n; }
 /* media por ejercicio (set La Cabrita en assets/ej y assets/anim/ej; sin hosting se oculta solo) */
 const EXMEDIA_ALIAS={pullup2:'pullup', lcurl2:'lcurl', c_abd2:'c_abd', c_calf2:'c_calf', c_hipl:'c_hip', c_z2:null};
+/* ============ RUTINA DE MOVILIDAD (diaria, guiada) ============
+   Antes era una lista estatica de 3 lineas; ahora es una rutina real: 10 ejercicios
+   en 3 bloques con dosis, instruccion y foto (assets/ej/mov_*.jpg, set Andres-Cabrito),
+   mas un player guiado en fbox con temporizador que avanza solo. El punto de reto
+   sigue siendo el mismo (S.mobil + ACTIONS.mobilTgl); el player solo lo marca al final. */
+const MOV_RUTINA=[
+  {b:'Muñecas y tobillos', ex:[
+    {id:'mov_munecas', n:'Círculos de muñeca', t:40, dosis:'40 s', d:'En cuatro apoyos, palmas en el piso y dedos mirando a las rodillas. Círculos suaves cargando un poco el peso adelante.'},
+    {id:'mov_tobillo', n:'Rodilla a la pared', t:60, dosis:'30 s por lado', d:'Media rodilla al piso frente a la pared. Lleva la rodilla sobre los dedos sin despegar el talón. Clave para sentadilla y prensa.'}]},
+  {b:'Cadera', ex:[
+    {id:'mov_sentadilla', n:'Sentadilla profunda sostenida', t:45, dosis:'45 s', d:'Talones en el piso, pecho arriba, los codos empujan las rodillas hacia afuera. Respira lento ahí abajo.'},
+    {id:'mov_zancada', n:'Zancada con rotación', t:60, dosis:'5 por lado', d:'Zancada baja, una mano al piso y el otro brazo gira hacia el techo abriendo el pecho. Cambia de lado a mitad de tiempo.'},
+    {id:'mov_paloma', n:'Paloma', t:60, dosis:'30 s por lado', d:'Pierna delantera doblada sobre el piso, la de atrás estirada. Torso erguido, cadera cuadrada. Cambia de lado a la mitad.'},
+    {id:'mov_bisagra', n:'Bisagra de cadera con palo', t:45, dosis:'10 lentas', d:'Palo pegado a cabeza, espalda alta y sacro. Dobla la cadera hacia atrás con rodillas suaves, sin perder los 3 contactos.'}]},
+  {b:'Columna y hombros', ex:[
+    {id:'mov_gato', n:'Gato-camello', t:45, dosis:'8 lentas', d:'En cuatro apoyos alterna arquear y redondear toda la columna, vértebra a vértebra, siguiendo la respiración.'},
+    {id:'mov_aguja', n:'Aguja torácica', t:60, dosis:'8 por lado', d:'Desde cuatro apoyos pasa un brazo por debajo del cuerpo y gira la espalda alta. Cambia de lado a la mitad.'},
+    {id:'mov_perro', n:'Perro boca abajo', t:45, dosis:'45 s', d:'Cadera alta en V invertida, talones buscando el piso. Pedalea suave las rodillas para sentir cada pierna.'},
+    {id:'mov_disloc', n:'Dislocaciones con palo', t:45, dosis:'12', d:'Agarre bien ancho, brazos siempre estirados: pasa el palo por encima de la cabeza hacia atrás y vuelve, sin doblar codos.'}]}
+];
+function movFlat(){ return MOV_RUTINA.flatMap(b=>b.ex.map(e=>({...e, b:b.b}))); }
+function movTotalMin(){ const s=movFlat().reduce((a,e)=>a+e.t,0); return Math.round(s/60); }
+/* player guiado: fbox propia (sobrevive al render), temporizador por ejercicio que
+   avanza solo, pausa, saltar atras/adelante. MOVP es el unico estado y muere con la caja. */
+let MOVP=null;
+function movStopPlayer(){ if(MOVP){ clearInterval(MOVP.int); if(MOVP.box) MOVP.box.remove(); MOVP=null; } }
+function movPlayerOpen(){
+  movStopPlayer();
+  const box=document.createElement('div'); box.className='fbox';
+  document.body.appendChild(box);
+  MOVP={i:0, left:movFlat()[0].t, pau:false, box, int:setInterval(movPlayerTick,1000)};
+  box.onclick=e=>{ if(e.target===box) movStopPlayer(); };
+  movPlayerRedraw();
+}
+function movPlayerTick(){
+  if(!MOVP || MOVP.pau) return;
+  MOVP.left--;
+  if(MOVP.left<=0){
+    if(navigator.vibrate) navigator.vibrate([120,60,120]);
+    const fl=movFlat();
+    if(MOVP.i>=fl.length-1){ movPlayerDone(); return; }
+    MOVP.i++; MOVP.left=fl[MOVP.i].t;
+  }
+  movPlayerRedraw();
+}
+function movPlayerDone(){
+  movStopPlayer();
+  const t=TODAY();
+  if(!S.mobil[t]){ S.mobil[t]=1; save('mobil'); toast('Movilidad hecha · +1 punto de reto'); }
+  else toast('Movilidad del día completa');
+  if(navigator.vibrate) navigator.vibrate([120,60,120,60,220]);
+  render();
+}
+function movPlayerRedraw(){
+  if(!MOVP || !MOVP.box) return;
+  const fl=movFlat(), e=fl[MOVP.i], tot=fl.length;
+  const mm=Math.floor(MOVP.left/60), ss=MOVP.left%60;
+  MOVP.box.innerHTML=`<div class="fboxin" style="max-width:400px">
+    <div class="flex between mb8"><b class="t-h2">Movilidad guiada</b><button class="btn sm" data-mv="cerrar" aria-label="cerrar">${ic('x',14)}</button></div>
+    <div class="small dim mb8">${esc(e.b)} · ${MOVP.i+1} de ${tot}</div>
+    <div class="movpimg"><img src="assets/ej/${e.id}.jpg" alt="" decoding="async" onerror="this.style.display='none'"></div>
+    <div class="flex between mt12" style="align-items:baseline">
+      <b class="t-h2" style="min-width:0">${esc(e.n)}</b>
+      <span class="chip fill" style="flex:none;pointer-events:none">${esc(e.dosis)}</span>
+    </div>
+    <div class="small mt8" style="line-height:1.55">${esc(e.d)}</div>
+    <div class="tc mt12"><span class="t-metric" style="font-size:44px">${mm}:${pad2(ss)}</span></div>
+    <div class="movpbar mt8"><i style="width:${Math.round((1-MOVP.left/e.t)*100)}%"></i></div>
+    <div class="flex mt12" style="gap:8px">
+      <button class="btn sm ghost" data-mv="prev" aria-label="ejercicio anterior" ${MOVP.i===0?'disabled':''}>${ic('chevL',15)}</button>
+      <button class="btn primary grow" data-mv="pausa" aria-label="${MOVP.pau?'seguir':'pausar'}">${MOVP.pau?ic('play',14)+' Seguir':'Pausa'}</button>
+      <button class="btn sm ghost" data-mv="next" aria-label="siguiente ejercicio">${ic('chevR',15)}</button>
+    </div>
+  </div>`;
+  MOVP.box.querySelectorAll('[data-mv]').forEach(b=>{ b.onclick=()=>{
+    const a=b.dataset.mv, fl2=movFlat();
+    if(a==='cerrar'){ movStopPlayer(); return; }
+    if(a==='pausa'){ MOVP.pau=!MOVP.pau; movPlayerRedraw(); return; }
+    if(a==='prev' && MOVP.i>0){ MOVP.i--; MOVP.left=fl2[MOVP.i].t; movPlayerRedraw(); return; }
+    if(a==='next'){ if(MOVP.i>=fl2.length-1){ movPlayerDone(); return; } MOVP.i++; MOVP.left=fl2[MOVP.i].t; movPlayerRedraw(); }
+  };});
+}
 /* ============ CATALOGO DE EJERCICIOS (EXCAT) ============
    Catalogo embebido de ejercicios (fuera de las rutinas fijas de ROUTINES): alimenta la
    pestana Ejercicios de Entrenar, el swap grid ampliado y el generador Personalizado.
@@ -2355,9 +2457,20 @@ const EXMEDIA_ALIAS={pullup2:'pullup', lcurl2:'lcurl', c_abd2:'c_abd', c_calf2:'
      tipo:  compuesto | aislado | cardio
    Las fotos van en assets/ej/<img>; muchas todavia no existen (el onerror las oculta con elegancia). */
 const EXCAT_RAW=[
+/* movilidad: la rutina diaria guiada (MOV_RUTINA) vive sobre estos mismos ids,
+   asi el catalogo, la caja de Movilidad en Entrenar y el player comparten fotos */
+["mov_gato","Gato-camello","movilidad","peso_corporal","aislado","mov_gato.jpg"],
+["mov_perro","Perro boca abajo","movilidad","peso_corporal","aislado","mov_perro.jpg"],
+["mov_sentadilla","Sentadilla profunda sostenida","movilidad","peso_corporal","aislado","mov_sentadilla.jpg"],
+["mov_zancada","Zancada con rotación","movilidad","peso_corporal","aislado","mov_zancada.jpg"],
+["mov_tobillo","Tobillo: rodilla a la pared","movilidad","peso_corporal","aislado","mov_tobillo.jpg"],
+["mov_paloma","Paloma (cadera y glúteo)","movilidad","peso_corporal","aislado","mov_paloma.jpg"],
+["mov_bisagra","Bisagra de cadera con palo","movilidad","otro","aislado","mov_bisagra.jpg"],
+["mov_disloc","Dislocaciones de hombro con palo","movilidad","otro","aislado","mov_disloc.jpg"],
+["mov_aguja","Aguja torácica (rotación)","movilidad","peso_corporal","aislado","mov_aguja.jpg"],
+["mov_munecas","Círculos de muñeca","movilidad","peso_corporal","aislado","mov_munecas.jpg"],
 /* calistenia: progresiones y habilidades (los basicos pushup/pullup/dip/plank ya
-   viven en sus categorias). Fotos pendientes de generar en assets/ej (el onerror
-   las oculta mientras tanto). */
+   viven en sus categorias). Fotos en assets/ej desde REV 130 (set Andres-Cabrito). */
 ["pike_pu","Pike Push Up","calistenia","peso_corporal","compuesto","pike_pu.jpg"],
 ["pushup_archer","Archer Push Up","calistenia","peso_corporal","compuesto","pushup_archer.jpg"],
 ["pushup_pseudo","Pseudo Planche Push Up","calistenia","peso_corporal","compuesto","pushup_pseudo.jpg"],
@@ -2649,8 +2762,8 @@ const EXCAT_RAW=[
 const EXCAT=EXCAT_RAW.map(a=>({id:a[0],name:a[1],cat:a[2],equip:a[3],tipo:a[4],img:a[5]}));
 function excatById(id){ return EXCAT.find(x=>x.id===id)||null; }
 function excatByCat(cat){ return EXCAT.filter(x=>x.cat===cat); }
-const EXCAT_LABELS={espalda:'Espalda', pecho:'Pecho', hombros:'Hombros', brazos:'Brazos', pierna:'Pierna', core:'Core', calistenia:'Calistenia', anillas:'Calistenia en anillas', cardio:'Cardio', olimpicos:'Olimpicos', fullbody:'Cuerpo completo', otros:'Otros'};
-const EXCAT_EQUIP_BADGE={barra:'BAR', mancuerna:'MAN', maquina:'MAQ', polea:'POL', banda:'BND', peso_corporal:'CORP', kettlebell:'KB', smith:'SMTH', otro:'OTRO'};
+const EXCAT_LABELS={espalda:'Espalda', pecho:'Pecho', hombros:'Hombros', brazos:'Brazos', pierna:'Pierna', core:'Core', movilidad:'Movilidad', calistenia:'Calistenia', anillas:'Calistenia en anillas', cardio:'Cardio', olimpicos:'Olimpicos', fullbody:'Cuerpo completo', otros:'Otros'};
+const EXCAT_EQUIP_BADGE={barra:'BAR', mancuerna:'MAN', maquina:'MAQ', polea:'POL', banda:'BND', peso_corporal:'CORP', anillas:'ANI', kettlebell:'KB', smith:'SMTH', otro:'OTRO'};
 /* miniatura circular con inicial de respaldo si la foto no existe (elegante, sin hueco) */
 function excatThumbInner(x){ const initial=esc((x.name||'?').trim().charAt(0).toUpperCase()); return '<img src="assets/ej/'+x.img+'" alt="" loading="lazy" decoding="async" onerror="this.remove()"><i>'+initial+'</i>'; }
 function excatThumb(x){ return '<span class="exthumb">'+excatThumbInner(x)+'</span>'; }
@@ -3395,6 +3508,7 @@ function loadState(){
     fotoSrc: store.get('fotoSrc', {}), // 'UID:iso' -> 'cam'|'up': origen de la foto, para que Semana de Fotos solo muestre las de rutina (F4)
     mobil: store.get('mobil', {}),     // iso -> 1: movilidad diaria hecha (+1 punto de reto)
     perso: store.get('perso', {herr:[], min:45, grupos:[], nivel:'media'}),  // ultimas elecciones de la caja Personalizado
+    goals: store.get('goals', []),     // metas de fuerza: [{id, ex, name, target, start, d}] (P10)
     retoprops: store.get('retoprops', {}), // {sem:'texto',...} propuesta de premio MÍA por reto
     retovotes: store.get('retovotes', {}), // {sem:'andres'|'cami'} mi voto por reto
     retoreset: store.get('retoreset', {}), // {d:'iso'} mi propuesta de reinicio de retos
@@ -3486,7 +3600,28 @@ let PAQFOODS=[]; let _paqPedido=false;
 function paqCargar(){
   if(_paqPedido) return; _paqPedido=true;
   fetch('assets/paq/nutricion-co.json').then(r=>r.json()).then(d=>{
-    if(Array.isArray(d)){ PAQFOODS=d; if(UI.nlogSlot) render(); }
+    if(!Array.isArray(d)) return;
+    PAQFOODS=d;
+    /* este render llegaba ~2 frames despues del tap o de la PRIMERA tecla de la
+       busqueda (la carga la disparan nlogOpen y nlogPanel) y era EL salto al
+       ingresar comida que volvia "a veces": destruia el campo recien re-enfocado
+       (el teclado se cerraba solo) o, sin busqueda, mataba al vigilante del tap
+       en plena expansion de content-visibility. Tres reglas:
+       1. si nada de lo visible usa los paquetes (sin texto y sin la categoria
+          Paquetes abierta) NO se re-pinta: los datos quedan cargados y el
+          siguiente render los muestra solo;
+       2. si hay un campo enfocado, se re-pinta y se le devuelve foco y cursor
+          (igual que los buscadores en vivo);
+       3. si no hay campo enfocado, se ancla el re-pintado al buscador del panel
+          para que el scroll no se mueva. */
+    if(!UI.nlogSlot || !(UI.nlogQ || UI.nlogCat==='paq')) return;
+    const foco=campoEnfocado(), ch=(foco&&foco.dataset)?foco.dataset.ch:null;
+    if(!ch){ const inp=document.querySelector('#view input[data-ch=nlogq]');
+      if(inp) UI._ancla={sel:'input[data-ch="nlogq"]', idx:0, top:inp.getBoundingClientRect().top}; }
+    render();
+    if(ch){ const inp=document.querySelector('#view [data-ch="'+ch+'"]');
+      if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false;
+        try{ inp.setSelectionRange(inp.value.length,inp.value.length); }catch(_){}} }
   }).catch(()=>{ _paqPedido=false; /* sin red y sin cache: se reintenta luego */ });
 }
 const LOGCATIMG={beb:'icBeb',des:'icDes',plato:'icPlato',prot:'icProt',acomp:'icAcomp',snack:'icSnack',rec:'icRec'};
@@ -4350,7 +4485,7 @@ function save(k){ clearDayCache(); if(!DEMO){ store.set(k, S[k]); sbPush(k); } }
    'draft' y 'fired' no se sincronizan (son del dispositivo). */
 let SB=null, sbState='off', sbDiagMsg='';
 try{ SB=JSON.parse(localStorage.getItem('afc2:sb')||'null'); if(SB) sbState='ok'; }catch(e){}
-const SB_KEYS=['weights','logs','sessions','steps','water','meals','checkins','inject','meal','reminders','cfg','sched','week','acts','custom','customRoutines','exnotes','free','nlog','customFoods','retos','fotopub','fotoSrc','mobil','retoprops','retovotes','retoreset','ideas','recipeIdeas','facturas','perso'];
+const SB_KEYS=['weights','logs','sessions','steps','water','meals','checkins','inject','meal','reminders','cfg','sched','week','acts','custom','customRoutines','exnotes','free','nlog','customFoods','retos','fotopub','fotoSrc','mobil','retoprops','retovotes','retoreset','ideas','recipeIdeas','facturas','perso','goals'];
 const sbTimers={}, sbPending={};
 /* el payload se lee SIEMPRE del namespace correcto al momento de enviar: si el usuario cambió
    entre el save y el disparo del debounce, S ya es del otro y usarlo cruzaría los datos */
@@ -6168,8 +6303,13 @@ function lineChart(o){
       if(x1-x0>28) s+='<text class="dbandt" x="'+((x0+x1)/2)+'" y="'+(T+11)+'" text-anchor="middle">descarga</text>';
     });
   }
+  /* valores del eje Y en cada linea guia (pedido del dueno: las graficas no eran
+     claras; antes solo se veia el ultimo valor y las lineas no decian nada) */
+  const gy0=o.goal!=null?Y(o.goal):null;
+  const fmtY=v=> Math.abs(v)>=1000 ? fmtInt(v) : String(Math.round(v*10)/10).replace('.',',');
   for(let g=0; g<3; g++){ const gv=mn+(mx-mn)*(g+1)/4, gy=Y(gv);
-    s+='<line class="gline" x1="'+L+'" y1="'+gy+'" x2="'+(W-R)+'" y2="'+gy+'"/>'; }
+    s+='<line class="gline" x1="'+L+'" y1="'+gy+'" x2="'+(W-R)+'" y2="'+gy+'"/>';
+    if(gy0===null || Math.abs(gy-gy0)>11) s+='<text class="ylab" x="'+(W-R+4)+'" y="'+(gy+3)+'">'+fmtY(gv)+'</text>'; }
   s+='<line class="axis" x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'"/>';
   if(o.goal!=null){ const gy=Y(o.goal);
     s+='<line class="goal" x1="'+L+'" y1="'+gy+'" x2="'+(W-R)+'" y2="'+gy+'"/>';
@@ -6204,11 +6344,29 @@ function lineChart(o){
     }
     TR={ta, tb, tEnd};
   }
-  const serieD=pts.map((p,i)=>(i?'L':'M')+X(i)+','+Y(p.v)).join(' ');
-  const gid='ar'+H+'_'+pts.length;
-  s+='<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba('+accColors().rgb+',.30)"/><stop offset="1" stop-color="rgba('+accColors().rgb+',0)"/></linearGradient></defs>';
-  s+='<path class="area" d="'+serieD+' L'+X(pts.length-1)+','+(H-B)+' L'+X(0)+','+(H-B)+' Z" fill="url(#'+gid+')"/>';
-  s+='<path class="serie" d="'+serieD+'"/>';
+  /* estilo de dibujo (pedido del dueno: "poder ver de otras maneras"):
+     'linea' (el clasico), 'barras' (mejor para totales por dia: volumen, tiempo)
+     y 'suave' (promedio movil de 7 puntos sobre los datos crudos en puntico). */
+  const estilo=o.estilo||'linea';
+  let ptsDib=pts;
+  if(estilo==='suave' && pts.length>=5){
+    ptsDib=pts.map((p,i)=>{ const a=Math.max(0,i-3), b2=Math.min(pts.length-1,i+3);
+      let sum=0, nn=0; for(let k=a;k<=b2;k++){ sum+=pts[k].v; nn++; }
+      return {...p, v:sum/nn}; });
+  }
+  if(estilo==='barras'){
+    s+='<defs><linearGradient id="bgr" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="'+accColors().g2+'"/><stop offset="1" stop-color="'+accColors().g1+'"/></linearGradient></defs>';
+    const bw=Math.max(3, (W-L-R)/Math.max(1,den)*0.62);
+    pts.forEach((p,i)=>{ const y=Y(p.v), hh=Math.max(0,(H-B)-y);
+      if(hh>0) s+='<rect class="barmark" x="'+(X(i)-bw/2)+'" y="'+y+'" width="'+bw+'" height="'+hh+'" rx="'+Math.min(bw/2,3.5)+'"/>'; });
+  } else {
+    const serieD=ptsDib.map((p,i)=>(i?'L':'M')+X(i)+','+Y(p.v)).join(' ');
+    const gid='ar'+H+'_'+pts.length;
+    s+='<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba('+accColors().rgb+',.30)"/><stop offset="1" stop-color="rgba('+accColors().rgb+',0)"/></linearGradient></defs>';
+    s+='<path class="area" d="'+serieD+' L'+X(ptsDib.length-1)+','+(H-B)+' L'+X(0)+','+(H-B)+' Z" fill="url(#'+gid+')"/>';
+    s+='<path class="serie" d="'+serieD+'"/>';
+    if(estilo==='suave') pts.forEach((p,i)=>{ s+='<circle class="dot raw" cx="'+X(i)+'" cy="'+Y(p.v)+'" r="2.4"/>'; });
+  }
   /* serie secundaria discreta (ej. kcal/dia) con eje implicito: se normaliza a su propio
      rango, no al de la serie principal, para que quepa en el mismo alto de grafica */
   let hasSerie2=false;
@@ -6226,7 +6384,7 @@ function lineChart(o){
       s+='<circle class="serie2dot" cx="'+X2(0)+'" cy="'+Y2(p2[0].v)+'" r="3" style="fill:'+col+'"/>';
     }
   }
-  pts.forEach((p,i)=>{
+  if(estilo==='linea') pts.forEach((p,i)=>{
     const cls = i===o.prIdx?'dot pr': i===pts.length-1?'dot hot':'dot';
     s+='<circle class="'+cls+'" cx="'+X(i)+'" cy="'+Y(p.v)+'" r="'+(i===pts.length-1?4.5:3.5)+'"/>';
   });
@@ -7255,17 +7413,22 @@ function vRutinas(){
     </button>
   </div>
   ${UI.mobilOpen?`<section class="mod">
-    <div class="mod-head"><span class="ttl">${ic('heart',16)} Movilidad diaria · 8-10 min</span><button class="btn sm ${S.mobil[TODAY()]?'ghost':'primary'}" data-a="mobilTgl">${S.mobil[TODAY()]?'Hecha ✓':'Hecha hoy (+1)'}</button></div>
-    <div class="row"><span class="num" style="font-size:15px;min-width:26px">01</span><div class="small grow"><b>Cadera e isquios:</b> bisagra de cadera con palo 2×10 + sentadilla profunda sostenida 2×30 s.</div></div>
-    <div class="row"><span class="num" style="font-size:15px;min-width:26px">02</span><div class="small grow"><b>Tobillos:</b> rodilla a la pared 2×10 por lado (clave para sentadilla y prensa).</div></div>
-    <div class="row"><span class="num" style="font-size:15px;min-width:26px">03</span><div class="small grow"><b>Hombros y espalda alta:</b> dislocaciones con banda o palo 2×12 + gato-camello 8 lentas.</div></div>
+    <div class="mod-head"><span class="ttl">${ic('heart',16)} Movilidad diaria · ~${movTotalMin()} min</span><button class="btn sm ${S.mobil[TODAY()]?'ghost':'primary'}" data-a="mobilTgl">${S.mobil[TODAY()]?'Hecha ✓':'Hecha hoy (+1)'}</button></div>
+    <button class="btn primary full mb12" data-a="movPlay">${ic('play',14)} Empezar rutina guiada</button>
+    ${MOV_RUTINA.map(bl=>`
+      <span class="lbl" style="display:block;margin:10px 0 2px">${esc(bl.b).toUpperCase()}</span>
+      ${bl.ex.map(e=>`<button class="actrow" data-a="movDetail" data-id="${e.id}" aria-label="${esc(e.n)}">
+        <span class="movthumb"><img loading="lazy" src="assets/ej/${e.id}.jpg" alt="" decoding="async" onerror="this.parentNode.style.display='none'"></span>
+        <span class="grow tl" style="min-width:0"><b style="font:600 15px var(--ui);display:block">${esc(e.n)}</b><span class="small dim">${esc(e.dosis)}</span></span>
+        <span class="nfchev">${ic('chevR',14)}</span>
+      </button>`).join('')}`).join('')}
     <div class="small dim mt8">Cuenta un punto de reto al día, entrenes o no. En día de gym: hazla antes y remata con 5 min de caminadora.</div>
   </section>`:''}
   ${UI.persoOpen?vPerso():''}
   `;
 }
 /* ============ VISTA: EJERCICIOS (dentro de Entrenar, catalogo EXCAT) ============ */
-const EXCAT_ORDER=['pierna','espalda','pecho','hombros','brazos','core','calistenia','anillas','cardio','olimpicos','fullbody','otros'];
+const EXCAT_ORDER=['pierna','espalda','pecho','hombros','brazos','core','movilidad','calistenia','anillas','cardio','olimpicos','fullbody','otros'];
 function excatRow(x){
   return `<button class="actrow" data-a="excatOpen" data-id="${x.id}" aria-label="${esc(x.name)}">
     ${excatThumb(x)}
@@ -7434,6 +7597,41 @@ function persoPreviewHtml(list){
     </div>
   </div>`;
 }
+/* mapa muscular con forma de cabra (pedido del dueno): dos siluetas (frente y
+   espalda) con zonas tocables que seleccionan el MISMO S.perso.grupos que los chips.
+   Es un dibujo esquematico, no anatomia: cada zona lleva data-a="persoGrupo" y el
+   despachador de clicks hace el resto (closest funciona igual dentro de SVG). */
+function cabraMapa(sel){
+  const on=v=>sel.includes(v)?' on':'';
+  const z=(v,lb,inner)=>`<g class="cmz${on(v)}" data-a="persoGrupo" data-v="${v}" role="button" aria-label="${lb}" aria-pressed="${sel.includes(v)?'true':'false'}">${inner}</g>`;
+  /* silueta comun: cabeza con cuernos y orejas, decorativa (no tocable) */
+  const cabeza=`<g class="cabrabody">
+    <path d="M42 18 Q37 6 46 8 Q52 10 52 16" />
+    <path d="M78 18 Q83 6 74 8 Q68 10 68 16" />
+    <circle cx="60" cy="32" r="21"/>
+    <path d="M38 30 Q28 26 26 34 Q30 40 40 38" />
+    <path d="M82 30 Q92 26 94 34 Q90 40 80 38" />
+  </g>`;
+  const frente=`<svg viewBox="0 0 120 168" aria-hidden="false">
+    ${cabeza}
+    ${z('hombros','Hombros','<circle class="zs" cx="39" cy="66" r="10"/><circle class="zs" cx="81" cy="66" r="10"/>')}
+    ${z('pecho','Pecho','<rect class="zs" x="45" y="59" width="30" height="19" rx="9"/>')}
+    ${z('brazos','Brazos','<rect class="zs" x="24" y="74" width="12" height="32" rx="6"/><rect class="zs" x="84" y="74" width="12" height="32" rx="6"/>')}
+    ${z('core','Core','<rect class="zs" x="46" y="81" width="28" height="23" rx="9"/>')}
+    ${z('pierna','Pierna','<rect class="zs" x="43" y="107" width="15" height="40" rx="7"/><rect class="zs" x="62" y="107" width="15" height="40" rx="7"/>')}
+    <g class="cabrabody"><path d="M47 150 h9 v7 h-9 z"/><path d="M64 150 h9 v7 h-9 z"/></g>
+    <text class="cml" x="60" y="166" text-anchor="middle">Frente</text>
+  </svg>`;
+  const espalda=`<svg viewBox="0 0 120 168" aria-hidden="false">
+    ${cabeza.replace('<circle cx="60" cy="32" r="21"/>','<circle cx="60" cy="32" r="21"/><circle cx="60" cy="26" r="6" fill="rgba(255,255,255,.05)"/>')}
+    ${z('espalda','Espalda','<path class="zs" d="M45 58 Q60 52 75 58 L78 92 Q60 100 42 92 Z"/>')}
+    ${z('brazos','Brazos','<rect class="zs" x="24" y="74" width="12" height="32" rx="6"/><rect class="zs" x="84" y="74" width="12" height="32" rx="6"/>')}
+    ${z('pierna','Pierna','<ellipse class="zs" cx="52" cy="106" rx="11" ry="10"/><ellipse class="zs" cx="68" cy="106" rx="11" ry="10"/><rect class="zs" x="43" y="116" width="15" height="31" rx="7"/><rect class="zs" x="62" y="116" width="15" height="31" rx="7"/>')}
+    <g class="cabrabody"><path d="M47 150 h9 v7 h-9 z"/><path d="M64 150 h9 v7 h-9 z"/><path d="M58 96 Q64 100 58 106" /></g>
+    <text class="cml" x="60" y="166" text-anchor="middle">Espalda</text>
+  </svg>`;
+  return `<div class="cabramapa">${frente}${espalda}</div>`;
+}
 function vPerso(){
   const p=S.perso, preview=UI.persoPreview;
   return `<section class="mod">
@@ -7443,6 +7641,8 @@ function vPerso(){
     <span class="lbl">TIEMPO</span>
     <div class="seg cols5 mt8 mb12">${PERSO_MIN.map(m=>`<button class="${p.min===m?'on':''}" data-a="persoMin" data-v="${m}" aria-label="${m} minutos">${m}</button>`).join('')}</div>
     <span class="lbl">MÚSCULOS</span>
+    <div class="small dim mt4">Toca la cabra donde quieras trabajar</div>
+    ${cabraMapa(p.grupos)}
     <div class="flex wrapf mt8 mb12">${PERSO_GRUPOS.map(([v,lb])=>`<button class="chip ${p.grupos.includes(v)?'fill':''}" data-a="persoGrupo" data-v="${v}" aria-label="${lb}">${lb}</button>`).join('')}</div>
     <span class="lbl">INTENSIDAD</span>
     <div class="seg cols3 mt8 mb12">${PERSO_NIVEL.map(([v,lb])=>`<button class="${p.nivel===v?'on':''}" data-a="persoNivel" data-v="${v}" aria-label="${lb}">${lb}</button>`).join('')}</div>
@@ -7483,7 +7683,7 @@ function vCalendario(){
       <button class="btn sm primary" data-a="calJumpGo" style="flex:none">IR</button>
     </div>`:''}
   </section>
-  ${view==='sem'?calSemana():calMes()}
+  <div data-swnav="cal">${view==='sem'?calSemana():calMes()}</div>
   <section class="mod tight" id="schedbox">
     <button class="schedhead ${UI.schedOpen?'open':''}" data-a="schedTgl">
       <img loading="lazy" class="schedcab" src="${UID==='andres'?(CAB.planA||CAB.faceA):(CAB.planC||CAB.faceC)}" alt="" decoding="async">
@@ -7693,7 +7893,7 @@ function daySummary(d){
 function vDia(){
   const sel=UI.calSel||TODAY(), sd=fromISO(sel);
   return `
-  <section class="mod tight">
+  <section class="mod tight" data-swnav="dia">
     <div class="flex" style="align-items:center">
       <button class="btn sm ghost" data-a="dayBack">${ic('chevL',14)} Agenda</button>
       <div class="grow tc"><b class="t-body strong">${DAYNAMES[sd.getDay()]} ${fmtD(sel)}</b></div>
@@ -9564,11 +9764,11 @@ function gestPlanHTML(){
       <button class="chip ${view==='semana'?'fill':''}" data-a="gestVista" data-v="semana">${ic('vsemana',13)} Semana</button>
       <button class="chip ${view==='dia'?'fill':''}" data-a="gestVista" data-v="dia">${ic('cal',13)} Día</button>
     </div>
-    ${view==='dia'?`
+    ${view==='dia'?`<div data-swnav="gestdia">
       <div class="flex wrapf mb12" style="gap:6px">${ORDEN.map(dl=>`<button class="chip ${diaSel===dl?'fill':''}" data-a="gestDaySel" data-d="${dl}" aria-label="Ver ${nombreDia[dl]}">${nombreDia[dl].slice(0,3)}${dl===hoyLetra?' · hoy':''}</button>`).join('')}</div>
       <h3 class="t-h2" style="margin:6px 0 14px">${nombreDia[diaSel]}</h3>
       ${uids.map(uid=>diaBlock(uid,diaSel,true)).join('')}
-    `:`
+    </div>`:`
       <div class="small dim mb8">Toca un día para ajustarlo</div>
       ${ORDEN.map(dl=>{
         /* el mapa de la semana: cada dia en UNA tarjeta compacta, con las comidas
@@ -10067,11 +10267,135 @@ function rendimientoCard(sub){
       <div><div class="bignum" style="line-height:1">${big}<small class="t-unit"> ${unit}</small></div>
         <div class="small ${deltaCls}" style="font-weight:600;margin-top:6px">${deltaTxt}</div></div>
     </div>
-    ${pts?`<div class="mt8">${lineChart({pts, fmt:v=>mode==='peso'?fmt1(v)+' kg':mode==='general'?v+'/4':mode==='tiempo'?v+' min':fmtInt(v)+' kg', trend:mode!=='general', h:120, bands:pts.length?deloadBands(pts[0].d, pts[pts.length-1].d):[], series2, horizonte:N, piso:mode==='peso'?Math.round((PLAN.wGoal||0)*0.9):null})}</div>`:''}
+    ${pts?(()=>{
+      /* estilo de grafica: por defecto barras para los totales por dia (volumen y
+         tiempo son sumas: una linea entre dias sueltos dibuja rampas que no existen)
+         y linea para lo continuo (peso, general). El usuario lo cambia con los chips
+         y su eleccion vale por modo (UI.chartKind[mode]), solo esta sesion. */
+      const estilo=(UI.chartKind&&UI.chartKind[mode]) || ((mode==='volumen'||mode==='tiempo')?'barras':'linea');
+      const chart=lineChart({pts, fmt:v=>mode==='peso'?fmt1(v)+' kg':mode==='general'?v+'/4':mode==='tiempo'?v+' min':fmtInt(v)+' kg', trend:mode!=='general'&&estilo!=='barras', h:120, bands:pts.length?deloadBands(pts[0].d, pts[pts.length-1].d):[], series2, horizonte:N, piso:mode==='peso'?Math.round((PLAN.wGoal||0)*0.9):null, estilo});
+      const kinds=[['linea','Línea'],['barras','Barras'],['suave','Suave']];
+      return `<div class="mt8">${chart}</div>
+      <div class="flex mt4" style="gap:6px;justify-content:flex-end">${kinds.map(([v,lb])=>`<button class="chip ${estilo===v?'fill':''}" style="padding:3px 10px;font-size:12px" data-a="chartKind" data-m="${mode}" data-v="${v}" aria-label="Ver como ${lb.toLowerCase()}" aria-pressed="${estilo===v?'true':'false'}">${lb}</button>`).join('')}</div>`;
+    })():''}
     <div class="kgrid k3 mt12">
       ${trio.map(x=>`<div class="kbox"><span class="lbl">${x.lbl}</span><div class="kv ${x.cls||''}">${x.val}</div></div>`).join('')}
     </div>
     <div class="small dim mt8">${foot}</div>
+  </section>`;
+}
+/* ============ METAS DE FUERZA (P10) ============
+   El dueno pone un objetivo concreto ("quiero 100 kg en sentadilla") y la app le
+   muestra el camino: mejor marca actual, barra de avance desde donde arranco,
+   escalones intermedios, y una proyeccion de CUANDO llegaria al ritmo real de sus
+   registros (regresion sobre el mejor peso por sesion, igual que la tendencia de
+   las graficas). Viven en S.goals (por usuario, viajan a la nube). */
+function goalHist(exId){
+  const h=S.logs[exId]||[]; const out=[];
+  h.forEach(en=>{ const ws=en.sets.map(s=>+s.w||0).filter(w=>w>0); if(ws.length) out.push({d:en.d, v:Math.max(...ws)}); });
+  out.sort((a,b)=>a.d<b.d?-1:1); return out;
+}
+function goalBest(exId){ const h=goalHist(exId); return h.length?Math.max(...h.map(p=>p.v)):0; }
+function goalProy(exId, target){
+  const h=goalHist(exId).slice(-12); if(h.length<3) return null;
+  const t0=fromISO(h[0].d).getTime()/864e5;
+  const xs=h.map(p=>fromISO(p.d).getTime()/864e5 - t0), ys=h.map(p=>p.v);
+  const n=xs.length, mx=xs.reduce((a,b)=>a+b,0)/n, my=ys.reduce((a,b)=>a+b,0)/n;
+  let num=0, den=0; xs.forEach((x,i)=>{ num+=(x-mx)*(ys[i]-my); den+=(x-mx)**2; });
+  if(!den) return null;
+  const b=num/den, a=my-b*mx;
+  if(b<=0.002) return {sube:false};
+  const tc=(target-a)/b, dias=Math.round(tc-xs[n-1]);
+  if(dias<=0) return {sube:true, ya:true, porSem:b*7};
+  if(dias>420) return {sube:false};
+  return {sube:true, dias, fecha:addDays(h[h.length-1].d, dias), porSem:b*7};
+}
+function goalExName(id){
+  if(EXMAP[id]) return EXMAP[id].name;
+  const x=EXCAT.find(e=>e.id===id); return x?x.name:id;
+}
+/* escalones del camino: 4 pasos intermedios redondeados a 2,5 kg, sin repetir */
+function goalSteps(start, target){
+  if(target<=start) return [];
+  const out=[]; for(let k=1;k<=4;k++){ const v=Math.round((start+(target-start)*k/5)/2.5)*2.5; if(v>start && v<target && !out.includes(v)) out.push(v); }
+  return out;
+}
+function goalCardHTML(g){
+  const best=Math.max(goalBest(g.ex), 0);
+  const done=best>=g.target;
+  const base=Math.min(g.start, best), span=Math.max(1, g.target-base);
+  const pct=clamp(Math.round((best-base)/span*100), 0, 100);
+  const steps=goalSteps(base, g.target);
+  const py=done?null:goalProy(g.ex, g.target);
+  let proyTxt;
+  if(done) proyTxt='<b style="color:var(--mint)">Meta cumplida.</b> Ponte una nueva o sube la barra.';
+  else if(!goalHist(g.ex).length) proyTxt='Todavía no hay registros de este ejercicio: entrena y regístralo para ver tu camino.';
+  else if(py&&py.ya) proyTxt='Tu tendencia ya toca la meta: confírmalo en tu próxima sesión.';
+  else if(py&&py.sube) proyTxt=`Al ritmo actual (+${fmt1(py.porSem)} kg/sem) llegarías <b style="color:var(--ink)">≈ ${fmtD(py.fecha)}</b>${py.dias>13?' ('+Math.round(py.dias/7)+' semanas)':''}.`;
+  else proyTxt='Aún no hay una tendencia que suba: dale 2-3 sesiones más a este ejercicio.';
+  return `<div class="goalcard ${done?'done':''}">
+    <div class="flex between" style="align-items:flex-start">
+      <div class="grow" style="min-width:0"><b style="font:600 16px var(--ui)">${esc(g.name)}</b>
+        <div class="small dim">Meta: <b class="numi" style="color:var(--ink)">${fmt1(g.target)} kg</b>${done?' · <b style="color:var(--mint)">cumplida ✓</b>':''}</div></div>
+      <button class="chip red" data-a="goalDel" data-id="${g.id}" aria-label="Borrar meta ${esc(g.name)}" style="flex:none">${ic('x',10)}</button>
+    </div>
+    <div class="flex mt8" style="align-items:baseline;gap:6px">
+      <span class="t-metric-md" style="line-height:1">${best?fmt1(best):'–'}</span><span class="t-unit">kg hoy</span>
+      <span class="small dim" style="margin-left:auto">${pct}%</span>
+    </div>
+    <div class="goalbar mt4"><i style="width:${pct}%"></i></div>
+    ${steps.length?`<div class="flex wrapf mt8" style="gap:6px">
+      ${steps.map(v=>`<span class="chip ${best>=v?'fill':'dim'}" style="pointer-events:none">${best>=v?'✓ ':''}${fmt1(v)}</span>`).join('')}
+      <span class="chip ${done?'fill':'dim'}" style="pointer-events:none">${done?'✓ ':''}${fmt1(g.target)} kg</span>
+    </div>`:''}
+    <div class="small dim mt8" style="line-height:1.5">${proyTxt}</div>
+  </div>`;
+}
+function metasCard(){
+  const goals=S.goals||[], open=UI.goalsOpen!==false;
+  const form=UI.goalForm;
+  const q=nrmTxt(UI.goalQ||'');
+  let formHtml='';
+  if(open&&form){
+    const pool=[];
+    const seen=new Set();
+    Object.keys(EXMAP).forEach(id=>{ pool.push({id, n:EXMAP[id].name}); seen.add(id); });
+    EXCAT.forEach(x=>{ if(!seen.has(x.id)){ pool.push({id:x.id, n:x.name}); seen.add(x.id); } });
+    const found=q?pool.filter(p=>nrmTxt(p.n).includes(q)).slice(0,8):[];
+    const pick=UI.goalEx?{id:UI.goalEx, n:goalExName(UI.goalEx)}:null;
+    formHtml=`<div class="mod tight mt8" style="border-style:dashed">
+      ${pick?`
+        <div class="flex between"><b style="font:600 15px var(--ui)">${esc(pick.n)}</b><button class="chip" data-a="goalPick" data-id="" aria-label="cambiar ejercicio">cambiar</button></div>
+        <div class="small dim mt4">Mejor marca actual: <b class="numi" style="color:var(--ink)">${goalBest(pick.id)?fmt1(goalBest(pick.id))+' kg':'sin registros'}</b></div>
+        <div class="flex mt8" style="gap:8px;align-items:center">
+          <input class="in" id="goalW" type="text" inputmode="decimal" placeholder="peso meta" aria-label="peso meta en kilos" style="flex:1">
+          <span class="t-unit">kg</span>
+          <button class="btn sm primary" data-a="goalSave" style="flex:none">${ic('check',13)} Guardar</button>
+        </div>`
+      :`
+        <span class="lbl">NUEVA META</span>
+        <input class="in mt8" data-ch="goalq" placeholder="busca el ejercicio: sentadilla, bench, hip thrust…" value="${esc(UI.goalQ||'')}">
+        ${found.length?`<div class="mt8">${found.map(p=>{ const nreg=(S.logs[p.id]||[]).length;
+          return `<button class="actrow" data-a="goalPick" data-id="${p.id}" aria-label="${esc(p.n)}">
+            <span class="grow tl" style="min-width:0"><b style="font:600 15px var(--ui);display:block">${esc(p.n)}</b><span class="small dim">${nreg?nreg+' registro'+(nreg>1?'s':''):'sin historial aún'}</span></span>
+            <span class="nfadd">${ic('plus',14)}</span></button>`; }).join('')}</div>`
+        :(q?'<div class="small dim mt8">Nada con esa búsqueda.</div>':'')}`}
+      <button class="btn sm ghost full mt8" data-a="goalNew">Cancelar</button>
+    </div>`;
+  }
+  return `<section class="mod tight" id="metasbox">
+    <button class="schedhead ${open?'open':''}" data-a="goalsTgl">
+      <span class="accic" style="width:36px;height:36px;border-radius:11px;flex:none">${ic('target',18)}</span>
+      <div class="grow tl" style="min-width:0">
+        <b class="schedt">Metas</b>
+        <span class="small dim" style="display:block">${goals.length?goals.length+' meta'+(goals.length>1?'s':'')+' activa'+(goals.length>1?'s':''):'Ponte un objetivo y mira el camino'}</span>
+      </div>
+      <span class="nfchev">${ic('chevR',16)}</span>
+    </button>
+    ${open?`<div class="schedbody">
+      ${goals.length?goals.map(goalCardHTML).join(''):'<div class="small dim" style="padding:6px 2px 2px">Ejemplo: 100 kg en sentadilla. La app te muestra tu mejor marca, los escalones del camino y cuándo llegarías a tu ritmo real.</div>'}
+      ${form?formHtml:`<button class="btn ghost full mt8" data-a="goalNew">${ic('plus',14)} Nueva meta</button>`}
+    </div>`:''}
   </section>`;
 }
 /* selector superior Actividad fisica / Nutricion con cabritas: T1 del rediseno de Progreso.
@@ -10110,6 +10434,7 @@ function vProgreso(){
   return `
   ${progGrpSelector(grp)}
   ${grp==='act'?`
+  ${metasCard()}
   ${rendimientoCard(sub)}
   <section class="mod tight">
     <div class="flex wrapf" style="gap:7px">
@@ -10857,6 +11182,12 @@ document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.d
     v.style.minHeight = ((y + window.innerHeight) - (v.offsetTop||0)) + 'px';
     window.scrollTo({top: y});
   }
+  /* generacion: si llega OTRO render mientras un vigilante sigue vivo (tecla
+     rapida, carga perezosa de paquetes, nube), el vigilante viejo queda corrigiendo
+     contra una foto vieja de la pantalla y PELEA con el nuevo: era el salto que
+     quedaba al escribir la primera busqueda tras abrir la app. TODO render sube la
+     generacion y los vigilantes de generaciones pasadas se apagan solos. */
+  const gen=(renderReal._gen=(renderReal._gen||0)+1);
   if(anclaSel && keep){
     let esperado=null;
     const aplicar=()=>{
@@ -10870,12 +11201,18 @@ document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.d
       return true;
     };
     aplicar();
-    let hAnt=-1, quietos=0, pasos=0;
+    /* el vigilante vigila la POSICION del ancla, no la altura del documento:
+       content-visibility puede recolocar el ancla varios frames DESPUES sin mover
+       la altura total (una seccion se infla arriba y el hueco se compensa abajo),
+       y el vigilante viejo se dormia a los 3 frames de altura quieta dejando al
+       usuario 40-50 px corrido. Ahora corrige cada frame que encuentre deriva,
+       durante todo el periodo (~1,5 s), y sigue muriendo si el usuario scrollea
+       (guardia de 80 px) o si llega un render mas nuevo (generacion). */
+    let pasos=0;
     const vigila=()=>{
-      const h=document.documentElement.scrollHeight;
-      if(h===hAnt){ quietos++; if(quietos>=3){ aplicar(); return; } }
-      else { quietos=0; if(aplicar()===false) return; }
-      hAnt=h; pasos++;
+      if(gen!==renderReal._gen) return;   /* llego un render mas nuevo: este vigilante muere */
+      if(aplicar()===false) return;
+      pasos++;
       if(pasos<90) requestAnimationFrame(vigila);
     };
     requestAnimationFrame(vigila);
@@ -11470,6 +11807,42 @@ const ACTIONS = {
   resetClear(){ S.retoreset={}; save('retoreset'); render(); },
   mobilTgl(){ const t=TODAY(); if(S.mobil[t]) delete S.mobil[t]; else S.mobil[t]=1; save('mobil'); render(); toast(S.mobil[t]?'Movilidad hecha · +1 punto de reto':'Movilidad desmarcada'); },
   mobilOpen(){ UI.mobilOpen=!UI.mobilOpen; render(); },
+  movPlay(){ movPlayerOpen(); },
+  goalsTgl(){ UI.goalsOpen=UI.goalsOpen===false?true:false; render(); },
+  chartKind(d){ UI.chartKind=UI.chartKind||{}; UI.chartKind[d.m]=d.v; render(); },
+  goalNew(){ UI.goalForm=!UI.goalForm; UI.goalEx=null; UI.goalQ=''; render(); },
+  goalPick(d){ UI.goalEx=d.id||null; render(); },
+  goalSave(){
+    const el=document.getElementById('goalW');
+    const w=el?parseFloat(String(el.value).replace(',','.')):NaN;
+    if(!UI.goalEx){ toast('Elige primero el ejercicio'); return; }
+    if(!(w>0)){ toast('Pon el peso meta en kilos'); return; }
+    const best=goalBest(UI.goalEx);
+    if(best && w<=best){ toast('Ya levantas '+fmt1(best)+' kg: la meta debería estar por encima'); return; }
+    S.goals=S.goals||[];
+    S.goals.push({id:Date.now(), ex:UI.goalEx, name:goalExName(UI.goalEx), target:w, start:best, d:TODAY()});
+    save('goals');
+    UI.goalForm=false; UI.goalEx=null; UI.goalQ='';
+    render(); toast('Meta guardada · a por esos '+fmt1(w)+' kg');
+  },
+  goalDel(d){
+    if(!confirm('¿Borrar esta meta?')) return;
+    S.goals=(S.goals||[]).filter(g=>String(g.id)!==String(d.id));
+    save('goals'); render(); toast('Meta borrada');
+  },
+  movDetail(d){
+    const e=movFlat().find(x=>x.id===d.id); if(!e) return;
+    const box=document.createElement('div'); box.className='fbox';
+    box.innerHTML=`<div class="fboxin" style="max-width:400px">
+      <div class="flex between mb8"><b class="t-h2" style="min-width:0">${esc(e.n)}</b><button class="btn sm" id="fcls" aria-label="cerrar">${ic('x',14)}</button></div>
+      <div class="small dim mb8">${esc(e.b)} · ${esc(e.dosis)}</div>
+      <div class="movpimg"><img src="assets/ej/${e.id}.jpg" alt="" decoding="async" onerror="this.style.display='none'"></div>
+      <div class="small mt12" style="line-height:1.6">${esc(e.d)}</div>
+    </div>`;
+    document.body.appendChild(box);
+    box.querySelector('#fcls').onclick=()=>box.remove();
+    box.onclick=ev=>{ if(ev.target===box) box.remove(); };
+  },
   /* pestana Ejercicios (catalogo EXCAT) dentro de Entrenar */
   excatCatTgl(d){ UI.excatCat = UI.excatCat===d.cat ? null : d.cat; render(); },
   excatEquip(d){ UI.excatEquip = UI.excatEquip===d.eq ? null : d.eq; render(); },
@@ -11655,6 +12028,16 @@ const ACTIONS = {
      Antes caia en el detalle del dia de hoy, que no es donde se arma la semana. */
   planGo(){ UI.tab='agenda'; UI.session=null; UI.calView='sem'; UI.calSel=TODAY(); UI.calDay=null; UI.calM=0; UI.schedOpen=true; UI.wkPick=null; render(); irACaja('schedbox'); },
   rotNext(){ const el=document.getElementById('rotcard'); const pool=rotPool(); if(!pool.length) return; UI.rotIdx=(UI.rotIdx||0)+1; const html=rotCardHTML(pool[((UI.rotIdx%pool.length)+pool.length)%pool.length]); if(el&&el.outerHTML!==undefined) el.outerHTML=html; },
+  rotPrev(){ const el=document.getElementById('rotcard'); const pool=rotPool(); if(!pool.length) return; UI.rotIdx=(UI.rotIdx||0)-1; const html=rotCardHTML(pool[((UI.rotIdx%pool.length)+pool.length)%pool.length]); if(el&&el.outerHTML!==undefined) el.outerHTML=html; },
+  /* deslizar en la vista Dia de Gestion: pasa al dia anterior/siguiente en el orden
+     de lectura L..D (mismo ORDEN de gestPlanHTML), sin dar la vuelta en los bordes */
+  gestDayShift(d){
+    const ORDEN=['L','M','X','J','V','S','D'];
+    const cur=UI.gestDay||DLETRAS[fromISO(TODAY()).getDay()];
+    const i=ORDEN.indexOf(cur); if(i<0) return;
+    const j=i+Number(d.n); if(j<0||j>=ORDEN.length) return;
+    UI.gestDay=ORDEN[j]; render();
+  },
   proxBox(){ proxBoxOpen(); },
   dayBack(){ UI.calDay=null; render(); },
   daySel(d){ const nd=addDays(UI.calSel||TODAY(), +d.n); UI.calSel=nd; UI.calDay=nd; render(); },
@@ -12453,6 +12836,7 @@ const CHANGES = {
   exnote(el){ const t=el.value.trim(); if(t) S.exnotes[el.dataset.ex]=t; else delete S.exnotes[el.dataset.ex]; save('exnotes'); },
   exq(el){ UI.exQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=exq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   excatq(el){ UI.excatQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=excatq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
+  goalq(el){ UI.goalQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=goalq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   addexq(el){ UI.addExQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=addexq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   remtime(el){ S.reminders[+el.dataset.i].time=el.value; save('reminders'); },
   cutTime(el){ S.cfg.cut={...(S.cfg.cut||{})}; S.cfg.cut[el.dataset.k]=el.value; save('cfg'); render(); },
@@ -12653,7 +13037,7 @@ document.addEventListener('click', e=>{
 /* los buscadores en vivo ya se repintan desde el listener de 'input': si ademas
    atendieran el 'change' que dispara el navegador al destruirse el campo, se repintaria
    dos veces por tecla (ver el guardia de render) */
-const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq']);
+const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq','goalq']);
 /* los dias de la semana son <details>: si no se recuerda cual quedo abierto, cada
    render los cierra, la pagina se encoge de golpe y el scroll cae al inicio (era el
    salto al tocar "ver ingredientes"). 'toggle' no burbujea: se escucha en captura. */
@@ -12710,7 +13094,7 @@ document.addEventListener('input', e=>{
   const el=e.target.closest('[data-ch]'); if(!el) return;
   const ch=el.dataset.ch;
   if(ch==='recq'){ UI.recQ=el.value; }
-  else if((ch==='nlogq'||ch==='exq'||ch==='excatq'||ch==='addexq'||ch==='nlogGrams') && CHANGES[ch]){ CHANGES[ch](el); }  /* la estabilidad la pone el ancla de renderReal; devolver el scroll aqui la peleaba */
+  else if((ch==='nlogq'||ch==='exq'||ch==='excatq'||ch==='addexq'||ch==='nlogGrams'||ch==='goalq') && CHANGES[ch]){ CHANGES[ch](el); }  /* la estabilidad la pone el ancla de renderReal; devolver el scroll aqui la peleaba */
   /* la calculadora solo escuchaba 'change', que en un campo de texto salta al salir del
      campo: el numero se quedaba congelado mientras se escribia. Ahora recalcula por tecla. */
   else if(ch==='pcal' && CHANGES.pcal){ CHANGES.pcal(el); }
@@ -12918,6 +13302,42 @@ function swdSnapBack(){
 }
 document.addEventListener('touchend', swdEnd, {passive:true});
 document.addEventListener('touchcancel', swdEnd, {passive:true});
+/* ============ DESLIZAR PARA NAVEGAR (SWN) ============
+   Gesto horizontal sobre zonas marcadas con data-swnav (o el rotador del home):
+   izquierda = siguiente, derecha = anterior. Nunca llama preventDefault (el scroll
+   vertical sigue de largo) y exige un gesto claramente horizontal y largo (64 px,
+   1.5x mas horizontal que vertical) para no pisar taps ni scroll. Zonas de hoy:
+   'cal' (mes/semana del calendario), 'dia' (cabecera del detalle de un dia),
+   'gestdia' (dia de la semana comida por comida) y el #rotcard del inicio.
+   No arranca en el borde izquierdo (ahi vive el swipe de atras) ni sobre las filas
+   con deslizar-para-borrar (.settbl/.mktrow/.exrowhead), inputs o graficas. */
+let SWN=null;
+document.addEventListener('touchstart', e=>{
+  if(e.touches.length!==1){ SWN=null; return; }
+  const t=e.touches[0];
+  if(t.clientX<=36){ SWN=null; return; }
+  if(t.target.closest('input,textarea,select,.chart,.settbl,.mktrow,.exrowhead,.nnrange')){ SWN=null; return; }
+  const rot=t.target.closest('#rotcard');
+  const zoneEl=rot?null:t.target.closest('[data-swnav]');
+  const zone=rot?'rot':(zoneEl?zoneEl.dataset.swnav:null);
+  if(!zone){ SWN=null; return; }
+  SWN={zone, x0:t.clientX, y0:t.clientY};
+}, {passive:true});
+document.addEventListener('touchend', e=>{
+  if(!SWN) return;
+  const {zone,x0,y0}=SWN; SWN=null;
+  const t=e.changedTouches[0]; if(!t) return;
+  const dx=t.clientX-x0, dy=t.clientY-y0;
+  if(Math.abs(dx)<64 || Math.abs(dx)<=Math.abs(dy)*1.5) return;
+  const n=dx<0?1:-1;
+  try{
+    if(zone==='cal') ACTIONS.calNav({n:String(n)});
+    else if(zone==='rot'){ if(n===1) ACTIONS.rotNext(); else ACTIONS.rotPrev(); }
+    else if(zone==='gestdia') ACTIONS.gestDayShift({n});
+    else if(zone==='dia') ACTIONS.daySel({n:String(n)});
+    if(navigator.vibrate) navigator.vibrate(8);
+  }catch(err){ try{ console.error(err); }catch(_){} }
+}, {passive:true});
 /* tooltips de graficas */
 document.addEventListener('pointerover', e=>{
   const h=e.target.closest('.hit'); if(h) showTip(e.clientX,e.clientY,h.dataset.tip);

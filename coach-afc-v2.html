@@ -1357,7 +1357,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 130';
+const APPREV='REV 131';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2378,12 +2378,16 @@ const MOV_RUTINA=[
   {b:'Cadera', ex:[
     {id:'mov_sentadilla', n:'Sentadilla profunda sostenida', t:45, dosis:'45 s', d:'Talones en el piso, pecho arriba, los codos empujan las rodillas hacia afuera. Respira lento ahí abajo.'},
     {id:'mov_zancada', n:'Zancada con rotación', t:60, dosis:'5 por lado', d:'Zancada baja, una mano al piso y el otro brazo gira hacia el techo abriendo el pecho. Cambia de lado a mitad de tiempo.'},
+    {id:'mov_9090', n:'90/90 de cadera', t:60, dosis:'5 cambios por lado', d:'Sentado con las dos rodillas a 90 grados, una adelante y una al lado. Gira las rodillas de un lado al otro sin ayudarte con las manos.'},
+    {id:'mov_rana', n:'Rana', t:45, dosis:'45 s', d:'Rodillas bien abiertas sobre el piso, pies en línea con las rodillas, antebrazos al frente. Empuja la cadera suave hacia atrás.'},
     {id:'mov_paloma', n:'Paloma', t:60, dosis:'30 s por lado', d:'Pierna delantera doblada sobre el piso, la de atrás estirada. Torso erguido, cadera cuadrada. Cambia de lado a la mitad.'},
     {id:'mov_bisagra', n:'Bisagra de cadera con palo', t:45, dosis:'10 lentas', d:'Palo pegado a cabeza, espalda alta y sacro. Dobla la cadera hacia atrás con rodillas suaves, sin perder los 3 contactos.'}]},
   {b:'Columna y hombros', ex:[
     {id:'mov_gato', n:'Gato-camello', t:45, dosis:'8 lentas', d:'En cuatro apoyos alterna arquear y redondear toda la columna, vértebra a vértebra, siguiendo la respiración.'},
     {id:'mov_aguja', n:'Aguja torácica', t:60, dosis:'8 por lado', d:'Desde cuatro apoyos pasa un brazo por debajo del cuerpo y gira la espalda alta. Cambia de lado a la mitad.'},
     {id:'mov_perro', n:'Perro boca abajo', t:45, dosis:'45 s', d:'Cadera alta en V invertida, talones buscando el piso. Pedalea suave las rodillas para sentir cada pierna.'},
+    {id:'mov_cuelgue', n:'Cuelgue en barra', t:40, dosis:'30-40 s', d:'Cuélgate de la barra con agarre al ancho de hombros y deja que el peso descuelgue los hombros y abra la espalda. Respira.'},
+    {id:'mov_pared', n:'Deslizamiento en pared', t:45, dosis:'10 lentas', d:'Espalda, codos y muñecas contra la pared: sube y baja los brazos como haciendo un press, sin despegar nada.'},
     {id:'mov_disloc', n:'Dislocaciones con palo', t:45, dosis:'12', d:'Agarre bien ancho, brazos siempre estirados: pasa el palo por encima de la cabeza hacia atrás y vuelve, sin doblar codos.'}]}
 ];
 function movFlat(){ return MOV_RUTINA.flatMap(b=>b.ex.map(e=>({...e, b:b.b}))); }
@@ -2465,6 +2469,10 @@ const EXCAT_RAW=[
 ["mov_zancada","Zancada con rotación","movilidad","peso_corporal","aislado","mov_zancada.jpg"],
 ["mov_tobillo","Tobillo: rodilla a la pared","movilidad","peso_corporal","aislado","mov_tobillo.jpg"],
 ["mov_paloma","Paloma (cadera y glúteo)","movilidad","peso_corporal","aislado","mov_paloma.jpg"],
+["mov_9090","90/90 de cadera","movilidad","peso_corporal","aislado","mov_9090.jpg"],
+["mov_rana","Rana (cadera)","movilidad","peso_corporal","aislado","mov_rana.jpg"],
+["mov_cuelgue","Cuelgue en barra (hombros)","movilidad","peso_corporal","aislado","mov_cuelgue.jpg"],
+["mov_pared","Deslizamiento en pared (hombros)","movilidad","peso_corporal","aislado","mov_pared.jpg"],
 ["mov_bisagra","Bisagra de cadera con palo","movilidad","otro","aislado","mov_bisagra.jpg"],
 ["mov_disloc","Dislocaciones de hombro con palo","movilidad","otro","aislado","mov_disloc.jpg"],
 ["mov_aguja","Aguja torácica (rotación)","movilidad","peso_corporal","aislado","mov_aguja.jpg"],
@@ -7880,7 +7888,7 @@ function daySummary(d){
   });
   if(!entries.length) return `<div class="small dim mb12">Ese día quedó marcado como entrenado pero sin series registradas.</div>`;
   const rn=sess.map(s=>{const r=findRoutine(s.rid); return r?r.name:null;}).filter(Boolean).join(' + ');
-  const rows=entries.map(({id,h,hi})=>{ const name=h.alt?h.alt+' (sust.)':(EXMAP[id]?EXMAP[id].name:id);
+  const rows=entries.map(({id,h,hi})=>{ const name=h.alt?h.alt+' (sust.)':exNombre(id);
     if(!edit) return `<div class="ingrow"><span>${esc(name)}</span><span class="dim">${h.sets.map(s=>fmt1(s.w)+'×'+s.r).join('  ')}</span></div>`;
     return `<div class="dayedex"><b class="small" style="display:block;margin-bottom:6px">${esc(name)}</b>${h.sets.map((s,i)=>`<div class="deset"><span class="desi">${i+1}</span><input class="in ctr" inputmode="decimal" value="${s.w}" data-ch="logSet" data-ex="${id}" data-hi="${hi}" data-i="${i}" data-f="w" aria-label="kg"><span class="dex">kg ×</span><input class="in ctr" inputmode="numeric" value="${s.r}" data-ch="logSet" data-ex="${id}" data-hi="${hi}" data-i="${i}" data-f="r" aria-label="reps"><span class="dex">reps</span></div>`).join('')}</div>`;
   }).join('');
@@ -7983,7 +7991,7 @@ const IMPORT_SYN=[
   ['leg extension','lext','c_lext'],['extension','lext','c_lext'],['cuadriceps','lext','c_lext'],
   ['hack squat','hack','c_smith'],['hack','hack'],
   ['leg press','lpress','c_prensa'],['prensa','lpress','c_prensa'],
-  ['romanian deadlift','rdl','c_rdl'],['peso muerto rumano','rdl','c_rdl'],['deadlift','rdl','c_dead','c_rdl'],['peso muerto','rdl','c_dead'],
+  ['romanian deadlift','rdl','c_rdl'],['peso muerto rumano','rdl','c_rdl'],['deadlift','c_dead','dead_bb'],['peso muerto','c_dead','dead_bb'],
   ['hip thrust','hip','c_hip'],['empuje de cadera','hip','c_hip'],
   ['incline dumbbell press','incdb','incmach'],['incline bench','incdb','incmach','c_chest'],['inclinado','incdb','incmach'],
   ['bench press','bench','c_bench','c_chest'],['chest press','c_chest','bench','c_bench'],['press de banca','bench','c_bench'],['banca','bench','c_bench'],
@@ -7997,21 +8005,50 @@ const IMPORT_SYN=[
   ['calf','calfse','calfst','c_calf'],['pantorrilla','calfse','c_calf'],
   ['walking lunge','lunge','c_lunge'],['lunge','lunge','c_lunge'],['zancada','lunge','c_lunge'],
   ['step up','c_step'],['back extension','c_backext'],['plank','c_plank'],['glute kickback','c_kick'],['kickback','c_kick'],
-  ['squat','squat','c_squat'],['sentadilla','squat','c_squat'],
+  ['squat','squat','c_squat','squat_bb'],['sentadilla','squat','c_squat','squat_bb'],
 ];
+/* nombre legible de cualquier id con historial: rutina > catalogo EXCAT > el id pelado */
+function exNombre(id){
+  if(EXMAP[id]) return EXMAP[id].name;
+  const x=EXCAT.find(e=>e.id===id);
+  return x?x.name:id;
+}
+function normEx(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
+/* el texto de Strong viene en ingles y los nombres del plan mezclan espanol:
+   para el match EXACTO se compara tambien una variante traducida token a token */
+const IMPORT_TOK={machine:'maquina', barbell:'barra', dumbbell:'mancuerna', band:'banda', bodyweight:'peso corporal'};
 function matchExId(name){
-  const q=name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\([^)]*\)/g,'').trim();
+  const qFull=normEx(name);
+  const qTrad=qFull.split(' ').map(w=>IMPORT_TOK[w]||w).join(' ');
+  /* 1. nombre EXACTO contra los ejercicios del plan del usuario (lo mas correcto:
+        la sesion importada alimenta el historial que la app ya usa) */
+  let hit=Object.keys(EXMAP).find(id=>{ const n=normEx(EXMAP[id].name); return n===qFull||n===qTrad; });
+  if(hit) return hit;
+  /* 2. sinonimos EN/ES; los candidatos se resuelven primero contra el plan y, si
+        ninguno existe ahi, contra el catalogo EXCAT (antes solo miraba el plan y
+        "Squat (Barbell)" caia por similitud en Hack Squat, que es otro ejercicio:
+        era la queja de "no agrega los ejercicios correctos") */
+  const q=normEx(name.replace(/\([^)]*\)/g,''));
   const have=id=>!!EXMAP[id];
+  const haveCat=id=>EXCAT.some(e=>e.id===id);
   let best=null,bl=0;
   for(const row of IMPORT_SYN){ const key=row[0];
-    if(q.indexOf(key)>-1 && key.length>bl){ const cand=row.slice(1).find(have); if(cand){ best=cand; bl=key.length; } } }
+    if(q.indexOf(key)>-1 && key.length>bl){ const cand=row.slice(1).find(have)||row.slice(1).find(haveCat); if(cand){ best=cand; bl=key.length; } } }
   if(best) return best;
-  // fallback: match contra el nombre en español del ejercicio
+  /* 3. nombre exacto contra el catalogo EXCAT completo */
+  const cat=EXCAT.find(e=>{ const n=normEx(e.name); return n===qFull||n===qTrad; });
+  if(cat) return cat.id;
+  /* 4. similitud por palabras: primero el plan (1 palabra basta), luego el
+        catalogo (exige 2 para no emparejar basura) */
   const qt=q.split(/\s+/).filter(w=>w.length>2);
   let bId=null,bs=0;
-  Object.keys(EXMAP).forEach(id=>{ const nm=EXMAP[id].name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  Object.keys(EXMAP).forEach(id=>{ const nm=normEx(EXMAP[id].name);
     let sc=0; qt.forEach(w=>{ if(nm.indexOf(w)>-1) sc++; }); if(sc>bs){ bs=sc; bId=id; } });
-  return bs>=1?bId:null;
+  if(bs>=1) return bId;
+  bId=null; bs=0;
+  EXCAT.forEach(x=>{ const nm=normEx(x.name);
+    let sc=0; qt.forEach(w=>{ if(nm.indexOf(w)>-1) sc++; }); if(sc>bs){ bs=sc; bId=x.id; } });
+  return bs>=2?bId:null;
 }
 function parseWorkoutText(text){
   const d=parseWorkoutDate(text)||TODAY();
@@ -10285,19 +10322,22 @@ function rendimientoCard(sub){
   </section>`;
 }
 /* ============ METAS DE FUERZA (P10) ============
-   El dueno pone un objetivo concreto ("quiero 100 kg en sentadilla") y la app le
-   muestra el camino: mejor marca actual, barra de avance desde donde arranco,
-   escalones intermedios, y una proyeccion de CUANDO llegaria al ritmo real de sus
-   registros (regresion sobre el mejor peso por sesion, igual que la tendencia de
-   las graficas). Viven en S.goals (por usuario, viajan a la nube). */
-function goalHist(exId){
+   El dueno pone un objetivo concreto CON repeticiones ("120 kg x 5 en sentadilla")
+   y la app le muestra el camino. Todo el calculo interno va en 1RM ESTIMADO
+   (Epley, la misma e1rm() de los records): asi una meta a 5 reps se compara
+   limpiamente con un historial hecho a 8 o a 10 reps, y las proyecciones usan
+   los datos que ya existen. En pantalla los numeros se muestran convertidos a
+   las reps de la meta (nadie piensa en "1RM teorico" mientras entrena). */
+function goalHistRM(exId){
   const h=S.logs[exId]||[]; const out=[];
-  h.forEach(en=>{ const ws=en.sets.map(s=>+s.w||0).filter(w=>w>0); if(ws.length) out.push({d:en.d, v:Math.max(...ws)}); });
+  h.forEach(en=>{ if(en.alt) return;
+    let rm=0; en.sets.forEach(s=>{ const w=+s.w||0, r=+s.r||0; if(w>0&&r>0) rm=Math.max(rm, e1rm(w,r)); });
+    if(rm>0) out.push({d:en.d, v:rm}); });
   out.sort((a,b)=>a.d<b.d?-1:1); return out;
 }
-function goalBest(exId){ const h=goalHist(exId); return h.length?Math.max(...h.map(p=>p.v)):0; }
-function goalProy(exId, target){
-  const h=goalHist(exId).slice(-12); if(h.length<3) return null;
+function goalBestRM(exId){ const h=goalHistRM(exId); return h.length?Math.max(...h.map(p=>p.v)):0; }
+function goalProy(exId, targetRM){
+  const h=goalHistRM(exId).slice(-12); if(h.length<3) return null;
   const t0=fromISO(h[0].d).getTime()/864e5;
   const xs=h.map(p=>fromISO(p.d).getTime()/864e5 - t0), ys=h.map(p=>p.v);
   const n=xs.length, mx=xs.reduce((a,b)=>a+b,0)/n, my=ys.reduce((a,b)=>a+b,0)/n;
@@ -10305,47 +10345,50 @@ function goalProy(exId, target){
   if(!den) return null;
   const b=num/den, a=my-b*mx;
   if(b<=0.002) return {sube:false};
-  const tc=(target-a)/b, dias=Math.round(tc-xs[n-1]);
+  const tc=(targetRM-a)/b, dias=Math.round(tc-xs[n-1]);
   if(dias<=0) return {sube:true, ya:true, porSem:b*7};
   if(dias>420) return {sube:false};
   return {sube:true, dias, fecha:addDays(h[h.length-1].d, dias), porSem:b*7};
 }
-function goalExName(id){
-  if(EXMAP[id]) return EXMAP[id].name;
-  const x=EXCAT.find(e=>e.id===id); return x?x.name:id;
-}
-/* escalones del camino: 4 pasos intermedios redondeados a 2,5 kg, sin repetir */
-function goalSteps(start, target){
-  if(target<=start) return [];
-  const out=[]; for(let k=1;k<=4;k++){ const v=Math.round((start+(target-start)*k/5)/2.5)*2.5; if(v>start && v<target && !out.includes(v)) out.push(v); }
+function goalExName(id){ return exNombre(id); }
+/* de 1RM estimado al peso equivalente a N reps (inversa de Epley) */
+function rmAReps(rm, reps){ return rm/(1+reps/30); }
+/* escalones del camino en el peso de la meta (a sus reps), redondeados a 2,5 kg */
+function goalSteps(startW, targetW){
+  if(targetW<=startW) return [];
+  const out=[]; for(let k=1;k<=4;k++){ const v=Math.round((startW+(targetW-startW)*k/5)/2.5)*2.5; if(v>startW && v<targetW && !out.includes(v)) out.push(v); }
   return out;
 }
 function goalCardHTML(g){
-  const best=Math.max(goalBest(g.ex), 0);
-  const done=best>=g.target;
-  const base=Math.min(g.start, best), span=Math.max(1, g.target-base);
-  const pct=clamp(Math.round((best-base)/span*100), 0, 100);
-  const steps=goalSteps(base, g.target);
-  const py=done?null:goalProy(g.ex, g.target);
+  const reps=g.reps||1;
+  const targetRM=e1rm(g.target, reps);
+  const startRM=g.startRM!==undefined?g.startRM:e1rm(g.start||0, 1);
+  const bestRM=goalBestRM(g.ex);
+  const done=bestRM>=targetRM-0.01;
+  const baseRM=Math.min(startRM, bestRM), span=Math.max(1, targetRM-baseRM);
+  const pct=clamp(Math.round((bestRM-baseRM)/span*100), 0, 100);
+  const hoyW=bestRM?rmAReps(bestRM, reps):0;      /* lo de hoy, traducido a las reps de la meta */
+  const steps=goalSteps(rmAReps(baseRM,reps), g.target);
+  const py=done?null:goalProy(g.ex, targetRM);
   let proyTxt;
   if(done) proyTxt='<b style="color:var(--mint)">Meta cumplida.</b> Ponte una nueva o sube la barra.';
-  else if(!goalHist(g.ex).length) proyTxt='Todavía no hay registros de este ejercicio: entrena y regístralo para ver tu camino.';
+  else if(!goalHistRM(g.ex).length) proyTxt='Todavía no hay registros de este ejercicio: entrena y regístralo para ver tu camino.';
   else if(py&&py.ya) proyTxt='Tu tendencia ya toca la meta: confírmalo en tu próxima sesión.';
-  else if(py&&py.sube) proyTxt=`Al ritmo actual (+${fmt1(py.porSem)} kg/sem) llegarías <b style="color:var(--ink)">≈ ${fmtD(py.fecha)}</b>${py.dias>13?' ('+Math.round(py.dias/7)+' semanas)':''}.`;
+  else if(py&&py.sube) proyTxt=`Al ritmo actual (+${fmt1(py.porSem)} kg/sem de 1RM) la lograrías <b style="color:var(--ink)">≈ ${fmtD(py.fecha)}</b>${py.dias>13?' ('+Math.round(py.dias/7)+' semanas)':''}.`;
   else proyTxt='Aún no hay una tendencia que suba: dale 2-3 sesiones más a este ejercicio.';
   return `<div class="goalcard ${done?'done':''}">
     <div class="flex between" style="align-items:flex-start">
       <div class="grow" style="min-width:0"><b style="font:600 16px var(--ui)">${esc(g.name)}</b>
-        <div class="small dim">Meta: <b class="numi" style="color:var(--ink)">${fmt1(g.target)} kg</b>${done?' · <b style="color:var(--mint)">cumplida ✓</b>':''}</div></div>
+        <div class="small dim">Meta: <b class="numi" style="color:var(--ink)">${fmt1(g.target)} kg × ${reps}</b>${done?' · <b style="color:var(--mint)">cumplida ✓</b>':''}</div></div>
       <button class="chip red" data-a="goalDel" data-id="${g.id}" aria-label="Borrar meta ${esc(g.name)}" style="flex:none">${ic('x',10)}</button>
     </div>
     <div class="flex mt8" style="align-items:baseline;gap:6px">
-      <span class="t-metric-md" style="line-height:1">${best?fmt1(best):'–'}</span><span class="t-unit">kg hoy</span>
+      <span class="t-metric-md" style="line-height:1">${hoyW?fmt1(hoyW):'–'}</span><span class="t-unit">kg × ${reps} hoy${hoyW?' (est.)':''}</span>
       <span class="small dim" style="margin-left:auto">${pct}%</span>
     </div>
     <div class="goalbar mt4"><i style="width:${pct}%"></i></div>
     ${steps.length?`<div class="flex wrapf mt8" style="gap:6px">
-      ${steps.map(v=>`<span class="chip ${best>=v?'fill':'dim'}" style="pointer-events:none">${best>=v?'✓ ':''}${fmt1(v)}</span>`).join('')}
+      ${steps.map(v=>`<span class="chip ${hoyW>=v?'fill':'dim'}" style="pointer-events:none">${hoyW>=v?'✓ ':''}${fmt1(v)}</span>`).join('')}
       <span class="chip ${done?'fill':'dim'}" style="pointer-events:none">${done?'✓ ':''}${fmt1(g.target)} kg</span>
     </div>`:''}
     <div class="small dim mt8" style="line-height:1.5">${proyTxt}</div>
@@ -10363,15 +10406,36 @@ function metasCard(){
     EXCAT.forEach(x=>{ if(!seen.has(x.id)){ pool.push({id:x.id, n:x.name}); seen.add(x.id); } });
     const found=q?pool.filter(p=>nrmTxt(p.n).includes(q)).slice(0,8):[];
     const pick=UI.goalEx?{id:UI.goalEx, n:goalExName(UI.goalEx)}:null;
+    /* mini caption en vivo: apenas hay ejercicio + peso, dice a que 1RM equivale
+       y CUANDO se lograria al ritmo real (pedido del dueno) */
+    let capt='';
+    if(pick){
+      const w=parseFloat(String(UI.goalW||'').replace(',','.'))||0;
+      const r=clamp(parseInt(UI.goalR||'1',10)||1,1,30);
+      if(w>0){
+        const tRM=e1rm(w,r), bRM=goalBestRM(pick.id);
+        if(bRM && tRM<=bRM) capt='Eso ya lo levantas hoy (equivale a un 1RM de '+fmt1(tRM)+' kg y el tuyo va en '+fmt1(bRM)+'). Sube la meta.';
+        else{
+          const py=goalProy(pick.id, tRM);
+          capt='Equivale a un 1RM estimado de '+fmt1(tRM)+' kg.'
+            +(py&&py.sube&&!py.ya?' Al ritmo actual la lograrías ≈ '+fmtD(py.fecha)+(py.dias>13?' ('+Math.round(py.dias/7)+' semanas)':'')+'.'
+            :py&&py.ya?' Tu tendencia ya la toca: confírmalo en tu próxima sesión.'
+            :bRM?' Aún no hay tendencia que suba para proyectar fecha.'
+            :' Sin registros todavía: la fecha aparecerá cuando entrenes este ejercicio.');
+        }
+      }
+    }
     formHtml=`<div class="mod tight mt8" style="border-style:dashed">
       ${pick?`
         <div class="flex between"><b style="font:600 15px var(--ui)">${esc(pick.n)}</b><button class="chip" data-a="goalPick" data-id="" aria-label="cambiar ejercicio">cambiar</button></div>
-        <div class="small dim mt4">Mejor marca actual: <b class="numi" style="color:var(--ink)">${goalBest(pick.id)?fmt1(goalBest(pick.id))+' kg':'sin registros'}</b></div>
+        <div class="small dim mt4">Mejor 1RM estimado hoy: <b class="numi" style="color:var(--ink)">${goalBestRM(pick.id)?fmt1(goalBestRM(pick.id))+' kg':'sin registros'}</b></div>
         <div class="flex mt8" style="gap:8px;align-items:center">
-          <input class="in" id="goalW" type="text" inputmode="decimal" placeholder="peso meta" aria-label="peso meta en kilos" style="flex:1">
-          <span class="t-unit">kg</span>
+          <input class="in" id="goalW" data-ch="goalw" type="text" inputmode="decimal" placeholder="peso" aria-label="peso meta en kilos" value="${esc(UI.goalW||'')}" style="flex:1;min-width:0">
+          <span class="t-unit" style="flex:none">kg ×</span>
+          <input class="in" id="goalR" data-ch="goalr" type="text" inputmode="numeric" placeholder="reps" aria-label="repeticiones de la meta" value="${esc(UI.goalR||'')}" style="width:64px;flex:none">
           <button class="btn sm primary" data-a="goalSave" style="flex:none">${ic('check',13)} Guardar</button>
-        </div>`
+        </div>
+        ${capt?`<div class="small dim mt8" style="line-height:1.5">${capt}</div>`:'<div class="small dim mt8">Pon el peso y a cuántas reps lo quieres lograr.</div>'}`
       :`
         <span class="lbl">NUEVA META</span>
         <input class="in mt8" data-ch="goalq" placeholder="busca el ejercicio: sentadilla, bench, hip thrust…" value="${esc(UI.goalQ||'')}">
@@ -10393,7 +10457,7 @@ function metasCard(){
       <span class="nfchev">${ic('chevR',16)}</span>
     </button>
     ${open?`<div class="schedbody">
-      ${goals.length?goals.map(goalCardHTML).join(''):'<div class="small dim" style="padding:6px 2px 2px">Ejemplo: 100 kg en sentadilla. La app te muestra tu mejor marca, los escalones del camino y cuándo llegarías a tu ritmo real.</div>'}
+      ${goals.length?goals.map(goalCardHTML).join(''):'<div class="small dim" style="padding:6px 2px 2px">Ejemplo: 120 kg × 5 en sentadilla. La app calcula el 1RM equivalente con tus registros, te muestra los escalones del camino y cuándo llegarías a tu ritmo real.</div>'}
       ${form?formHtml:`<button class="btn ghost full mt8" data-a="goalNew">${ic('plus',14)} Nueva meta</button>`}
     </div>`:''}
   </section>`;
@@ -10603,7 +10667,7 @@ function vPeso(){
   </section>`;
 }
 function vEjercicios(){
-  const ex=EXMAP[UI.ex]||{id:UI.ex, name:'Ejercicio', sets:3, reps:[8,12], inc:0};
+  const ex=EXMAP[UI.ex]||{id:UI.ex, name:exNombre(UI.ex), sets:3, reps:[8,12], inc:0};
   const cut=rangeCut(), histAll=S.logs[ex.id]||[];
   const hist=(()=>{ const f=histAll.filter(h=>h.d>=cut); return f.length>=2?f:histAll.slice(-8); })();
   const pts=hist.map(h=>{ const top=Math.max(...h.sets.map(s=>Number(s.w)||0));
@@ -10624,6 +10688,13 @@ function vEjercicios(){
     ${UI.exQ?`<div class="flex wrapf mb8">${ROUTINES.flatMap(r=>r.ex).filter(e=>e.name.toLowerCase().includes(UI.exQ.toLowerCase())).slice(0,8).map(e=>`<button class="chip ${e.id===UI.ex?'fill':''}" data-a="exPick" data-ex="${e.id}">${shortEx(e.name)}</button>`).join('')||'<span class="small dim">Nada con esa búsqueda</span>'}</div>`:''}
     <select class="in mb8" data-ch="exsel">
       ${ROUTINES.map(r=>`<optgroup label="${r.name}">${r.ex.filter(e=>!UI.exQ||e.name.toLowerCase().includes(UI.exQ.toLowerCase())).map(e=>`<option value="${e.id}" ${e.id===UI.ex?'selected':''}>${e.name}</option>`).join('')}</optgroup>`).join('')}
+      ${(()=>{ /* ejercicios con historial FUERA del plan (importados de Strong, ids del
+        catalogo): antes no salian en este selector y sus registros quedaban invisibles */
+        const extra=Object.keys(S.logs).filter(id=>!EXMAP[id] && (S.logs[id]||[]).length)
+          .map(id=>({id, n:exNombre(id)}))
+          .filter(x=>!UI.exQ||x.n.toLowerCase().includes(UI.exQ.toLowerCase()))
+          .sort((x,y)=>x.n.localeCompare(y.n));
+        return extra.length?`<optgroup label="Importados y catálogo">${extra.map(x=>`<option value="${x.id}" ${x.id===UI.ex?'selected':''}>${esc(x.n)}</option>`).join('')}</optgroup>`:''; })()}
     </select>
     ${hist.length?`
     ${lineChart({pts, fmt:v=>fmt1(v)+' kg', prIdx, trend:true, h:200})}
@@ -11706,11 +11777,25 @@ const ACTIONS = {
     if(!txt || txt.trim().length<8){ toast('Pega el texto del entreno'); return false; }
     const {d, items}=parseWorkoutText(txt);
     if(!items.length){ toast('No encontré series en el texto'); return false; }
+    /* primero se emparejan TODOS los nombres, para poder avisar de duplicados
+       ANTES de escribir nada (el dueno importo dos veces y el registro quedo
+       doble sin que la app dijera ni mu) */
+    const plan=items.map(it=>{
+      let id=matchExId(it.name); let alt=null;
+      if(!id){ id='imp_'+normEx(it.name).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,24)||'imp_ej'; alt=it.name; }
+      return {it, id, alt};
+    });
+    const repetidos=plan.filter(p=>(S.logs[p.id]||[]).some(h=>h.d===d));
+    if(repetidos.length){
+      const rep=confirm('El '+fmtD(d)+' ya tiene registros de '+repetidos.length+' de estos ejercicios.\n\nAceptar: REEMPLAZAR lo de ese día con lo que estás pegando.\nCancelar: sumarlo encima como series adicionales.');
+      if(rep){
+        plan.forEach(p=>{ if(S.logs[p.id]){ S.logs[p.id]=S.logs[p.id].filter(h=>h.d!==d); if(!S.logs[p.id].length) delete S.logs[p.id]; } });
+      }
+    }
     let matched=0; const unmatched=[], trainedIds=[]; let totalSeries=0, totalEj=0;
-    items.forEach(it=>{
-      let id=matchExId(it.name);
+    plan.forEach(({it,id,alt})=>{
       const entry={d, sets:it.sets.map(s=>({w:s.w, r:s.r}))};
-      if(!id){ id='imp_'+it.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,24)||'imp_ej'; entry.alt=it.name; unmatched.push(it.name); }
+      if(alt){ entry.alt=alt; unmatched.push(it.name); }
       else matched++;
       (S.logs[id]=S.logs[id]||[]).push(entry);
       S.logs[id].sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
@@ -11810,20 +11895,21 @@ const ACTIONS = {
   movPlay(){ movPlayerOpen(); },
   goalsTgl(){ UI.goalsOpen=UI.goalsOpen===false?true:false; render(); },
   chartKind(d){ UI.chartKind=UI.chartKind||{}; UI.chartKind[d.m]=d.v; render(); },
-  goalNew(){ UI.goalForm=!UI.goalForm; UI.goalEx=null; UI.goalQ=''; render(); },
+  goalNew(){ UI.goalForm=!UI.goalForm; UI.goalEx=null; UI.goalQ=''; UI.goalW=''; UI.goalR=''; render(); },
   goalPick(d){ UI.goalEx=d.id||null; render(); },
   goalSave(){
-    const el=document.getElementById('goalW');
-    const w=el?parseFloat(String(el.value).replace(',','.')):NaN;
+    const wEl=document.getElementById('goalW'), rEl=document.getElementById('goalR');
+    const w=wEl?parseFloat(String(wEl.value).replace(',','.')):NaN;
+    const r=clamp(parseInt(rEl&&rEl.value?rEl.value:'1',10)||1,1,30);
     if(!UI.goalEx){ toast('Elige primero el ejercicio'); return; }
     if(!(w>0)){ toast('Pon el peso meta en kilos'); return; }
-    const best=goalBest(UI.goalEx);
-    if(best && w<=best){ toast('Ya levantas '+fmt1(best)+' kg: la meta debería estar por encima'); return; }
+    const tRM=e1rm(w,r), bRM=goalBestRM(UI.goalEx);
+    if(bRM && tRM<=bRM){ toast('Eso equivale a un 1RM de '+fmt1(tRM)+' kg y ya vas en '+fmt1(bRM)+': sube la meta'); return; }
     S.goals=S.goals||[];
-    S.goals.push({id:Date.now(), ex:UI.goalEx, name:goalExName(UI.goalEx), target:w, start:best, d:TODAY()});
+    S.goals.push({id:Date.now(), ex:UI.goalEx, name:goalExName(UI.goalEx), target:w, reps:r, startRM:bRM, d:TODAY()});
     save('goals');
-    UI.goalForm=false; UI.goalEx=null; UI.goalQ='';
-    render(); toast('Meta guardada · a por esos '+fmt1(w)+' kg');
+    UI.goalForm=false; UI.goalEx=null; UI.goalQ=''; UI.goalW=''; UI.goalR='';
+    render(); toast('Meta guardada · a por esos '+fmt1(w)+' kg × '+r);
   },
   goalDel(d){
     if(!confirm('¿Borrar esta meta?')) return;
@@ -12837,6 +12923,8 @@ const CHANGES = {
   exq(el){ UI.exQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=exq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   excatq(el){ UI.excatQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=excatq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   goalq(el){ UI.goalQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=goalq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
+  goalw(el){ UI.goalW=el.value; render(); const inp=document.getElementById('goalW'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
+  goalr(el){ UI.goalR=el.value; render(); const inp=document.getElementById('goalR'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   addexq(el){ UI.addExQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=addexq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   remtime(el){ S.reminders[+el.dataset.i].time=el.value; save('reminders'); },
   cutTime(el){ S.cfg.cut={...(S.cfg.cut||{})}; S.cfg.cut[el.dataset.k]=el.value; save('cfg'); render(); },
@@ -13037,7 +13125,7 @@ document.addEventListener('click', e=>{
 /* los buscadores en vivo ya se repintan desde el listener de 'input': si ademas
    atendieran el 'change' que dispara el navegador al destruirse el campo, se repintaria
    dos veces por tecla (ver el guardia de render) */
-const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq','goalq']);
+const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq','goalq','goalw','goalr']);
 /* los dias de la semana son <details>: si no se recuerda cual quedo abierto, cada
    render los cierra, la pagina se encoge de golpe y el scroll cae al inicio (era el
    salto al tocar "ver ingredientes"). 'toggle' no burbujea: se escucha en captura. */
@@ -13094,7 +13182,7 @@ document.addEventListener('input', e=>{
   const el=e.target.closest('[data-ch]'); if(!el) return;
   const ch=el.dataset.ch;
   if(ch==='recq'){ UI.recQ=el.value; }
-  else if((ch==='nlogq'||ch==='exq'||ch==='excatq'||ch==='addexq'||ch==='nlogGrams'||ch==='goalq') && CHANGES[ch]){ CHANGES[ch](el); }  /* la estabilidad la pone el ancla de renderReal; devolver el scroll aqui la peleaba */
+  else if((ch==='nlogq'||ch==='exq'||ch==='excatq'||ch==='addexq'||ch==='nlogGrams'||ch==='goalq'||ch==='goalw'||ch==='goalr') && CHANGES[ch]){ CHANGES[ch](el); }  /* la estabilidad la pone el ancla de renderReal; devolver el scroll aqui la peleaba */
   /* la calculadora solo escuchaba 'change', que en un campo de texto salta al salir del
      campo: el numero se quedaba congelado mientras se escribia. Ahora recalcula por tecla. */
   else if(ch==='pcal' && CHANGES.pcal){ CHANGES.pcal(el); }

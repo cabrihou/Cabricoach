@@ -67,7 +67,7 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   Calistenia en anillas (12), con equipo "Anillas" en el filtro; las 24 fotos (set
   Andrés-Cabrito) viven en assets/ej desde REV 130
 - **E6** Movilidad completa: tocar la tarjeta Movilidad despliega la rutina real de
-  10 ejercicios en 3 bloques (muñecas/tobillos, cadera, columna/hombros) con foto,
+  14 ejercicios en 3 bloques (muñecas/tobillos, cadera, columna/hombros) con foto,
   dosis y detalle (`MOV_RUTINA`, `ACTIONS.movDetail`), botón "Hecha hoy (+1)" de
   siempre (`mobilTgl`) y "Empezar rutina guiada": player en ventana flotante con
   temporizador que avanza solo, pausa y saltos (`movPlayerOpen`/`movPlayerRedraw`,
@@ -88,7 +88,11 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
     `ACTIONS.mark`) (`exDots`)
   - E2f Ventana "Series sin marcar" al finalizar con pendientes: completar todas y
     finalizar, finalizar solo con lo hecho, o seguir entrenando (`finishPendBox`)
-- **E3** Importar entreno pegando texto (Strong, etc.) (`impTgl`)
+- **E3** Importar entreno pegando texto (Strong, etc.) (`impTgl`). Desde REV 131 el
+  emparejador (`matchExId`) va: nombre exacto del plan > sinónimos > nombre exacto
+  del catálogo EXCAT > similitud; si el día ya tiene registros de esos ejercicios
+  pregunta si REEMPLAZAR o añadir encima; los ids fuera del plan salen en P7 bajo
+  "Importados y catálogo" y sus registros se borran con la X de la tabla
 - **E4** Historial de entrenos
 - **E5** Sub-pestaña Ejercicios: catálogo EXCAT completo (`vExcat`)
   - E5a Buscador en vivo, sin acentos ni mayúsculas (`excatq`)
@@ -244,11 +248,13 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 
 - **P1** Selector grande con cabritas: Actividad física / Nutrición (`progGrpSelector`)
 - **P10** Metas de fuerza (caja colapsable arriba del Rendimiento, solo grupo
-  Actividad física): objetivos tipo "100 kg en sentadilla" con mejor marca actual,
-  barra de avance, escalones intermedios cada ~20% y proyección de fecha al ritmo
-  real de los registros (`metasCard`, `goalCardHTML`, `goalProy`; datos en
-  `S.goals`, viajan a la nube). Nueva meta con buscador en vivo del catálogo
-  (`goalq`) y peso objetivo; borrar con la X (confirma)
+  Actividad física): objetivos tipo "120 kg × 5 en sentadilla". Todo se calcula en
+  1RM estimado (Epley, `e1rm`) para comparar metas a N reps contra historial a
+  otras reps, y en pantalla se muestra convertido a las reps de la meta: mejor
+  marca hoy, barra, escalones y proyección de fecha por regresión
+  (`metasCard`, `goalCardHTML`, `goalProy`, `rmAReps`; datos en `S.goals`).
+  El formulario pide peso × reps y muestra un caption en vivo con el 1RM
+  equivalente y la fecha en que se lograría (`goalw`/`goalr`)
 - **P2** Tarjeta Rendimiento (`rendimientoCard`)
   - P2a Selector de intervalo (SEM/15D/30D/6M/AÑO), esquina superior derecha
   - P2b Número grande + delta del periodo

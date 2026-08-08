@@ -58,11 +58,18 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 
 ## E · Entrenar (`vEntrenar`)
 
-- **E1x** Tarjeta "Crear rutina" (junto a Personalizado): armador propio con búsqueda
-  del catálogo, series por ejercicio, guardado en `S.customRoutines` (por usuario,
-  sincroniza a nube). Las propias entran a ROUTINES vía `rutinasRefrescar()`: lista,
-  sesiones, semana, isla y calendario las tratan igual; se borran con la X de su
-  tarjeta (los días de la semana que la usaban vuelven a descanso)
+- **E1x** Tarjeta "Crear rutina" (junto a Personalizado): armador propio, guardado en
+  `S.customRoutines` (por usuario, sincroniza a nube). Desde REV 133 es interactivo:
+  sin búsqueda muestra las categorías del catálogo navegables con foto y check
+  (`crCat`), la búsqueda también trae fotos, y cada ejercicio agregado permite
+  editar series (+/-) y el rango de reps (dos campos, `crReps`, coherencia min≤max).
+  El teclado ya no se cierra por tecla: `crNombre` no re-pinta la caja (solo toca el
+  disabled de Guardar) y `crBuscar` re-enfoca SÍNCRONO (el setTimeout viejo llegaba
+  tarde para el teclado de iOS). Las propias entran a ROUTINES vía
+  `rutinasRefrescar()`; se borran con la X de su tarjeta
+- **E5x** Catálogo enriquecido: los 24 de calistenia y anillas traen grupo muscular
+  MÁS implicado (`mus`, "Principal: Espalda" en lista, chip en el detalle) y
+  descripción corta de ejecución (`desc`, reemplaza al texto genérico del detalle)
 - **E2x** Catálogo: categorías nuevas Calistenia (12 progresiones/habilidades) y
   Calistenia en anillas (12), con equipo "Anillas" en el filtro; las 24 fotos (set
   Andrés-Cabrito) viven en assets/ej desde REV 130

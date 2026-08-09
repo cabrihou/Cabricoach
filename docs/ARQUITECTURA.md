@@ -34,8 +34,40 @@ PIN, `gestOpen`, `weekResetStamp`), `meal` (todo el sistema de comida compartido
 
 ## 3. Ciclo de render y estabilidad del scroll
 
-`render()` → `renderReal()` reconstruye `#view` ENTERO con el HTML de
-`VIEWS[UI.tab]()`. No hay virtual DOM: cualquier cambio re-pinta la vista completa.
+`render()` → `renderReal()` arma el HTML de `VIEWS[UI.tab]()` y lo aplica de dos
+formas distintas:
+
+- **Misma vista → MORPH** (REV 136). `morphView` compara el HTML nuevo contra el que
+  ya está en pantalla y toca solo lo que cambió, en vez de reemplazarlo. Así el campo
+  enfocado nunca se recrea (el teclado no se cierra), las imágenes no se vuelven a
+  descargar, los `select` conservan su valor y las secciones con `content-visibility`
+  no vuelven a medir su placeholder. Es un morphdom mínimo escrito en el archivo
+  (la app no tiene npm ni build): `morphClave` identifica cada fila por sus `data-*`
+  para poder reordenar sin recrear, y ante cualquier duda reemplaza el nodo, que es
+  el comportamiento viejo. Si algo falla, `morphView` devuelve false y se cae al
+  `innerHTML` de siempre. Vistas habilitadas en `MORPH_VISTAS`.
+- **Cambio de vista → reemplazo entero**, que es lo correcto: la vista nueva arranca
+  desde arriba.
+
+Con morph el scroll no se toca (el DOM sobrevivió, la página nunca se encogió) y solo
+se corrige con el **ancla visual**: se recuerda un NODO real y su posición en pantalla
+antes de tocar el DOM, y después se ajusta el scroll por la diferencia exacta. A qué
+se ancla depende de DE DÓNDE viene el render:
+
+- viene de escribir → el ancla es el campo (no colapsa nunca) y se vigila ~1,5 s,
+  porque el layout sigue moviéndose después (content-visibility);
+- viene de un tap (`UI._ancla` lo dejó el despachador de clicks) → el ancla es la
+  primera sección visible y se vigila solo unos frames. Seguir al campo aquí era un
+  error: el buscador de comida conserva el foco, y al tocar "Guardar loggeo" el
+  registro nuevo aparece encima y arrastraba la pantalla 178 px.
+
+Debajo sigue vivo el aparato viejo (apuntalado de altura + ancla por selector) para
+las vistas sin morph y para el cambio de vista.
+
+### Cómo era antes (y por qué existe todo lo de abajo)
+
+Hasta REV 135 `renderReal` reconstruía `#view` ENTERO en cada cambio. No hay virtual
+DOM: cualquier cambio re-pintaba la vista completa.
 `UI` es el estado efímero de interfaz (pestaña, sub-pestaña, ventanas, filtros); no
 se persiste.
 

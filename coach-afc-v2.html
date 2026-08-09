@@ -1380,7 +1380,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 135';
+const APPREV='REV 136';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -11302,6 +11302,146 @@ function countUp(escribiendo){
    navegador tiraba NotFoundError y el primer render moria antes de restaurar el scroll:
    por eso la pantalla saltaba al escribir. Con el guardia, el render de adentro se ignora. */
 let RENDERING=false;
+/* ============ MORPH: actualizar el DOM en vez de reemplazarlo ============
+   render() reconstruia #view ENTERO en cada cambio, y eso destruia el campo
+   enfocado: de ahi salieron el teclado que se cerraba al escribir el nombre de una
+   rutina, el foco perdido en los buscadores y los saltos de scroll (todo el aparato
+   de ancla y vigilantes de mas abajo existe para compensar ESO).
+   morphView compara el HTML nuevo contra el que ya esta en pantalla y toca solo lo
+   que cambio, asi el input que estas usando nunca se recrea, las imagenes no se
+   vuelven a descargar y las secciones con content-visibility no vuelven a medir su
+   placeholder. Es un morphdom minimo escrito aqui porque la app no tiene npm ni build.
+
+   Reglas de seguridad (ante la duda, reemplazar = comportamiento viejo):
+   - si cambia el tipo de nodo o la clave, se reemplaza entero;
+   - el valor de un campo NO se pisa mientras tenga el foco (lo esta escribiendo);
+   - si algo falla, morphView devuelve false y renderReal cae al innerHTML de siempre. */
+function morphClave(el){
+  if(el.id) return '#'+el.id;
+  const d=el.dataset;
+  if(!d) return null;
+  /* mismos atributos que usa el ancla del despachador de clicks: identifican una fila
+     concreta (una comida, un dia, un ejercicio) aunque se reordene la lista */
+  const ks=['a','ch','k','id','rid','ix','i','d','n','u','v','x','m','r','w','t','s','cat','ex'];
+  let out='';
+  for(const k of ks) if(d[k]!==undefined) out+=k+'='+d[k]+';';
+  return out||null;
+}
+function morphMismo(a,b){
+  if(a.nodeType!==b.nodeType) return false;
+  if(a.nodeType!==1) return true;
+  if(a.nodeName!==b.nodeName) return false;
+  const ka=morphClave(a), kb=morphClave(b);
+  if(ka||kb) return ka===kb;
+  return true;
+}
+function morphAttrs(v,n){
+  const an=n.attributes, av=v.attributes;
+  for(let i=0;i<an.length;i++){ const a=an[i];
+    if(v.getAttribute(a.name)!==a.value) v.setAttribute(a.name, a.value); }
+  for(let i=av.length-1;i>=0;i--){ const a=av[i];
+    if(!n.hasAttribute(a.name)) v.removeAttribute(a.name); }
+  /* los controles de formulario guardan su estado en PROPIEDADES, no en atributos */
+  const t=v.nodeName;
+  if(t==='INPUT'){
+    if(v.type==='checkbox'||v.type==='radio'){ const c=n.hasAttribute('checked'); if(v.checked!==c) v.checked=c; }
+    else if(v.type!=='file' && document.activeElement!==v){
+      const nv=n.getAttribute('value'); if(nv!==null && v.value!==nv) v.value=nv;
+    }
+  } else if(t==='TEXTAREA'){
+    if(document.activeElement!==v && v.value!==n.textContent) v.value=n.textContent;
+  } else if(t==='OPTION'){
+    const s=n.hasAttribute('selected'); if(v.selected!==s) v.selected=s;
+  }
+}
+function morphNodo(v,n){
+  if(v.nodeType!==1){ if(v.nodeValue!==n.nodeValue) v.nodeValue=n.nodeValue; return; }
+  morphAttrs(v,n);
+  /* no entrar donde el DOM no lo pinta la vista (lienzos, contenido inyectado a mano) */
+  if(v.dataset && v.dataset.morphSkip!==undefined) return;
+  morphHijos(v,n);
+  if(v.nodeName==='SELECT' && document.activeElement!==v){
+    const nv=n.value!==undefined?n.value:null;
+    const sel=[...n.children].find(o=>o.hasAttribute&&o.hasAttribute('selected'));
+    const want=sel?sel.getAttribute('value'):nv;
+    if(want!=null && v.value!==want) v.value=want;
+  }
+}
+function morphHijos(vp,np){
+  let v=vp.firstChild, n=np.firstChild;
+  /* indice por clave de los hijos viejos: permite rescatar un nodo que se movio de
+     sitio (una comida que cambio de orden) en vez de recrearlo */
+  let porClave=null;
+  while(n){
+    const sigN=n.nextSibling;
+    if(!v){ vp.appendChild(n.cloneNode(true)); n=sigN; continue; }
+    if(morphMismo(v,n)){ morphNodo(v,n); v=v.nextSibling; n=sigN; continue; }
+    const kn=n.nodeType===1?morphClave(n):null;
+    if(kn){
+      if(!porClave){ porClave={}; for(let c=v;c;c=c.nextSibling){ if(c.nodeType===1){ const k=morphClave(c); if(k&&!porClave[k]) porClave[k]=c; } } }
+      const viejo=porClave[kn];
+      if(viejo && viejo.nodeName===n.nodeName){
+        if(viejo!==v) vp.insertBefore(viejo, v);
+        morphNodo(viejo,n); delete porClave[kn];
+        n=sigN; continue;
+      }
+    }
+    /* nodo nuevo sin pareja: se inserta; si el viejo ya no aparece mas, se borra */
+    const kv=v.nodeType===1?morphClave(v):null;
+    const quedaEnNuevo = kv ? [...np.children].some(c=>morphClave(c)===kv) : false;
+    if(kv && !quedaEnNuevo){ const fuera=v; v=v.nextSibling; vp.removeChild(fuera); continue; }
+    vp.insertBefore(n.cloneNode(true), v);
+    n=sigN;
+  }
+  while(v){ const fuera=v; v=v.nextSibling; vp.removeChild(fuera); }
+}
+/* vistas donde el morph esta activo. Se enciende por partes para poder medir cada
+   una contra el comportamiento viejo antes de extenderlo. */
+const MORPH_VISTAS=new Set(['inicio','agenda','comida','entrenar','progreso','checkin','retos','perfil','fotos','mas']);
+/* ancla visual del morph: se recuerda un NODO real que este en pantalla y su
+   posicion. Como el morph no lo destruye, despues se corrige el scroll por la
+   diferencia exacta. Es mas fiable que anclarse al control que se toco, porque ese
+   control puede desaparecer (el boton "Guardar loggeo" se va justo al guardar, y el
+   ancla vieja terminaba corrigiendo contra otra cosa y movia la pantalla 178 px). */
+function anclaVisualTomar(preferirCampo){
+  /* Se guardan DOS anclas:
+     - la principal es el campo enfocado, si lo hay: el morph lo conserva y es lo que
+       el ojo sigue. Anclarse solo a la seccion que lo contiene no basta, porque el
+       alto cambia DENTRO de ella (la lista de resultados aparece o se va);
+     - la de respaldo es la primera seccion visible, para cuando el campo desaparece
+       con el cambio (al guardar un loggeo se cierra el panel entero con su buscador:
+       sin respaldo nadie corregia y la pantalla saltaba 200 px). */
+  const cont=$('#view'), vi=cont&&cont.firstElementChild;
+  let alt=null;
+  if(vi){ const H=window.innerHeight;
+    for(const el of vi.children){ const r=el.getBoundingClientRect();
+      if(r.bottom>2 && r.top<H){ alt={el, top:r.top}; break; } } }
+  const f=preferirCampo && (typeof campoEnfocado==='function') ? campoEnfocado() : null;
+  if(f && f.getBoundingClientRect && f.isConnected) return {el:f, top:f.getBoundingClientRect().top, alt};
+  return alt;
+}
+function anclaVisualAplicar(av){
+  if(!av) return;
+  let a=av;
+  if(!a.el || !a.el.isConnected) a=av.alt;      /* el campo se fue: usa la seccion */
+  if(!a || !a.el || !a.el.isConnected) return;
+  const d=a.el.getBoundingClientRect().top - a.top;
+  if(Math.abs(d)>0.5) window.scrollBy(0, d);
+}
+function morphView(html){
+  const cont=$('#view');
+  const vieja=cont.firstElementChild;
+  if(!vieja || vieja.className!=='view-in') return false;
+  try{
+    const tmp=document.createElement('div');
+    tmp.innerHTML='<div class="view-in">'+html+'</div>';
+    morphNodo(vieja, tmp.firstElementChild);
+    return true;
+  }catch(err){
+    try{ console.error('morph fallo, reemplazo entero', err); }catch(_){}
+    return false;
+  }
+}
 function render(){
   if(RENDERING) return;
   RENDERING=true;
@@ -11342,8 +11482,24 @@ function renderReal(){
   const focoTop = focoEl && focoEl.getBoundingClientRect ? focoEl.getBoundingClientRect().top : 0;
   /* el mismo data-ch puede repetirse (un % por comida): recordar CUAL aparicion es */
   const focoIdx = (focoCh && !focoId) ? [...document.querySelectorAll('#view [data-ch="'+focoCh+'"]')].indexOf(focoEl) : 0;
-  $('#view').innerHTML = '<div class="view-in">'+VIEWS[UI.tab]()+'</div>';
-  countUp(escribiendo);
+  /* misma vista + morph disponible = se actualiza en sitio (no se destruye el foco
+     ni el scroll). Al CAMBIAR de vista se reemplaza entero, que es lo correcto:
+     empieza de cero arriba. Si el morph falla, cae al reemplazo de siempre. */
+  const htmlNuevo = VIEWS[UI.tab]();
+  const puedeMorph = keep && MORPH_VISTAS.has(UI.tab);
+  /* De donde viene este render decide a que anclarse. Si el despachador de clicks
+     dejo UI._ancla, viene de un TAP: hay que quedarse donde esta la pantalla, no
+     seguir al campo. El buscador de comida conserva el foco despues de escribir, asi
+     que al tocar "Guardar loggeo" el campo seguia siendo el ancla y, como el registro
+     nuevo aparece ENCIMA de el, arrastraba la pantalla 178 px hacia arriba. */
+  const vieneDeTap = !!UI._ancla;
+  const av = puedeMorph ? anclaVisualTomar(!vieneDeTap) : null;   /* se toma ANTES de tocar el DOM */
+  const morphed = puedeMorph && morphView(htmlNuevo);
+  if(!morphed) $('#view').innerHTML = '<div class="view-in">'+htmlNuevo+'</div>';
+  else anclaVisualAplicar(av);
+  /* los contadores animan al ENTRAR a una vista. Con morph los nodos siguen vivos con
+     su cifra puesta: re-animarlos en cada cambio seria un parpadeo constante. */
+  countUp(escribiendo || morphed);
 document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.t===UI.tab));
   navIndicator();
   updateIsland();
@@ -11360,12 +11516,17 @@ document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.d
      Solucion unica: se define un ANCLA (el campo enfocado si se esta escribiendo,
      o el control recien tocado que guardo el despachador de clicks) y se re-aplica
      por frames hasta que la altura del documento se estabiliza. */
+  /* con morph nada de esto hace falta: el DOM sobrevivio y el ancla visual de arriba
+     ya dejo la pantalla donde estaba. Sigue vivo para las vistas sin morph y para el
+     cambio de vista. */
   let anclaSel=null, anclaIdx=0, anclaTop=0;
-  if(escribiendo && (focoId||focoCh)){
-    anclaSel = focoId ? '#'+focoId : '#view [data-ch="'+focoCh+'"]';
-    anclaIdx = Math.max(0, focoIdx); anclaTop = focoTop;
-  } else if(keep && UI._ancla){
-    anclaSel='#view '+UI._ancla.sel; anclaIdx=Math.max(0,UI._ancla.idx); anclaTop=UI._ancla.top;
+  if(!morphed){
+    if(escribiendo && (focoId||focoCh)){
+      anclaSel = focoId ? '#'+focoId : '#view [data-ch="'+focoCh+'"]';
+      anclaIdx = Math.max(0, focoIdx); anclaTop = focoTop;
+    } else if(keep && UI._ancla){
+      anclaSel='#view '+UI._ancla.sel; anclaIdx=Math.max(0,UI._ancla.idx); anclaTop=UI._ancla.top;
+    }
   }
   UI._ancla=null;
   /* contra (a): apuntalar la altura para que el scroll quepa. NO se suelta por
@@ -11376,11 +11537,17 @@ document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.d
      asi que nunca deja espacio muerto alcanzable, y se limpia al cambiar de vista,
      que es cuando el scroll arranca de cero. */
   if(!keep) $('#view').style.minHeight='';
-  window.scrollTo({top: keep? y : 0});
-  if(keep && Math.abs((window.scrollY||0) - y) > 1){
-    const v=$('#view');
-    v.style.minHeight = ((y + window.innerHeight) - (v.offsetTop||0)) + 'px';
-    window.scrollTo({top: y});
+  /* con morph el DOM no se destruyo: la pagina nunca se encogio, el scroll sigue
+     exactamente donde estaba y no hay placeholders que apuntalar. Devolverlo a mano
+     aqui solo podria moverlo. El ancla de mas abajo se conserva porque sigue
+     haciendo falta cuando algo ARRIBA cambia de alto (una caja que se cierra). */
+  if(!morphed){
+    window.scrollTo({top: keep? y : 0});
+    if(keep && Math.abs((window.scrollY||0) - y) > 1){
+      const v=$('#view');
+      v.style.minHeight = ((y + window.innerHeight) - (v.offsetTop||0)) + 'px';
+      window.scrollTo({top: y});
+    }
   }
   /* generacion: si llega OTRO render mientras un vigilante sigue vivo (tecla
      rapida, carga perezosa de paquetes, nube), el vigilante viejo queda corrigiendo
@@ -11388,6 +11555,32 @@ document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.d
      quedaba al escribir la primera busqueda tras abrir la app. TODO render sube la
      generacion y los vigilantes de generaciones pasadas se apagan solos. */
   const gen=(renderReal._gen=(renderReal._gen||0)+1);
+  /* con morph el contenido no vuelve a inflarse (las secciones ya expandidas siguen
+     expandidas), pero una imagen que termina de cargar si puede correr el layout:
+     se re-aplica el ancla visual unos frames, sin el aparato de altura. */
+  /* Vigilar por frames SOLO mientras se escribe. Ahi el ancla es el campo, que no
+     colapsa nunca, y hace falta porque el layout sigue moviendose tras el morph
+     (content-visibility expande y colapsa secciones al entrar y salir de pantalla:
+     sin esto quedaba un salto de ~43 px al teclear).
+     Tras un TAP el ancla es una seccion cualquiera, y esa SI puede colapsar: seguirla
+     durante 1,5 s arrastraba la pantalla 200 px al guardar un loggeo. Para ese caso
+     basta la correccion unica que ya se hizo justo despues del morph. */
+  if(morphed && av){
+    /* cuantos frames se vigila: escribiendo, el ancla es el campo (nunca colapsa) y
+       conviene vigilar todo el periodo; tras un tap el ancla es una seccion que SI
+       puede colapsar por content-visibility, y perseguirla 1,5 s arrastraba la
+       pantalla 200 px al guardar un loggeo: ahi bastan unos frames. */
+    const MAXF = escribiendo ? 90 : 10;
+    let n=0, esperado=null;
+    const vig=()=>{
+      if(gen!==renderReal._gen) return;
+      if(esperado!==null && Math.abs((window.scrollY||0)-esperado)>80) return;
+      anclaVisualAplicar(av);
+      esperado=window.scrollY||0;
+      if(++n<MAXF) requestAnimationFrame(vig);
+    };
+    requestAnimationFrame(vig);
+  }
   if(anclaSel && keep){
     let esperado=null;
     const aplicar=()=>{

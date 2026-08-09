@@ -329,12 +329,21 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   coinciden varios se funden en un solo formulario (`medEstado`, `medCamposHoy`).
   Se puede medir cuando se quiera con los chips de abajo, no solo el día que toca.
   Para Cami, si el set cae en fase menstrual se SUGIERE aplazar (`medAvisoFase`)
-- **MD2** Mapa corporal (`medMapa`): **plano técnico de líneas blancas**, sin relleno.
-  12 zonas tocables; la elegida se ilumina con el color del usuario y un
-  `feGaussianBlur`, el resto baja a 0,22 de opacidad. Al lado de cada zona va su
-  etiqueta de plano con línea guía, el valor y el **indicador de cambio**: el
-  triángulo apunta según el signo, el color según si ese cambio es bueno en esa
-  zona (bajar es bueno en cintura y cadera, subir en el resto). Navegable por teclado
+- **MD2** Mapa corporal (`medMapa`): el **model sheet anatómico de la cabra**, en tres
+  vistas rotables (`MED_VISTAS`: frente, perfil, espalda) con chips arriba y **swipe**
+  (`data-swnav="medvista"` → `ACTIONS.medRotar`). El arte viene del render de Magnific
+  vectorizado; las tres figuras se separaron por posición y se normalizaron al mismo alto
+  (1460) centradas en 700 de ancho, para que rotar no haga saltar el cuerpo. Vive en
+  `MED_ARTE` (~98 KB); las clases `a`..`f` son los grises del original, tintables por CSS.
+  Al tocar una zona: un **velo oscurece todo** y una copia del arte recortada por esa zona
+  (`<use mask>` + `feColorMatrix` al color del usuario + `feDropShadow`) vuelve a plena luz.
+  La máscara lleva degradado en los extremos para que el corte no parezca una caja.
+  Las zonas son rectángulos (`MED_ZONAS`) que **recortan el arte**, así que lo que se
+  ilumina es el trozo de cuerpo, no un recuadro. Al rotar, una zona que no existe en la
+  vista nueva salta a su pareja del otro lado. **Cotas al lado** (`MED_COTAS`) con línea
+  guía, valor e **indicador de cambio**: el triángulo apunta según el signo, el color según
+  si ese cambio es bueno en esa zona (bajar es bueno en cintura y cadera, subir en el
+  resto). Todo tocable y navegable por teclado
 - **MD3** Panel de la zona (`medPanelZona`): valor, fecha, delta y sparkline, más
   **medida objetivo** con barra de avance (`medObjetivoDe`), **histórico de hasta 8
   tomas con el peso promedio de ese día al lado** y una **sugerencia por zona**

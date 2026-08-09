@@ -269,3 +269,24 @@ eso). Por defecto solo "La semana comida por comida" abre.
   carga perezosa (`paqCargar`/`PAQFOODS`), categoría "Paquetes" en el loggeo y
   precache del service worker para offline. Regenerar: `procesar_csv.py` +
   el exportador del catálogo (ver ese repo).
+
+## El mapa del cuerpo (REV 145)
+
+El arte no se dibuja a mano: sale del model sheet anatómico generado en Magnific,
+vectorizado a SVG. El archivo traía las tres vistas en un solo lienzo de 2048x1529, así
+que el preproceso las **separa por la posición horizontal de cada path** (393 paths, solo
+comandos `M L C z`, todos absolutos), calcula el bounding box de cada figura y las
+reescribe trasladadas al mismo origen, redondeando a entero. Eso deja las tres vistas
+alineadas y en la misma escala, que es lo que hace que la rotación no dé un salto.
+
+Los grises del original se mapearon a clases `a`..`f` en vez de dejar el `fill` inline:
+sin eso no se podría tintar ni oscurecer el arte desde CSS, y son 393 paths.
+
+La iluminación no usa `clip-path` sino `<mask>` con degradado: el clip dejaba un corte
+recto que delataba el rectángulo. Y el tinte va por `feColorMatrix` en el `<use>`, no por
+CSS, porque **el contenido de un `<use>` está en shadow DOM y los selectores descendentes
+no lo alcanzan**. Ese fue el intento fallido antes de llegar al filtro.
+
+Peso: 98 KB de arte sobre un archivo que ya iba en 1,2 MB. Se aceptó porque sustituye
+un dibujo hecho a mano que no convencía y porque no añade ninguna petición de red.
+

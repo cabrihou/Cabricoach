@@ -833,6 +833,22 @@ svg .acc{fill:var(--mint);stroke:none}
 .movpimg{border-radius:14px;overflow:hidden;background:#10151d;aspect-ratio:1/1;max-height:260px;display:flex;align-items:center;justify-content:center}
 .movpimg img{width:100%;height:100%;object-fit:cover;display:block}
 .movpbar{height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+/* escenario del contador: la cabrita detras, difuminada, y el anillo encima */
+.pustage{position:relative;display:flex;align-items:center;justify-content:center;min-height:210px;border-radius:16px;overflow:hidden;
+  background:radial-gradient(120% 120% at 50% 30%,rgba(var(--acc-rgb),.16),transparent 70%)}
+.pustage .pughost{position:absolute;width:190px;height:190px;object-fit:contain;opacity:.34;filter:blur(1px) saturate(.85);transition:opacity .4s}
+.pustage.work .pughost{opacity:.5;filter:none}
+.pustage .puring{position:relative;z-index:2}
+.pustage .puring svg text{paint-order:stroke;stroke:rgba(11,13,15,.55);stroke-width:4px;stroke-linejoin:round}
+#island .islring{position:relative;width:34px;height:34px;flex:none;display:flex;align-items:center;justify-content:center}
+#island .islring b{position:absolute;font:700 11px var(--num);font-variant-numeric:tabular-nums;color:#fff}
+/* g/kg de proteina: cifra propia, no una linea de texto perdida */
+.cycpeso{margin-top:12px;padding-top:10px;border-top:1px solid var(--line2)}
+.gkg{display:inline-flex;align-items:baseline;gap:5px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+.gkg b{font:700 17px var(--num);font-variant-numeric:tabular-nums;line-height:1}
+.gkg span{font:600 11px var(--ui);color:var(--smoke)}
+.gkg i{font:500 11px var(--ui);font-style:normal;color:var(--ink3,#7a8699);margin-left:2px}
+.pubandas{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .puimg{border-radius:14px;overflow:hidden;background:#10151d;aspect-ratio:1/1;max-height:240px;display:flex;align-items:center;justify-content:center}
 .puimg img{width:100%;height:100%;object-fit:cover;display:block}
 .pucab{width:74px;height:74px;border-radius:16px;object-fit:cover;flex:none}
@@ -1387,7 +1403,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 138';
+const APPREV='REV 139';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2567,19 +2583,25 @@ function puRedraw(){
   PU.box=box;
   const f=puFase(), nv=puNivel();
   const tot=puTotalRestante(), tm=Math.floor(tot/60000), tsg=Math.floor((tot%60000)/1000);
-  const pct=Math.round((1-tot/(PU_TOTAL*1000))*100);
+  const pctTot=clamp(Math.round((1-tot/(PU_TOTAL*1000))*100),0,100);
+  /* el anillo cuenta la FASE en curso: en descanso baja con el minuto, y en el
+     trabajo se queda lleno porque el tiempo ahi lo pone ella, no el reloj. */
+  const pctFase = f.tipo==='rest' ? clamp(Math.round(f.resto/(PU_DESC*1000)*100),0,100) : 100;
+  const centro = f.tipo==='rest' ? f.mm+':'+pad2(f.ss) : String(PU.reps);
+  const sub = f.tipo==='rest' ? 'DESCANSO' : 'DOMINADAS';
   const img=(f.tipo==='work'?CAB.camLift:CAB.camCheck)||CAB.faceC;
   box.innerHTML=`<div class="fboxin" style="max-width:400px">
     <div class="flex between mb8"><b class="t-h2">Mi primera dominada</b><button class="btn sm" data-pu="min" aria-label="seguir en segundo plano">${ic('x',14)}</button></div>
-    <div class="small dim mb8">${esc(nv.n)} · ronda ${PU.ronda}</div>
-    <div class="puimg"><img src="${img}" alt="" decoding="async" onerror="this.style.display='none'"></div>
-    <div class="tc mt12">
-      <div class="lbl">${f.tipo==='work'?'AHORA':'DESCANSA'}</div>
-      <div class="t-metric" style="font-size:52px;line-height:1.05">${f.tipo==='work'?PU.reps+' reps':f.mm+':'+pad2(f.ss)}</div>
-      <div class="small dim mt4">${f.tipo==='work'?'Tomate el tiempo que necesites · toca "Listo" al terminar':'Suelta la barra y respira'}</div>
+    <div class="small dim mb12">${esc(nv.n)} · ronda ${PU.ronda}</div>
+    <div class="pustage ${f.tipo}">
+      <img class="pughost" src="${img}" alt="" decoding="async" onerror="this.style.display='none'">
+      <div class="puring">${ring(pctFase, centro, sub, 190, 13)}</div>
     </div>
-    <div class="movpbar mt12"><i style="width:${clamp(pct,0,100)}%"></i></div>
-    <div class="small dim tc mt4">Quedan ${tm}:${pad2(tsg)} de los 15 minutos</div>
+    <div class="small tc mt12" style="line-height:1.5;color:var(--ink)">${f.tipo==='work'
+      ? 'Sube con calma y baja contando 3. Toca <b>Listo</b> cuando termines las '+PU.reps+'.'
+      : 'Suelta la barra, sacude los brazos y respira.'}</div>
+    <div class="movpbar mt12"><i style="width:${pctTot}%"></i></div>
+    <div class="small dim tc mt4">Quedan ${tm}:${pad2(tsg)} de los 15 minutos · ronda ${PU.ronda}</div>
     <div class="flex mt12" style="gap:8px">
       ${f.tipo==='work'
         ? '<button class="btn primary grow" data-pu="listo">'+ic('check',14)+' Listo, a descansar</button>'
@@ -2590,7 +2612,7 @@ function puRedraw(){
   </div>`;
   box.querySelectorAll('[data-pu]').forEach(b=>{ b.onclick=()=>{
     const a=b.dataset.pu;
-    if(a==='min'){ box.remove(); updateIsland(); return; }         /* sigue corriendo en la isla */
+    if(a==='min'){ box.remove(); updateIsland(); return; }
     if(a==='fin'){ puStop(true); return; }
     if(a==='listo'){ PU.fase='rest'; PU.fin=Date.now()+PU_DESC*1000; puRedraw(); updateIsland(); return; }
     if(a==='ya'){ PU.fase='work'; PU.ronda++; PU.fin=Date.now()+45000; puRedraw(); updateIsland(); }
@@ -2612,6 +2634,9 @@ function puCapsula(){
       </div>
     </div>
     <div class="small mt8" style="line-height:1.5;color:var(--ink2)">${esc(nv.d)}</div>
+    <span class="lbl" style="display:block;margin-top:12px">CON CUÁNTA AYUDA HOY</span>
+    <div class="pubandas">${PU_NIVELES.map((x,i)=>`<button class="chip ${i===st.nivel?'fill':''}" data-a="puNivelSet" data-v="${i}" aria-pressed="${i===st.nivel?'true':'false'}" aria-label="Usar ${esc(x.n)}">${esc(x.n)}</button>`).join('')}</div>
+    <div class="small dim mt4">Elige según cómo te sientas hoy: si no puedes con las 3 limpias, sube la ayuda sin pensarlo.</div>
     <div class="flex between mt12" style="align-items:baseline">
       <span class="lbl">NIVEL ${st.nivel+1} DE ${PU_NIVELES.length}</span>
       <span class="small dim">${enNivel}/${PU_SESIONES_NIVEL} sesiones para el siguiente</span>
@@ -3731,7 +3756,18 @@ function updateIsland(){
      que poder volver a ella desde cualquier pantalla */
   if(PU && PU.corriendo){
     const f=puFase();
-    el.innerHTML=`<span class="islic">${ic(f.tipo==='work'?'barbell':'timer',16)}</span><span class="isltxt"><b>${f.tipo==='work'?'Haz '+PU.reps+' dominadas':'Descansa'}</b><i>${f.mm}:${pad2(f.ss)} · ronda ${PU.ronda} · toca para volver</i></span><span class="islgo">${ic('chevR',16)}</span>`;
+    const pf = f.tipo==='rest' ? clamp(f.resto/(PU_DESC*1000)*100,0,100) : 100;
+    const rr=13, cc=2*Math.PI*rr;
+    el.innerHTML=`<span class="islring">
+        <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+          <circle cx="17" cy="17" r="${rr}" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="3.4"/>
+          <circle cx="17" cy="17" r="${rr}" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"
+            stroke-dasharray="${cc.toFixed(1)}" stroke-dashoffset="${(cc*(1-pf/100)).toFixed(1)}" transform="rotate(-90 17 17)"/>
+        </svg>
+        <b>${f.tipo==='work'?PU.reps:f.mm+':'+pad2(f.ss)}</b>
+      </span>
+      <span class="isltxt"><b>${f.tipo==='work'?'Haz '+PU.reps+' dominadas':'Descansa'}</b><i>Ronda ${PU.ronda} · toca para volver</i></span>
+      <span class="islgo">${ic('chevR',16)}</span>`;
     el.classList.add('on');
     el.onclick=()=>puBoxOpen();
     return;
@@ -7180,16 +7216,16 @@ function nutriDay(t, opts){
         <div style="flex:none">${ring(pct, Math.round(pct)+'%', 'PROTEÍNA', 110, 11)}</div>
         <div style="min-width:0">
           <div class="t-metric-md" style="line-height:1">${eat.pg}<span class="t-unit"> / ${goal} g</span></div>
+          ${(()=>{ /* g de proteina por KG de peso: es la cifra con la que se lee de
+            verdad si comiste suficiente, sin depender de cuanto peses. Va aqui, pegada
+            al total, porque en el bloque de texto de abajo pasaba desapercibida. */
+            const kg=PLAN.pesoBase||0; if(!kg) return '';
+            const gk=Math.round(eat.pg/kg*100)/100, meta=1.8;
+            const col=gk>=meta?'var(--mint)':gk>=meta*0.8?'var(--gold)':'var(--red)';
+            return `<div class="gkg mt4"><b style="color:${col}">${fmt1(gk)}</b><span>g/kg</span><i>meta 1,8</i></div>`;
+          })()}
           <div class="small dim" style="margin-top:5px">≈ ${eat.kc} <span style="opacity:.6">/ ${PLAN.kcal} kcal</span></div>
           <div class="nutnudge mt8 ${alerta?'alert':''}">${nudge}</div>
-          ${(()=>{ /* g de proteina por kg de peso de HOY (pedido del dueno): es la
-            cifra con la que se lee de verdad si comiste suficiente, independiente de
-            cuanto peses. Se compara con 1,8 g/kg, que es la meta del plan. */
-            const kg=PLAN.pesoBase||0; if(!kg) return '';
-            const gk=eat.pg/kg, meta=1.8;
-            const col=gk>=meta?'var(--mint)':gk>=meta*0.8?'var(--gold)':'var(--ink2)';
-            return `<div class="small mt4" style="color:var(--ink2)">Llevas <b class="numi" style="color:${col}">${fmt1(Math.round(gk*10)/10)} g/kg</b> de proteína · meta 1,8 g/kg (${fmt1(kg)} kg)</div>`;
-          })()}
           <div class="small dim mt4">Meta calculada con ${fmt1(PLAN.pesoBase)} kg de promedio de la semana · 1,8 g/kg</div>
         </div>
       </div>
@@ -7665,8 +7701,37 @@ function cycHome(){
         <img loading="lazy" src="${c.img}" alt="" decoding="async" style="width:54px;flex:none;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4))">
         <div class="small grow" style="line-height:1.4"><b>${consejo}</b></div>
       </div>
+      ${cycPesoNota(c)}
     </div>
   </section>`;
+}
+/* Peso de la semana leido A LA LUZ DE LA FASE (pedido del dueno). En la lutea y en
+   los dias de sangrado el cuerpo retiene liquido y la bascula sube uno o dos kilos
+   que NO son grasa: verlo sin ese contexto desanima y hace tomar decisiones malas.
+   Se compara el promedio de los ultimos 7 dias contra los 7 anteriores, que es
+   como se lee una tendencia de peso, nunca el dato de un dia suelto. */
+function cycPesoNota(c){
+  const prom=(desde,hasta)=>{ let s=0,n=0;
+    (S.weights||[]).forEach(w=>{ if(w.d>=desde && w.d<=hasta){ s+=w.kg; n++; } });
+    return n?{kg:s/n, n}:null; };
+  const hoy=TODAY();
+  const a=prom(addDays(hoy,-6), hoy), b=prom(addDays(hoy,-13), addDays(hoy,-7));
+  if(!a) return '<div class="cycpeso"><span class="small dim">Pésate esta semana y te digo si lo que marca la báscula es de verdad o es retención.</span></div>';
+  const dif=b? a.kg-b.kg : null;
+  const retiene = c.key==='lute' || c.key==='mens';
+  let txt;
+  if(dif===null) txt=`Promedio de esta semana: <b>${fmt1(Math.round(a.kg*10)/10)} kg</b> (${a.n} pesaje${a.n>1?'s':''}). La semana que viene ya podré compararte.`;
+  else if(dif>0.15) txt=retiene
+      ? `Subiste <b>${fmt1(Math.round(dif*10)/10)} kg</b> de promedio, y en fase ${c.fase.toLowerCase()} eso es <b>agua, no grasa</b>: baja sola cuando llegue el periodo. No cambies nada.`
+      : `Subiste <b>${fmt1(Math.round(dif*10)/10)} kg</b> de promedio esta semana. En esta fase no hay retención que lo explique, así que sí mide comida.`;
+  else if(dif<-0.15) txt=retiene
+      ? `Bajaste <b>${fmt1(Math.round(Math.abs(dif)*10)/10)} kg</b> aun estando en fase ${c.fase.toLowerCase()}, que es cuando el cuerpo retiene: vas muy bien.`
+      : `Bajaste <b>${fmt1(Math.round(Math.abs(dif)*10)/10)} kg</b> de promedio esta semana.`;
+  else txt=retiene
+      ? `Estable esta semana (${fmt1(Math.round(a.kg*10)/10)} kg). En fase ${c.fase.toLowerCase()} mantenerte ya es buena señal: suele subir por retención.`
+      : `Estable esta semana: <b>${fmt1(Math.round(a.kg*10)/10)} kg</b> de promedio.`;
+  return `<div class="cycpeso"><span class="lbl" style="color:${c.col}">TU PESO ESTA SEMANA</span>
+    <div class="small mt4" style="line-height:1.5">${txt}</div></div>`;
 }
 /* tira de las 4 fases con la actual resaltada, reusada en la ventana de detalle del ciclo */
 function cycFasesStrip(c){
@@ -12552,6 +12617,14 @@ const ACTIONS = {
   mobilOpen(){ UI.mobilOpen=!UI.mobilOpen; render(); },
   movPlay(){ movPlayerOpen(); },
   puStart(){ if(PU){ puBoxOpen(); return; } puStart(); },
+  /* la banda la elige ella: el nivel sugerido sigue subiendo solo con las sesiones,
+     pero un dia flojo se puede bajar la exigencia sin perder el progreso */
+  puNivelSet(d){
+    const st=puEstado(); const v=clamp(+d.v,0,PU_NIVELES.length-1);
+    st.nivel=v; save('pullup');
+    if(PU) puRedraw();
+    render(); toast('Hoy: '+PU_NIVELES[v].n);
+  },
   goalsTgl(){ UI.goalsOpen=UI.goalsOpen===false?true:false; render(); },
   chartKind(d){ UI.chartKind=UI.chartKind||{}; UI.chartKind[d.m]=d.v; render(); },
   goalNew(){ UI.goalForm=!UI.goalForm; UI.goalEx=null; UI.goalQ=''; UI.goalW=''; UI.goalR=''; render(); },

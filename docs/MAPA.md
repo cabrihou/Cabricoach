@@ -47,7 +47,9 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
     (`nlogEditEntry`: vuelve al borrador y se guarda de nuevo), copiar el registro del
     otro usuario (`nlogCopiar`) y **pegar** la tabla nutricional de Google para que la
     app saque los macros sola (`leerMacros` + `pegarTgl`/`pegarUsar`)
-  - I4h Indicador de **g de proteína por kg de peso** del día, contra la meta de 1,8
+  - I4h Cifra de **g de proteína por kg de peso** del día contra la meta de 1,8,
+    pegada al total de proteína (`.gkg`); en el bloque de texto de abajo pasaba
+    desapercibida
   - I4e Barras de proteína de los últimos 7 días (`.pweek`)
   - I4f/I4g **ya no viven aquí** (Tarea 3): el registro libre "¿Qué comiste?" y la tabla
     "Comidas y macros" se sacaron del Inicio (el dueño no quiere registro en el resumen
@@ -58,7 +60,10 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   central con la fecha del próximo período (`cycleInfo` trae `next`/`toNext`), fase y
   cabrita debajo con el consejo del momento (tip/food/animo rotan según la hora). Toca
   la tarjeta y abre el detalle en una `.fbox` (`ACTIONS.cycDetail` → `cycBox`) con las
-  cuatro fases del mes (`cycFasesStrip`). Sin `cycStart` muestra una tarjeta de
+  cuatro fases del mes (`cycFasesStrip`). Incluye **cómo va su peso esta semana leído
+  según la fase** (`cycPesoNota`): compara el promedio de 7 días contra los 7
+  anteriores y, en lútea o menstrual, explica que una subida es retención de líquido
+  y no grasa. Sin `cycStart` muestra una tarjeta de
   invitación con cabrita, beneficio en dos líneas y botón propio "Activar mi ciclo"
   (`ACTIONS.cycCfgGo` → M6); antes era una línea de texto chiquita que pasaba
   desapercibida (Tarea 4).
@@ -68,8 +73,12 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   minutos de 3 dominadas + 1 minuto de descanso. 5 niveles que quitan ayuda en vez de
   sumar reps (banda gruesa → media → delgada → negativas → sin ayuda), y se sube tras
   4 sesiones (`PU_NIVELES`, `S.pullup`). El contador vive en una ventana
-  (`puBoxOpen`/`puRedraw`, estado en vivo en `PU`) y al minimizarla sigue corriendo en
-  la **isla flotante** (`updateIsland`), que devuelve a la sesión al tocarla
+  (`puBoxOpen`/`puRedraw`, estado en vivo en `PU`) con **contador circular** (anillo
+  que se vacía con el minuto de descanso y muestra las reps en la fase de trabajo,
+  sobre la cabrita difuminada) y al minimizarla sigue corriendo en la **isla
+  flotante**, que lleva su propio anillo (`updateIsland`) y devuelve a la sesión.
+  La resistencia de la banda se elige a mano (`puNivelSet`): la progresión sigue
+  subiendo sola, pero un día flojo se puede bajar sin perder el avance
 
 ## E · Entrenar (`vEntrenar`)
 

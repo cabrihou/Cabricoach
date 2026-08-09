@@ -96,6 +96,25 @@ Reglas duras:
 
 Ver `docs/DESIGN-STANDARDS.md` para color, componentes y el resto del lenguaje visual.
 
+## Imágenes nuevas: SIEMPRE en el space del personaje
+
+Las fotos de ejercicios y las ilustraciones se generan en Magnific, en el space
+**"Character Model Sheet Development"**, en la pestaña **`Andrés`** o **`Cami`** según
+de quién sea la imagen. Ahí está la referencia del personaje conectada al puerto
+`reference` de cada nodo `image-generator`: sin esa conexión sale otro personaje.
+Nunca crear los nodos en otro space ni en la Página 1 (ya pasó, hubo que rehacer).
+
+Nombre del nodo: `EJ — <id>`, `MOV — <id>` o `APP — <escena>`; formato 1:1; el prompt
+va completo y autónomo (personaje + acción + estilo). En el prompt SIEMPRE: sin texto
+de ningún tipo en la imagen y **sin collar ni campana**. Andrés es el cabrito
+café/tan con muñequeras azules; Cami es la cabrita crema con amarillo y brillo dorado
+(la crema con brillo AZUL es la versión vieja: esa foto se rehace).
+
+Antes de aceptar una foto: la pose debe SER el ejercicio, con su punto de apoyo
+visible, una sola mascota y sin letras. Sale como JPEG 480×480 a `assets/ej/` y se
+copia a `site/assets/ej/`. **Generar cuesta créditos: no lo hagas sin que Andy lo
+pida explícitamente.** El detalle completo está en `docs/DESIGN-STANDARDS.md` §5.
+
 ## Documentación de fondo
 
 - `docs/ARQUITECTURA.md`: cómo funciona todo por dentro (estado, render y

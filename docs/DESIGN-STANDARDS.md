@@ -129,6 +129,32 @@ nueva se genera con el mismo prompt base para mantener la serie.
 Reglas comunes: overlay oscuro garantiza contraste AA del texto; ancho 900 px, JPEG q≈52-55,
 embebidas como data-URI (la app es un único HTML offline).
 
+### Dónde se generan las imágenes (REGLA DURA, 09/08)
+
+**Todo nodo de imagen se crea en el space "Character Model Sheet Development" de
+Magnific, en la pestaña del personaje que corresponda: `Andrés` o `Cami`.** Ahí vive
+la referencia del personaje conectada al puerto `reference` de cada generador, que es
+lo que mantiene la cara y el color consistentes entre cientos de fotos.
+
+- Nunca se crean nodos sueltos en otro space ni en la Página 1: se pierde la
+  referencia y sale otro personaje (pasó y costó una tanda entera).
+- Cada nodo es de tipo `image-generator`, 1:1, se llama `EJ — <id>` (ejercicio),
+  `MOV — <id>` (movilidad) o `APP — <escena>`, y su prompt es AUTÓNOMO: personaje
+  completo + acción + estilo, aunque se repita entre nodos.
+- Los dos personajes vigentes, y no se mezclan:
+  - **Andrés-Cabrito**: pelaje café/tan (moreno), banda roja, muñequeras azules
+    (#5C8DFF), camiseta oscura, brillo azul.
+  - **Cami-Cabrita**: pelaje crema-blanco, moño y muñequeras amarillas (#FFC94D),
+    brillo dorado.
+- Prohibiciones que van SIEMPRE en el prompt: cero texto en la imagen (ni rótulos en
+  máquinas o discos) y **sin collar ni campana** en el cuello.
+- La cabrita crema con brillo AZUL es la versión de la primera generación: si aparece,
+  la foto se rehace. Los ejercicios de Andrés van con el cabrito tan.
+- Antes de aceptar una foto: que la POSE sea el ejercicio (no la mascota parada junto
+  al equipo), que se vea el punto de apoyo (colchoneta, pared, barra, palo) y que no
+  haya dos mascotas en la misma escena.
+- Salida a la app: JPEG 480×480 en `assets/ej/` **y** copia en `site/assets/ej/`.
+
 ### Las cabritas (constante `CAB`)
 
 Mascota 3D de la casa: cabrita de pelaje crema, cuernos pequeños, gorra granate o gafas
@@ -194,6 +220,7 @@ leyendo, con la Biblia, con idea, tomándose una foto, dormida, con el reloj.
 3. ¿Cero esquinas rectas visibles (excepto la foto a sangre dentro de su tarjeta)?
 4. ¿Al menos un elemento "wow" por pantalla principal (anillo, tarjeta-foto, gráfica glow)?
 5. ¿Imágenes dentro del sistema (set navy generado para equipo; nunca personas generadas), siempre con overlay oscuro, y la ilustración corresponde al texto?
+5b. Si hay imagen nueva de mascota: ¿se generó en el space "Character Model Sheet Development", en la pestaña del personaje (Andrés / Cami) y con la referencia conectada? ¿La pose ES el ejercicio, con su punto de apoyo visible, UNA sola mascota, sin texto pegado y sin collar ni campana?
 6. ¿Nav y topbar en vidrio, tab activo en acento?
 7. ¿Se ve como los referentes y NO "hecho por IA" (sin emojis, sin morado genérico, sin glassmorphism gratuito en todo)?
 

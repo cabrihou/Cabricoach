@@ -22,7 +22,8 @@ por peso desde REV 111 (1,8 g/kg de proteína, promedio semanal de pesajes): el
 | [ARQUITECTURA.md](ARQUITECTURA.md) | cómo funciona por dentro, con los porqués |
 | [PRUEBAS.md](PRUEBAS.md) | receta completa de verificación (estático + CDP) |
 | [MAPA.md](MAPA.md) | código corto por zona de pantalla (I4b, C3d...) para señalar sin ambigüedad |
-| [DESIGN-STANDARDS.md](DESIGN-STANDARDS.md) | estándar visual REV 4.0 "Night Gym" (lo escribió Andy; manda) |
+| [DESIGN-STANDARDS.md](DESIGN-STANDARDS.md) | estándar visual REV 4.0 "Night Gym" (lo escribió Andy; manda). §5 tiene la regla de dónde se generan las imágenes |
+| [AUDITORIA-IMAGENES.md](AUDITORIA-IMAGENES.md) | qué fotos hay que rehacer y por qué (09/08); los nodos ya están en el space del personaje |
 | [PROYECTO-COACH-AFC.md](PROYECTO-COACH-AFC.md) | especificación original (perfiles, plan, rutinas). Histórico: los macros fijos que menciona ya son dinámicos |
 | [INDICACIONES.md](INDICACIONES.md) | registro histórico de pedidos de la sesión del 30/07 |
 | `../CLAUDE.md` | arranque para Claude Code (estructura, trampas, publicación) |

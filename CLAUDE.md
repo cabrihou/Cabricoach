@@ -81,6 +81,16 @@ Lo que **no** viaja por git y hay que crear en cada máquina: `~/.config/cabrito
 (credenciales) y la programación del coach diario
 (`zsh herramientas/coach-diario/instalar.sh`).
 
+## Imágenes nuevas (Magnific)
+
+Los nodos de imagen se crean **siempre** en el space "Character Model Sheet
+Development", en la pestaña **Andrés** o **Cami** según el personaje: ahí está la
+referencia conectada que mantiene la mascota consistente. Nunca en otro space ni en la
+Página 1. Andrés = cabrito café/tan con muñequeras azules; Cami = cabrita crema con
+amarillo y brillo dorado. En el prompt siempre: sin texto en la imagen y sin collar ni
+campana. Generar cuesta créditos: solo cuando Andy lo pida.
+Regla completa en [docs/DESIGN-STANDARDS.md](docs/DESIGN-STANDARDS.md) §5.
+
 ## Señalar dónde está algo
 
 `docs/MAPA.md` da un código corto a cada caja de la app (I4b, C3d, P2d…). Úsalos para

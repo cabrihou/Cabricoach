@@ -294,7 +294,13 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - FT1b Botón "Deshacer el último lote": visible solo si hay un lote reversible
     (`S.fotoLote`), pide confirmación y restaura byte a byte lo que el lote tocó
     (`loteDeshacer`, IndexedDB `cabritos-fotos` store `loteBak`)
-- **FT2** Antes y después: presets 7/30/365 días, primera vs última, comparar 2 a mano
+- **FT2** Antes y después: presets 7/30/365 días, primera vs última, comparar 2 a mano.
+  La ventana de comparación (`fotoCompare`) tiene desde REV 135 un **deslizador sobre
+  la foto**: se arrastra la imagen misma (Pointer Events, dedo o ratón), con línea de
+  degradado, halo lateral y manija; la fecha del lado que casi no se ve se atenúa.
+  Al abrir hace un barrido corto de bienvenida (se detiene al primer toque; no corre
+  con `prefers-reduced-motion`). Accesible por teclado (flechas, Home/End) con
+  `role="slider"`. Reemplaza al `input type=range` que estaba debajo de la foto
 - **FT3** Galería: filtro por persona + Esta semana / Ver todas (`fotoFill`)
 
 ## K · Check-in (vista propia, `vCheckin`)

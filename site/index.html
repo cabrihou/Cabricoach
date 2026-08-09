@@ -574,10 +574,33 @@ svg .acc{fill:var(--mint);stroke:none}
 .wbtn2{width:46px;height:38px;border-radius:12px;background:var(--card2);border:1px solid var(--line);font:600 17px var(--num);display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink2)}
 .wbtn2.plus{flex:1;width:auto;background:var(--grad);color:var(--onmint);border:none;font:600 15px var(--ui);letter-spacing:.005em;gap:6px;justify-content:center}
 .cicab{position:absolute;right:4px;top:44px;width:118px;filter:drop-shadow(0 12px 22px rgba(0,0,0,.5));pointer-events:none;z-index:1}
-.cmpwrap{position:relative;overflow:hidden;border-radius:14px;background:#000;aspect-ratio:3/4}
-.cmpwrap>img,.cmptop img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* comparador antes/despues: se arrastra la foto misma (ver fotoCompare).
+   touch-action:none para que iOS no scrollee la pagina durante el arrastre. */
+.cmpwrap{position:relative;overflow:hidden;border-radius:14px;background:#000;aspect-ratio:3/4;touch-action:none;cursor:col-resize;-webkit-user-select:none;user-select:none}
+.cmpwrap.drag{cursor:grabbing}
+.cmpwrap>img,.cmptop img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none}
 .cmptop{position:absolute;inset:0}
-.cmpbar{position:absolute;top:0;bottom:0;width:2px;background:var(--mint);box-shadow:0 0 10px rgba(var(--acc-rgb),.8);transform:translateX(-1px)}
+.cmpbar{position:absolute;top:0;bottom:0;width:2px;transform:translateX(-1px);z-index:3;
+  background:linear-gradient(to bottom,transparent,var(--mint) 14%,var(--mint) 86%,transparent);
+  box-shadow:0 0 12px rgba(var(--acc-rgb),.7)}
+/* halo que se desvanece a los lados de la linea, como el del patron original */
+.cmpbar::before{content:'';position:absolute;top:50%;left:1px;width:76px;height:64%;transform:translateY(-50%);pointer-events:none;
+  background:linear-gradient(90deg,rgba(var(--acc-rgb),.32),transparent);
+  -webkit-mask-image:radial-gradient(52px at left,#000,transparent);mask-image:radial-gradient(52px at left,#000,transparent)}
+.cmpbar::after{content:'';position:absolute;top:50%;right:1px;width:76px;height:64%;transform:translateY(-50%);pointer-events:none;
+  background:linear-gradient(270deg,rgba(var(--acc-rgb),.32),transparent);
+  -webkit-mask-image:radial-gradient(52px at right,#000,transparent);mask-image:radial-gradient(52px at right,#000,transparent)}
+.cmphandle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:12px;
+  background:#fff;color:#0B0D0F;display:flex;align-items:center;justify-content:center;z-index:4;
+  box-shadow:0 6px 16px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.28)}
+.cmphandle:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+/* las fechas de cada lado: .fd solo estaba definida dentro de .fitem, aqui necesita
+   su propia regla (antes iban con estilos en linea) */
+.cmpwrap .fd{position:absolute;left:10px;bottom:10px;z-index:5;pointer-events:none;
+  font:500 12px var(--num);color:var(--ink);background:rgba(11,13,15,.74);padding:3px 9px;border-radius:999px}
+.cmpwrap .fd.r{left:auto;right:10px}
+.cmplbl{transition:opacity .18s ease}
+#cmpHint{transition:opacity .3s ease}
 .seg.scrollx{display:flex;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .seg.scrollx::-webkit-scrollbar{display:none}
 .seg.scrollx>button{flex:none;padding:9px 15px}
@@ -1357,7 +1380,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 134';
+const APPREV='REV 135';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -5771,19 +5794,32 @@ function fotoStats(d){
   if(ci){ const m=ci.m||ci.medidas||ci; const seg=[]; [['cintura','cint'],['pecho','pecho'],['brazo','brazo'],['hombro','hombro'],['muslo','muslo']].forEach(([k,lb])=>{ const v=m&&m[k]; if(typeof v==='number'&&v>0) seg.push(lb+' '+v); }); if(seg.length) lines.push(ic('ruler',12)+' '+seg.join(' · ')+' cm'); }
   return {kg, html:`<b class="cmpdate">${fmtLong(d)}</b>${lines.length?`<div class="cmpsl">${lines.join('<span class="cmpdot">·</span>')}</div>`:''}`};
 }
+/* Antes y despues con deslizador SOBRE la foto (REV 135). Antes habia un
+   <input type=range> debajo: se arrastraba un control lejos de lo que miras. Ahora
+   se arrastra la foto misma, como el patron "image compare" de Aceternity, portado
+   a vanilla (la app no tiene React ni build): misma idea (clip-path que sigue al
+   puntero, linea con degradado y manija), sin sus dependencias ni las chispas, y
+   con la paleta Night Gym en vez del indigo/cyan del original.
+   Pointer Events cubre dedo y raton con un solo camino; touch-action:none en el
+   marco evita que iOS scrollee la pagina mientras arrastras. */
 function fotoCompare(A,B){
   const box=document.createElement('div'); box.className='fbox';
   const sa=fotoStats(A.d), sb=fotoStats(B.d);
   let delta='';
   if(sa.kg!=null && sb.kg!=null){ const diff=sb.kg-sa.kg; delta=`<div class="cmpdelta ${diff<0?'good':diff>0?'up':''}">${diff>0?'+':''}${fmt1(diff)} kg</div>`; }
+  const dots='<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><circle cx="12" cy="6" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="18" r="1.7"/></svg>';
   box.innerHTML=`<div class="fboxin">
-    <div class="cmpwrap"><img loading="lazy" decoding="async" src="${B.url}" alt="">
+    <div class="cmpwrap" id="cmpW">
+      <img loading="lazy" decoding="async" src="${B.url}" alt="">
       <div class="cmptop" id="cmpT" style="clip-path:inset(0 50% 0 0)"><img loading="lazy" decoding="async" src="${A.url}" alt=""></div>
-      <div class="cmpbar" id="cmpB" style="left:50%"></div>
-      <span class="fd" style="left:6px;bottom:6px">${A.label}</span>
-      <span class="fd" style="right:6px;left:auto;bottom:6px">${B.label}</span>
+      <div class="cmpbar" id="cmpB" style="left:50%">
+        <span class="cmphandle" id="cmpH" role="slider" tabindex="0" aria-label="Deslizar para comparar las dos fotos"
+          aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="mitad y mitad">${dots}</span>
+      </div>
+      <span class="fd cmplbl" id="cmpLA">${A.label}</span>
+      <span class="fd cmplbl r" id="cmpLB">${B.label}</span>
     </div>
-    <input type="range" min="0" max="100" value="50" id="cmpR" style="width:100%;margin-top:10px">
+    <div class="small dim tc mt8" id="cmpHint">${ic('fotoSplit',12)} Arrastra sobre la foto para comparar</div>
     <div class="cmpstats"><div class="cmpcol">${sa.html}</div>${delta}<div class="cmpcol r">${sb.html}</div></div>
     <div class="flex mt8" style="gap:8px">
       <button class="btn primary grow" id="fexp">${ic('share',14)} Exportar / compartir</button>
@@ -5791,12 +5827,60 @@ function fotoCompare(A,B){
     </div>
   </div>`;
   document.body.appendChild(box);
-  const q=s=>box.querySelector?box.querySelector(s):null;
-  const rg=q('#cmpR'), tp=q('#cmpT'), br=q('#cmpB');
-  if(rg) rg.oninput=()=>{ const v=+rg.value; if(tp) tp.style.clipPath='inset(0 '+(100-v)+'% 0 0)'; if(br) br.style.left=v+'%'; };
-  const c=q('#fcls'); if(c) c.onclick=()=>box.remove();
-  const ex=q('#fexp'); if(ex) ex.onclick=()=>exportCompare(A,B);
-  box.onclick=e=>{ if(e.target===box) box.remove(); };
+  const q=s=>box.querySelector(s);
+  const wrap=q('#cmpW'), tp=q('#cmpT'), br=q('#cmpB'), hd=q('#cmpH'), la=q('#cmpLA'), lb=q('#cmpLB'), hint=q('#cmpHint');
+  let pct=50, auto=null;
+  const poner=v=>{
+    pct=clamp(v,0,100);
+    tp.style.clipPath='inset(0 '+(100-pct)+'% 0 0)';
+    br.style.left=pct+'%';
+    /* en los extremos la manija se saldria del marco (overflow:hidden la cortaba a
+       la mitad): se mete hacia adentro lo justo, de forma progresiva */
+    const off=clamp((3-pct)/3,0,1)*17 - clamp((pct-97)/3,0,1)*17;
+    hd.style.transform='translate(-50%,-50%) translateX('+off.toFixed(1)+'px)';
+    /* la fecha del lado que casi no se ve se apaga: siempre se sabe cual estas mirando */
+    la.style.opacity=String(clamp(pct/28,0,1));
+    lb.style.opacity=String(clamp((100-pct)/28,0,1));
+    hd.setAttribute('aria-valuenow', String(Math.round(pct)));
+    hd.setAttribute('aria-valuetext', pct<=2?('solo '+B.label):pct>=98?('solo '+A.label):(Math.round(pct)+'% de '+A.label));
+  };
+  const desdeX=x=>{ const r=wrap.getBoundingClientRect(); if(!r.width) return; poner((x-r.left)/r.width*100); };
+  const pararAuto=()=>{ if(auto){ cancelAnimationFrame(auto); auto=null; } if(hint) hint.style.opacity='.55'; };
+  /* barrido de bienvenida: una ida y vuelta corta para que se vea que se arrastra.
+     Muere al primer toque y no corre con prefers-reduced-motion. */
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+    const t0=performance.now(), DUR=1500;
+    const paso=()=>{ const k=(performance.now()-t0)/DUR;
+      if(k>=1){ poner(50); auto=null; return; }
+      poner(50+Math.sin(k*Math.PI*2)*32);
+      auto=requestAnimationFrame(paso); };
+    auto=requestAnimationFrame(paso);
+  }
+  let arrastrando=false;
+  wrap.addEventListener('pointerdown', e=>{
+    pararAuto();
+    SWB=null;                       /* el gesto de "atras" desde el borde no debe cerrar la caja al arrastrar */
+    arrastrando=true; wrap.classList.add('drag');
+    try{ wrap.setPointerCapture(e.pointerId); }catch(_){}
+    desdeX(e.clientX);
+    e.preventDefault();
+  });
+  wrap.addEventListener('pointermove', e=>{ if(arrastrando){ desdeX(e.clientX); e.preventDefault(); } });
+  const soltar=e=>{ if(!arrastrando) return; arrastrando=false; wrap.classList.remove('drag');
+    try{ wrap.releasePointerCapture(e.pointerId); }catch(_){} };
+  wrap.addEventListener('pointerup', soltar);
+  wrap.addEventListener('pointercancel', soltar);
+  hd.addEventListener('keydown', e=>{
+    const k=e.key; let d=0;
+    if(k==='ArrowLeft') d=-4; else if(k==='ArrowRight') d=4;
+    else if(k==='Home'){ pararAuto(); poner(0); e.preventDefault(); return; }
+    else if(k==='End'){ pararAuto(); poner(100); e.preventDefault(); return; }
+    if(d){ pararAuto(); poner(pct+d); e.preventDefault(); }
+  });
+  poner(50);
+  q('#fcls').onclick=()=>{ pararAuto(); box.remove(); };
+  q('#fexp').onclick=()=>exportCompare(A,B);
+  box.onclick=e=>{ if(e.target===box){ pararAuto(); box.remove(); } };
 }
 function loadImg(src){ return new Promise((res,rej)=>{ const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>res(im); im.onerror=rej; im.src=src; }); }
 /* compone el antes/después en un lienzo con fechas y delta de peso, y lo comparte o descarga */

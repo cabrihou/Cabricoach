@@ -1403,7 +1403,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 139';
+const APPREV='REV 140';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -6968,6 +6968,29 @@ function qtyTxt(q,u){
 /* etiqueta corta para mostrar la unidad de un alimento del catalogo (no una
    cantidad, solo la referencia: "por 100 g", "por cucharada", o la unidad
    contable tal cual: "porción", "taza"...). Uso: listas de resultados. */
+/* Convierte una lista de ingredientes en un PLATO reutilizable: queda en
+   customFoods (compartido con el otro), sale en la categoria Platos y al registrarlo
+   se despliega con su desglose. Una porcion del plato = lo que se armo.
+   Los macros llegan YA en total (no por unidad): quien llama se encarga. */
+function platoDesde(items){
+  if(!items || items.length<2) return;
+  const fq=n=>n%1?fmt1(n):String(n);
+  const sug=items[0].n.split(' ').slice(0,2).join(' ')+' con '+items[1].n.split(' ')[0].toLowerCase();
+  const nom=(window.prompt('Nombre del plato (una porción = lo que armaste):', sug)||'').trim();
+  if(!nom) return;
+  const comps=items.map(i=>{
+    const cant = (i.u==='g') ? Math.round((+i.q||1)*100)+' g' : ((+i.q||1)!==1? '×'+fq(+i.q||1) : '');
+    return [i.n+(cant?' ('+cant+')':''), Math.round(i.pg*10)/10, Math.round(i.cg*10)/10, Math.round(i.fg*10)/10, Math.round(i.kc)];
+  });
+  const id='plato'+Date.now().toString(36);
+  const yaEsta=(S.customFoods||[]).some(f=>nrmTxt(f[1])===nrmTxt(nom));
+  if(yaEsta){ toast('Ya tienes un plato con ese nombre'); return; }
+  S.customFoods=(S.customFoods||[]).concat([[id, nom.slice(0,58), 'plato', 'porción', comps]]);
+  save('customFoods');
+  const m=foodMac([id,nom,'plato','porción',comps]);
+  render();
+  toast('Plato guardado: '+m.pg+' g de proteína por porción. Búscalo por su nombre o en Platos.');
+}
 /* ============ LEER MACROS DE UN TEXTO PEGADO ============
    El dueno busca el alimento en Google y pega lo que sale. El formato NUNCA es el
    mismo (tabla de Google, etiqueta del paquete, ficha en ingles, con kJ, con
@@ -7288,6 +7311,7 @@ function nlogPanel(slot){
         return `<div class="nentry">
         <div class="flex between"><span class="small" style="color:var(--mint);font-weight:700">${hm}</span>
           <span class="flex" style="gap:6px;flex:none">
+            ${e.items.length>=2?`<button class="chip" data-a="platoDeEntry" data-i="${gi}" aria-label="Guardar estos ${e.items.length} ingredientes como un plato">${ic('book',10)} Guardar como plato</button>`:''}
             <button class="chip" data-a="nlogEditEntry" data-i="${gi}" aria-label="Corregir este registro">${ic('clip',10)} Corregir</button>
             <button class="chip red" data-a="nlogDelEntry" data-i="${gi}" aria-label="borrar loggeo">${ic('x',10)}</button>
           </span></div>
@@ -12945,19 +12969,17 @@ const ACTIONS = {
   platoGuardar(){
     const draft=UI.nlogDraft||[];
     if(draft.length<2){ toast('Arma el plato con 2 o más ingredientes'); return; }
-    const sug=draft[0].n.split(' ').slice(0,2).join(' ')+' con '+draft[1].n.split(' ')[0].toLowerCase();
-    const nom=(window.prompt('Nombre del plato (una porción = lo que armaste):', sug)||'').trim();
-    if(!nom) return;
-    const fq=n=>n%1?fmt1(n):String(n);
-    const comps=draft.map(i=>{
-      const cant = (i.u==='g') ? Math.round(i.q*100)+' g' : (i.q!==1? '×'+fq(i.q) : '');
-      return [i.n+(cant?' ('+cant+')':''), Math.round(i.pg*i.q*10)/10, Math.round(i.cg*i.q*10)/10, Math.round(i.fg*i.q*10)/10, Math.round(i.kc*i.q)];
-    });
-    const id='plato'+Date.now().toString(36);
-    S.customFoods=(S.customFoods||[]).concat([[id, nom.slice(0,58), 'plato', 'porción', comps]]);
-    save('customFoods');
-    const m=foodMac([id,nom,'plato','porción',comps]);
-    render(); toast('Plato guardado: '+m.pg+' g de proteína por porción. Está en Platos.');
+    /* el borrador guarda macros POR UNIDAD y la cantidad aparte: se multiplica */
+    platoDesde(draft.map(i=>({n:i.n, u:i.u, q:i.q,
+      pg:i.pg*i.q, cg:i.cg*i.q, fg:i.fg*i.q, kc:i.kc*i.q})));
+  },
+  /* mismo plato, pero desde un loggeo YA guardado (pedido del dueno: "luego de un
+     loggeo de varios ingredientes poderlo volver un plato"). Aqui los macros del
+     item ya vienen multiplicados por su cantidad (ver nlogSave), no se re-multiplican. */
+  platoDeEntry(d){
+    const e=(S.nlog[nutriT()]||[])[+d.i];
+    if(!e || (e.items||[]).length<2){ toast('Ese registro tiene un solo alimento'); return; }
+    platoDesde(e.items.map(i=>({n:i.n, u:i.u, q:i.q, pg:i.pg, cg:i.cg, fg:i.fg, kc:i.kc})));
   },
   nlogSave(){
     const draft=UI.nlogDraft||[]; if(!draft.length){ toast('Agrega al menos un elemento'); return; }

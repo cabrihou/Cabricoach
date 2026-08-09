@@ -21,9 +21,12 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 - **I2** Checkpoint del día: tarjetas de atajos (`ckSection`)
   - I2a Entreno ("Ir a entrenar" + check que completa la rutina)
   - I2b Pasos · I2c Agua · I2d Check-in · I2e Foto del día
-- **I4x** Botón "Guardar esta combinación como plato" en el borrador del loggeo (2+
-  ingredientes): lo guarda como alimento compuesto en customFoods, sale en la
-  categoría Platos y se registra con su desglose (`ACTIONS.platoGuardar`)
+- **I4x** Guardar una combinación como **plato reutilizable** (alimento compuesto en
+  customFoods, sale en la categoría Platos y se registra con su desglose). Se puede
+  desde el borrador (`platoGuardar`) **y desde un loggeo ya guardado** con 2+
+  ingredientes (`platoDeEntry`); ambos usan `platoDesde`, que rechaza nombres
+  repetidos. Ojo con los macros: en el borrador van por unidad y hay que multiplicar
+  por la cantidad; en un registro guardado ya vienen multiplicados
 - **I2x** Isla semanal de entrenos: tocar la CAJA de entrenamiento (junto a pasos)
   abre una fbox con los 7 días y su rutina/movilidad/descanso sobre el mismo
   `S.week` del calendario, más botón "Entrenar: rutina de hoy" y plantilla base

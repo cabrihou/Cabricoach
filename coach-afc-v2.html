@@ -843,6 +843,39 @@ svg .acc{fill:var(--mint);stroke:none}
 #island .islring{position:relative;width:34px;height:34px;flex:none;display:flex;align-items:center;justify-content:center}
 #island .islring b{position:absolute;font:700 11px var(--num);font-variant-numeric:tabular-nums;color:#fff}
 /* g/kg de proteina: cifra propia, no una linea de texto perdida */
+.fzadestacado{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fzabox{padding:11px 12px;border-radius:14px;background:var(--card2);border:1px solid var(--line)}
+.fzabox.debil{border-color:rgba(255,201,77,.35)}
+.fzabox b{display:block;font:600 15px var(--ui);margin-top:3px}
+.fzabox i{display:block;font:700 13px var(--ui);font-style:normal;margin:2px 0 3px}
+.fzarow{padding:9px 0;border-bottom:1px dashed var(--line)}
+.fzarow:last-child{border-bottom:none}
+.fzabar{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.fzabar i{display:block;height:100%;border-radius:99px;transition:width .4s ease}
+.medwrap{display:flex;justify-content:center;margin:4px 0 6px}
+.medsvg{width:min(230px,72vw);height:auto}
+.medpanel{margin-top:12px;padding-top:10px;border-top:1px solid var(--line2)}
+.medrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.medrow:last-child{border-bottom:none}
+.medval{flex:none;text-align:right;line-height:1.15}
+.medval b{font:700 19px var(--num);font-variant-numeric:tabular-nums}
+.medval em{font:500 11px var(--ui);font-style:normal;color:var(--smoke);display:block}
+.meddelta{display:block;font:600 12px var(--num);font-style:normal;color:var(--ink2)}
+.meddelta.mint{color:var(--mint)} .meddelta.red{color:var(--red)} .meddelta.neutro{color:var(--ink2)}
+.medspark{width:76px;height:26px;flex:none}
+.medspark path{fill:none;stroke:var(--mint);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.medspark circle{fill:var(--mint)}
+.medkpi{display:flex;gap:8px;flex-wrap:wrap}
+.medkpi span{font:500 12px var(--ui);color:var(--ink2);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;padding:3px 9px}
+.medkpi b{font:700 14px var(--num);color:var(--ink)}
+.medgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.medfield .lbl{display:block}
+.medformula summary{font:500 13px var(--ui);color:var(--ink2);cursor:pointer;list-style:none}
+.medformula summary::-webkit-details-marker{display:none}
+.medformula summary::before{content:'▸ ';color:var(--mint)}
+.medformula[open] summary::before{content:'▾ '}
+.medfx{font:500 12.5px var(--num);line-height:1.6;color:var(--ink2);background:var(--card2);border-radius:10px;padding:9px 11px;overflow-x:auto;white-space:nowrap}
+.medfx.sust{color:var(--ink);border:1px solid rgba(var(--acc-rgb),.35)}
 .cycpeso{margin-top:12px;padding-top:10px;border-top:1px solid var(--line2)}
 .gkg{display:inline-flex;align-items:baseline;gap:5px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line)}
 .gkg b{font:700 17px var(--num);font-variant-numeric:tabular-nums;line-height:1}
@@ -1403,7 +1436,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 141';
+const APPREV='REV 142';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2504,6 +2537,484 @@ function movPlayerRedraw(){
     if(a==='prev' && MOVP.i>0){ MOVP.i--; MOVP.left=fl2[MOVP.i].t; movPlayerRedraw(); return; }
     if(a==='next'){ if(MOVP.i>=fl2.length-1){ movPlayerDone(); return; } MOVP.i++; MOVP.left=fl2[MOVP.i].t; movPlayerRedraw(); }
   };});
+}
+/* ============ MEDIDAS CORPORALES ============
+   Un registro por fecha en S.medidas. Todos los campos son opcionales salvo la
+   fecha: un dia de solo peso es un registro valido y los calculos que no se puedan
+   hacer dicen QUE falta, en vez de romperse.
+   El peso NO se duplica aqui: vive en S.weights, que ya se registra a diario desde
+   el Inicio. Al guardar peso en una medicion se escribe en los dos sitios para que
+   no haya dos verdades. */
+const MED_CAMPOS=[
+  {k:'cuello',        n:'Cuello',            zona:'cuello',        g:'quin', ayuda:'Justo bajo la nuez, cinta relajada.'},
+  {k:'pecho',         n:'Pecho',             zona:'pecho',         g:'mes',  ayuda:'A la línea de los pezones, exhalando sin forzar.'},
+  {k:'cintura',       n:'Cintura',           zona:'cintura',       g:'quin', ayuda:'A la altura del ombligo, sin apretar ni meter barriga.'},
+  {k:'cadera',        n:'Cadera',            zona:'cadera',        g:'mes',  ayuda:'Por la parte más ancha de los glúteos.'},
+  {k:'brazo_rel_der', n:'Brazo relajado der.',  zona:'brazo-der',  g:'mes', par:'brazo_rel_izq', ayuda:'Brazo colgando, en el punto más grueso.'},
+  {k:'brazo_rel_izq', n:'Brazo relajado izq.',  zona:'brazo-izq',  g:'mes', par:'brazo_rel_der'},
+  {k:'brazo_flex_der',n:'Brazo contraído der.', zona:'brazo-der',  g:'mes', par:'brazo_flex_izq', ayuda:'Bíceps apretado, en el pico.'},
+  {k:'brazo_flex_izq',n:'Brazo contraído izq.', zona:'brazo-izq',  g:'mes', par:'brazo_flex_der'},
+  {k:'antebrazo_der', n:'Antebrazo der.',    zona:'antebrazo-der', g:'mes', par:'antebrazo_izq', ayuda:'En su punto más ancho, mano relajada.'},
+  {k:'antebrazo_izq', n:'Antebrazo izq.',    zona:'antebrazo-izq', g:'mes', par:'antebrazo_der'},
+  {k:'muslo_der',     n:'Muslo der.',        zona:'muslo-der',     g:'mes', par:'muslo_izq', ayuda:'A media distancia entre la ingle y la rodilla.'},
+  {k:'muslo_izq',     n:'Muslo izq.',        zona:'muslo-izq',     g:'mes', par:'muslo_der'},
+  {k:'pantorrilla_der',n:'Pantorrilla der.', zona:'pantorrilla-der',g:'mes', par:'pantorrilla_izq', ayuda:'En el punto más ancho, de pie.'},
+  {k:'pantorrilla_izq',n:'Pantorrilla izq.', zona:'pantorrilla-izq',g:'mes', par:'pantorrilla_der'},
+];
+const MED_GRUPOS={
+  dia:  {n:'Peso de hoy',   cada:1,   tol:0, campos:['peso']},
+  quin: {n:'Cintura y cuello', cada:14, tol:2, campos:['cintura','cuello']},
+  mes:  {n:'Set completo',  cada:28,  tol:4, campos:MED_CAMPOS.filter(c=>c.g==='mes').map(c=>c.k).concat(['cintura','cuello'])},
+  anio: {n:'Estatura',      cada:365, tol:0, campos:['estatura']},
+};
+/* la cintura de la mujer se mide en el punto MAS ESTRECHO del torso para la formula
+   Navy; la del hombre, al ombligo. El texto de ayuda cambia con el usuario porque
+   medir distinto cambia el resultado varios puntos. */
+function medAyudaCintura(){
+  return UID==='cami'
+    ? 'Para el cálculo de grasa, mídete en el punto más estrecho del torso (por encima del ombligo), no en el ombligo.'
+    : 'A la altura del ombligo, de pie y relajado, sin meter barriga.';
+}
+function seedMedidas(){
+  /* primera medición real de cada uno, para que el módulo arranque con historia */
+  const A={fecha:'2026-08-09', peso:90.4, estatura:177, cuello:39.5, pecho:117.8, cintura:91.5, cadera:105,
+    brazo_rel_der:37.5, brazo_rel_izq:38.5, brazo_flex_der:40.2, brazo_flex_izq:41.5,
+    antebrazo_der:30.5, antebrazo_izq:30.6, muslo_der:61, muslo_izq:60, pantorrilla_der:39.8, pantorrilla_izq:39.5};
+  const C={fecha:'2026-08-09', peso:58.5, estatura:160, cuello:32, pecho:82, cintura:71, cadera:102.5,
+    brazo_rel_der:27.5, brazo_rel_izq:27, brazo_flex_der:28, brazo_flex_izq:28,
+    antebrazo_der:22.5, antebrazo_izq:22.5, muslo_der:60, muslo_izq:59, pantorrilla_der:34.5, pantorrilla_izq:34.5};
+  const base=(UID==='cami'?C:A);
+  return {[base.fecha]: base};
+}
+function medFechas(){ return Object.keys(S.medidas||{}).sort(); }
+function medUltimo(campo){
+  /* el ultimo registro que TENGA ese campo (la estatura se hereda del que la traiga) */
+  const fs=medFechas();
+  for(let i=fs.length-1;i>=0;i--){ const r=S.medidas[fs[i]]; if(r && r[campo]!=null) return {d:fs[i], v:r[campo]}; }
+  return null;
+}
+function medSerie(campo){
+  return medFechas().map(d=>({d, v:(S.medidas[d]||{})[campo]})).filter(x=>x.v!=null);
+}
+/* promedio movil de 7 dias del peso: el numero que importa. Funciona con menos de
+   7 puntos (usa los que haya) y sale de S.weights, no de las mediciones. */
+function pesoProm7(hasta){
+  const fin=hasta||TODAY(), ini=addDays(fin,-6);
+  const ws=(S.weights||[]).filter(w=>w.d>=ini && w.d<=fin);
+  if(!ws.length){ const u=(S.weights||[]).slice(-1)[0]; return u?{kg:u.kg, n:1, unico:true}:null; }
+  return {kg:ws.reduce((a,w)=>a+w.kg,0)/ws.length, n:ws.length};
+}
+/* ---- calculos ---- */
+const log10=x=>Math.log(x)/Math.LN10;
+function medNavy(){
+  const est=medUltimo('estatura'), cue=medUltimo('cuello'), cin=medUltimo('cintura'), cad=medUltimo('cadera');
+  const falta=[];
+  if(!est) falta.push('estatura');
+  if(!cue) falta.push('cuello');
+  if(!cin) falta.push('cintura');
+  if(UID==='cami' && !cad) falta.push('cadera');
+  if(falta.length) return {ok:false, falta};
+  const E=est.v, N=cue.v, C=cin.v, H=cad?cad.v:0;
+  let pct, formula;
+  if(UID==='cami'){
+    pct=495/(1.29579 - 0.35004*log10(C+H-N) + 0.22100*log10(E)) - 450;
+    formula={txt:'495 / (1,29579 − 0,35004·log₁₀(cintura + cadera − cuello) + 0,22100·log₁₀(estatura)) − 450',
+      sust:`495 / (1,29579 − 0,35004·log₁₀(${fmt1(C)} + ${fmt1(H)} − ${fmt1(N)}) + 0,22100·log₁₀(${fmt1(E)})) − 450`};
+  } else {
+    pct=495/(1.0324 - 0.19077*log10(C-N) + 0.15456*log10(E)) - 450;
+    formula={txt:'495 / (1,0324 − 0,19077·log₁₀(cintura − cuello) + 0,15456·log₁₀(estatura)) − 450',
+      sust:`495 / (1,0324 − 0,19077·log₁₀(${fmt1(C)} − ${fmt1(N)}) + 0,15456·log₁₀(${fmt1(E)})) − 450`};
+  }
+  if(!isFinite(pct) || pct<=0 || pct>70) return {ok:false, falta:[], raro:true};
+  const pm=pesoProm7();
+  const kg=pm?pm.kg:null;
+  return {ok:true, pct:Math.round(pct*10)/10, formula, est:E, cue:N, cin:C, cad:H,
+    grasaKg: kg!=null? Math.round(kg*pct/100*10)/10 : null,
+    magraKg: kg!=null? Math.round(kg*(1-pct/100)*10)/10 : null,
+    pesoUsado: kg!=null? Math.round(kg*10)/10 : null};
+}
+function medRatios(){
+  const est=medUltimo('estatura'), cin=medUltimo('cintura'), cad=medUltimo('cadera');
+  const out={};
+  if(est&&cin){ out.ce={v:cin.v/est.v, umbral:0.50}; }
+  if(cad&&cin){ out.cc={v:cin.v/cad.v, umbral: UID==='cami'?0.85:0.90}; }
+  return out;
+}
+/* asimetrias de los pares bilaterales: se avisa desde 1 cm y se sugiere trabajo
+   unilateral desde 1,5 cm */
+function medAsimetrias(){
+  const out=[]; const vistos={};
+  MED_CAMPOS.forEach(c=>{
+    if(!c.par || vistos[c.k]) return;
+    vistos[c.par]=1;
+    const a=medUltimo(c.k), b=medUltimo(c.par);
+    if(!a||!b) return;
+    const dif=Math.abs(a.v-b.v);
+    if(dif>=1) out.push({n:c.n.replace(' der.','').replace(' izq.',''), der:c.k.includes('_der')?a.v:b.v, izq:c.k.includes('_der')?b.v:a.v, dif:Math.round(dif*10)/10, fuerte:dif>1.5});
+  });
+  return out;
+}
+/* ---- cadencia ---- */
+function medUltimaDe(grupo){
+  const campos=MED_GRUPOS[grupo].campos;
+  if(grupo==='dia'){ const u=(S.weights||[]).slice(-1)[0]; return u?u.d:null; }
+  const fs=medFechas();
+  for(let i=fs.length-1;i>=0;i--){ const r=S.medidas[fs[i]]||{};
+    if(campos.some(k=>r[k]!=null)) return fs[i]; }
+  return null;
+}
+function medEstado(){
+  const hoy=TODAY(), out=[];
+  Object.keys(MED_GRUPOS).forEach(g=>{
+    const cfg=MED_GRUPOS[g], ult=medUltimaDe(g);
+    const dias = ult? Math.round((fromISO(hoy)-fromISO(ult))/86400000) : null;
+    const pend = ult===null || dias>=cfg.cada;
+    out.push({g, n:cfg.n, cada:cfg.cada, ult, dias, pend, tarde: pend && dias!=null && dias>cfg.cada+cfg.tol});
+  });
+  return out;
+}
+function medPendientes(){ return medEstado().filter(x=>x.pend); }
+/* campos a pedir hoy: si coinciden varios grupos se funden en un solo formulario */
+function medCamposHoy(forzar){
+  const g=new Set();
+  if(forzar) (forzar==='todo'?['dia','quin','mes','anio']:[forzar]).forEach(x=>g.add(x));
+  else medPendientes().forEach(p=>g.add(p.g));
+  const ks=new Set();
+  g.forEach(x=>MED_GRUPOS[x].campos.forEach(k=>ks.add(k)));
+  return {grupos:[...g], campos:[...ks]};
+}
+/* Cami: el set mensual en fase menstrual miente (1-2 kg de agua). Se SUGIERE aplazar,
+   nunca se bloquea. */
+function medAvisoFase(){
+  if(UID!=='cami') return null;
+  const c=(typeof cycleInfo==='function')?cycleInfo():null;
+  if(!c) return null;
+  if(c.key==='mens') return {aplazar:true, txt:'Estás en fase menstrual: la retención de agua (1-2 kg) va a inflar la cintura y el peso. Si puedes, mídete en unos días, en folicular, y comparas peras con peras.'};
+  if(c.key==='lute') return {aplazar:false, txt:'Estás en fase lútea: puede haber algo de retención. Anótalo por si el número sale raro.'};
+  return null;
+}
+/* ---- plan de accion ---- */
+function medPlan(){
+  const cinS=medSerie('cintura');
+  const pm=pesoProm7();
+  const asim=medAsimetrias();
+  const r=medRatios();
+  const out=[];
+  /* prioridad 1: la cintura sobre la estatura manda por encima de la bascula */
+  if(r.ce && r.ce.v>0.50) out.push({t:'foco', x:`Tu cintura es el <b>${Math.round(r.ce.v*100)}%</b> de tu estatura (la referencia es 50%). Ese es el objetivo, por encima del número de la báscula.`});
+  /* tendencia: ultimas 3 mediciones de cintura vs peso promedio */
+  if(cinS.length>=2 && pm){
+    const cinA=cinS[cinS.length-1], cinB=cinS[cinS.length-2];
+    const dCin=cinA.v-cinB.v;
+    const pmAntes=pesoProm7(addDays(cinB.d, 6));
+    const dPeso=(pmAntes&&pm)? pm.kg-pmAntes.kg : null;
+    const baja=v=>v<-0.3, sube=v=>v>0.3, quieto=v=>Math.abs(v)<=0.3;
+    if(dPeso!=null){
+      if(baja(dCin)&&baja(dPeso)) out.push({t:'ok', x:'Cintura y peso bajando a la vez: vas bien. No cambies nada, sostén lo que estás haciendo.'});
+      else if(quieto(dCin)&&baja(dPeso)) out.push({t:'ojo', x:'Baja el peso pero la cintura no. Puede ser pérdida de músculo o un error de medición: antes de recortar más comida, asegura la proteína y la fuerza.'});
+      else if(baja(dCin)&&quieto(dPeso)) out.push({t:'ok', x:'La cintura baja y la báscula no se mueve: eso es recomposición, estás cambiando grasa por músculo. Es un buen escenario aunque el peso no baje.'});
+      else if(sube(dCin)&&sube(dPeso)) out.push({t:'ojo', x:'Cintura y peso subiendo juntos. Revisa la ingesta de la semana antes de tocar el entreno.'});
+      else if(quieto(dCin)&&quieto(dPeso) && cinS.length>=3) out.push({t:'ojo', x:'Tres semanas sin moverse nada. Toca ajustar UNA sola variable: baja 150 kcal al día y deja el entreno igual dos semanas.'});
+    }
+  }
+  asim.filter(a=>a.fuerte).forEach(a=>out.push({t:'ojo', x:`${a.n}: ${fmt1(a.dif)} cm de diferencia entre lados. Mete trabajo unilateral de ese grupo (una serie por lado) hasta emparejar.`}));
+  if(!out.length) out.push({t:'ok', x:'Aún no hay suficiente historia para leer una tendencia. Sigue midiendo y en dos o tres semanas te digo qué está pasando.'});
+  return out.slice(0,3);
+}
+/* ============ NIVEL DE FUERZA vs ESTANDARES ============
+   Un 1RM suelto no dice nada: 100 kg de sentadilla es otra cosa a 60 kg que a 95.
+   Aqui se compara el 1RM ESTIMADO contra el peso corporal y se traduce a un nivel,
+   con los umbrales habituales de fuerza relativa (ratio 1RM / peso corporal), que
+   son distintos por sexo. Sirve para lo unico que importa: saber cual es el eslabon
+   debil y priorizarlo, en vez de seguir puliendo el que ya va bien. */
+const FZA_NIVELES=['Principiante','Novato','Intermedio','Avanzado','Élite'];
+/* ratios de 1RM/peso corporal para [novato, intermedio, avanzado, elite] */
+const FZA_STD={
+  bench:   {n:'Press banca',      a:[0.75,1.00,1.50,2.00], c:[0.40,0.60,0.90,1.25]},
+  squat:   {n:'Sentadilla',       a:[1.00,1.50,2.00,2.50], c:[0.60,1.00,1.40,1.85]},
+  dead:    {n:'Peso muerto',      a:[1.25,1.75,2.50,3.00], c:[0.75,1.15,1.65,2.15]},
+  ohp:     {n:'Press de hombro',  a:[0.50,0.70,1.00,1.30], c:[0.30,0.45,0.65,0.90]},
+  row:     {n:'Remo',             a:[0.70,1.00,1.35,1.75], c:[0.40,0.60,0.85,1.15]},
+  pulldown:{n:'Jalón / dominada', a:[0.70,0.95,1.25,1.60], c:[0.40,0.60,0.85,1.10]},
+  hip:     {n:'Hip thrust',       a:[1.00,1.50,2.25,3.00], c:[0.90,1.40,2.00,2.60]},
+  legpress:{n:'Prensa',           a:[1.75,2.50,3.50,4.50], c:[1.25,1.90,2.70,3.50]},
+  curl:    {n:'Curl de bíceps',   a:[0.30,0.45,0.65,0.85], c:[0.20,0.30,0.45,0.60]},
+};
+/* que id de ejercicio cuenta para cada estandar (el mejor de los suyos manda) */
+const FZA_MAP={
+  bench:['bench','bench_db','bench_smith','incdb','incmach','c_bench','c_chest','bench_wide','bench_close'],
+  squat:['hack','squat_bb','c_smith','squat_smith','squat_mach','squat_front','hacksquat','hacksquat_bb'],
+  dead:['rdl','dead_bb','c_dead','rdl_bb','sumo_dead','trapbar_dead','stiffdead_bb'],
+  ohp:['shpress','ohpdb','c_ohp','ohp_bb','shpress_mach'],
+  row:['row','rowuni','c_rowp','c_rowm','tbar_row','row_seat_wide','bentrow_bb'],
+  pulldown:['latcl','latop','latcab','pullup','pullup2','c_jalon','latpull_bb'],
+  hip:['hip','c_hip','hipthrust_bb'],
+  legpress:['lpress','c_prensa','legpress','legpress_seat'],
+  curl:['curl','preach','hammer','c_curl','curl_bb','preach_bb'],
+};
+function fzaPesoCorporal(){ const pm=pesoProm7(); return pm?pm.kg:(currentWeight()||0); }
+/* mejor 1RM estimado historico de un ejercicio (ignora los sustituidos) */
+function fzaMejor1RM(id){
+  const h=(S.logs||{})[id]||[]; let b=0, d=null;
+  h.forEach(en=>{ if(en.alt) return;
+    en.sets.forEach(s=>{ const w=+s.w||0, r=+s.r||0; if(w>0&&r>0){ const e=e1rm(w,r); if(e>b){ b=e; d=en.d; } } }); });
+  return b>0?{rm:b, d}:null;
+}
+function fzaNivelDe(ratio, umbrales){
+  let i=0; while(i<umbrales.length && ratio>=umbrales[i]) i++;
+  /* progreso hacia el siguiente escalon, para la barra */
+  const desde = i===0?0:umbrales[i-1];
+  const hasta = i<umbrales.length?umbrales[i]:umbrales[umbrales.length-1];
+  const pct = i>=umbrales.length ? 100 : clamp((ratio-desde)/(hasta-desde)*100,0,100);
+  return {nivel:i, nombre:FZA_NIVELES[i], pct, faltaRatio: i<umbrales.length? hasta-ratio : 0};
+}
+function fzaTabla(){
+  const pc=fzaPesoCorporal();
+  if(!pc) return [];
+  const key = UID==='cami' ? 'c' : 'a';
+  const out=[];
+  Object.keys(FZA_STD).forEach(k=>{
+    let mejor=null, exId=null;
+    (FZA_MAP[k]||[]).forEach(id=>{ const m=fzaMejor1RM(id); if(m && (!mejor || m.rm>mejor.rm)){ mejor=m; exId=id; } });
+    if(!mejor) return;
+    const ratio=mejor.rm/pc;
+    const nv=fzaNivelDe(ratio, FZA_STD[k][key]);
+    out.push({k, n:FZA_STD[k].n, ex:exId, rm:Math.round(mejor.rm*10)/10, d:mejor.d, ratio:Math.round(ratio*100)/100, ...nv,
+      /* puntaje comparable entre ejercicios: cuanto del camino a elite lleva */
+      score: ratio/FZA_STD[k][key][3]});
+  });
+  return out.sort((x,y)=>y.score-x.score);
+}
+function fzaCard(){
+  const tb=fzaTabla();
+  const pc=fzaPesoCorporal();
+  if(tb.length<2) return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('trend',16)} Tu nivel de fuerza</span></div>
+    <div class="small dim">Registra al menos dos de los básicos (banca, sentadilla, peso muerto, remo, press de hombro) y te digo en qué nivel estás y cuál es tu punto débil.</div></section>`;
+  const fuerte=tb[0], debil=tb[tb.length-1];
+  const col=n=>['#8B97A1','#8FA0FF','#58DFA3','var(--gold)','#FF7AB6'][n]||'var(--ink2)';
+  return `<section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('trend',16)} Tu nivel de fuerza</span><span class="chip dim">vs ${fmt1(Math.round(pc*10)/10)} kg</span></div>
+    <div class="fzadestacado">
+      <div class="fzabox"><span class="lbl">MÁS FUERTE</span><b>${esc(fuerte.n)}</b>
+        <i style="color:${col(fuerte.nivel)}">${fuerte.nombre}</i>
+        <span class="small dim">${fmt1(fuerte.rm)} kg · ${fuerte.ratio}× tu peso</span></div>
+      <div class="fzabox debil"><span class="lbl">MÁS FLOJO</span><b>${esc(debil.n)}</b>
+        <i style="color:${col(debil.nivel)}">${debil.nombre}</i>
+        <span class="small dim">${fmt1(debil.rm)} kg · ${debil.ratio}× tu peso</span></div>
+    </div>
+    <div class="small mt12" style="line-height:1.5">Tu eslabón débil es <b>${esc(debil.n).toLowerCase()}</b>. Ponlo de primero en la sesión un mes: ahí está la ganancia fácil.</div>
+    <div class="mt12">${tb.map(x=>`
+      <div class="fzarow">
+        <div class="flex between" style="align-items:baseline">
+          <b class="small">${esc(x.n)}</b>
+          <span class="medval"><b>${fmt1(x.rm)}</b><em>kg · ${x.ratio}×</em></span>
+        </div>
+        <div class="fzabar mt4"><i style="width:${Math.round(x.pct)}%;background:${col(x.nivel)}"></i></div>
+        <div class="flex between mt4"><span class="small" style="color:${col(x.nivel)}">${x.nombre}</span>
+          <span class="small dim">${x.nivel>=4?'tope de la tabla':'faltan '+fmt1(Math.round(x.faltaRatio*pc*10)/10)+' kg para '+FZA_NIVELES[x.nivel+1]}</span></div>
+      </div>`).join('')}</div>
+    <div class="small dim mt12" style="line-height:1.5">Los niveles comparan tu 1RM estimado contra tu peso corporal, con los baremos habituales de fuerza relativa (${UID==='cami'?'tabla femenina':'tabla masculina'}). Es una referencia, no un examen.</div>
+  </section>`;
+}
+/* ---- mapa corporal: cabrito bipedo de frente, en paths por zona ----
+   Vectorial y no una foto, porque hay que poder resaltar CADA zona por separado.
+   Ojo con los lados: en una vista de frente, el lado DERECHO del usuario aparece a
+   la IZQUIERDA de la pantalla. Las zonas estan etiquetadas por el lado del cuerpo,
+   no por el de la imagen. */
+function medMapa(sel){
+  const acc = UID==='cami' ? '#FFC94D' : '#5C8DFF';
+  const piel = UID==='cami' ? '#F0E4D2' : '#C69C6D';
+  const z=(id,lb,d)=>`<g class="mzone ${sel===id?'on':''}" data-a="medZona" data-z="${id}" role="button" tabindex="0"
+      aria-label="${lb}${sel===id?', seleccionada':''}" aria-pressed="${sel===id?'true':'false'}">${d}</g>`;
+  return `<svg class="medsvg" viewBox="0 0 200 350" role="group" aria-label="Mapa del cuerpo: toca una zona para ver su medida">
+    <defs><style>
+      .mzone .zp{fill:${piel};stroke:#0B0D0F;stroke-width:2;stroke-linejoin:round;transition:fill .18s,opacity .18s}
+      .mzone.on .zp{fill:${acc};stroke:#fff;stroke-width:2.6}
+      .medsvg.hassel .mzone:not(.on){opacity:.35}
+      .mzone{cursor:pointer}
+      .mzone:focus-visible{outline:none}
+      .mzone:focus-visible .zp{stroke:#fff;stroke-width:3}
+      .mfix{fill:${piel};stroke:#0B0D0F;stroke-width:2;stroke-linejoin:round}
+    </style></defs>
+    <!-- cabeza, cuernos y orejas: decorativo, no medible -->
+    <g class="mfix">
+      <path d="M78 34 Q70 14 82 17 Q90 20 91 30"/>
+      <path d="M122 34 Q130 14 118 17 Q110 20 109 30"/>
+      <ellipse cx="100" cy="44" rx="27" ry="25"/>
+      <path d="M74 42 Q58 38 56 48 Q62 56 76 52"/>
+      <path d="M126 42 Q142 38 144 48 Q138 56 124 52"/>
+    </g>
+    <rect x="73" y="30" width="54" height="9" rx="4" fill="#D64545" stroke="#0B0D0F" stroke-width="1.6"/>
+    ${UID==='cami'?`<path d="M128 30 l10 -7 l2 9 l-10 3 z" fill="#FFC94D" stroke="#0B0D0F" stroke-width="1.6"/>`:''}
+    ${z('cuello','Cuello','<path class="zp" d="M88 64 h24 v16 h-24 z"/>')}
+    ${z('pecho','Pecho','<path class="zp" d="M72 80 q28 -9 56 0 l-3 52 q-25 7 -50 0 z"/>')}
+    ${z('cintura','Cintura','<path class="zp" d="M75 132 q25 7 50 0 l-2 40 q-23 6 -46 0 z"/>')}
+    ${z('cadera','Cadera','<path class="zp" d="M77 172 q23 6 46 0 l5 34 q-28 8 -56 0 z"/>')}
+    ${z('brazo-der','Brazo derecho','<path class="zp" d="M70 84 q-16 3 -19 16 l-4 46 q9 5 19 0 l7 -46 z"/>')}
+    ${z('brazo-izq','Brazo izquierdo','<path class="zp" d="M130 84 q16 3 19 16 l4 46 q-9 5 -19 0 l-7 -46 z"/>')}
+    ${z('antebrazo-der','Antebrazo derecho','<path class="zp" d="M47 146 q9 5 19 0 l3 46 q-11 5 -21 0 z"/>')}
+    ${z('antebrazo-izq','Antebrazo izquierdo','<path class="zp" d="M153 146 q-9 5 -19 0 l-3 46 q11 5 21 0 z"/>')}
+    ${z('muslo-der','Muslo derecho','<path class="zp" d="M74 206 q13 5 25 2 l-2 58 q-12 4 -24 0 z"/>')}
+    ${z('muslo-izq','Muslo izquierdo','<path class="zp" d="M126 206 q-13 5 -25 2 l2 58 q12 4 24 0 z"/>')}
+    ${z('pantorrilla-der','Pantorrilla derecha','<path class="zp" d="M73 266 q12 4 24 0 l-3 48 q-9 4 -18 0 z"/>')}
+    ${z('pantorrilla-izq','Pantorrilla izquierda','<path class="zp" d="M127 266 q-12 4 -24 0 l3 48 q9 4 18 0 z"/>')}
+    <g class="mfix"><path d="M76 314 h18 v10 h-18 z"/><path d="M106 314 h18 v10 h-18 z"/>
+      <path d="M46 192 q10 6 21 0 l1 12 q-11 5 -22 0 z"/><path d="M154 192 q-10 6 -21 0 l-1 12 q11 5 22 0 z"/></g>
+  </svg>`;
+}
+/* sparkline de una serie de medidas, sin ejes: solo la forma del cambio */
+function medSpark(serie){
+  if(!serie || serie.length<2) return '';
+  const W=120,H=30, vs=serie.map(p=>p.v);
+  let mn=Math.min(...vs), mx=Math.max(...vs);
+  if(mx-mn<0.4){ const c=(mx+mn)/2; mn=c-0.2; mx=c+0.2; }
+  const X=i=>2+(i/(serie.length-1))*(W-4), Y=v=>H-3-((v-mn)/(mx-mn))*(H-6);
+  const d=serie.map((p,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(p.v).toFixed(1)).join(' ');
+  return `<svg class="medspark" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="${d}"/>
+    <circle cx="${X(serie.length-1).toFixed(1)}" cy="${Y(vs[vs.length-1]).toFixed(1)}" r="2.6"/></svg>`;
+}
+/* panel de la zona tocada: valor, delta contra la medicion anterior y sparkline.
+   El color del delta es NEUTRO salvo en cintura y cadera: en brazos, pecho, muslo o
+   pantorrilla subir no es malo, asi que pintarlo de rojo mentiria. */
+function medPanelZona(zona){
+  const campos=MED_CAMPOS.filter(c=>c.zona===zona);
+  if(!campos.length) return '';
+  const dirige = (zona==='cintura'||zona==='cadera');
+  const filas=campos.map(c=>{
+    const s=medSerie(c.k);
+    if(!s.length) return `<div class="medrow"><span class="grow"><b>${c.n}</b><i class="small dim" style="display:block">sin medir todavía</i></span></div>`;
+    const ult=s[s.length-1], ant=s.length>1?s[s.length-2]:null;
+    const dif=ant? Math.round((ult.v-ant.v)*10)/10 : null;
+    const cls = dif==null?'':(!dirige?'neutro':(dif<0?'mint':dif>0?'red':''));
+    return `<div class="medrow">
+      <span class="grow" style="min-width:0"><b>${c.n}</b>
+        <i class="small dim" style="display:block">${fmtD(ult.d)}${ant?' · antes '+fmt1(ant.v)+' cm':''}</i></span>
+      ${medSpark(s.slice(-6))}
+      <span class="medval"><b>${fmt1(ult.v)}</b><em>cm</em>
+        ${dif!=null?`<i class="meddelta ${cls}">${dif>0?'↑ +':dif<0?'↓ −':'→ '}${fmt1(Math.abs(dif))}</i>`:''}</span>
+    </div>`;
+  }).join('');
+  const par=campos.find(c=>c.par);
+  let asim='';
+  if(par){
+    const a=medAsimetrias().find(x=>zona.startsWith(x.n.toLowerCase().split(' ')[0].slice(0,5)));
+    if(a) asim=`<div class="small mt8" style="color:${a.fuerte?'var(--gold)':'var(--ink2)'}">Diferencia entre lados: <b>${fmt1(a.dif)} cm</b>${a.fuerte?' · mete trabajo unilateral de ese grupo':''}</div>`;
+  }
+  const ayuda=(campos.find(c=>c.ayuda)||{}).ayuda;
+  const ayudaTxt = zona==='cintura' ? medAyudaCintura() : ayuda;
+  return `<div class="medpanel">${filas}${asim}${ayudaTxt?`<div class="small dim mt8" style="line-height:1.5">${ic('ruler',11)} ${esc(ayudaTxt)}</div>`:''}</div>`;
+}
+/* ---- la vista ---- */
+function vMedidas(){
+  const sel=UI.medZona||null;
+  const nav=medNavy(), r=medRatios(), pend=medPendientes(), fase=medAvisoFase();
+  const pm=pesoProm7();
+  const est=medUltimo('estatura');
+  const hoyForm=UI.medForm ? medCamposHoy(UI.medForm) : null;
+  return `
+  ${pageHead('Medidas', 'tu cuerpo en números, sin drama')}
+  ${pend.length?`<section class="mod tight glowtop">
+    <div class="flex" style="gap:10px;align-items:flex-start">${ic('bell',16)}
+      <div class="grow" style="min-width:0"><b>Hoy toca: ${pend.map(p=>p.n.toLowerCase()).join(' y ')}</b>
+        <div class="small dim mt4">${pend.map(p=>p.ult?`${p.n}: hace ${p.dias} día${p.dias===1?'':'s'}${p.tarde?' (con retraso)':''}`:`${p.n}: nunca`).join(' · ')}</div></div></div>
+    ${fase&&fase.aplazar?`<div class="nkcalert mt8">${ic('alert',14)}<div>${esc(fase.txt)}</div></div>`:''}
+    <button class="btn primary full mt12" data-a="medAbrir" data-g="pend">${ic('ruler',14)} Registrar lo de hoy</button>
+  </section>`:`<section class="mod tight">
+    <div class="flex between"><span class="small dim">Todo al día. La próxima toca ${(()=>{const e=medEstado().filter(x=>x.ult).sort((a,b)=>(a.cada-a.dias)-(b.cada-b.dias))[0];
+      return e? e.n.toLowerCase()+' en '+Math.max(0,e.cada-e.dias)+' días' : 'cuando quieras';})()}.</span></div>
+  </section>`}
+  <section class="mod tight">
+    <div class="small dim">Puedes medirte cuando quieras, no solo el día que toca.</div>
+    <div class="flex wrapf mt8" style="gap:6px">
+      ${Object.keys(MED_GRUPOS).map(g=>`<button class="chip ${UI.medForm===g?'fill':''}" data-a="medAbrir" data-g="${g}">${MED_GRUPOS[g].n}</button>`).join('')}
+      <button class="chip ${UI.medForm==='todo'?'fill':''}" data-a="medAbrir" data-g="todo">Todo</button>
+    </div>
+  </section>
+  ${hoyForm?medForm(hoyForm):''}
+  <section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('ruler',16)} Tu cuerpo</span>${sel?`<button class="btn sm ghost" data-a="medZona" data-z="">Ver todo</button>`:''}</div>
+    <div class="medwrap"><div class="${sel?'hassel':''}" style="display:contents">${medMapa(sel).replace('class="medsvg"', 'class="medsvg'+(sel?' hassel':'')+'"')}</div></div>
+    <div class="small dim tc">${sel?'Toca otra zona para cambiar':'Toca una zona del cuerpo para ver su medida'}</div>
+    ${sel?medPanelZona(sel):''}
+  </section>
+  <section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('target',16)} Grasa corporal · método Navy</span></div>
+    ${nav.ok?`
+      <div class="flex" style="gap:14px;align-items:center">
+        <div style="flex:none">${ring(clamp(nav.pct*2.2,0,100), fmt1(nav.pct)+'%', 'GRASA', 132, 11)}</div>
+        <div class="grow" style="min-width:0">
+          ${nav.pesoUsado!=null?`<div class="small">Con <b class="numi">${fmt1(nav.pesoUsado)} kg</b> de promedio (7 días):</div>
+          <div class="medkpi mt4"><span><b>${fmt1(nav.grasaKg)}</b> kg de grasa</span><span><b>${fmt1(nav.magraKg)}</b> kg de magra</span></div>`:'<div class="small dim">Registra tu peso para ver masa grasa y magra.</div>'}
+          <div class="small dim mt8" style="line-height:1.45">Margen de error del método: <b>±3 a 4 puntos</b>. La señal está en la <b>tendencia</b>, no en el número exacto.</div>
+        </div>
+      </div>
+      <details class="medformula mt12"><summary>De dónde sale este número</summary>
+        <div class="medfx mt8">${nav.formula.txt}</div>
+        <div class="medfx sust mt4">${nav.formula.sust}</div>
+        <div class="small dim mt8">Medidas usadas: cuello ${fmt1(nav.cue)} · cintura ${fmt1(nav.cin)}${UID==='cami'?' · cadera '+fmt1(nav.cad):''} · estatura ${fmt1(nav.est)} cm.</div>
+        ${UID==='cami'?(()=>{ /* la cadera ancha por estructura infla el resultado: se
+            muestra cuanto pesa en el numero para que no se lea como dogma */
+            const alt=495/(1.29579 - 0.35004*log10(nav.cin+(nav.cad-5)-nav.cue) + 0.22100*log10(nav.est)) - 450;
+            return `<div class="nkcalert mt8">${ic('alert',14)}<div><b>Ojo con la cadera.</b> La fórmula suma tu cadera, y la tuya es ancha por estructura ósea, no por grasa: eso empuja el resultado hacia arriba. Con 5 cm menos de cadera daría ${fmt1(Math.round(alt*10)/10)}%, y tu cadera no va a cambiar por dieta. Para ti la señal fiable es la <b>cintura</b> y la <b>tendencia</b> de este número, nunca su valor absoluto.</div></div>`;})():''}
+      </details>`
+    :`<div class="small dim">Para calcularlo me falta: <b>${nav.falta.join(', ')}</b>.</div>
+      <button class="btn ghost full mt8" data-a="medAbrir" data-g="todo">${ic('ruler',13)} Medir lo que falta</button>`}
+  </section>
+  ${(r.ce||r.cc)?`<section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('chart',16)} Proporciones</span></div>
+    ${r.ce?medRatioRow('Cintura / estatura', r.ce.v, r.ce.umbral, 'Por debajo de 0,50 es la referencia de salud, igual para todos.'):''}
+    ${r.cc?medRatioRow('Cintura / cadera', r.cc.v, r.cc.umbral, UID==='cami'?'Referencia en mujeres: por debajo de 0,85.':'Referencia en hombres: por debajo de 0,90.'):''}
+  </section>`:''}
+  ${(()=>{ const as=medAsimetrias(); if(!as.length) return '';
+    return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('alert',16)} Diferencias entre lados</span></div>
+      ${as.map(a=>`<div class="medrow"><span class="grow"><b>${esc(a.n)}</b><i class="small dim" style="display:block">der ${fmt1(a.der)} · izq ${fmt1(a.izq)} cm</i></span>
+        <span class="medval"><b>${fmt1(a.dif)}</b><em>cm</em></span></div>`).join('')}
+      <div class="small dim mt8">Hasta 1 cm es normal. Desde 1,5 conviene trabajo unilateral del grupo.</div></section>`;})()}
+  <section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('zap',16)} Qué hacer con esto</span></div>
+    ${medPlan().map(p=>`<div class="flex mt8" style="gap:9px;align-items:flex-start">${ic(p.t==='ok'?'check':'alert',14)}<div class="small grow" style="line-height:1.5">${p.x}</div></div>`).join('')}
+  </section>
+  ${(()=>{ const fs=medFechas(); if(fs.length<2) return '';
+    return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('cal',16)} Historial</span></div>
+      <div class="tbwrap"><table class="tb"><tr><th>Fecha</th><th class="r">Cintura</th><th class="r">Pecho</th><th class="r">Cadera</th><th class="r">Peso</th></tr>
+      ${fs.slice(-8).reverse().map(d=>{const m=S.medidas[d]||{};
+        return `<tr><td>${fmtD(d)}</td><td class="r">${m.cintura?fmt1(m.cintura):'·'}</td><td class="r">${m.pecho?fmt1(m.pecho):'·'}</td><td class="r">${m.cadera?fmt1(m.cadera):'·'}</td><td class="r">${m.peso?fmt1(m.peso):'·'}</td></tr>`;}).join('')}
+      </table></div></section>`;})()}
+  `;
+}
+function medRatioRow(nom, v, umbral, nota){
+  const ok=v<=umbral, pct=clamp(v/(umbral*1.5)*100,0,100);
+  return `<div class="mt8"><div class="flex between" style="align-items:baseline">
+      <b class="small">${nom}</b><span class="medval"><b class="${ok?'mint':'red'}">${v.toFixed(2)}</b><em>meta ≤ ${umbral.toFixed(2)}</em></span></div>
+    <div class="goalbar mt4"><i style="width:${pct}%;background:${ok?'linear-gradient(90deg,var(--mint),var(--mint2))':'linear-gradient(90deg,#FF6B6B,#E05252)'}"></i></div>
+    <div class="small dim mt4">${nota}</div></div>`;
+}
+/* formulario: SOLO los campos que tocan hoy (o los del grupo elegido a mano) */
+function medForm(sel){
+  const campos=sel.campos;
+  const hoy=TODAY(), reg=(S.medidas||{})[hoy]||{};
+  const inp=(k,lb,ph,ayuda)=>`<div class="medfield">
+      <span class="lbl">${lb}</span>
+      <input class="in mt4 ctr" inputmode="decimal" id="med_${k}" data-ch="medIn" data-k="${k}" value="${reg[k]!=null?reg[k]:''}" placeholder="${ph||''}" aria-label="${lb} en centímetros">
+      ${ayuda?`<i class="small dim" style="display:block;margin-top:4px;line-height:1.4">${esc(ayuda)}</i>`:''}
+    </div>`;
+  const filas=[];
+  if(campos.includes('peso')){ const u=medUltimo('peso')||{}; filas.push(inp('peso','Peso (kg)', u.v?'ant. '+fmt1(u.v):'', 'Se guarda también en tu registro diario de peso.')); }
+  if(campos.includes('estatura')){ const u=medUltimo('estatura')||{}; filas.push(inp('estatura','Estatura (cm)', u.v?'ant. '+fmt1(u.v):'', 'Se pide una vez al año; se hereda del último registro.')); }
+  MED_CAMPOS.filter(c=>campos.includes(c.k)).forEach(c=>{
+    const u=medUltimo(c.k)||{};
+    const ayuda = c.k==='cintura' ? medAyudaCintura() : c.ayuda;
+    filas.push(inp(c.k, c.n+' (cm)', u.v?'ant. '+fmt1(u.v):'', ayuda));
+  });
+  const fase=medAvisoFase();
+  return `<section class="mod" id="medform">
+    <div class="mod-head"><span class="ttl">${ic('ruler',16)} ${sel.grupos.length>1?'Medición de hoy':MED_GRUPOS[sel.grupos[0]]?MED_GRUPOS[sel.grupos[0]].n:'Medición'}</span>
+      <button class="btn sm" data-a="medCerrar" aria-label="cerrar">${ic('x',13)}</button></div>
+    ${fase?`<div class="nkcalert mb12">${ic('alert',14)}<div>${esc(fase.txt)}</div></div>`:''}
+    <div class="small dim mb12">Deja en blanco lo que no midas: un registro incompleto vale igual.</div>
+    <div class="medgrid">${filas.join('')}</div>
+    <button class="btn primary full mt12" data-a="medGuardar">${ic('check',14)} Guardar medición de hoy</button>
+  </section>`;
 }
 /* ============ RETO: MI PRIMERA DOMINADA (Cami) ============
    Objetivo: la primera dominada SIN banda. El metodo es "greasing the groove":
@@ -3728,6 +4239,10 @@ function loadState(){
     mobil: store.get('mobil', {}),     // iso -> 1: movilidad diaria hecha (+1 punto de reto)
     perso: store.get('perso', {herr:[], min:45, grupos:[], nivel:'media'}),  // ultimas elecciones de la caja Personalizado
     pullup: store.get('pullup', {nivel:0, sesiones:[], reps:3}),   // reto de la primera dominada (Cami)
+    /* medidas corporales por fecha: {'YYYY-MM-DD': {cuello, pecho, cintura, ...}}.
+       Una clave por usuario (no una por fecha) para no multiplicar escrituras en la
+       nube: el objeto entero viaja igual que weights o logs. */
+    medidas: store.get('medidas', null) || seedMedidas(),
     goals: store.get('goals', []),     // metas de fuerza: [{id, ex, name, target, start, d}] (P10)
     retoprops: store.get('retoprops', {}), // {sem:'texto',...} propuesta de premio MÍA por reto
     retovotes: store.get('retovotes', {}), // {sem:'andres'|'cami'} mi voto por reto
@@ -4725,7 +5240,7 @@ function save(k){ clearDayCache(); if(!DEMO){ store.set(k, S[k]); sbPush(k); } }
    'draft' y 'fired' no se sincronizan (son del dispositivo). */
 let SB=null, sbState='off', sbDiagMsg='';
 try{ SB=JSON.parse(localStorage.getItem('afc2:sb')||'null'); if(SB) sbState='ok'; }catch(e){}
-const SB_KEYS=['weights','logs','sessions','steps','water','meals','checkins','inject','meal','reminders','cfg','sched','week','acts','custom','customRoutines','exnotes','free','nlog','customFoods','retos','fotopub','fotoSrc','mobil','retoprops','retovotes','retoreset','ideas','recipeIdeas','facturas','perso','goals','pullup'];
+const SB_KEYS=['weights','logs','sessions','steps','water','meals','checkins','inject','meal','reminders','cfg','sched','week','acts','custom','customRoutines','exnotes','free','nlog','customFoods','retos','fotopub','fotoSrc','mobil','retoprops','retovotes','retoreset','ideas','recipeIdeas','facturas','perso','goals','pullup','medidas'];
 const sbTimers={}, sbPending={};
 /* el payload se lee SIEMPRE del namespace correcto al momento de enviar: si el usuario cambió
    entre el save y el disparo del debounce, S ya es del otro y usarlo cruzaría los datos */
@@ -10674,6 +11189,7 @@ function vPerfil(){
     <div class="accgrid">
       ${[['progGo','','chart','Progreso','actividad y nutrición'],
          ['ckGo','','clip','Check-in','peso y medidas'],
+  ['medGo','','ruler','Medidas','mapa del cuerpo y grasa %'],
          ['fotoVer','','camera','Fotos','registro y comparar'],
          ['tab','mas','more','Ajustes','PIN, nube y plan']].map(([a,t2,icn,lb,sub])=>`
       <button class="accbox" data-a="${a}" ${t2?`data-t="${t2}"`:''}>
@@ -11259,6 +11775,7 @@ function vEjercicios(){
     </table></div>`
     :`<div class="tc" style="padding:14px 0"><img loading="lazy" class="cabimg" src="${CAB.vacio}" width="110" height="110" decoding="async" alt=""><div class="small dim mt8">Sin sesiones registradas de ${ex.name}. El punto rojo marcará tu récord.</div></div>`}
   </section>
+  ${fzaCard()}
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('star',16)} Records personales</span><span class="chip dim">${ex.name}</span></div>
     <div class="prlist">
@@ -11690,7 +12207,7 @@ function vMas(){
 }
 
 /* ============ RENDER ============ */
-const VIEWS = {inicio:vInicio, entrenar:vEntrenar, agenda:vAgenda, comida:vComida, progreso:vProgreso, fotos:vFotos, checkin:vCheckin, retos:vRetos, perfil:vPerfil, mas:vMas};
+const VIEWS = {inicio:vInicio, entrenar:vEntrenar, agenda:vAgenda, comida:vComida, progreso:vProgreso, fotos:vFotos, checkin:vCheckin, retos:vRetos, perfil:vPerfil, mas:vMas, medidas:vMedidas};
 function countUp(escribiendo){
   if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   /* si el usuario esta escribiendo en un campo, no reinicies la animacion: el
@@ -12655,6 +13172,32 @@ const ACTIONS = {
   mobilOpen(){ UI.mobilOpen=!UI.mobilOpen; render(); },
   movPlay(){ movPlayerOpen(); },
   puStart(){ if(PU){ puBoxOpen(); return; } puStart(); },
+  medZona(d){ UI.medZona = d.z ? (UI.medZona===d.z?null:d.z) : null; render(); },
+  medAbrir(d){ UI.medForm = (UI.medForm===d.g) ? null : (d.g==='pend'?'pend':d.g); render();
+    if(UI.medForm) setTimeout(()=>irACaja('medform'), 60); },
+  medCerrar(){ UI.medForm=null; render(); },
+  medGuardar(){
+    const hoy=TODAY();
+    const reg=Object.assign({fecha:hoy}, (S.medidas||{})[hoy]||{});
+    let n=0;
+    document.querySelectorAll('#medform [data-ch="medIn"]').forEach(el=>{
+      const k=el.dataset.k, v=+String(el.value).replace(',','.').replace(/[^\d.]/g,'');
+      if(v>0){ reg[k]=Math.round(v*10)/10; n++; } else if(el.value.trim()==='') delete reg[k];
+    });
+    if(!n){ toast('Escribe al menos una medida'); return; }
+    S.medidas=S.medidas||{}; S.medidas[hoy]=reg;
+    /* el peso vive en S.weights (el registro diario del Inicio): se escribe alli
+       tambien para no tener dos verdades del mismo dato */
+    if(reg.peso>0){
+      S.weights=(S.weights||[]).filter(w=>w.d!==hoy).concat([{d:hoy, kg:reg.peso}]);
+      S.weights.sort((a,b)=>a.d<b.d?-1:1); save('weights'); metasInvalidar(UID);
+    }
+    save('medidas');
+    UI.medForm=null; render();
+    const nav=medNavy();
+    toast(n+' medida'+(n>1?'s':'')+' guardada'+(n>1?'s':'')+(nav.ok?' · grasa ≈ '+fmt1(nav.pct)+'%':''));
+  },
+  medGo(){ UI.backTo=(UI.tab==='medidas')?(UI.backTo||'perfil'):UI.tab; UI.tab='medidas'; UI.session=null; render(); window.scrollTo({top:0}); },
   /* la banda la elige ella: el nivel sugerido sigue subiendo solo con las sesiones,
      pero un dia flojo se puede bajar la exigencia sin perder el progreso */
   puNivelSet(d){
@@ -13775,6 +14318,7 @@ const CHANGES = {
     a.run=a.run||{}; const v=Math.round(+String(el.value).replace(/[^\d]/g,'')||0);
     if(v>0) a.run.min=v; else delete a.run.min;
     save('acts'); render(); },
+  medIn(){ /* se lee al guardar: re-pintar por tecla destruiria el campo enfocado */ },
   goalq(el){ UI.goalQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=goalq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   goalw(el){ UI.goalW=el.value; render(); const inp=document.getElementById('goalW'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   goalr(el){ UI.goalR=el.value; render(); const inp=document.getElementById('goalR'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },

@@ -312,8 +312,35 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   (`dayDelEx`) o borrar todos los registros del día con su sesión (`dayDelAll`),
   ambos con confirmación (pedido del dueño tras el import duplicado)
 - **P7** Vista Fuerza (por ejercicio, récords) (`vEjercicios`)
+  - P7a "Tu nivel de fuerza" (`fzaCard`): compara el 1RM estimado de cada básico
+    contra el peso corporal y lo traduce a nivel (Principiante → Élite) con los
+    baremos de fuerza relativa, distintos por sexo (`FZA_STD`). Destaca el ejercicio
+    más fuerte y el más flojo, dice cuántos kg faltan para el siguiente nivel y
+    recomienda priorizar el eslabón débil
 - **P8** Vista Pasos (`vPasos`)
 - **P9** Nutrición en Progreso: adherencia, kcal, dona de macros, top alimentos (`vNutriStats`)
+
+## MD · Medidas (sección propia, `vMedidas`, se entra desde PF7)
+
+- **MD1** Aviso de lo que toca hoy: cada grupo tiene su cadencia (peso diario,
+  cintura y cuello cada 14 días, set completo cada 28, estatura cada 365). Si
+  coinciden varios se funden en un solo formulario (`medEstado`, `medCamposHoy`).
+  Se puede medir cuando se quiera con los chips de abajo, no solo el día que toca.
+  Para Cami, si el set mensual cae en fase menstrual se SUGIERE aplazar (`medAvisoFase`)
+- **MD2** Mapa corporal: cabrito bípedo en SVG con 12 zonas tocables por `<path>`
+  (`medMapa`). Al elegir una, el resto baja a 0,35 de opacidad y la activa toma el
+  color del usuario. Navegable por teclado, cada zona con `aria-label`
+- **MD3** Panel de la zona: valor, fecha, delta contra la medición anterior y
+  sparkline de las últimas 6 (`medPanelZona`, `medSpark`). El delta solo se colorea
+  en cintura y cadera: en brazo o pecho subir no es malo
+- **MD4** Bloque Navy: % de grasa, masa grasa y magra sobre el promedio de 7 días,
+  la fórmula literal con los valores sustituidos y el margen de error (±3-4 puntos).
+  Para Cami añade el aviso de que su cadera ancha es estructural e infla el
+  resultado, con el cálculo alternativo para que se vea cuánto pesa (`medNavy`)
+- **MD5** Proporciones: cintura/estatura (≤0,50) y cintura/cadera (≤0,90 él, ≤0,85
+  ella) (`medRatios`); diferencias entre lados desde 1 cm (`medAsimetrias`)
+- **MD6** "Qué hacer con esto": lee la tendencia de cintura contra el peso promedio
+  y devuelve máximo 3 frases con una acción concreta (`medPlan`)
 
 ## FT · Fotos (sección independiente, `vFotos`)
 

@@ -445,3 +445,23 @@ uno piensa cuando quiere "algo de hombro" y no se acuerda del nombre. `medGrupoE
 vista)` traduce zona a categoría de `EXCAT`, y **depende de la vista**: en la espalda el
 torso alto no es pecho sino dorsales. Respeta el filtro de equipo que ya esté puesto.
 
+## MC · Carga por músculo (Progreso → Medidas → pestaña Carga)
+
+El mismo cuerpo, pintado por volumen de la semana en vez de por medidas.
+
+- **MC1** Mapa de calor (`medMapa` con `calor`): cada zona se pinta del color de su nivel
+  de volumen, con la forma de sus músculos. La zona toma el estado del músculo que la
+  define en esa vista (`ZONA_MUSC`), así que el torso alto por delante habla del pectoral
+  y por detrás del dorsal. Rojo sin trabajo, naranja por debajo del mínimo, verde creciendo,
+  amarillo alto, rojo pasado
+- **MC2** Selector de periodo: 7, 14 o 28 días (`UI.cargaDias`)
+- **MC3** Detalle del músculo tocado: series efectivas, ejercicios que lo trabajaron,
+  barra contra MEV/MAV/MRV y consejo concreto (`cargaConsejo`)
+- **MC4** "Lo que pide atención": los que están por debajo del mínimo o por encima de lo
+  recuperable, con cuántas series faltan o sobran
+- **MC5** Ranking de todo el cuerpo con la marca del mínimo en cada barra
+- **E9** En la ficha de cada ejercicio (`muscReparto`), el reparto en % con barra apilada:
+  "de cada serie, 65% pectoral, 20% deltoide anterior, 15% tríceps"
+
+De dónde salen los números: [CARGA-MUSCULAR.md](CARGA-MUSCULAR.md).
+

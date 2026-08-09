@@ -309,3 +309,20 @@ más allá del eje (mirando 30 días con la meta a 22 semanas), se prolonga la r
 punteada más tenue hasta la línea de meta y se rotula ahí: es la línea imaginaria de
 cuándo se lograría, aunque el eje no llegue.
 
+## Series efectivas (REV 147)
+
+El volumen por grupo que había (`weekVolume`) contaba series enteras al grupo del
+ejercicio: 3 series de banca eran 3 de pecho y cero de tríceps. Eso miente en las dos
+direcciones, porque el tríceps recibe trabajo real que no se contaba y el pecho recibe
+menos del que se le apuntaba.
+
+`cargaMuscular(dias)` reparte cada serie entre los músculos según `EJ_PATRONES`, que es
+una tabla de EMG por patrón de movimiento (ver [CARGA-MUSCULAR.md](CARGA-MUSCULAR.md)).
+Los ejercicios llegan al patrón por id o, si vienen importados, por lo que diga el nombre.
+Cobertura: 273 de 300 del catálogo, y lo que no se pudo repartir se dice en pantalla en vez
+de desaparecer.
+
+El mapa de calor reusa la misma maquinaria de máscaras del mapa de medidas: una máscara por
+zona con los paths de sus músculos, y un rect del color del nivel encima. Por eso el color
+sigue la forma anatómica y no se sale del cuerpo.
+

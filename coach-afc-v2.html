@@ -876,6 +876,23 @@ svg .acc{fill:var(--mint);stroke:none}
 .mrotb.on{background:var(--acc);border-color:var(--acc);color:#0B0D0F}
 .medbp{width:100%;height:auto;display:block;max-height:56vh;touch-action:pan-y;border-radius:16px;transition:max-height .25s}
 .medbp.hassel{max-height:42vh}
+.muscrep{padding-top:10px;border-top:1px solid var(--line2)}
+.mrbar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--line2)}
+.mrbar i{display:block;height:100%}
+.mrlist{display:flex;flex-wrap:wrap;gap:5px 12px;font:600 11.5px var(--ui);color:var(--ink2)}
+.mrlist span{display:flex;align-items:center;gap:5px}
+.mrlist i{width:8px;height:8px;border-radius:2px;display:block}
+.mrlist b{color:var(--ink)}
+.cargaleg{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:8px 0 2px;font:600 10px var(--ui);color:var(--smoke)}
+.cargaleg span{display:flex;align-items:center;gap:4px}
+.cargaleg i{width:9px;height:9px;border-radius:3px;display:block}
+.cargarow{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--line2)}
+.cargarow:last-of-type{border-bottom:0}
+.cargarow .cn{flex:0 0 92px;font:600 12px var(--ui);color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cargarow .cb{position:relative;flex:1;height:8px;border-radius:4px;background:var(--line2);overflow:visible}
+.cargarow .cb i{display:block;height:100%;border-radius:4px}
+.cargarow .cb .cmev{position:absolute;top:-3px;width:2px;height:14px;background:var(--smoke);opacity:.55;border-radius:1px}
+.cargarow .cv{flex:0 0 34px;text-align:right;font:700 12px var(--num);color:var(--ink)}
 .medph{display:flex;align-items:baseline;gap:7px;margin:0 0 8px;padding-bottom:8px;border-bottom:1px solid var(--line2)}
 .medph b{font:700 15px var(--ui);color:var(--ink)}
 .medobj{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid var(--line2);border-radius:12px;background:rgba(255,255,255,.02)}
@@ -1488,7 +1505,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 146';
+const APPREV='REV 147';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3273,6 +3290,161 @@ const MED_COTAS={"frente":[["cuello","cuello","i",330,300,400],["pecho","pecho",
 
 /* que grupo del catalogo de ejercicios entrena cada zona. En la espalda, el torso alto
    no es pecho sino dorsales: por eso depende de la vista. */
+/* ============ CARGA POR MUSCULO ============
+   Un ejercicio no entrena "pecho": reparte el trabajo. El press de banca carga sobre todo
+   el pectoral, pero tambien deltoide anterior y triceps, y ese triceps cuenta como volumen
+   aunque uno no lo haya "entrenado" aparte. Por eso el volumen se mide en SERIES EFECTIVAS:
+   cada serie se reparte entre los musculos segun cuanto participan (volumen fraccionado),
+   que es como se cuenta el volumen semanal en la literatura de hipertrofia.
+   Los repartos y las referencias de volumen estan en EJ_PATRONES / MUSC_VOL. */
+/* Reparto de cada patron de movimiento entre musculos, en % del trabajo de la serie.
+   Sale de estudios de EMG normalizados a MVIC (Boeckh-Behrens & Buskies, y las tablas de
+   involucramiento de ExRx), recopilados el 09/08/2026. Cada patron suma 100.
+   Correccion propia sobre la fuente: en jalon vertical, remos y muscle up se le devolvio
+   al BICEPS su parte (15-20%). La recopilacion no lo contaba y sin el, el volumen de
+   biceps de quien entrena espalda sale a la mitad de lo que realmente recibe.
+   Los multiarticulares olimpicos son los mas discutibles: ahi el reparto depende mucho de
+   la tecnica y de la carga relativa. */
+const EJ_PATRONES={"press_horizontal":{"pectoral":65,"deltoide_anterior":20,"triceps":15},"press_cerrado":{"triceps":45,"pectoral":40,"deltoide_anterior":15},"palanca_frontal":{"dorsal":45,"abdomen":30,"lumbar":15,"triceps":10},"parada_manos":{"deltoide_anterior":45,"triceps":30,"trapecio":15,"abdomen":10},"sosten_anillas":{"triceps":40,"pectoral":30,"deltoide_anterior":20,"abdomen":10},"agarre_antebrazo":{"antebrazo":85,"biceps":15},"abduccion_cadera":{"gluteo":90,"aductor":10},"press_inclinado":{"pectoral":55,"deltoide_anterior":30,"triceps":15},"press_declinado":{"pectoral":70,"deltoide_anterior":15,"triceps":15},"fondo_pecho":{"pectoral":50,"triceps":45,"deltoide_anterior":5},"apertura_pecho":{"pectoral":85,"deltoide_anterior":15},"flexion_pecho":{"pectoral":60,"triceps":25,"deltoide_anterior":15},"press_vertical":{"deltoide_anterior":45,"triceps":30,"deltoide_lateral":20,"deltoide_posterior":5},"elevacion_lateral":{"deltoide_lateral":60,"deltoide_anterior":20,"deltoide_posterior":20},"elevacion_frontal":{"deltoide_anterior":70,"pectoral":20,"deltoide_lateral":10},"pajaro_posterior":{"deltoide_posterior":70,"trapecio":20,"deltoide_lateral":10},"jalon_vertical":{"dorsal":55,"biceps":20,"trapecio":15,"romboides":10},"remo_horizontal":{"dorsal":55,"trapecio":20,"biceps":15,"romboides":10},"remo_unilateral":{"dorsal":55,"biceps":20,"trapecio":15,"romboides":10},"remo_invertido":{"dorsal":50,"trapecio":25,"biceps":15,"romboides":10},"muscle_up":{"dorsal":30,"pectoral":20,"triceps":20,"biceps":15,"trapecio":15},"pullover":{"pectoral":50,"dorsal":35,"triceps":15},"encogimiento_trapecio":{"trapecio":90,"romboides":10},"curl_biceps":{"biceps":85,"antebrazo":15},"curl_martillo":{"biceps":70,"antebrazo":30},"extension_triceps":{"triceps":95,"antebrazo":5},"fondo_triceps":{"triceps":90,"deltoide_anterior":10},"sentadilla":{"cuadriceps":55,"gluteo":30,"isquiotibial":15},"prensa":{"cuadriceps":70,"gluteo":20,"isquiotibial":10},"zancada":{"cuadriceps":45,"gluteo":40,"isquiotibial":15},"extension_cuadriceps":{"cuadriceps":100},"curl_femoral":{"isquiotibial":100},"peso_muerto_convencional":{"isquiotibial":35,"cuadriceps":30,"gluteo":20,"lumbar":15},"peso_muerto_rumano":{"isquiotibial":50,"gluteo":35,"lumbar":15},"hip_thrust":{"gluteo":85,"isquiotibial":10,"cuadriceps":5},"gemelo_de_pie":{"pantorrilla":100},"gemelo_sentado":{"pantorrilla":100},"plancha_core":{"abdomen":85,"isquiotibial":15},"crunch_abdominal":{"abdomen":100},"elevacion_piernas":{"abdomen":100},"rotacion_core":{"oblicuos":70,"abdomen":30},"cargada_olimpica":{"gluteo":25,"isquiotibial":20,"cuadriceps":20,"trapecio":20,"lumbar":15},"arrancada_olimpica":{"gluteo":25,"isquiotibial":20,"cuadriceps":20,"deltoide_anterior":20,"trapecio":15},"farmer_walk":{"trapecio":45,"antebrazo":35,"abdomen":20}};
+/* Volumen semanal de referencia en SERIES EFECTIVAS por musculo (Renaissance Periodization
+   y literatura reciente de hipertrofia):
+   MEV = minimo para crecer · MAV = punto optimo · MRV = maximo que se recupera.
+   Varia mucho por persona (años de entreno, sueño, comida): son referencias, no leyes.
+   El deltoide anterior lleva MEV 0 a proposito: se llena solo con cualquier press. */
+const MUSC_VOL={"pectoral":{"mev":8,"mav":14,"mrv":20},"dorsal":{"mev":8,"mav":14,"mrv":20},"deltoide_lateral":{"mev":10,"mav":15,"mrv":22},"deltoide_posterior":{"mev":8,"mav":12,"mrv":18},"deltoide_anterior":{"mev":0,"mav":8,"mrv":16},"triceps":{"mev":8,"mav":14,"mrv":20},"biceps":{"mev":8,"mav":12,"mrv":18},"antebrazo":{"mev":4,"mav":8,"mrv":14},"cuadriceps":{"mev":10,"mav":14,"mrv":20},"isquiotibial":{"mev":8,"mav":12,"mrv":18},"gluteo":{"mev":8,"mav":14,"mrv":20},"pantorrilla":{"mev":6,"mav":10,"mrv":16},"abdomen":{"mev":6,"mav":10,"mrv":12},"trapecio":{"mev":8,"mav":12,"mrv":18},"romboides":{"mev":4,"mav":8,"mrv":14},"lumbar":{"mev":2,"mav":6,"mrv":10},"oblicuos":{"mev":4,"mav":8,"mrv":12},"aductor":{"mev":0,"mav":6,"mrv":12}};
+const MUSC_NOM={pectoral:'Pectoral', deltoide_anterior:'Deltoide anterior', deltoide_lateral:'Deltoide lateral',
+  deltoide_posterior:'Deltoide posterior', triceps:'Tríceps', biceps:'Bíceps', antebrazo:'Antebrazo',
+  dorsal:'Dorsal', trapecio:'Trapecio', romboides:'Romboides', lumbar:'Lumbar', abdomen:'Abdomen',
+  oblicuos:'Oblicuos', cuadriceps:'Cuádriceps', isquiotibial:'Isquiotibial', gluteo:'Glúteo',
+  aductor:'Aductor', pantorrilla:'Pantorrilla', cuello:'Cuello'};
+/* que musculos representa cada zona del mapa. Depende de la vista: el torso alto por
+   delante es pectoral y por detras dorsal, aunque sea la misma zona tocable. */
+const ZONA_MUSC={
+  frente:{cuello:['cuello','trapecio'], hombros:['deltoide_anterior','deltoide_lateral'],
+    pecho:['pectoral'], cintura:['abdomen','oblicuos'], cadera:['gluteo','aductor'],
+    'brazo-der':['biceps','triceps'],'brazo-izq':['biceps','triceps'],
+    'antebrazo-der':['antebrazo'],'antebrazo-izq':['antebrazo'],
+    'muslo-der':['cuadriceps'],'muslo-izq':['cuadriceps'],
+    'pantorrilla-der':['pantorrilla'],'pantorrilla-izq':['pantorrilla']},
+  espalda:{cuello:['cuello','trapecio'], hombros:['deltoide_posterior','trapecio'],
+    pecho:['dorsal','romboides'], cintura:['lumbar'], cadera:['gluteo'],
+    'brazo-der':['triceps','biceps'],'brazo-izq':['triceps','biceps'],
+    'antebrazo-der':['antebrazo'],'antebrazo-izq':['antebrazo'],
+    'muslo-der':['isquiotibial'],'muslo-izq':['isquiotibial'],
+    'pantorrilla-der':['pantorrilla'],'pantorrilla-izq':['pantorrilla']},
+  lado:{cuello:['cuello','trapecio'], hombros:['deltoide_lateral','deltoide_anterior'],
+    pecho:['pectoral','dorsal'], cintura:['oblicuos','abdomen'], cadera:['gluteo'],
+    'brazo-der':['biceps','triceps'],'antebrazo-der':['antebrazo'],
+    'muslo-der':['cuadriceps','isquiotibial'],'pantorrilla-der':['pantorrilla']},
+};
+/* de un ejercicio registrado a su patron de movimiento. Primero por id (los de las rutinas
+   propias, que son los que de verdad se loguean) y si no, por lo que diga el nombre, que es
+   lo unico que traen los importados de Strong. */
+const EJ_PATRON_ID={
+  bench:'press_horizontal', c_chest:'press_horizontal', incdb:'press_inclinado', incmach:'press_inclinado',
+  dip:'fondo_pecho', fly:'apertura_pecho', c_fly:'apertura_pecho',
+  row:'remo_horizontal', c_rowp:'remo_horizontal', rowuni:'remo_unilateral',
+  pullup:'jalon_vertical', pullup2:'jalon_vertical', latcl:'jalon_vertical', latop:'jalon_vertical', c_jalon:'jalon_vertical',
+  shpress:'press_vertical', ohpdb:'press_vertical', latdb:'elevacion_lateral', latcab:'elevacion_lateral',
+  revfly:'pajaro_posterior', facep:'pajaro_posterior', c_rfly:'pajaro_posterior',
+  curl:'curl_biceps', preach:'curl_biceps', hammer:'curl_martillo',
+  skull:'extension_triceps', tricab:'extension_triceps',
+  hack:'sentadilla', c_smith:'sentadilla', lpress:'prensa', c_prensa:'prensa',
+  lext:'extension_cuadriceps', c_lext:'extension_cuadriceps',
+  lunge:'zancada', c_bulg:'zancada', c_step:'zancada',
+  lcurl:'curl_femoral', lcurl2:'curl_femoral', c_fcurl:'curl_femoral', c_lying:'curl_femoral',
+  rdl:'peso_muerto_rumano', c_dead:'peso_muerto_rumano', c_backext:'peso_muerto_rumano',
+  hip:'hip_thrust', c_hip:'hip_thrust', c_kick:'hip_thrust', c_abd:'hip_thrust',
+  adduct:'hip_thrust', c_adduct:'hip_thrust',
+  calfst:'gemelo_de_pie', calfse:'gemelo_sentado',
+};
+const EJ_PATRON_NOM=[
+  [/cerrad|close.?grip/i,'press_cerrado'],
+  [/press.*(banca|pecho|plano)|bench/i,'press_horizontal'],
+  [/incl/i,'press_inclinado'], [/decl/i,'press_declinado'],
+  [/fondo|dip/i,'fondo_pecho'],
+  [/apertur|fly|pec.?deck|contract|crossover|cruce|around the world/i,'apertura_pecho'],
+  [/chest press|press de pecho|floor press/i,'press_horizontal'],
+  [/pull through|glute ham|puente|bridge/i,'hip_thrust'],
+  [/aductor|adductor|aduccion/i,'hip_thrust'],
+  [/skip|high knee|trote|sprint/i,'flexion_pecho'],
+  [/turkish|get up/i,'plancha_core'],
+  [/flexion|push.?up/i,'flexion_pecho'],
+  [/arnold|push press|militar|overhead|shoulder press|press.*(militar|hombro|overhead)|hombro.*press/i,'press_vertical'],
+  [/elevaci[oó]n.*lateral|lateral raise/i,'elevacion_lateral'],
+  [/elevaci[oó]n.*frontal|front raise/i,'elevacion_frontal'],
+  [/p[aá]jaro|posterior|rear delt|face.?pull/i,'pajaro_posterior'],
+  [/dominad|pull.?up|chin.?up|jal[oó]n|lat pulldown|pulldown/i,'jalon_vertical'],
+  [/remo invertido|inverted row|australian/i,'remo_invertido'],
+  [/remo|row/i,'remo_horizontal'],
+  [/pullover/i,'pullover'], [/encogimiento|shrug/i,'encogimiento_trapecio'],
+  [/martillo|hammer/i,'curl_martillo'], [/curl.*(femoral|pierna|leg)|leg curl/i,'curl_femoral'],
+  [/curl/i,'curl_biceps'],
+  [/extensi[oó]n.*(tr[ií]ceps|codo)|copa|franc[eé]s|skull|press franc/i,'extension_triceps'],
+  [/tr[ií]ceps|pushdown/i,'extension_triceps'],
+  [/extensi[oó]n.*(cuadr|pierna|rodilla)|leg extension/i,'extension_cuadriceps'],
+  [/prensa|leg press/i,'prensa'],
+  [/zancada|lunge|b[uú]lgar|step.?up|split squat/i,'zancada'],
+  [/sentadilla|squat|hack/i,'sentadilla'],
+  [/peso muerto.*(rumano|rigid)|rdl|romanian|buenos d[ií]as|good morning|hiperext|back ext/i,'peso_muerto_rumano'],
+  [/peso muerto|deadlift/i,'peso_muerto_convencional'],
+  [/hip thrust|puente|gl[uú]teo|patada|abducci[oó]n|aducci[oó]n/i,'hip_thrust'],
+  [/gemelo.*sentad|seated calf/i,'gemelo_sentado'], [/gemelo|pantorrilla|calf/i,'gemelo_de_pie'],
+  [/plancha|plank|hollow|ab wheel|rueda/i,'plancha_core'],
+  [/crunch|abdominal|sit.?up/i,'crunch_abdominal'],
+  [/elevaci[oó]n.*(pierna|rodilla)|leg raise|knee raise|v.?up/i,'elevacion_piernas'],
+  [/rusa|russian|rotaci[oó]n|rotation|twist|le[nñ]ador|woodchop|oblicu/i,'rotacion_core'],
+  [/superman|bird.?dog|extensi[oó]n lumbar/i,'peso_muerto_rumano'],
+  [/rack pull|jump shrug|high pull/i,'peso_muerto_convencional'],
+  [/swing|ball slam|thruster|wall ball/i,'cargada_olimpica'],
+  [/burpee|jumping jack|mountain climber|escalador|salto de caj[oó]n|box jump/i,'flexion_pecho'],
+  [/cargada|clean|jerk/i,'cargada_olimpica'], [/arranc|snatch/i,'arrancada_olimpica'],
+  [/granjero|farmer|carry/i,'farmer_walk'],
+  [/front lever|back lever|skin the cat|planche/i,'palanca_frontal'],
+  [/handstand|parada de manos|pino/i,'parada_manos'],
+  [/support hold|sost[eé]n|soporte en anillas/i,'sosten_anillas'],
+  [/l.?sit|dragon flag|hollow|knees to elbows|toes to bar|rodillas al pecho/i,'elevacion_piernas'],
+  [/wrist|mu[nñ]eca|roller|agarre|grip|dead hang|colgarse/i,'agarre_antebrazo'],
+  [/kickback|patada de gl[uú]teo|abducci[oó]n|abductor/i,'abduccion_cadera'],
+  [/side bend|lateral de tronco|inclinaci[oó]n lateral/i,'rotacion_core'], [/muscle.?up/i,'muscle_up'],
+];
+function ejPatron(id, nombre){
+  if(id && EJ_PATRON_ID[id]) return EJ_PATRON_ID[id];
+  const n=nombre||exNombre(id)||'';
+  if(!n) return null;
+  for(const [re,pat] of EJ_PATRON_NOM) if(re.test(n)) return pat;
+  return null;
+}
+/* series efectivas por musculo en los ultimos N dias */
+function cargaMuscular(dias){
+  const hoy=TODAY(), desde=addDays(hoy,-((dias||7)-1));
+  const out={}, ejer={}, sinMapear=[];
+  Object.entries(S.logs||{}).forEach(([id,hist])=>{
+    const enRango=hist.filter(h=>h.d>=desde && h.d<=hoy);
+    if(!enRango.length) return;
+    const nom=exNombre(id);
+    const pat=ejPatron(id, nom), rep=pat?EJ_PATRONES[pat]:null;
+    const series=enRango.reduce((a,h)=>a+(h.sets||[]).length,0);
+    if(!rep){ if(series) sinMapear.push(nom); return; }
+    Object.entries(rep).forEach(([m,pc])=>{
+      out[m]=(out[m]||0)+series*pc/100;
+      (ejer[m]=ejer[m]||new Set()).add(nom);
+    });
+  });
+  const res={};
+  Object.keys(out).forEach(m=>{ res[m]={series:Math.round(out[m]*10)/10, ejercicios:[...(ejer[m]||[])]}; });
+  return {musc:res, sinMapear:[...new Set(sinMapear)], dias:dias||7};
+}
+/* en que nivel esta ese musculo frente a las referencias de volumen semanal */
+function cargaNivel(m, series){
+  const v=MUSC_VOL[m];
+  if(!v) return {k:'na', n:'sin referencia', c:'var(--smoke)', pc:0};
+  if(series<=0) return {k:'cero', n:'sin trabajo', c:'#FF6B6B', pc:0};
+  if(series<v.mev) return {k:'bajo', n:'por debajo del mínimo', c:'#FF9F45', pc:series/v.mrv};
+  if(series<v.mav) return {k:'ok', n:'en zona de crecer', c:'#58DFA3', pc:series/v.mrv};
+  if(series<=v.mrv) return {k:'alto', n:'volumen alto', c:'#FFC94D', pc:series/v.mrv};
+  return {k:'exceso', n:'por encima de lo recuperable', c:'#FF6B6B', pc:1};
+}
 const MED_EJGRUPO={
   cuello:'hombros', hombros:'hombros', pecho:'pecho', cintura:'core', cadera:'pierna',
   'brazo-der':'brazos','brazo-izq':'brazos','antebrazo-der':'brazos','antebrazo-izq':'brazos',
@@ -3287,7 +3459,7 @@ function medGrupoEj(zona, vista){
    escoger ejercicios por musculo. Cambia la accion de cada zona y si lleva cotas. */
 function medMapa(sel, o){
   o=o||{};
-  const accion=o.accion||'medZona', conCotas=o.cotas!==false;
+  const accion=o.accion||'medZona', conCotas=o.cotas!==false, calor=o.calor||null;
   const acc = UID==='cami' ? [1.25,0.99,0.38] : [0.50,0.74,1.32];
   const accHex = UID==='cami' ? '#FFC94D' : '#5C8DFF';
   const vista = MED_ZONAS[UI.medVista] ? UI.medVista : 'frente';
@@ -3317,24 +3489,25 @@ function medMapa(sel, o){
     ${MED_VISTAS.map(v=>`<button class="mrotb ${v[0]===vista?'on':''}" data-a="medVista" data-v="${v[0]}"
       aria-pressed="${v[0]===vista?'true':'false'}">${v[1]}</button>`).join('')}
   </div>
-  <svg class="medbp ${zsel?'hassel':''}" viewBox="0 0 1100 1500" role="group"
+  <svg class="medbp ${zsel?'hassel':''} ${calor?'calor':''}" viewBox="0 0 1100 1500" role="group"
     aria-label="Cuerpo, vista ${vista}. Toca una zona para ver su medida">
     <defs>
-      <filter id="mzlit" x="-14%" y="-14%" width="128%" height="128%">
+      <filter id="mzlit" x="0%" y="0%" width="100%" height="100%">
         <feColorMatrix type="matrix" values="${acc[0]} 0 0 0 0  0 ${acc[1]} 0 0 0  0 0 ${acc[2]} 0 0  0 0 0 1 0"/>
-        <feDropShadow dx="0" dy="0" stdDeviation="18" flood-color="${accHex}" flood-opacity=".85"/>
       </filter>
-      ${zsel?`<filter id="mzsoft"><feGaussianBlur stdDeviation="5"/></filter>
-      <mask id="mzclip"><g class="mzmk" transform="translate(${OFF},0)" filter="url(#mzsoft)">${
+      ${zsel?`<mask id="mzclip"><g class="mzmk" transform="translate(${OFF},0)">${
         (MED_MUSC[vista][sel]||[]).map(i=>MED_ARTE[vista][i]).join('')}</g></mask>`:''}
       <style>
         .medbp{--acc:${accHex}}
         .mzarte .a{fill:#C9D2DC}.mzarte .b{fill:#9AA5B1}.mzarte .c{fill:#6E7783}
         .mzarte .d{fill:#4A515A}.mzarte .e{fill:#3E444C}.mzarte .f{fill:#2B3036}
-        .mzarte{opacity:.78;transition:opacity .25s}
-        .medbp.hassel .mzarte{opacity:.55}
-        .mvelo{fill:#0B0D0F;opacity:.62}
-        .mzmk path{fill:#fff;stroke:#fff;stroke-width:9;stroke-linejoin:round}
+        .mzarte{opacity:.9;transition:opacity .25s}
+        .medbp.hassel .mzarte{opacity:.82}
+        .mvelo{fill:#0B0D0F;opacity:.3}
+        .mzmk path{fill:#fff;stroke:none}
+        .mfill{fill:${accHex};opacity:.92}
+        .mline path{fill:none;stroke:#12151A;stroke-width:2.4;stroke-linejoin:round;opacity:.55}
+        .medbp.calor .mline path{stroke:#fff;stroke-width:4;opacity:.95}
         .mhit{fill:transparent;cursor:pointer;outline:none}
         .mhit:focus-visible{fill:${accHex};fill-opacity:.14;stroke:#fff;stroke-width:2}
         .mgu{stroke:#8A94A0;stroke-width:2;opacity:.3;stroke-dasharray:6 8;fill:none}
@@ -3354,8 +3527,17 @@ function medMapa(sel, o){
       </style>
     </defs>
     <g class="mzarte" id="mzarte" transform="translate(${OFF},0)">${MED_ARTE[vista].join("")}</g>
-    ${zsel?`<rect class="mvelo" x="0" y="0" width="1100" height="1500"/>
-      <use href="#mzarte" mask="url(#mzclip)" filter="url(#mzlit)"/>`:''}
+    ${calor?`<rect x="0" y="0" width="1100" height="1500" fill="#0B0D0F" opacity=".45"/>`:''}
+    ${calor?Object.keys(zs).map(z=>{
+      const c=calor[z]; if(!c||!c.col) return '';
+      const ps=(MED_MUSC[vista][z]||[]); if(!ps.length) return '';
+      return `<mask id="mk_${z}"><g class="mzmk" transform="translate(${OFF},0)">${ps.map(i=>MED_ARTE[vista][i]).join('')}</g></mask>
+        <rect x="0" y="0" width="1100" height="1500" mask="url(#mk_${z})" fill="${c.col}" opacity="${c.op}"/>`;
+    }).join(''):''}
+    ${zsel?`${calor?'':'<rect class="mvelo" x="0" y="0" width="1100" height="1500"/>'}
+      ${calor?'':'<rect class="mfill" x="0" y="0" width="1100" height="1500" mask="url(#mzclip)"/>'}
+      <g class="mline" transform="translate(${OFF},0)">${
+        (MED_MUSC[vista][sel]||[]).map(i=>MED_ARTE[vista][i]).join('')}</g>`:''}
     ${Object.keys(zs).filter(z=>conCotas||medGrupoEj(z,vista)).map(z=>`<rect class="mhit" ${rect(zs[z])} data-a="${accion}" data-z="${z}"
       role="button" tabindex="0" aria-pressed="${sel===z?'true':'false'}" aria-label="${esc(medNomZona(z))}"/>`).join('')}
     ${conCotas?(MED_COTAS[vista]||[]).map(c=>cota(c[0],c[1],c[2],c[3],c[4],c[5])).join(''):''}
@@ -3513,6 +3695,90 @@ function medSugerenciaZona(zona, k, obj, act){
   const como=COMO[k]||'';
   if(falta<=0.3) return `Ya estás en el objetivo de esta zona. Ahora se trata de <b>mantenerla</b> mientras baja la cintura: ahí es donde se nota la forma.`;
   return `Te faltan <b>${fmt1(falta)} cm</b> para el objetivo${como?`. Lo que los pone: <b>${como}</b>`:''}. Con superávit limpio esto toma meses, no semanas: 1 cm de brazo real es medio año de trabajo.`;
+}
+/* ---- la vista de carga: el mismo cuerpo, pintado por volumen de la semana ---- */
+function cargaZonas(vista, carga){
+  const out={};
+  Object.keys(MED_ZONAS[vista]).forEach(z=>{
+    const ms=(ZONA_MUSC[vista]||{})[z]||[];
+    /* la zona toma el estado del musculo que la define (el primero de la lista, que es el
+       protagonista de esa vista): si el pecho por delante esta flojo, el pecho se pinta
+       flojo, aunque el dorsal de detras vaya bien */
+    const m=ms[0]; if(!m) return;
+    const s=(carga.musc[m]||{}).series||0;
+    const nv=cargaNivel(m,s);
+    if(nv.k==='na') return;
+    out[z]={col:nv.c, op: nv.k==='cero'?0.34:clamp(0.6+nv.pc*0.35,0.6,0.95), nivel:nv, musculo:m, series:s};
+  });
+  return out;
+}
+function vCarga(){
+  const dias=UI.cargaDias||7;
+  const carga=cargaMuscular(dias);
+  const vista=MED_ZONAS[UI.medVista]?UI.medVista:'frente';
+  const zonas=cargaZonas(vista, carga);
+  const sel=UI.medZona;
+  /* ranking de todos los musculos con referencia, para el detalle y las alertas */
+  const filas=Object.keys(MUSC_VOL).map(m=>{
+    const s=(carga.musc[m]||{}).series||0;
+    return {m, s, nv:cargaNivel(m,s), ej:(carga.musc[m]||{}).ejercicios||[]};
+  }).filter(f=>MUSC_VOL[f.m].mev>0 || f.s>0).sort((a,b)=>b.s-a.s);
+  const flojos=filas.filter(f=>f.nv.k==='cero'||f.nv.k==='bajo');
+  const pasados=filas.filter(f=>f.nv.k==='exceso');
+  const selM = sel ? ((ZONA_MUSC[vista]||{})[sel]||[])[0] : null;
+  const selF = selM ? filas.find(f=>f.m===selM) : null;
+  const totalSeries=Math.round(filas.reduce((a,f)=>a+f.s,0));
+  return `
+  <section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('flame',16)} Carga por músculo</span>
+      <div class="flex" style="gap:5px">${[[7,'7 d'],[14,'14 d'],[28,'28 d']].map(([d,l])=>
+        `<button class="chip ${dias===d?'fill':''}" data-a="cargaDias" data-d="${d}">${l}</button>`).join('')}</div></div>
+    <p class="small dim" style="margin:0 0 4px;line-height:1.5">Cada serie se reparte entre los músculos que de verdad trabajan: un press de banca no es solo pecho, también suma tríceps y deltoide. Eso son <b>series efectivas</b>.</p>
+    ${medMapa(sel, {calor:zonas, cotas:false})}
+    <div class="cargaleg">${[['#FF6B6B','sin trabajo'],['#FF9F45','por debajo'],['#58DFA3','creciendo'],['#FFC94D','alto'],['#FF6B6B','pasado']].map(([c,l],i)=>
+      `<span><i style="background:${c}"></i>${l}</span>`).join('')}</div>
+    ${selF?`<div class="medpanel">
+      <div class="medph">${ic('barbell',13)} <b>${esc(MUSC_NOM[selF.m]||selF.m)}</b><span class="small dim">en ${dias} días</span></div>
+      <div class="flex between" style="align-items:baseline;gap:10px">
+        <b class="numi" style="font:800 22px var(--num)">${fmt1(selF.s)} <span class="small dim" style="font-weight:600">series efectivas</span></b>
+        <span class="chip" style="color:${selF.nv.c};border-color:${selF.nv.c}">${esc(selF.nv.n)}</span></div>
+      <div class="small dim mt4">${selF.ej.length?esc(selF.ej.slice(0,4).join(' · ')):'sin ejercicios en el periodo'}</div>
+      ${MUSC_VOL[selF.m]?(()=>{const v=MUSC_VOL[selF.m];
+        return `<div class="medbar mt8"><i style="width:${clamp(selF.s/v.mrv*100,2,100)}%;background:${selF.nv.c};box-shadow:none"></i></div>
+        <div class="flex between small dim mt4"><span>mínimo ${v.mev}</span><span>óptimo ${v.mav}</span><span>tope ${v.mrv}</span></div>`;})():''}
+      <div class="medsug">${ic('zap',12)}<div>${cargaConsejo(selF, dias)}</div></div>
+    </div>`:`<div class="small dim tc mt8">Toca un músculo para ver sus series, su nivel y qué hacer.</div>`}
+  </section>
+  ${(flojos.length||pasados.length)?`<section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('alert',16)} Lo que pide atención</span></div>
+    ${flojos.slice(0,4).map(f=>`<div class="medrow"><span class="grow"><b>${esc(MUSC_NOM[f.m]||f.m)}</b>
+      <i class="small dim" style="display:block">${f.s>0?fmt1(f.s)+' de las '+MUSC_VOL[f.m].mev+' series mínimas':'no lo trabajaste en '+dias+' días'}</i></span>
+      <span class="medval"><b style="color:${f.nv.c}">${f.s>0?'+'+Math.ceil(MUSC_VOL[f.m].mev-f.s):MUSC_VOL[f.m].mev}</b><em>series</em></span></div>`).join('')}
+    ${pasados.slice(0,2).map(f=>`<div class="medrow"><span class="grow"><b>${esc(MUSC_NOM[f.m]||f.m)}</b>
+      <i class="small dim" style="display:block">${fmt1(f.s)} series, por encima de las ${MUSC_VOL[f.m].mrv} que se recuperan</i></span>
+      <span class="medval"><b style="color:#FF6B6B">−${Math.ceil(f.s-MUSC_VOL[f.m].mrv)}</b><em>series</em></span></div>`).join('')}
+    <div class="small dim mt8" style="line-height:1.5">${flojos.length?`Los de arriba son los que <b>menos atención reciben</b>. ${dias===7?'Una semana suelta no dice mucho: mira también 14 y 28 días antes de rehacer la rutina.':''}`:''}</div>
+  </section>`:''}
+  <section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('chart',16)} Todo el cuerpo · ${dias} días</span></div>
+    <div class="small dim" style="margin-bottom:6px">${totalSeries} series efectivas repartidas.</div>
+    ${filas.map(f=>{const v=MUSC_VOL[f.m];
+      return `<div class="cargarow"><span class="cn">${esc(MUSC_NOM[f.m]||f.m)}</span>
+        <span class="cb"><i style="width:${clamp(f.s/v.mrv*100,0,100)}%;background:${f.nv.c}"></i>
+          <b class="cmev" style="left:${clamp(v.mev/v.mrv*100,0,100)}%"></b></span>
+        <span class="cv">${fmt1(f.s)}</span></div>`;}).join('')}
+    <div class="small dim mt8" style="line-height:1.5">La marca en cada barra es el <b>mínimo semanal</b> de ese músculo; el final de la barra, el máximo que se recupera. Referencias de EMG y de volumen semanal, no leyes: ajústalas a cómo te recuperas.</div>
+    ${carga.sinMapear.length?`<div class="small dim mt8">No supe repartir: ${esc(carga.sinMapear.slice(0,4).join(', '))}. Si son tuyos, dime y los agrego.</div>`:''}
+  </section>`;
+}
+function cargaConsejo(f, dias){
+  const v=MUSC_VOL[f.m], n=MUSC_NOM[f.m]||f.m, sem=dias/7;
+  const porSem=f.s/sem;
+  if(f.nv.k==='cero') return `No trabajaste <b>${esc(n)}</b> en ${dias} días. Con ${v.mev} series a la semana ya alcanza para no perderlo: son dos ejercicios de tres series.`;
+  if(f.nv.k==='bajo') return `Vas en <b>${fmt1(porSem)} series por semana</b> y el mínimo para que crezca son <b>${v.mev}</b>. Súbele ${Math.ceil(v.mev-porSem)} series: un ejercicio más al final de la sesión donde ya lo tocas.`;
+  if(f.nv.k==='ok') return `<b>${fmt1(porSem)} series por semana</b> es zona de crecer. Aquí no toca añadir volumen sino subir peso o repeticiones sobre lo que ya haces.`;
+  if(f.nv.k==='alto') return `<b>${fmt1(porSem)} series por semana</b> es volumen alto: funciona un tiempo, pero si el rendimiento se estanca o duermes mal, es lo primero que hay que recortar.`;
+  return `<b>${fmt1(porSem)} series por semana</b> pasa de lo que se recupera (${v.mrv}). Más no es mejor: recorta ${Math.ceil(porSem-v.mrv)} series y vas a rendir más, no menos.`;
 }
 /* ---- la vista ---- */
 /* Medidas vive DENTRO de Progreso (es donde se buscan los datos del cuerpo) y
@@ -9154,6 +9420,24 @@ function excatDesc(x){
   const cierre=x.tipo==='compuesto'?' Mueve varias articulaciones, va de primero en la sesión.':' Trabajo puntual, va al final de la sesión.';
   return (t+' de '+grupo+' '+equipo).replace(/\s+/g,' ').trim()+'.'+cierre;
 }
+/* Que musculos mueve un ejercicio y en que proporcion. No es opinion: sale de EMG
+   (ver EJ_PATRONES). Sirve para dos cosas: saber que estas entrenando de verdad y que
+   la app pueda repartir tus series entre musculos en el mapa de carga. */
+function muscReparto(id, nombre){
+  const pat=ejPatron(id, nombre); if(!pat) return '';
+  const rep=EJ_PATRONES[pat]; if(!rep) return '';
+  const orden=Object.entries(rep).sort((a,b)=>b[1]-a[1]);
+  const COL=['var(--acc)','#58DFA3','#FFC94D','#FF9F45','#8FA0FF'];
+  return `<div class="muscrep mt12">
+    <div class="flex between" style="align-items:baseline"><b class="small">Qué músculos mueve</b>
+      <span class="small dim">de cada serie</span></div>
+    <div class="mrbar mt8">${orden.map(([m,pc],i)=>
+      `<i style="width:${pc}%;background:${COL[i%COL.length]}" title="${esc(MUSC_NOM[m]||m)} ${pc}%"></i>`).join('')}</div>
+    <div class="mrlist mt8">${orden.map(([m,pc],i)=>
+      `<span><i style="background:${COL[i%COL.length]}"></i>${esc(MUSC_NOM[m]||m)} <b>${pc}%</b></span>`).join('')}</div>
+    <div class="small dim mt8" style="line-height:1.5">Si haces <b>4 series</b>, para ${esc((MUSC_NOM[orden[0][0]]||'').toLowerCase())} cuentan <b>${fmt1(4*orden[0][1]/100)}</b> y para ${esc((MUSC_NOM[orden[orden.length-1][0]]||'').toLowerCase())} <b>${fmt1(4*orden[orden.length-1][1]/100)}</b>. Así se reparte tu volumen en el mapa de carga.</div>
+  </div>`;
+}
 function excatDetailBox(id){
   const x=excatById(id); if(!x) return;
   const emId=Object.keys(EXMAP).find(k=>EXMAP[k].name===x.name);
@@ -9178,6 +9462,7 @@ function excatDetailBox(id){
         ${last?`<div class="small dim">Última vez: <b style="color:var(--ink)">${fmt1(lastTop)} kg</b> · ${fmtD(last.d)}</div>`:`<div class="small dim">Sin historial todavía con este ejercicio.</div>`}
       </div>
     </div>
+    ${muscReparto(id, x.name)}
     ${canAdd?`<button class="btn primary full mt12" id="fadd">${ic('plus',14)} Agregar a la sesión de hoy</button>`:''}
   </div>`;
   document.body.appendChild(box);
@@ -12225,7 +12510,12 @@ function vProgreso(){
   const grp=progGroup();
   return `
   ${progGrpSelector(grp)}
-  ${grp==='cuerpo'? vMedidasCuerpo() : grp==='act'?`
+  ${grp==='cuerpo'? `<section class="mod tight">
+      <div class="seg cols2 segduo">
+        <button class="${UI.cuerpoSub!=='carga'?'on':''}" data-a="cuerpoSub" data-s="medidas">${ic('ruler',15)} Medidas</button>
+        <button class="${UI.cuerpoSub==='carga'?'on':''}" data-a="cuerpoSub" data-s="carga">${ic('flame',15)} Carga</button>
+      </div></section>
+    ${UI.cuerpoSub==='carga' ? vCarga() : vMedidasCuerpo()}` : grp==='act'?`
   ${metasCard()}
   ${rendimientoCard(sub)}
   <section class="mod tight">
@@ -14121,6 +14411,8 @@ const ACTIONS = {
   /* Check-in y Fotos son vistas propias (no estan en el nav): guardo de donde vine para el boton volver */
   medVista(d){ UI.medVista=d.v; render(); },
   excatMapa(){ UI.excatMapa=!UI.excatMapa; if(!UI.excatMapa) UI.excatZona=null; UI.excatQ=''; render(); window.scrollTo({top:0}); },
+  cuerpoSub(d){ UI.cuerpoSub=d.s; UI.medZona=null; render(); window.scrollTo({top:0}); },
+  cargaDias(d){ UI.cargaDias=+d.d||7; render(); },
   excatZona(d){ UI.excatZona = UI.excatZona===d.z ? null : d.z; render(); },
   medRotar(n){ const i=MED_VISTAS.findIndex(v=>v[0]===(MED_ZONAS[UI.medVista]?UI.medVista:'frente'));
     const j=(i+n+MED_VISTAS.length)%MED_VISTAS.length;

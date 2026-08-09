@@ -1,4 +1,9 @@
-# Auditoría de imágenes · 09/08/2026
+# Auditoría de imágenes · 09/08/2026 (CERRADA el 10/08)
+
+> **Estado: resuelta.** Las 56 fotos se regeneraron desde los nodos y están instaladas
+> (REV 141), más 6 ilustraciones y 4 videos del reto de la dominada. Lo que queda
+> anotado abajo es el registro de qué estaba mal y por qué, y las poses que siguen
+> sin convencer tras la regeneración.
 
 Revisión una por una de las **327 fotos de ejercicios** (`assets/ej/`) y las
 **100 imágenes de interfaz** (`assets/cab/`). Resultado: **47 fotos a rehacer**.
@@ -76,3 +81,24 @@ originales abiertos en grande para los casos límite. Los criterios de marcado f
 texto pegado, personaje que no es la cabra, pose que no corresponde al nombre del
 archivo, versión vieja del personaje (crema con azul, o collar/campana) y estilo ajeno
 al sistema.
+
+
+## Cierre (10/08/2026)
+
+Regeneradas e instaladas las 56 (55 de Andrés + `c_lunge` de Cami), en `assets/ej/` y
+`site/assets/ej/` a 480×480. **La coherencia del personaje quedó resuelta**: los 29 que
+salían con la cabrita crema sobre brillo azul son ahora el cabrito tan, sin collar ni
+campana, y desapareció el texto pegado de `shpress` y `front_lever_tuck`.
+
+Además entraron, para el reto de la primera dominada de Cami:
+- 6 ilustraciones en `assets/cab/pu_*.jpg` (420×420), una por nivel de ayuda más la
+  celebración, y precargadas en el service worker para que la cápsula funcione sin señal;
+- 4 videos en `assets/anim/pu_*.mp4`, generados en Kling 720p y recomprimidos con
+  `avconvert -p PresetMediumQuality` de 3,3-6,0 MB a ~460 KB cada uno, que es el rango
+  de los videos que ya tenía el proyecto (260-460 KB).
+
+**Poses que siguen sin corresponder** tras la regeneración (mejoraron muchas, estas no):
+`floorpress` (sigue de pie en vez de acostado), `squat_db` y `squat_bw` (no flexionan),
+`c_lunge` (no baja la rodilla), `revfly_mach` (posa junto a la máquina), `muscleup`
+(parece un fondo en paralelas) y `powersnatch` (la barra queda tras la nuca, parece un
+press). Sus nodos siguen en el space por si se quieren repetir.

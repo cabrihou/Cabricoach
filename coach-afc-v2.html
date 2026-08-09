@@ -836,8 +836,8 @@ svg .acc{fill:var(--mint);stroke:none}
 /* escenario del contador: la cabrita detras, difuminada, y el anillo encima */
 .pustage{position:relative;display:flex;align-items:center;justify-content:center;min-height:210px;border-radius:16px;overflow:hidden;
   background:radial-gradient(120% 120% at 50% 30%,rgba(var(--acc-rgb),.16),transparent 70%)}
-.pustage .pughost{position:absolute;width:190px;height:190px;object-fit:contain;opacity:.34;filter:blur(1px) saturate(.85);transition:opacity .4s}
-.pustage.work .pughost{opacity:.5;filter:none}
+.pustage .pughost{position:absolute;width:210px;height:210px;object-fit:cover;border-radius:18px;opacity:.34;filter:blur(1px) saturate(.85);transition:opacity .4s}
+.pustage.work .pughost{opacity:.62;filter:none}
 .pustage .puring{position:relative;z-index:2}
 .pustage .puring svg text{paint-order:stroke;stroke:rgba(11,13,15,.55);stroke-width:4px;stroke-linejoin:round}
 #island .islring{position:relative;width:34px;height:34px;flex:none;display:flex;align-items:center;justify-content:center}
@@ -1403,7 +1403,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 140';
+const APPREV='REV 141';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -1457,6 +1457,13 @@ const CAB={
 
   camCheck:"assets/cab/camCheck.png",
   camLift:"assets/cab/camLift.png",
+  /* reto de la primera dominada: una por nivel de ayuda + la celebracion */
+  puGruesa:"assets/cab/pu_gruesa.jpg",
+  puMedia:"assets/cab/pu_media.jpg",
+  puDelgada:"assets/cab/pu_delgada.jpg",
+  puNegativa:"assets/cab/pu_negativa.jpg",
+  puLibre:"assets/cab/pu_libre.jpg",
+  puCelebra:"assets/cab/pu_celebra.jpg",
   tileCheckC:"assets/cab/tileCheckC.png",
   tileFotoC:"assets/cab/tileFotoC.png",
   medidasC:"assets/cab/medidasC.png",
@@ -2507,11 +2514,11 @@ function movPlayerRedraw(){
    La progresion no es "mas reps" sino MENOS ayuda: la banda va de gruesa a delgada
    y al final desaparece. Se sube de nivel cuando se completan 4 sesiones limpias. */
 const PU_NIVELES=[
-  {id:'b_fuerte', n:'Banda gruesa',    d:'La banda hace la mayor parte. Concentrate en el recorrido completo: barbilla arriba, bajar lento contando 3.'},
-  {id:'b_media',  n:'Banda media',     d:'Ya sientes la espalda trabajando. Cero balanceo: si te meces, la banda todavia debe ser mas gruesa.'},
-  {id:'b_suave',  n:'Banda delgada',   d:'Casi todo eres tu. Aprieta gluteos y abdomen para no arquearte.'},
-  {id:'negativa', n:'Solo negativas',  d:'Sin banda: sube con salto hasta la barbilla y BAJA lo mas lento que puedas (5 segundos). Aqui se gana la fuerza.'},
-  {id:'libre',    n:'Sin ayuda',       d:'La de verdad. Una limpia vale mas que tres a medias.'}
+  {id:'b_fuerte', n:'Banda gruesa',    img:'puGruesa',   vid:'pu_asistida.mp4', d:'La banda hace la mayor parte. Concentrate en el recorrido completo: barbilla arriba, bajar lento contando 3.'},
+  {id:'b_media',  n:'Banda media',     img:'puMedia',    vid:'pu_asistida.mp4', d:'Ya sientes la espalda trabajando. Cero balanceo: si te meces, la banda todavia debe ser mas gruesa.'},
+  {id:'b_suave',  n:'Banda delgada',   img:'puDelgada',  vid:'pu_asistida.mp4', d:'Casi todo eres tu. Aprieta gluteos y abdomen para no arquearte.'},
+  {id:'negativa', n:'Solo negativas',  img:'puNegativa', vid:'pu_negativa.mp4', d:'Sin banda: sube con salto hasta la barbilla y BAJA lo mas lento que puedas (5 segundos). Aqui se gana la fuerza.'},
+  {id:'libre',    n:'Sin ayuda',       img:'puLibre',    vid:'pu_libre.mp4',    d:'La de verdad. Una limpia vale mas que tres a medias.'}
 ];
 const PU_TOTAL=15*60, PU_DESC=60, PU_REPS=3, PU_SESIONES_NIVEL=4;
 function puEstado(){
@@ -2589,12 +2596,19 @@ function puRedraw(){
   const pctFase = f.tipo==='rest' ? clamp(Math.round(f.resto/(PU_DESC*1000)*100),0,100) : 100;
   const centro = f.tipo==='rest' ? f.mm+':'+pad2(f.ss) : String(PU.reps);
   const sub = f.tipo==='rest' ? 'DESCANSO' : 'DOMINADAS';
-  const img=(f.tipo==='work'?CAB.camLift:CAB.camCheck)||CAB.faceC;
+  /* mientras trabaja, el video del gesto de SU nivel (asi ve la ejecucion mientras la
+     hace); en el descanso una imagen quieta, que no distrae. El poster cubre el caso
+     sin video y REDUCE apaga la animacion. */
+  const foto=CAB[nv.img]||CAB.camLift||CAB.faceC;
+  const media = f.tipo==='work'
+    ? (REDUCE ? `<img class="pughost" src="${foto}" alt="" decoding="async">`
+              : `<video class="pughost" src="assets/anim/${nv.vid}" poster="${foto}" autoplay muted loop playsinline preload="metadata"></video>`)
+    : `<img class="pughost" src="${CAB.camCheck||foto}" alt="" decoding="async">`;
   box.innerHTML=`<div class="fboxin" style="max-width:400px">
     <div class="flex between mb8"><b class="t-h2">Mi primera dominada</b><button class="btn sm" data-pu="min" aria-label="seguir en segundo plano">${ic('x',14)}</button></div>
     <div class="small dim mb12">${esc(nv.n)} · ronda ${PU.ronda}</div>
     <div class="pustage ${f.tipo}">
-      <img class="pughost" src="${img}" alt="" decoding="async" onerror="this.style.display='none'">
+      ${media}
       <div class="puring">${ring(pctFase, centro, sub, 190, 13)}</div>
     </div>
     <div class="small tc mt12" style="line-height:1.5;color:var(--ink)">${f.tipo==='work'
@@ -2627,7 +2641,7 @@ function puCapsula(){
     <div class="mod-head"><span class="ttl">${ic('target',16)} Mi primera dominada</span>
       <span class="chip ${hecho?'fill':'dim'}">${hecho?ic('check',11)+' hoy ✓':'tarea de hoy'}</span></div>
     <div class="flex" style="gap:12px;align-items:center">
-      <img loading="lazy" class="pucab" src="${CAB.camLift||CAB.faceC}" alt="" decoding="async">
+      <img loading="lazy" class="pucab" src="${(st.nivel>=PU_NIVELES.length-1 && total>0 ? CAB.puCelebra : CAB[nv.img]) || CAB.camLift || CAB.faceC}" alt="" decoding="async">
       <div class="grow" style="min-width:0">
         <b class="t-h2" style="display:block">${esc(nv.n)}</b>
         <div class="small dim mt4" style="line-height:1.5">${PU_REPS} dominadas · descansas 1 minuto · otra vez, durante 15 minutos.</div>

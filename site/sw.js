@@ -1,12 +1,12 @@
 /* Coach Cabritos · offline para el gimnasio sin señal */
-const CACHE = 'cabritos-v84';
+const CACHE = 'cabritos-v85';
 const CORE = ['./', 'index.html', 'manifest.webmanifest'];
 /* Las imagenes de la interfaz salieron del HTML a archivos sueltos (bajo de 4,3 MB a
    1 MB). Como el gimnasio puede no tener señal, se precargan en segundo plano al
    instalar: si se dejaran solo bajo demanda, una pantalla que no hubieras abierto
    antes se veria sin sus imagenes al quedarte sin datos. Las fotos de ejercicios
    (assets/ej, 8 MB) NO se precargan: son muchas y solo se ven al abrir el catalogo. */
-const UI_IMGS = [
+const UI_IMGS = ['assets/cab/pu_gruesa.jpg','assets/cab/pu_media.jpg','assets/cab/pu_delgada.jpg','assets/cab/pu_negativa.jpg','assets/cab/pu_libre.jpg','assets/cab/pu_celebra.jpg',
   'assets/cab/andBuff.png',
   'assets/cab/andLift.png',
   'assets/cab/apple-touch-icon.png',

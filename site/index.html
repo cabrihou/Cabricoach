@@ -833,6 +833,9 @@ svg .acc{fill:var(--mint);stroke:none}
 .movpimg{border-radius:14px;overflow:hidden;background:#10151d;aspect-ratio:1/1;max-height:260px;display:flex;align-items:center;justify-content:center}
 .movpimg img{width:100%;height:100%;object-fit:cover;display:block}
 .movpbar{height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.puimg{border-radius:14px;overflow:hidden;background:#10151d;aspect-ratio:1/1;max-height:240px;display:flex;align-items:center;justify-content:center}
+.puimg img{width:100%;height:100%;object-fit:cover;display:block}
+.pucab{width:74px;height:74px;border-radius:16px;object-fit:cover;flex:none}
 .movpbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--mint),var(--mint2));transition:width .5s linear}
 .cabramapa{display:flex;gap:18px;justify-content:center;margin:10px 0 2px}
 .cabramapa svg{width:128px;height:auto;overflow:visible}
@@ -1221,6 +1224,10 @@ svg .acc{fill:var(--mint);stroke:none}
 .hstep{display:flex;align-items:center;flex:none;background:var(--card2);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .hstep button{border:0;background:none;color:var(--ink);font-size:18px;width:34px;height:36px;cursor:pointer}
 .hval{min-width:44px;text-align:center;font:600 15px var(--num);font-variant-numeric:tabular-nums;border-left:1px solid var(--line);border-right:1px solid var(--line);height:36px;display:flex;align-items:center;justify-content:center}
+/* la cantidad del borrador tambien se escribe a mano: con solo +/- de 0,5 no se
+   podia poner "media taza y algo" ni una cantidad suelta (queja del dueno) */
+.hval input{width:46px;text-align:center;background:none;border:0;color:var(--ink);font:600 15px var(--num);font-variant-numeric:tabular-nums;padding:0}
+.hval input:focus{outline:none}
 .ngrams{display:flex;align-items:center;flex:none;gap:6px}
 .ngrams input{width:64px;text-align:center;background:var(--card2);border:1px solid var(--line);border-radius:12px;height:36px;padding:0 4px;font:700 16px var(--num);font-variant-numeric:tabular-nums}
 .festimate{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding:11px 13px;background:var(--card2);border-radius:12px}
@@ -1380,7 +1387,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 136';
+const APPREV='REV 137';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2475,6 +2482,145 @@ function movPlayerRedraw(){
     if(a==='next'){ if(MOVP.i>=fl2.length-1){ movPlayerDone(); return; } MOVP.i++; MOVP.left=fl2[MOVP.i].t; movPlayerRedraw(); }
   };});
 }
+/* ============ RETO: MI PRIMERA DOMINADA (Cami) ============
+   Objetivo: la primera dominada SIN banda. El metodo es "greasing the groove":
+   series cortas MUY lejos del fallo, repetidas muchas veces con descanso completo.
+   La sesion del dia son 15 minutos: 3 dominadas asistidas, 1 minuto de descanso, y
+   otra vez, hasta que se acabe el tiempo (~7-8 rondas). Se entrena el gesto, no se
+   agota el musculo: por eso nunca se llega al fallo.
+   La progresion no es "mas reps" sino MENOS ayuda: la banda va de gruesa a delgada
+   y al final desaparece. Se sube de nivel cuando se completan 4 sesiones limpias. */
+const PU_NIVELES=[
+  {id:'b_fuerte', n:'Banda gruesa',    d:'La banda hace la mayor parte. Concentrate en el recorrido completo: barbilla arriba, bajar lento contando 3.'},
+  {id:'b_media',  n:'Banda media',     d:'Ya sientes la espalda trabajando. Cero balanceo: si te meces, la banda todavia debe ser mas gruesa.'},
+  {id:'b_suave',  n:'Banda delgada',   d:'Casi todo eres tu. Aprieta gluteos y abdomen para no arquearte.'},
+  {id:'negativa', n:'Solo negativas',  d:'Sin banda: sube con salto hasta la barbilla y BAJA lo mas lento que puedas (5 segundos). Aqui se gana la fuerza.'},
+  {id:'libre',    n:'Sin ayuda',       d:'La de verdad. Una limpia vale mas que tres a medias.'}
+];
+const PU_TOTAL=15*60, PU_DESC=60, PU_REPS=3, PU_SESIONES_NIVEL=4;
+function puEstado(){
+  S.pullup=S.pullup||{nivel:0, sesiones:[], reps:PU_REPS};
+  return S.pullup;
+}
+function puNivel(){ const st=puEstado(); return PU_NIVELES[clamp(st.nivel,0,PU_NIVELES.length-1)]; }
+function puSesionesEnNivel(){ const st=puEstado(); return (st.sesiones||[]).filter(s=>s.nivel===st.nivel).length; }
+function puHechoHoy(){ return (puEstado().sesiones||[]).some(s=>s.d===TODAY()); }
+/* PU es el estado EN VIVO de la sesion (no se persiste): muere al cerrar la app,
+   igual que el temporizador de descanso. Lo que queda guardado es la sesion hecha. */
+let PU=null;
+function puFase(){
+  if(!PU) return {tipo:'work', mm:0, ss:0, resto:0};
+  const t=Math.max(0, PU.fin-Date.now());
+  const mm=Math.floor(t/60000), ss=Math.floor((t%60000)/1000);
+  return {tipo:PU.fase, mm, ss, resto:t};
+}
+function puTotalRestante(){ return PU? Math.max(0, PU.finTotal-Date.now()) : 0; }
+function puStart(){
+  const st=puEstado();
+  PU={corriendo:true, fase:'work', ronda:1, reps:st.reps||PU_REPS,
+      fin:Date.now()+45000, finTotal:Date.now()+PU_TOTAL*1000, int:null, box:null};
+  PU.int=setInterval(puTick, 500);
+  puBoxOpen();
+}
+function puStop(guardar){
+  if(!PU) return;
+  clearInterval(PU.int);
+  const rondas=PU.ronda-(PU.fase==='work'?1:0);
+  const box=PU.box; PU=null;
+  if(box) box.remove();
+  if(guardar && rondas>0){
+    const st=puEstado();
+    st.sesiones=(st.sesiones||[]).concat([{d:TODAY(), nivel:st.nivel, rondas, reps:st.reps||PU_REPS}]);
+    /* al completar las sesiones del nivel se sube solo: la progresion es quitar ayuda */
+    if(puSesionesEnNivel()>=PU_SESIONES_NIVEL && st.nivel<PU_NIVELES.length-1){
+      st.nivel++;
+      setTimeout(()=>toast('¡Subiste de nivel! Ahora: '+puNivel().n), 900);
+    }
+    save('pullup');
+    xpEntrenoExterno('pullup', {d:TODAY(), clave:'pullup', series:rondas, ejercicios:1});
+    toast(rondas+' ronda'+(rondas>1?'s':'')+' · '+(rondas*(st.reps||PU_REPS))+' dominadas hoy');
+  }
+  updateIsland(); render();
+}
+function puTick(){
+  if(!PU) return;
+  if(puTotalRestante()<=0){ puStop(true); return; }
+  if(Date.now()>=PU.fin){
+    if(PU.fase==='work'){ PU.fase='rest'; PU.fin=Date.now()+PU_DESC*1000;
+      if(navigator.vibrate) navigator.vibrate([90,50,90]); beep(); }
+    else { PU.fase='work'; PU.ronda++; PU.fin=Date.now()+45000;
+      if(navigator.vibrate) navigator.vibrate([140,60,140]); beep(); }
+  }
+  puRedraw(); updateIsland();
+}
+function puBoxOpen(){
+  if(!PU) return;
+  let box=document.querySelector('.fbox.pubox');
+  if(!box){ box=document.createElement('div'); box.className='fbox pubox';
+    document.body.appendChild(box);
+    box.onclick=e=>{ if(e.target===box) box.remove(); };   /* cerrar la ventana NO corta la sesion: sigue en la isla */
+  }
+  PU.box=box; puRedraw();
+}
+function puRedraw(){
+  const box=document.querySelector('.fbox.pubox'); if(!box || !PU) return;
+  PU.box=box;
+  const f=puFase(), nv=puNivel();
+  const tot=puTotalRestante(), tm=Math.floor(tot/60000), tsg=Math.floor((tot%60000)/1000);
+  const pct=Math.round((1-tot/(PU_TOTAL*1000))*100);
+  const img=(f.tipo==='work'?CAB.camLift:CAB.camCheck)||CAB.faceC;
+  box.innerHTML=`<div class="fboxin" style="max-width:400px">
+    <div class="flex between mb8"><b class="t-h2">Mi primera dominada</b><button class="btn sm" data-pu="min" aria-label="seguir en segundo plano">${ic('x',14)}</button></div>
+    <div class="small dim mb8">${esc(nv.n)} · ronda ${PU.ronda}</div>
+    <div class="puimg"><img src="${img}" alt="" decoding="async" onerror="this.style.display='none'"></div>
+    <div class="tc mt12">
+      <div class="lbl">${f.tipo==='work'?'AHORA':'DESCANSA'}</div>
+      <div class="t-metric" style="font-size:52px;line-height:1.05">${f.tipo==='work'?PU.reps+' reps':f.mm+':'+pad2(f.ss)}</div>
+      <div class="small dim mt4">${f.tipo==='work'?'Tomate el tiempo que necesites · toca "Listo" al terminar':'Suelta la barra y respira'}</div>
+    </div>
+    <div class="movpbar mt12"><i style="width:${clamp(pct,0,100)}%"></i></div>
+    <div class="small dim tc mt4">Quedan ${tm}:${pad2(tsg)} de los 15 minutos</div>
+    <div class="flex mt12" style="gap:8px">
+      ${f.tipo==='work'
+        ? '<button class="btn primary grow" data-pu="listo">'+ic('check',14)+' Listo, a descansar</button>'
+        : '<button class="btn primary grow" data-pu="ya">'+ic('play',14)+' Ya, siguiente ronda</button>'}
+      <button class="btn sm ghost" data-pu="fin" style="flex:none">Terminar</button>
+    </div>
+    <div class="small dim mt8" style="line-height:1.5">${esc(nv.d)}</div>
+  </div>`;
+  box.querySelectorAll('[data-pu]').forEach(b=>{ b.onclick=()=>{
+    const a=b.dataset.pu;
+    if(a==='min'){ box.remove(); updateIsland(); return; }         /* sigue corriendo en la isla */
+    if(a==='fin'){ puStop(true); return; }
+    if(a==='listo'){ PU.fase='rest'; PU.fin=Date.now()+PU_DESC*1000; puRedraw(); updateIsland(); return; }
+    if(a==='ya'){ PU.fase='work'; PU.ronda++; PU.fin=Date.now()+45000; puRedraw(); updateIsland(); }
+  };});
+}
+/* la capsula con la tarea del dia: solo para Cami y solo mientras el reto este vivo */
+function puCapsula(){
+  if(UID!=='cami') return '';
+  const st=puEstado(), nv=puNivel(), hecho=puHechoHoy();
+  const enNivel=puSesionesEnNivel(), total=(st.sesiones||[]).length;
+  return `<section class="mod" id="pubox">
+    <div class="mod-head"><span class="ttl">${ic('target',16)} Mi primera dominada</span>
+      <span class="chip ${hecho?'fill':'dim'}">${hecho?ic('check',11)+' hoy ✓':'tarea de hoy'}</span></div>
+    <div class="flex" style="gap:12px;align-items:center">
+      <img loading="lazy" class="pucab" src="${CAB.camLift||CAB.faceC}" alt="" decoding="async">
+      <div class="grow" style="min-width:0">
+        <b class="t-h2" style="display:block">${esc(nv.n)}</b>
+        <div class="small dim mt4" style="line-height:1.5">${PU_REPS} dominadas · descansas 1 minuto · otra vez, durante 15 minutos.</div>
+      </div>
+    </div>
+    <div class="small mt8" style="line-height:1.5;color:var(--ink2)">${esc(nv.d)}</div>
+    <div class="flex between mt12" style="align-items:baseline">
+      <span class="lbl">NIVEL ${st.nivel+1} DE ${PU_NIVELES.length}</span>
+      <span class="small dim">${enNivel}/${PU_SESIONES_NIVEL} sesiones para el siguiente</span>
+    </div>
+    <div class="goalbar mt4"><i style="width:${Math.round(Math.min(enNivel/PU_SESIONES_NIVEL,1)*100)}%"></i></div>
+    <button class="btn primary full mt12" data-a="puStart">${ic('play',14)} ${hecho?'Hacerlo otra vez':'Empezar los 15 minutos'}</button>
+    ${total?`<div class="small dim mt8">Llevas ${total} sesión${total>1?'es':''} · ${(st.sesiones||[]).reduce((a,s)=>a+s.rondas*s.reps,0)} dominadas en total.</div>`:''}
+  </section>`;
+}
 /* ============ CATALOGO DE EJERCICIOS (EXCAT) ============
    Catalogo embebido de ejercicios (fuera de las rutinas fijas de ROUTINES): alimenta la
    pestana Ejercicios de Entrenar, el swap grid ampliado y el generador Personalizado.
@@ -3542,6 +3688,7 @@ function loadState(){
     fotoSrc: store.get('fotoSrc', {}), // 'UID:iso' -> 'cam'|'up': origen de la foto, para que Semana de Fotos solo muestre las de rutina (F4)
     mobil: store.get('mobil', {}),     // iso -> 1: movilidad diaria hecha (+1 punto de reto)
     perso: store.get('perso', {herr:[], min:45, grupos:[], nivel:'media'}),  // ultimas elecciones de la caja Personalizado
+    pullup: store.get('pullup', {nivel:0, sesiones:[], reps:3}),   // reto de la primera dominada (Cami)
     goals: store.get('goals', []),     // metas de fuerza: [{id, ex, name, target, start, d}] (P10)
     retoprops: store.get('retoprops', {}), // {sem:'texto',...} propuesta de premio MÍA por reto
     retovotes: store.get('retovotes', {}), // {sem:'andres'|'cami'} mi voto por reto
@@ -3580,6 +3727,15 @@ function buildNav(){
 /* isla flotante: si hay una rutina en curso y no la estás viendo, aparece una barra para volver */
 function updateIsland(){
   const el=$('#island'); if(!el||!el.classList) return;
+  /* el reto de la dominada manda mientras corre: es una sesion cronometrada y hay
+     que poder volver a ella desde cualquier pantalla */
+  if(PU && PU.corriendo){
+    const f=puFase();
+    el.innerHTML=`<span class="islic">${ic(f.tipo==='work'?'barbell':'timer',16)}</span><span class="isltxt"><b>${f.tipo==='work'?'Haz '+PU.reps+' dominadas':'Descansa'}</b><i>${f.mm}:${pad2(f.ss)} · ronda ${PU.ronda} · toca para volver</i></span><span class="islgo">${ic('chevR',16)}</span>`;
+    el.classList.add('on');
+    el.onclick=()=>puBoxOpen();
+    return;
+  }
   const inSession = UI.tab==='entrenar' && UI.session;
   const show = S && S.draft && S.draft.rid && !inSession;
   if(!show){ el.classList.remove('on'); el.innerHTML=''; el.onclick=null; return; }
@@ -4212,13 +4368,13 @@ const NFOODS=[
  ['chorizo-50','Chorizo','prot','g',16,2,20],
  ['chorizo-100','Chorizo','prot','g',16,2,20],
  ['arroz-integral','Arroz integral','acomp','g',1.7,25,0.6],
- ['arroz-coco','Arroz con coco','acomp','taza',3,42,4],
- ['arroz-fideos','Arroz con fideos','acomp','taza',3,48,1],
- ['arroz-verduras','Arroz con verduras','acomp','taza',3,42,1],
- ['arroz-azafran','Arroz con azafrán','acomp','taza',3,44,0],
- ['arroz-rojo','Arroz rojo','acomp','taza',3,44,1],
- ['arroz-garbanzos','Arroz con garbanzos','acomp','taza',4,45,1],
- ['arroz-huevo','Arroz con huevo','acomp','taza',5,44,3],
+ ['arroz-coco','Arroz con coco','acomp','g',2.0,27,2.5],
+ ['arroz-fideos','Arroz con fideos','acomp','g',2.0,30,0.5],
+ ['arroz-verduras','Arroz con verduras','acomp','g',2.0,27,0.5],
+ ['arroz-azafran','Arroz con azafrán','acomp','g',2.0,28,0.0],
+ ['arroz-rojo','Arroz rojo','acomp','g',2.0,28,0.5],
+ ['arroz-garbanzos','Arroz con garbanzos','acomp','g',2.5,28,0.5],
+ ['arroz-huevo','Arroz con huevo','acomp','g',3.0,28,2.0],
  ['frijol-rojo','Frijol rojo','acomp','g',3.3,12.5,0.8],
  ['frijol-negro','Frijol negro','acomp','g',3.3,12.5,0.8],
  ['frijol-pinto','Frijol pinto','acomp','g',3.3,13.3,0.8],
@@ -4519,7 +4675,7 @@ function save(k){ clearDayCache(); if(!DEMO){ store.set(k, S[k]); sbPush(k); } }
    'draft' y 'fired' no se sincronizan (son del dispositivo). */
 let SB=null, sbState='off', sbDiagMsg='';
 try{ SB=JSON.parse(localStorage.getItem('afc2:sb')||'null'); if(SB) sbState='ok'; }catch(e){}
-const SB_KEYS=['weights','logs','sessions','steps','water','meals','checkins','inject','meal','reminders','cfg','sched','week','acts','custom','customRoutines','exnotes','free','nlog','customFoods','retos','fotopub','fotoSrc','mobil','retoprops','retovotes','retoreset','ideas','recipeIdeas','facturas','perso','goals'];
+const SB_KEYS=['weights','logs','sessions','steps','water','meals','checkins','inject','meal','reminders','cfg','sched','week','acts','custom','customRoutines','exnotes','free','nlog','customFoods','retos','fotopub','fotoSrc','mobil','retoprops','retovotes','retoreset','ideas','recipeIdeas','facturas','perso','goals','pullup'];
 const sbTimers={}, sbPending={};
 /* el payload se lee SIEMPRE del namespace correcto al momento de enviar: si el usuario cambió
    entre el save y el disparo del debounce, S ya es del otro y usarlo cruzaría los datos */
@@ -6776,6 +6932,85 @@ function qtyTxt(q,u){
 /* etiqueta corta para mostrar la unidad de un alimento del catalogo (no una
    cantidad, solo la referencia: "por 100 g", "por cucharada", o la unidad
    contable tal cual: "porción", "taza"...). Uso: listas de resultados. */
+/* ============ LEER MACROS DE UN TEXTO PEGADO ============
+   El dueno busca el alimento en Google y pega lo que sale. El formato NUNCA es el
+   mismo (tabla de Google, etiqueta del paquete, ficha en ingles, con kJ, con
+   "de los cuales azucares"...), pero la informacion siempre esta. Esto la saca.
+
+   Decisiones que evitan los errores tipicos:
+   - los numeros vienen con coma o punto decimal, y a veces con el separador de
+     miles: "1.234 kcal" es mil doscientos, "1,5 g" es uno y medio;
+   - se ignoran las SUB-lineas ("de los cuales azucares", "of which saturates",
+     "grasas saturadas"): son parte del total, no otro macro. Se busca por eso la
+     PRIMERA aparicion de cada macro, que es siempre la del total;
+   - kJ y kcal conviven en las etiquetas europeas: manda kcal, y si solo hay kJ se
+     convierte (1 kcal = 4,184 kJ);
+   - la base (100 g o porcion) se detecta por el texto; si no se dice nada se asume
+     100 g, que es como viene casi siempre. */
+function leerMacros(txt){
+  const s=' '+String(txt||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ')+' ';
+  /* numero pegado a la etiqueta, tolerando ":" "=" y la unidad detras */
+  const num=v=>{
+    if(v==null) return null;
+    let x=String(v).trim();
+    if(/^\d{1,3}(\.\d{3})+$/.test(x)) x=x.replace(/\./g,'');      /* 1.234 = mil doscientos */
+    else if(/^\d{1,3}(,\d{3})+$/.test(x)) x=x.replace(/,/g,'');
+    else x=x.replace(',', '.');
+    const n=parseFloat(x);
+    return isFinite(n)?n:null;
+  };
+  const buscar=(claves, unidad)=>{
+    for(const k of claves){
+      /* etiqueta ... numero, permitiendo "total", ":", "=" y palabras sueltas en medio */
+      const re=new RegExp(k+'[a-z\\s()]{0,14}?[:=]?\\s*([0-9]+(?:[.,][0-9]+)?)\\s*'+(unidad||''), 'i');
+      const m=s.match(re);
+      if(m){ const n=num(m[1]); if(n!=null) return n; }
+    }
+    return null;
+  };
+  const avisos=[];
+  let p=buscar(['proteinas?','protein','prot\\b'],'g?');
+  let c=buscar(['carbohidratos? totales','carbohidratos?','hidratos de carbono','carbs?','carbohydrates?','glucidos?'],'g?');
+  let g=buscar(['grasas? totales','grasa total','grasas?','lipidos?','fat','total fat'],'g?');
+  /* formatos compactos del tipo "165 kcal | P: 31 g | C: 0 g | G: 3.6 g": aqui la
+     etiqueta es una sola letra, asi que se EXIGE el separador (: o =) para no cazar
+     cualquier palabra suelta ni la "g" de la unidad */
+  const corto=letras=>{
+    const m=s.match(new RegExp('(?:^|[^a-z])(?:'+letras+')\\s*[:=]\\s*([0-9]+(?:[.,][0-9]+)?)','i'));
+    if(m){ const n=num(m[1]); if(n!=null) return n; }
+    return null;
+  };
+  if(p==null) p=corto('p|prot');
+  if(c==null) c=corto('c|hc|ch|carb');
+  if(g==null) g=corto('g|gr|lip');
+  /* y al reves, cuando el numero va DELANTE: "8 g de proteina, 30 g de carbohidratos" */
+  const alReves=claves=>{
+    const m=s.match(new RegExp('([0-9]+(?:[.,][0-9]+)?)\\s*(?:g|gr|gramos)?\\s*(?:de\\s+)?(?:'+claves+')','i'));
+    if(m){ const n=num(m[1]); if(n!=null) return n; }
+    return null;
+  };
+  if(p==null) p=alReves('proteinas?|protein');
+  if(c==null) c=alReves('carbohidratos?|hidratos de carbono|carbs?|carbohydrates?');
+  if(g==null) g=alReves('grasas?|lipidos?|fat');
+  let kc=buscar(['kcal','calorias?','calories','energia','energy','valor energetico'],'');
+  /* "545 kJ / 130 kcal": si el numero que cazo es el de kJ, se busca el kcal explicito */
+  const mKcal=s.match(/([0-9]+(?:[.,][0-9]+)?)\s*kcal/);
+  if(mKcal) kc=num(mKcal[1]);
+  else {
+    const mKj=s.match(/([0-9]+(?:[.,][0-9]+)?)\s*kj/);
+    if(mKj){ const kj=num(mKj[1]); if(kj!=null){ kc=Math.round(kj/4.184); avisos.push('convertí los kJ'); } }
+  }
+  if(p==null&&c==null&&g==null) return {ok:false};
+  p=p==null?0:p; c=c==null?0:c; g=g==null?0:g;
+  const kcCalc=Math.round(p*4+c*4+g*9);
+  if(kc==null) kc=kcCalc;
+  else if(kcCalc>0 && Math.abs(kc-kcCalc)/Math.max(kc,kcCalc)>0.3) avisos.push('las kcal del texto no cuadran con los macros');
+  /* base: por 100 g salvo que el texto diga claramente que es una porcion */
+  let base='g';
+  if(/\bpor porcion|per serving|\bporcion\b|\bserving\b|\bunidad\b/.test(s) && !/100\s*(g|ml|gr)/.test(s)) base='porción';
+  const r1=x=>Math.round(x*10)/10;
+  return {ok:true, p:r1(p), c:r1(c), g:r1(g), kc:Math.round(kc), base, avisos};
+}
 function unidadLabel(u){
   if(u==='g') return 'por 100 g';
   if(u==='cda') return 'por cucharada';
@@ -6898,10 +7133,13 @@ function nutriDay(t, opts){
     return {k,lb,es,pg:Math.round(es.reduce((a,x)=>a+x.e.items.reduce((y,i)=>y+i.pg,0),0))}; });
   const cur=slots.find(s=>s.k===UI.nlogSlot);
   if(compacto){
-    /* franjas sin cabrita: siempre el icono (mismo fallback que ya existia cuando no habia foto) */
+    /* las cabritas de mañana/tarde/noche tambien aqui: el modo compacto las omitia y
+       en el calendario las franjas salian con un icono gris (queja del dueno). El
+       icono queda de respaldo por si falta la imagen. */
     const nslotsHtml=slots.map(s=>{ const tint={m:'var(--gold)',t:'#58DFA3',n:'#8FA0FF'}[s.k], glow={m:'rgba(255,201,77,.14)',t:'rgba(88,223,163,.14)',n:'rgba(143,160,255,.14)'}[s.k];
+      const img=CAB['comer'+({m:'M',t:'T',n:'N'})[s.k]+(UID==='andres'?'A':'C')];
       return `<button class="nslot nslot-${s.k} ${UI.nlogSlot===s.k?'on':''}" data-a="nlogOpen" data-s="${s.k}">
-      <span class="nslotic" style="color:${tint};background:${glow}">${ic(s.k==='m'?'egg':s.k==='t'?'food':'moon',18)}</span>
+      ${img?`<img loading="lazy" class="nslotimg" src="${img}" alt="" decoding="async">`:`<span class="nslotic" style="color:${tint};background:${glow}">${ic(s.k==='m'?'egg':s.k==='t'?'food':'moon',18)}</span>`}
       <b>${s.lb}</b>
       <span class="nsub">${s.es.length? s.es.length+' loggeo'+(s.es.length>1?'s':'') : 'sin registro'}</span>
       ${s.pg?`<span class="nslotp">${s.pg} g P</span>`:''}
@@ -6944,6 +7182,14 @@ function nutriDay(t, opts){
           <div class="t-metric-md" style="line-height:1">${eat.pg}<span class="t-unit"> / ${goal} g</span></div>
           <div class="small dim" style="margin-top:5px">≈ ${eat.kc} <span style="opacity:.6">/ ${PLAN.kcal} kcal</span></div>
           <div class="nutnudge mt8 ${alerta?'alert':''}">${nudge}</div>
+          ${(()=>{ /* g de proteina por kg de peso de HOY (pedido del dueno): es la
+            cifra con la que se lee de verdad si comiste suficiente, independiente de
+            cuanto peses. Se compara con 1,8 g/kg, que es la meta del plan. */
+            const kg=PLAN.pesoBase||0; if(!kg) return '';
+            const gk=eat.pg/kg, meta=1.8;
+            const col=gk>=meta?'var(--mint)':gk>=meta*0.8?'var(--gold)':'var(--ink2)';
+            return `<div class="small mt4" style="color:var(--ink2)">Llevas <b class="numi" style="color:${col}">${fmt1(Math.round(gk*10)/10)} g/kg</b> de proteína · meta 1,8 g/kg (${fmt1(kg)} kg)</div>`;
+          })()}
           <div class="small dim mt4">Meta calculada con ${fmt1(PLAN.pesoBase)} kg de promedio de la semana · 1,8 g/kg</div>
         </div>
       </div>
@@ -7005,25 +7251,88 @@ function nlogPanel(slot){
       ${slot.es.map(({e,gi})=>{ const hh=new Date(e.ts||Date.now()), hm=pad2(hh.getHours())+':'+pad2(hh.getMinutes());
         return `<div class="nentry">
         <div class="flex between"><span class="small" style="color:var(--mint);font-weight:700">${hm}</span>
-          <button class="chip red" data-a="nlogDelEntry" data-i="${gi}" aria-label="borrar loggeo">${ic('x',10)}</button></div>
+          <span class="flex" style="gap:6px;flex:none">
+            <button class="chip" data-a="nlogEditEntry" data-i="${gi}" aria-label="Corregir este registro">${ic('clip',10)} Corregir</button>
+            <button class="chip red" data-a="nlogDelEntry" data-i="${gi}" aria-label="borrar loggeo">${ic('x',10)}</button>
+          </span></div>
         ${e.items.map(i=>{ const qtxt = (i.u==='g'||i.u==='cda') ? medidaTxt(i.q,i.u,i.id) : (i.q!==1? '×'+fq(i.q) : '');
           return `<div class="nitem"><span class="nitn">${esc(i.n)}${qtxt?' <em>'+esc(qtxt)+'</em>':''}</span><span class="nitm"><b class="npro">${i.pg} P</b> · ${i.kc} kcal</span></div>
           ${i.comp&&i.comp.length?`<div class="ncompwrap">${i.comp.map(c=>`<div class="ncomp"><span>${esc(c[0])}</span>${c[1]!=null?`<span>${c[1]}P · ${c[2]} kcal</span>`:'<span class="dim">·</span>'}</div>`).join('')}</div>`:''}`;}).join('')}
       </div>`;}).join('')}`:''}
     <span class="lbl" style="display:block;margin-top:${slot.es.length?12:0}px">NUEVO LOGGEO · ${slot.lb.toUpperCase()}</span>
+    ${(()=>{ /* casi siempre comen lo mismo y solo cambian las porciones (pedido del
+      dueno): si el otro ya registro algo en esta misma franja y dia, se copia entero
+      al borrador y desde ahi se ajustan las cantidades antes de guardar. */
+      const otro=UID==='andres'?'cami':'andres';
+      const pl=(partnerState('nlog')||{})[nutriT()]||[];
+      const suyo=pl.filter(e=>e.s===(slot.k));
+      const n=suyo.reduce((a,e)=>a+(e.items||[]).length,0);
+      if(!n) return '';
+      return `<button class="chip catchip mt8" data-a="nlogCopiar" data-s="${slot.k}" aria-label="Copiar el registro de ${USERS[otro].name}">
+        ${ic('repeat',12)} Copiar lo de ${esc(USERS[otro].name)} · ${n} alimento${n>1?'s':''}</button>`;
+    })()}
+    ${draft.length?`<div class="ndraft mt12"><span class="lbl">EN ESTE LOGGEO · ${draft.length}</span>
+      ${draft.map((i,ix)=>{
+        const esG = i.u==='g', esCda = i.u==='cda';
+        const sub = (esG||esCda) ? ' · '+medidaTxt(i.q,i.u,i.id) : (i.u?' · '+i.u:'');
+        const ctl = esG
+          ? `<div class="ngrams">
+              <input class="in" id="gramsQ${ix}" data-ch="nlogGrams" data-i="${ix}" type="text" inputmode="decimal" value="${Math.round(i.q*100)}" aria-label="gramos de ${esc(i.n)}">
+              <span class="t-unit">g</span>
+            </div>`
+          : `<div class="hstep"><button data-a="nlogQty" data-i="${ix}" data-d="-1" aria-label="menos">−</button><span class="hval"><input id="qtyQ${ix}" data-ch="nlogQtyIn" data-i="${ix}" type="text" inputmode="decimal" value="${fq(i.q)}" aria-label="cantidad de ${esc(i.n)} en ${esc(i.u||'unidades')}"></span><button data-a="nlogQty" data-i="${ix}" data-d="1" aria-label="más">+</button></div>`;
+        return `<div class="ndrow">
+        <div class="grow" style="min-width:0"><b style="font-size:16px">${esc(i.n)}</b><span class="nfsub" style="display:block"><b class="npro">${Math.round(i.pg*i.q)} P</b> · ${Math.round(i.kc*i.q)} kcal${sub}</span>
+          ${esG?`<div class="flex wrapf mt4" style="gap:6px">${[100,150,200].map(v=>`<button class="chip" data-a="nlogGramsSet" data-i="${ix}" data-v="${v}">${v} g</button>`).join('')}</div>`:''}
+        </div>
+        ${ctl}
+        <button class="chip red" data-a="nlogRm" data-i="${ix}" aria-label="quitar">${ic('x',10)}</button>
+      </div>`;}).join('')}
+      <div class="festimate mt8"><div><b class="t-metric-md">${Math.round(dtot.pg)} <span class="t-unit">g proteína</span></b><div class="small dim">${Math.round(dtot.cg)}C · ${Math.round(dtot.fg)}G · ~${Math.round(dtot.kc)} kcal</div></div><span class="estag">Aprox</span></div>
+      <button class="btn primary full mt8" data-a="nlogSave">${ic('check',14)} Guardar loggeo</button>
+      ${draft.length>=2?`<button class="btn ghost full mt8" data-a="platoGuardar">${ic('book',13)} Guardar esta combinación como plato</button>`:''}
+    </div>`:''}
     ${(()=>{ const act=recetasActivas(w); if(!act.length) return '';
       return `<div class="small dim mt8 mb4">Cocinaste esto esta semana · toca para registrar la porción ajustada</div>
       <div class="flex wrapf">${act.map(id=>{ const rr=RECIPES.find(x=>x.id===id); if(!rr) return '';
         return `<button class="chip catchip" data-a="nlogPickMP" data-r="${id}" aria-label="Registrar ${esc(rr.name)}">${ic('book',12)} ${esc(rr.name.split(' ').slice(0,3).join(' '))}</button>`; }).join('')}</div>`;
     })()}
     <input class="in mt8" data-ch="nlogq" placeholder="busca: hamburguesa, huevos, arepa, café…" value="${esc(UI.nlogQ||'')}">
-    <div class="flex wrapf mt8">${FOODCATS.map(([id,lb,icn])=>{const im=CAB[LOGCATIMG[id]]; return `<button class="chip catchip ${cat===id?'fill':''}" data-a="nlogCat" data-c="${id}">${im?`<img loading="lazy" class="catimg" src="${im}" alt="" decoding="async">`:`<span class="cati">${ic(icn,12)}</span>`} ${lb}</button>`;}).join('')}</div>
+    ${(()=>{ /* las categorias ocupaban 8 chips fijos entre el buscador y los
+      resultados; ahora viven en una caja que se abre solo si la quieres (pedido del
+      dueno). Si hay una categoria activa, la caja se muestra abierta sola. */
+      const abierta = UI.nlogCatOpen || !!cat;
+      const lbCat = cat ? (FOODCATS.find(x=>x[0]===cat)||[])[1] : null;
+      return `<section class="mod tight" style="margin:8px 0 0">
+        <button class="schedhead ${abierta?'open':''}" data-a="nlogCatTgl">
+          <span class="grow tl" style="min-width:0"><b class="schedt" style="display:block">Categorías</b><span class="small dim" style="display:block">${lbCat?esc(lbCat):'Explora sin buscar por nombre'}</span></span>
+          <span class="nfchev">${ic('chevR',16)}</span>
+        </button>
+        ${abierta?`<div class="schedbody"><div class="flex wrapf">${FOODCATS.map(([id,lb,icn])=>{const im=CAB[LOGCATIMG[id]]; return `<button class="chip catchip ${cat===id?'fill':''}" data-a="nlogCat" data-c="${id}">${im?`<img loading="lazy" class="catimg" src="${im}" alt="" decoding="async">`:`<span class="cati">${ic(icn,12)}</span>`} ${lb}</button>`;}).join('')}
+          ${cat?`<button class="chip" data-a="nlogCat" data-c="${cat}" aria-label="Quitar la categoría">${ic('x',10)} Quitar</button>`:''}</div></div>`:''}
+      </section>`; })()}
     ${rows?`<div class="nfoodlist mt8">${rows}</div>`:'<div class="small dim mt8">Busca por nombre o abre una categoría. Las macros son aproximadas; tus recetas son precisas.</div>'}
     ${(UI.nlogQ && !UI.nlogNew)?`<button class="nfnew mt8" data-a="nlogNewOpen">${ic('plus',13)} <span>¿No aparece? Agregar <b>"${esc(UI.nlogQ)}"</b> con sus macros</span></button>
       <div class="flex mt8" style="gap:6px;flex-wrap:wrap">
         <button class="chip" data-a="codigoTgl">${ic('search',11)} Por código de barras</button>
         <a class="chip" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent('macros '+UI.nlogQ)}" aria-label="Buscar las macros de ${esc(UI.nlogQ)} en Google">${ic('zap',11)} Ver macros en Google</a>
+        <button class="chip ${UI.pegarOpen?'fill':''}" data-a="pegarTgl">${ic('paste',11)} Pegar lo que copiaste</button>
       </div>`:''}
+    ${UI.pegarOpen?`<div class="nlognew mt8">
+      <span class="lbl">Pegar los datos y yo los leo</span>
+      <div class="small dim mt4" style="line-height:1.5">Copia la tabla nutricional de Google (o de la etiqueta) y pégala aquí. Da igual el formato: busco calorías, proteína, carbohidratos y grasa donde estén.</div>
+      <textarea class="in mt8" id="pegarIn" data-ch="pegarin" rows="5" placeholder="p. ej.  Calorías 130 · Proteínas 2,7 g · Carbohidratos 28 g · Grasas 0,3 g" aria-label="Pega aquí la información nutricional">${esc(UI.pegarTxt||'')}</textarea>
+      ${(()=>{ const pr=UI.pegarTxt?leerMacros(UI.pegarTxt):null;
+        if(!UI.pegarTxt) return '';
+        if(!pr || !pr.ok) return '<div class="small mt8" style="color:var(--gold)">No encontré macros ahí. Necesito al menos proteína, carbohidratos y grasa.</div>';
+        return `<div class="festimate mt8"><div><b class="t-metric-md">${pr.p} <span class="t-unit">P</span> · ${pr.c} <span class="t-unit">C</span> · ${pr.g} <span class="t-unit">G</span></b>
+          <div class="small dim">≈ ${pr.kc} kcal ${pr.base==='g'?'por 100 g':'por porción'}${pr.avisos.length?' · '+esc(pr.avisos.join(' · ')):''}</div></div><span class="estag">Leído</span></div>`;
+      })()}
+      <div class="flex mt8" style="gap:8px">
+        <button class="btn primary grow" data-a="pegarUsar">${ic('check',14)} Usar estos datos</button>
+        <button class="btn sm ghost" data-a="pegarTgl" style="flex:none">Cancelar</button>
+      </div>
+    </div>`:''}
     ${UI.codigoBuscar!==undefined?`<div class="flex mt8" style="gap:6px">
       <input class="in grow" id="codigoIn" inputmode="numeric" placeholder="código de barras del paquete (770...)" value="${esc(UI.codigoBuscar||'')}" aria-label="Código de barras">
       <button class="btn sm primary" data-a="codigoBuscar">${UI.codigoCargando?'Buscando…':'Buscar'}</button>
@@ -7051,27 +7360,6 @@ function nlogPanel(slot){
         <button class="btn sm ghost" data-a="nlogNewCancel" style="flex:none">Cancelar</button>
       </div>
     </div>`})():''}
-    ${draft.length?`<div class="ndraft mt12"><span class="lbl">EN ESTE LOGGEO · ${draft.length}</span>
-      ${draft.map((i,ix)=>{
-        const esG = i.u==='g', esCda = i.u==='cda';
-        const sub = (esG||esCda) ? ' · '+medidaTxt(i.q,i.u,i.id) : (i.u?' · '+i.u:'');
-        const ctl = esG
-          ? `<div class="ngrams">
-              <input class="in" id="gramsQ${ix}" data-ch="nlogGrams" data-i="${ix}" type="text" inputmode="decimal" value="${Math.round(i.q*100)}" aria-label="gramos de ${esc(i.n)}">
-              <span class="t-unit">g</span>
-            </div>`
-          : `<div class="hstep"><button data-a="nlogQty" data-i="${ix}" data-d="-1" aria-label="menos">−</button><span class="hval">${fq(i.q)}</span><button data-a="nlogQty" data-i="${ix}" data-d="1" aria-label="más">+</button></div>`;
-        return `<div class="ndrow">
-        <div class="grow" style="min-width:0"><b style="font-size:16px">${esc(i.n)}</b><span class="nfsub" style="display:block"><b class="npro">${Math.round(i.pg*i.q)} P</b> · ${Math.round(i.kc*i.q)} kcal${sub}</span>
-          ${esG?`<div class="flex wrapf mt4" style="gap:6px">${[100,150,200].map(v=>`<button class="chip" data-a="nlogGramsSet" data-i="${ix}" data-v="${v}">${v} g</button>`).join('')}</div>`:''}
-        </div>
-        ${ctl}
-        <button class="chip red" data-a="nlogRm" data-i="${ix}" aria-label="quitar">${ic('x',10)}</button>
-      </div>`;}).join('')}
-      <div class="festimate mt8"><div><b class="t-metric-md">${Math.round(dtot.pg)} <span class="t-unit">g proteína</span></b><div class="small dim">${Math.round(dtot.cg)}C · ${Math.round(dtot.fg)}G · ~${Math.round(dtot.kc)} kcal</div></div><span class="estag">Aprox</span></div>
-      <button class="btn primary full mt8" data-a="nlogSave">${ic('check',14)} Guardar loggeo</button>
-      ${draft.length>=2?`<button class="btn ghost full mt8" data-a="platoGuardar">${ic('book',13)} Guardar esta combinación como plato</button>`:''}
-    </div>`:''}
   </div>`;
 }
 function vInicio(){
@@ -7489,6 +7777,7 @@ function vRutinas(){
   const wk=weekOfPlan();
   return `
   ${isDeload()?`<section class="mod tight inv"><div class="flex">${ic('alert',18)}<div class="small">Descarga: mismos pesos de la semana pasada, <b>2 series</b> por ejercicio.</div></div></section>`:''}
+  ${puCapsula()}
   <div class="rgrid">
   ${ROUTINES.map(r=>{
     const dates=r.ex.map(e=>(S.logs[e.id]||[]).map(h=>h.d)).flat().sort();
@@ -7762,10 +8051,35 @@ function vPerso(){
 const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const ACTDEF=[
   {t:'gym',   label:'Hice la rutina', icon:'barbell'},
+  {t:'run',   label:'Salí a correr',  icon:'steps'},
   {t:'padel', label:'Pádel',          icon:'padel'},
   {t:'cardio',label:'Cardio',         icon:'heart'},
   {t:'descanso',label:'Descanso',     icon:'moon'},
 ];
+/* correr guarda ademas distancia y duracion en S.acts[dia].run={km,min}; el ritmo se
+   calcula (no se escribe) porque es lo que se deduce de los otros dos. */
+function paceTxt(km,min){
+  if(!(km>0)||!(min>0)) return '';
+  const p=min/km, mm=Math.floor(p), ss=Math.round((p-mm)*60);
+  return mm+':'+pad2(ss===60?0:ss)+' min/km';
+}
+function runBox(sel){
+  const a=S.acts[sel]; if(!a || a.t!=='run') return '';
+  const r=a.run||{};
+  const pace=paceTxt(+r.km||0, +r.min||0);
+  return `<div class="mod tight" style="margin:0 0 12px">
+    <span class="lbl">TU CARRERA</span>
+    <div class="flex mt8" style="gap:8px">
+      <div class="grow" style="min-width:0"><span class="small dim">Distancia</span>
+        <input class="in ctr mt4" inputmode="decimal" placeholder="km" value="${r.km!=null?r.km:''}" data-ch="runKm" data-d="${sel}" aria-label="kilómetros recorridos"></div>
+      <div class="grow" style="min-width:0"><span class="small dim">Duración</span>
+        <input class="in ctr mt4" inputmode="numeric" placeholder="min" value="${r.min!=null?r.min:''}" data-ch="runMin" data-d="${sel}" aria-label="minutos de la carrera"></div>
+    </div>
+    <div class="festimate mt8"><div><b class="t-metric-md">${pace?esc(pace.split(' ')[0]):'–'} <span class="t-unit">${pace?'min/km':'ritmo'}</span></b>
+      <div class="small dim">${(+r.km>0&&+r.min>0)?fmt1(+r.km)+' km en '+fmtInt(+r.min)+' min':'Pon distancia y tiempo y calculo el ritmo'}</div></div>
+      <span class="estag">Calculado</span></div>
+  </div>`;
+}
 function vAgenda(){ return vCalendario(); }
 function vCalendario(){
   if(!UI.calSel) UI.calSel=TODAY();
@@ -8031,6 +8345,7 @@ function calEditor(){
       ${ACTDEF.map(a=>`<button class="chip ${S.acts[sel]?.t===a.t?'fill':''}" data-a="calAct" data-t="${a.t}">${ic(a.icon,12)} ${a.label}</button>`).join('')}
       ${S.acts[sel]?`<button class="chip red" data-a="calAct" data-t="${S.acts[sel].t}">${ic('x',12)} Quitar</button>`:''}
     </div>
+    ${runBox(sel)}
     <div class="row">
       <div class="ck ${sst.pasos?'on':''}">${sst.pasos?ic('check',14):''}</div>
       <div class="grow"><b style="font-size:16px">Pasos</b><div class="small dim">meta ${fmtInt(S.cfg.stepGoal)}</div></div>
@@ -12236,6 +12551,7 @@ const ACTIONS = {
   mobilTgl(){ const t=TODAY(); if(S.mobil[t]) delete S.mobil[t]; else S.mobil[t]=1; save('mobil'); render(); toast(S.mobil[t]?'Movilidad hecha · +1 punto de reto':'Movilidad desmarcada'); },
   mobilOpen(){ UI.mobilOpen=!UI.mobilOpen; render(); },
   movPlay(){ movPlayerOpen(); },
+  puStart(){ if(PU){ puBoxOpen(); return; } puStart(); },
   goalsTgl(){ UI.goalsOpen=UI.goalsOpen===false?true:false; render(); },
   chartKind(d){ UI.chartKind=UI.chartKind||{}; UI.chartKind[d.m]=d.v; render(); },
   goalNew(){ UI.goalForm=!UI.goalForm; UI.goalEx=null; UI.goalQ=''; UI.goalW=''; UI.goalR=''; render(); },
@@ -12583,6 +12899,69 @@ const ACTIONS = {
     clearDayCache();
     if(t===TODAY()) xpHabitos(t);   // un dia pasado no paga XP de habitos, misma convencion que mealAt/waterAt/stepsAt/weightAt
     render(); toast('Loggeado · +'+pg+' g de proteína');
+  },
+  nlogCatTgl(){ UI.nlogCatOpen=!(UI.nlogCatOpen || UI.nlogCat); if(!UI.nlogCatOpen) UI.nlogCat=null; render(); },
+  /* corregir un registro ya guardado (pedido del dueno: "permiteme modificar valores
+     o porciones de comida ingresadas"): vuelve al borrador, donde las cantidades ya
+     se pueden escribir a mano, y se guarda de nuevo. Se saca del dia al reabrirlo
+     para que no quede contado dos veces; el toast lo deja claro. */
+  nlogEditEntry(d){
+    const t=nutriT(), arr=(S.nlog[t]||[]);
+    const e=arr[+d.i]; if(!e) return;
+    UI.nlogDraft=UI.nlogDraft||[];
+    (e.items||[]).forEach(i=>{
+      const q=+i.q||1;
+      const f=i.id?foodOf(i.id):null;
+      if(f){ const m=foodMac(f);
+        UI.nlogDraft.push({n:f[1], q, u:f[3], id:f[0], pg:m.pg, cg:m.cg, fg:m.fg, kc:m.kc,
+          comp:Array.isArray(f[4])? f[4].map(c=>[c[0], Math.round(c[1]), (c[4]!=null?c[4]:kcOf(c[1],c[2],c[3]))]) : null});
+      } else {
+        UI.nlogDraft.push({n:i.n, q, u:i.u||'porción', id:i.id||null,
+          pg:(+i.pg||0)/q, cg:(+i.cg||0)/q, fg:(+i.fg||0)/q, kc:(+i.kc||0)/q, comp:i.comp||null});
+      }
+    });
+    UI.nlogSlot=e.s||UI.nlogSlot;
+    arr.splice(+d.i,1);
+    if(!arr.length) delete S.nlog[t];
+    save('nlog'); clearDayCache(); render();
+    toast('Ajusta las cantidades y vuelve a guardar');
+  },
+  /* trae al borrador lo que el otro registro en esta franja. Los items guardados
+     llevan los macros YA multiplicados por su cantidad (ver nlogSave), asi que hay
+     que volver a la unidad: si el alimento sigue en el catalogo se toma de ahi
+     (exacto), y si no, se divide por la cantidad. */
+  nlogCopiar(d){
+    const pl=(partnerState('nlog')||{})[nutriT()]||[];
+    const suyo=pl.filter(e=>e.s===d.s);
+    if(!suyo.length){ toast('No hay nada suyo en esta franja'); return; }
+    UI.nlogDraft=UI.nlogDraft||[];
+    let n=0;
+    suyo.forEach(e=>(e.items||[]).forEach(i=>{
+      const q=+i.q||1;
+      const f=i.id?foodOf(i.id):null;
+      if(f){ const m=foodMac(f);
+        UI.nlogDraft.push({n:f[1], q, u:f[3], id:f[0], pg:m.pg, cg:m.cg, fg:m.fg, kc:m.kc,
+          comp:Array.isArray(f[4])? f[4].map(c=>[c[0], Math.round(c[1]), (c[4]!=null?c[4]:kcOf(c[1],c[2],c[3]))]) : null});
+      } else {
+        UI.nlogDraft.push({n:i.n, q, u:i.u||'porción', id:i.id||null,
+          pg:(+i.pg||0)/q, cg:(+i.cg||0)/q, fg:(+i.fg||0)/q, kc:(+i.kc||0)/q, comp:i.comp||null});
+      }
+      n++;
+    }));
+    const otro=UID==='andres'?'cami':'andres';
+    render();
+    toast('Copiado de '+USERS[otro].name+' · '+n+' alimento'+(n>1?'s':'')+', ajusta las cantidades');
+  },
+  pegarTgl(){ UI.pegarOpen=!UI.pegarOpen; if(!UI.pegarOpen) UI.pegarTxt=''; render();
+    if(UI.pegarOpen) setTimeout(()=>{ const el=document.getElementById('pegarIn'); if(el) el.focus({preventScroll:true}); }, 60); },
+  /* pasa lo leido al formulario de alimento nuevo, que es el que ya sabe guardarlo */
+  pegarUsar(){
+    const pr=leerMacros(UI.pegarTxt||'');
+    if(!pr || !pr.ok){ toast('No encontré macros en ese texto'); return; }
+    UI.nlogNew={name:(UI.nlogQ||'').trim(), u:pr.base, p:pr.p, c:pr.c, g:pr.g, pesoCda:15};
+    UI.pegarOpen=false; UI.pegarTxt='';
+    render();
+    toast('Listo: '+pr.p+' P · '+pr.c+' C · '+pr.g+' G'+(pr.avisos.length?' ('+pr.avisos[0]+')':''));
   },
   codigoTgl(){ UI.codigoBuscar = UI.codigoBuscar===undefined ? '' : undefined; render();
     setTimeout(()=>{ const el=document.getElementById('codigoIn'); if(el) el.focus({preventScroll:true}); }, 60); },
@@ -13262,10 +13641,31 @@ const CHANGES = {
     const inp=document.getElementById('gramsQ'+i);
     if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); }
   },
+  /* cantidad escrita a mano en unidades que no son gramos (tazas, porciones,
+     unidades...). Antes solo se podia mover con los +/- de medio en medio. */
+  nlogQtyIn(el){
+    const i=+el.dataset.i; const it=(UI.nlogDraft||[])[i]; if(!it) return;
+    const v=+String(el.value).replace(',','.').replace(/[^\d.]/g,'')||0;
+    it.q=clamp(v,0.05,99);
+    render();
+    const inp=document.getElementById('qtyQ'+i);
+    if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; try{ inp.setSelectionRange(inp.value.length,inp.value.length); }catch(_){} }
+  },
   exsel(el){ UI.ex=el.value; render(); },
   exnote(el){ const t=el.value.trim(); if(t) S.exnotes[el.dataset.ex]=t; else delete S.exnotes[el.dataset.ex]; save('exnotes'); },
   exq(el){ UI.exQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=exq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   excatq(el){ UI.excatQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=excatq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
+  pegarin(el){ UI.pegarTxt=el.value; render();
+    const inp=document.getElementById('pegarIn');
+    if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; try{ inp.setSelectionRange(inp.value.length,inp.value.length); }catch(_){} } },
+  runKm(el){ const d=el.dataset.d, a=S.acts[d]; if(!a) return;
+    a.run=a.run||{}; const v=+String(el.value).replace(',','.').replace(/[^\d.]/g,'')||0;
+    if(v>0) a.run.km=Math.round(v*100)/100; else delete a.run.km;
+    save('acts'); render(); },
+  runMin(el){ const d=el.dataset.d, a=S.acts[d]; if(!a) return;
+    a.run=a.run||{}; const v=Math.round(+String(el.value).replace(/[^\d]/g,'')||0);
+    if(v>0) a.run.min=v; else delete a.run.min;
+    save('acts'); render(); },
   goalq(el){ UI.goalQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=goalq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   goalw(el){ UI.goalW=el.value; render(); const inp=document.getElementById('goalW'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   goalr(el){ UI.goalR=el.value; render(); const inp=document.getElementById('goalR'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
@@ -13489,7 +13889,7 @@ document.addEventListener('click', e=>{
 /* los buscadores en vivo ya se repintan desde el listener de 'input': si ademas
    atendieran el 'change' que dispara el navegador al destruirse el campo, se repintaria
    dos veces por tecla (ver el guardia de render) */
-const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq','goalq','goalw','goalr']);
+const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq','goalq','goalw','goalr','nlogQtyIn','pegarin']);
 /* los dias de la semana son <details>: si no se recuerda cual quedo abierto, cada
    render los cierra, la pagina se encoge de golpe y el scroll cae al inicio (era el
    salto al tocar "ver ingredientes"). 'toggle' no burbujea: se escucha en captura. */
@@ -13546,7 +13946,7 @@ document.addEventListener('input', e=>{
   const el=e.target.closest('[data-ch]'); if(!el) return;
   const ch=el.dataset.ch;
   if(ch==='recq'){ UI.recQ=el.value; }
-  else if((ch==='nlogq'||ch==='exq'||ch==='excatq'||ch==='addexq'||ch==='nlogGrams'||ch==='goalq'||ch==='goalw'||ch==='goalr') && CHANGES[ch]){ CHANGES[ch](el); }  /* la estabilidad la pone el ancla de renderReal; devolver el scroll aqui la peleaba */
+  else if((ch==='nlogq'||ch==='exq'||ch==='excatq'||ch==='addexq'||ch==='nlogGrams'||ch==='nlogQtyIn'||ch==='pegarin'||ch==='goalq'||ch==='goalw'||ch==='goalr') && CHANGES[ch]){ CHANGES[ch](el); }  /* la estabilidad la pone el ancla de renderReal; devolver el scroll aqui la peleaba */
   /* la calculadora solo escuchaba 'change', que en un campo de texto salta al salir del
      campo: el numero se quedaba congelado mientras se escribia. Ahora recalcula por tecla. */
   else if(ch==='pcal' && CHANGES.pcal){ CHANGES.pcal(el); }

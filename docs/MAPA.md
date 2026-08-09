@@ -40,7 +40,14 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - I4a Anillo de proteína + mensaje del día
   - I4b Caja "Con qué cerrar" (sugerencias sueltas y combinaciones) (`sugBox`)
   - I4c Fila de macros: Carbo / Grasa / Proteína (`.macrow`)
-  - I4d Franjas Mañana/Tarde/Noche + buscador de loggeo (`nlogPanel`)
+  - I4d Franjas Mañana/Tarde/Noche + buscador de loggeo (`nlogPanel`). Desde REV 137:
+    el BORRADOR va arriba (se ve lo que llevas sin bajar), las categorías viven en una
+    caja colapsable (`nlogCatTgl`), la cantidad se escribe a mano en cualquier unidad
+    (`nlogQtyIn`, antes solo gramos), se puede **Corregir** un registro ya guardado
+    (`nlogEditEntry`: vuelve al borrador y se guarda de nuevo), copiar el registro del
+    otro usuario (`nlogCopiar`) y **pegar** la tabla nutricional de Google para que la
+    app saque los macros sola (`leerMacros` + `pegarTgl`/`pegarUsar`)
+  - I4h Indicador de **g de proteína por kg de peso** del día, contra la meta de 1,8
   - I4e Barras de proteína de los últimos 7 días (`.pweek`)
   - I4f/I4g **ya no viven aquí** (Tarea 3): el registro libre "¿Qué comiste?" y la tabla
     "Comidas y macros" se sacaron del Inicio (el dueño no quiere registro en el resumen
@@ -58,6 +65,12 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 
 ## E · Entrenar (`vEntrenar`)
 
+- **E7** Reto "Mi primera dominada" (solo Cami, `puCapsula`): la tarea del día son 15
+  minutos de 3 dominadas + 1 minuto de descanso. 5 niveles que quitan ayuda en vez de
+  sumar reps (banda gruesa → media → delgada → negativas → sin ayuda), y se sube tras
+  4 sesiones (`PU_NIVELES`, `S.pullup`). El contador vive en una ventana
+  (`puBoxOpen`/`puRedraw`, estado en vivo en `PU`) y al minimizarla sigue corriendo en
+  la **isla flotante** (`updateIsland`), que devuelve a la sesión al tocarla
 - **E1x** Tarjeta "Crear rutina" (junto a Personalizado): armador propio, guardado en
   `S.customRoutines` (por usuario, sincroniza a nube). Desde REV 133 es interactivo:
   sin búsqueda muestra las categorías del catálogo navegables con foto y check
@@ -123,6 +136,9 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - A4b Chips "Comidas del plan" para marcar sin detallar (no duplican macro si esa
     franja ya tiene loggeo detallado, ver `eatenOn`) (`mealAt`)
   - A4c Agua, peso, inyección y foto de ese día
+  - A4d **Correr**: al marcar "Salí a correr" aparece la caja de la carrera con
+    distancia y duración; el ritmo se calcula solo (`runBox`, `paceTxt`,
+    `runKm`/`runMin`, datos en `S.acts[dia].run`)
 - **A5** Modo foto: las tarjetas de los días se giran y muestran la foto (`calFotoTgl`, `.flip3d`)
 
 ## C · Comida (`vComida`, sub-pestañas Recetas / Mercado / Gestión)

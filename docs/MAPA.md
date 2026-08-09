@@ -351,6 +351,9 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   grasa meta (`medCinturaObjetivo`); si esa inversión cae por debajo de 0,40 de
   cintura/estatura se marca imposible y se explica en vez de mostrar un número irreal
   (es lo que pasa con la cadera de Cami). En Cami el pecho no lleva objetivo: es busto
+- **MD11** Medidas es el **tercer grupo del selector de Progreso** (`progGrpSelector`),
+  al lado de Actividad física y Nutrición: dejó de ser un chip perdido entre los de
+  actividad. `progGroup()` devuelve `cuerpo` cuando la sub-vista es `medidas`
 - **MD10** "Cada cuánto medirte" (`medCadenciaCard`): las cuatro cadencias con el
   porqué de cada una, cuáles son clave y cuántos días faltan para la próxima
 - **MD4** Bloque Navy: % de grasa, masa grasa y magra sobre el promedio de 7 días,
@@ -433,3 +436,12 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 ---
 Si una zona cambia de lugar, el código se queda con la zona, no con la posición.
 Al agregar cajas nuevas se les asigna el siguiente número libre de su pantalla.
+
+## E8 · Elegir ejercicios por músculo (`vExcat`, botón "Elegir por músculo")
+
+El mismo cuerpo de Medidas, aquí como buscador: `medMapa(z, {accion:'excatZona',
+cotas:false})`. Tocar el pecho o el hombro filtra el catálogo a ese grupo, que es como
+uno piensa cuando quiere "algo de hombro" y no se acuerda del nombre. `medGrupoEj(zona,
+vista)` traduce zona a categoría de `EXCAT`, y **depende de la vista**: en la espalda el
+torso alto no es pecho sino dorsales. Respeta el filtro de equipo que ya esté puesto.
+

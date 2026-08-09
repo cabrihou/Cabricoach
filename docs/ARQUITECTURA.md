@@ -290,3 +290,22 @@ no lo alcanzan**. Ese fue el intento fallido antes de llegar al filtro.
 Peso: 98 KB de arte sobre un archivo que ya iba en 1,2 MB. Se aceptó porque sustituye
 un dibujo hecho a mano que no convencía y porque no añade ninguna petición de red.
 
+## La fecha de llegada a la meta (REV 146)
+
+`pesoRecta(dias)` traza una recta de mínimos cuadrados sobre **todas** las pesadas del
+periodo (8 semanas, o 4 si no alcanzan). Antes `metaFases` comparaba dos promedios
+sueltos (hoy contra hace 28 días) y un solo día de sal o mal dormido movía la fecha de
+llegada por semanas; con la recta el ruido diario se cancela.
+
+De ahí salen tres cosas que la app enseña: la pendiente en kg/semana, el **r²** (qué tan
+consistente va, traducido a palabras en `metaCalidad`) y el **error estándar de la
+pendiente**, que es lo que abre o cierra la ventana de fechas. El viejo ±3 semanas era
+un número inventado; ahora una bajada limpia da una ventana estrecha y uno con zigzag
+una ancha, que es la información honesta.
+
+En las gráficas de peso la meta pasó a ser el **piso del eje** y se dibuja su línea. Si
+la recta cruza la meta dentro del periodo, se marca el punto y la fecha. Si el cruce cae
+más allá del eje (mirando 30 días con la meta a 22 semanas), se prolonga la recta
+punteada más tenue hasta la línea de meta y se rotula ahí: es la línea imaginaria de
+cuándo se lograría, aunque el eje no llegue.
+

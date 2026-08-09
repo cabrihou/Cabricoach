@@ -1387,7 +1387,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 137';
+const APPREV='REV 138';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -7405,6 +7405,7 @@ function vInicio(){
     ${daystrip()}
   </section>
   ${ckSection()}
+  ${puCapsula()}
   ${homeRotator()}
   ${(()=>{
     const dt2=fromISO(t);
@@ -7777,7 +7778,6 @@ function vRutinas(){
   const wk=weekOfPlan();
   return `
   ${isDeload()?`<section class="mod tight inv"><div class="flex">${ic('alert',18)}<div class="small">Descarga: mismos pesos de la semana pasada, <b>2 series</b> por ejercicio.</div></div></section>`:''}
-  ${puCapsula()}
   <div class="rgrid">
   ${ROUTINES.map(r=>{
     const dates=r.ex.map(e=>(S.logs[e.id]||[]).map(h=>h.d)).flat().sort();

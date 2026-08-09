@@ -63,14 +63,16 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   (`ACTIONS.cycCfgGo` → M6); antes era una línea de texto chiquita que pasaba
   desapercibida (Tarea 4).
 
-## E · Entrenar (`vEntrenar`)
-
-- **E7** Reto "Mi primera dominada" (solo Cami, `puCapsula`): la tarea del día son 15
+- **I6** Reto "Mi primera dominada" (solo Cami, `puCapsula`, en el Inicio bajo el
+  checkpoint): la tarea del día son 15
   minutos de 3 dominadas + 1 minuto de descanso. 5 niveles que quitan ayuda en vez de
   sumar reps (banda gruesa → media → delgada → negativas → sin ayuda), y se sube tras
   4 sesiones (`PU_NIVELES`, `S.pullup`). El contador vive en una ventana
   (`puBoxOpen`/`puRedraw`, estado en vivo en `PU`) y al minimizarla sigue corriendo en
   la **isla flotante** (`updateIsland`), que devuelve a la sesión al tocarla
+
+## E · Entrenar (`vEntrenar`)
+
 - **E1x** Tarjeta "Crear rutina" (junto a Personalizado): armador propio, guardado en
   `S.customRoutines` (por usuario, sincroniza a nube). Desde REV 133 es interactivo:
   sin búsqueda muestra las categorías del catálogo navegables con foto y check

@@ -843,6 +843,16 @@ svg .acc{fill:var(--mint);stroke:none}
 #island .islring{position:relative;width:34px;height:34px;flex:none;display:flex;align-items:center;justify-content:center}
 #island .islring b{position:absolute;font:700 11px var(--num);font-variant-numeric:tabular-nums;color:#fff}
 /* g/kg de proteina: cifra propia, no una linea de texto perdida */
+.metarangos{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.metarango{padding:7px 9px;border-radius:10px;background:var(--card2);border:1px solid var(--line);line-height:1.25}
+.metarango.on{border-color:rgba(var(--acc-rgb),.5);background:rgba(var(--acc-rgb),.10)}
+.metarango b{display:block;font:600 12.5px var(--ui)}
+.metarango span{font:600 12px var(--num);color:var(--smoke)}
+.metafase{padding:12px 13px;border-radius:14px;background:var(--card2);border:1px solid var(--line)}
+.metafase.activa{border-color:rgba(var(--acc-rgb),.4)}
+.metafase.hecha{border-color:rgba(88,223,163,.4)}
+.proprow{padding:9px 0;border-bottom:1px dashed var(--line)}
+.proprow:last-of-type{border-bottom:none}
 .fzadestacado{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fzabox{padding:11px 12px;border-radius:14px;background:var(--card2);border:1px solid var(--line)}
 .fzabox.debil{border-color:rgba(255,201,77,.35)}
@@ -1436,7 +1446,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 142';
+const APPREV='REV 143';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -1674,7 +1684,11 @@ const USERS = {
 const PLANS = {
   andres:{
     title:'Plan continuo', start:'2026-07-13', end:'2027-12-31', weeks:156, block:true,
-    wStart:94.4, wGoal:89.5, metaNote:'meta: 89-90 kg @ 14-15% de grasa',
+    /* Meta corregida (REV 143). La de 89 kg asumia 75,6 kg de masa magra; la medicion
+       del 07/08 da 73,6 kg reales (90,7 de peso menos 17,1% de grasa). Con esa magra,
+       el 15% de grasa cae en 86,6 kg. La de 89 kg no se borra: pasa a ser la Fase 2,
+       que es ganar 2 kg de magra DESPUES de definir (ver metaFases). */
+    wStart:94.4, wGoal:86.6, wGoalFase2:89, metaNote:'Fase 1: 86,6 kg @ 15% de grasa · Fase 2: 89 kg manteniendo el 15%',
     /* kcal/prot/fat/carb ya NO viven aca fijos: se calculan por peso (metasDe,
        mas abajo). kcalKg conserva el nivel de kcal/kg de hoy (2200/94,4) para que
        el recalculo no le cambie el deficit de golpe cuando baje de peso. */
@@ -2560,12 +2574,18 @@ const MED_CAMPOS=[
   {k:'muslo_izq',     n:'Muslo izq.',        zona:'muslo-izq',     g:'mes', par:'muslo_der'},
   {k:'pantorrilla_der',n:'Pantorrilla der.', zona:'pantorrilla-der',g:'mes', par:'pantorrilla_izq', ayuda:'En el punto más ancho, de pie.'},
   {k:'pantorrilla_izq',n:'Pantorrilla izq.', zona:'pantorrilla-izq',g:'mes', par:'pantorrilla_der'},
+  {k:'hombros',        n:'Hombros',          zona:'hombros',        g:'mes', ayuda:'Por el pico de los deltoides, brazos relajados a los lados.'},
+  /* anclas esqueleticas: NO se entrenan y no cambian. Son la base de todo el sistema
+     de proporciones, y hay que decirlo en el campo o la gente intenta "mejorarlas". */
+  {k:'muneca',  n:'Muñeca',  zona:'antebrazo-der',  g:'anio', ancla:1, ayuda:'Justo por debajo del hueso, en la mano dominante. Es hueso: no cambia y no se entrena.'},
+  {k:'tobillo', n:'Tobillo', zona:'pantorrilla-der',g:'anio', ancla:1, ayuda:'En el punto más estrecho, sobre los tobillos. Es hueso: no cambia.'},
+  {k:'rodilla', n:'Rodilla', zona:'muslo-der',      g:'anio', ancla:1, ayuda:'Por el medio de la rótula, pierna estirada y relajada. Es hueso: no cambia.'},
 ];
 const MED_GRUPOS={
   dia:  {n:'Peso de hoy',   cada:1,   tol:0, campos:['peso']},
   quin: {n:'Cintura y cuello', cada:14, tol:2, campos:['cintura','cuello']},
   mes:  {n:'Set completo',  cada:28,  tol:4, campos:MED_CAMPOS.filter(c=>c.g==='mes').map(c=>c.k).concat(['cintura','cuello'])},
-  anio: {n:'Estatura',      cada:365, tol:0, campos:['estatura']},
+  anio: {n:'Estructura',    cada:365, tol:0, campos:['estatura','muneca','tobillo','rodilla']},
 };
 /* la cintura de la mujer se mide en el punto MAS ESTRECHO del torso para la formula
    Navy; la del hombre, al ombligo. El texto de ayuda cambia con el usuario porque
@@ -2700,6 +2720,22 @@ function medPlan(){
   const asim=medAsimetrias();
   const r=medRatios();
   const out=[];
+  /* En mujeres hay tres diferencias que cambian el consejo entero:
+     1. si el ciclo se fue o viene irregular estando en deficit, eso manda sobre
+        cualquier objetivo de composicion;
+     2. si la meta ya cae en rango fitness, nunca se recomienda mas deficit;
+     3. el peso oscila hasta 2 kg dentro del mismo ciclo, asi que el estancamiento
+        solo se juzga comparando la MISMA fase entre meses, no semanas seguidas. */
+  const esCami = UID==='cami';
+  if(esCami){
+    const meta=metaGrasaDe();
+    const c=(typeof cycleInfo==='function')?cycleInfo():null;
+    const sinCiclo = S.cfg && S.cfg.cycStart && (fromISO(TODAY())-fromISO(S.cfg.cycStart))/86400000 > (S.cfg.cycLen||28)*1.6;
+    if(sinCiclo) return [{t:'ojo', x:'<b>Tu ciclo lleva bastante retraso.</b> Eso va primero, por encima de cualquier objetivo de composición: si estás en déficit, súbelo a mantenimiento y habla con tu médica antes de seguir.'}];
+    if(meta>=21 && meta<=24){
+      out.push({t:'ok', x:`Tu meta (${fmt1(meta)}%) ya está en rango fitness. Aquí no toca recortar: toca <b>mantener y levantar</b>. La composición cambia con fuerza y proteína, no con menos comida.`});
+    }
+  }
   /* prioridad 1: la cintura sobre la estatura manda por encima de la bascula */
   if(r.ce && r.ce.v>0.50) out.push({t:'foco', x:`Tu cintura es el <b>${Math.round(r.ce.v*100)}%</b> de tu estatura (la referencia es 50%). Ese es el objetivo, por encima del número de la báscula.`});
   /* tendencia: ultimas 3 mediciones de cintura vs peso promedio */
@@ -2709,17 +2745,257 @@ function medPlan(){
     const pmAntes=pesoProm7(addDays(cinB.d, 6));
     const dPeso=(pmAntes&&pm)? pm.kg-pmAntes.kg : null;
     const baja=v=>v<-0.3, sube=v=>v>0.3, quieto=v=>Math.abs(v)<=0.3;
-    if(dPeso!=null){
+    /* en mujer, una diferencia de menos de 2 kg dentro del mismo ciclo es ruido */
+    const ruido = esCami && dPeso!=null && Math.abs(dPeso)<2 && Math.abs(dCin)<1;
+    if(dPeso!=null && !ruido){
       if(baja(dCin)&&baja(dPeso)) out.push({t:'ok', x:'Cintura y peso bajando a la vez: vas bien. No cambies nada, sostén lo que estás haciendo.'});
       else if(quieto(dCin)&&baja(dPeso)) out.push({t:'ojo', x:'Baja el peso pero la cintura no. Puede ser pérdida de músculo o un error de medición: antes de recortar más comida, asegura la proteína y la fuerza.'});
       else if(baja(dCin)&&quieto(dPeso)) out.push({t:'ok', x:'La cintura baja y la báscula no se mueve: eso es recomposición, estás cambiando grasa por músculo. Es un buen escenario aunque el peso no baje.'});
       else if(sube(dCin)&&sube(dPeso)) out.push({t:'ojo', x:'Cintura y peso subiendo juntos. Revisa la ingesta de la semana antes de tocar el entreno.'});
-      else if(quieto(dCin)&&quieto(dPeso) && cinS.length>=3) out.push({t:'ojo', x:'Tres semanas sin moverse nada. Toca ajustar UNA sola variable: baja 150 kcal al día y deja el entreno igual dos semanas.'});
+      else if(quieto(dCin)&&quieto(dPeso) && cinS.length>=3 && !esCami) out.push({t:'ojo', x:'Tres semanas sin moverse nada. Toca ajustar UNA sola variable: baja 150 kcal al día y deja el entreno igual dos semanas.'});
+      else if(quieto(dCin)&&quieto(dPeso) && esCami && cinS.length>=3 && (fromISO(cinA.d)-fromISO(cinS[cinS.length-3].d))/86400000>=56) out.push({t:'ojo', x:'Dos meses comparando la misma fase del ciclo y sin cambio. Ahí sí toca ajustar UNA variable, no antes: dentro del mismo mes el peso oscila y no dice nada.'});
     }
   }
   asim.filter(a=>a.fuerte).forEach(a=>out.push({t:'ojo', x:`${a.n}: ${fmt1(a.dif)} cm de diferencia entre lados. Mete trabajo unilateral de ese grupo (una serie por lado) hasta emparejar.`}));
   if(!out.length) out.push({t:'ok', x:'Aún no hay suficiente historia para leer una tendencia. Sigue midiendo y en dos o tres semanas te digo qué está pasando.'});
   return out.slice(0,3);
+}
+/* ============ META DE GRASA CORPORAL ============
+   El % de grasa objetivo NO significa lo mismo en hombre y mujer: la grasa esencial
+   femenina esta en 10-13% contra 3-5% en hombres. Un 15% que en el es "definido", en
+   ella esta por debajo del piso fisiologico. Por eso el minimo del control es un TOPE
+   DURO por sexo, no un aviso que se pueda ignorar. */
+const MET_GRASA={
+  andres:{min:8, def:15, rangos:[['Esencial','3-5%',3,5],['Atlético','6-13%',6,13],['Fitness / definido','14-17%',14,17],['Aceptable','18-24%',18,24]]},
+  cami:  {min:18, def:22, rangos:[['Esencial','10-13%',10,13],['Atlética','14-20%',14,20],['Fitness / definida','21-24%',21,24],['Aceptable','25-31%',25,31]]},
+};
+function metaGrasaCfg(){ return MET_GRASA[UID]||MET_GRASA.andres; }
+/* el tope se aplica AQUI, no solo en el control: asi no se puede saltar escribiendo
+   el valor a mano ni dejando un dato viejo guardado por debajo del minimo */
+function metaGrasaDe(){
+  const c=metaGrasaCfg();
+  const v=(S.cfg&&S.cfg.metaGrasa!=null)?+S.cfg.metaGrasa:c.def;
+  return clamp(isFinite(v)?v:c.def, c.min, 40);
+}
+function metaGrasaRango(pct){
+  const c=metaGrasaCfg();
+  const r=c.rangos.find(x=>pct>=x[2]&&pct<=x[3]);
+  return r?r[0]:(pct<c.rangos[0][2]?'Por debajo del piso fisiológico':'Por encima del rango');
+}
+function metaGrasaCard(){
+  const c=metaGrasaCfg(), v=metaGrasaDe();
+  const nav=medNavy();
+  return `<section class="mod" id="metagrasa">
+    <div class="mod-head"><span class="ttl">${ic('target',16)} Tu meta de grasa</span><span class="chip fill">${fmt1(v)}%</span></div>
+    <div class="small dim mb8">${esc(metaGrasaRango(v))}${nav.ok?` · hoy vas en ${fmt1(nav.pct)}%`:''}</div>
+    <input type="range" class="nnrange" data-ch="metaGrasa" min="${c.min}" max="35" step="0.5" value="${v}"
+      style="--rc:var(--mint)" aria-label="Meta de grasa corporal en porcentaje">
+    <div class="flex between"><span class="small dim">${c.min}%</span><span class="small dim">35%</span></div>
+    ${(UID==='cami'&&v<20)?`<div class="nkcalert mt8">${ic('alert',14)}<div>Sostener menos del 18% se asocia a pérdida del ciclo menstrual, caída de densidad ósea y desajuste hormonal. No te lo digo para asustarte: es que por debajo de ahí el cuerpo empieza a apagar funciones. El mínimo del control está en ${c.min}% por eso.</div></div>`:''}
+    <div class="metarangos mt12">${c.rangos.map(r=>{
+      const dentro = v>=r[2]&&v<=r[3];
+      return `<div class="metarango ${dentro?'on':''}"><b>${r[0]}</b><span>${r[1]}</span></div>`;}).join('')}</div>
+    <div class="small dim mt8" style="line-height:1.5">${UID==='cami'
+      ? 'Los rangos femeninos van más altos que los masculinos y eso es fisiología, no falta de disciplina: la grasa esencial de una mujer es el triple.'
+      : 'Por debajo del 8% se entra en territorio de competición: no es sostenible ni saludable fuera de una peak week.'}</div>
+  </section>`;
+}
+/* ============ META EN DOS FASES ============
+   Mezclar "definir" con "ganar musculo" es lo que hace que una meta se sienta
+   inalcanzable: son procesos opuestos. Se separan.
+     Fase 1 (definicion): bajar grasa manteniendo la magra, hasta el 15%.
+     Fase 2 (recomposicion): subir 2 kg de magra manteniendo ese 15%, en 6-12 meses.
+   La fecha se estima con la tasa REAL de las ultimas 4 semanas cuando hay historia;
+   si no, con el 0,5% del peso corporal por semana, que es el ritmo sostenible. */
+function metaFases(){
+  const pm=pesoProm7();
+  if(!pm) return null;
+  const peso=pm.kg;
+  /* de donde sale el % de grasa: primero lo MEDIDO (bascula de bioimpedancia en el
+     check-in), porque es un dato real del dueño; si no hay, el estimado por cinta
+     (Navy). Cambia bastante el objetivo, asi que la pantalla dice cual se usó. */
+  const nav=medNavy();
+  const ci=(S.checkins||[]).filter(c=>c.fat>0).slice(-1)[0];
+  const usaBascula = !!(ci && (fromISO(TODAY())-fromISO(ci.d))/86400000 <= 45);
+  const pctG = usaBascula ? ci.fat : (nav.ok ? nav.pct : null);
+  if(pctG==null) return {falta:true};
+  const magra = peso*(1-pctG/100);
+  const metaPct = metaGrasaDe()/100;
+  const objetivo = magra/(1-metaPct);               /* peso a TU meta, con la magra de hoy */
+  const kgPorPerder = Math.max(0, peso-objetivo);
+  /* tasa real: pendiente del promedio de 7 dias de hoy contra el de hace 4 semanas */
+  const antes=pesoProm7(addDays(TODAY(),-28));
+  let tasa=null, real=false;
+  if(antes && antes.n>=2){ const d=(antes.kg-peso)/4; if(isFinite(d)){ tasa=d; real=true; } }
+  if(tasa==null || tasa<=0){ tasa = real ? 0 : peso*0.005; }
+  const fase2 = (PLAN.wGoalFase2||89);
+  const out={peso:Math.round(peso*10)/10, pct:Math.round(pctG*10)/10, fuente:usaBascula?'báscula':'cinta (Navy)', metaPct:Math.round(metaPct*1000)/10, magra:Math.round(magra*10)/10,
+    objetivo:Math.round(objetivo*10)/10, kgPorPerder:Math.round(kgPorPerder*10)/10,
+    tasa:Math.round((tasa||0)*100)/100, real, fase2, cumplida:kgPorPerder<=0.3};
+  if(!out.cumplida && tasa>0){
+    const sem=Math.max(1, Math.round(kgPorPerder/tasa));
+    out.semanas=sem;
+    out.fecha=addDays(TODAY(), sem*7);
+    out.desde=addDays(TODAY(), Math.max(0,(sem-3))*7);
+    out.hasta=addDays(TODAY(), (sem+3)*7);
+  } else if(!out.cumplida) out.sinProgreso=true;
+  return out;
+}
+/* guardia: si la magra cae mas de 1 kg mientras la grasa se mantiene o sube, el
+   deficit se esta comiendo el musculo. Antes de alarmar hay que descartar lo obvio:
+   una deshidratacion se lee igual que una perdida de magra. */
+function metaGuardia(){
+  const fs=medFechas().filter(d=>{ const m=S.medidas[d]||{}; return m.cintura&&m.cuello; });
+  if(fs.length<2) return null;
+  const calc=d=>{ const m=S.medidas[d]||{}; const est=medUltimo('estatura'); if(!est) return null;
+    const w=(S.weights||[]).filter(x=>x.d<=d).slice(-1)[0]; if(!w) return null;
+    let pct;
+    if(UID==='cami'){ if(!m.cadera) return null;
+      pct=495/(1.29579-0.35004*log10(m.cintura+m.cadera-m.cuello)+0.22100*log10(est.v))-450; }
+    else pct=495/(1.0324-0.19077*log10(m.cintura-m.cuello)+0.15456*log10(est.v))-450;
+    if(!isFinite(pct)||pct<=0) return null;
+    return {d, magra:w.kg*(1-pct/100), grasa:w.kg*pct/100};
+  };
+  const b=calc(fs[fs.length-2]), a=calc(fs[fs.length-1]);
+  if(!a||!b) return null;
+  const dMagra=a.magra-b.magra, dGrasa=a.grasa-b.grasa;
+  if(dMagra<-1 && dGrasa>=-0.2) return {dMagra:Math.round(dMagra*10)/10, dGrasa:Math.round(dGrasa*10)/10};
+  return null;
+}
+function metaCard(){
+  const m=metaFases();
+  if(!m) return '';
+  if(m.falta) return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('scale',16)} Tu meta</span></div>
+    <div class="small dim">Para calcular la meta con tu masa magra real me falta el % de grasa: mide cuello y cintura.</div></section>`;
+  const g=metaGuardia();
+  return `<section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('scale',16)} Tu meta, en dos fases</span></div>
+    ${g?`<div class="nkcalert mb12">${ic('alert',14)}<div><b>Ojo con la magra.</b> Entre las dos últimas mediciones bajó ${fmt1(Math.abs(g.dMagra))} kg de masa magra y la grasa no bajó. Antes de asustarte: ¿estabas bien hidratado y sin entrenar justo antes de medirte? La deshidratación se lee igual que perder músculo. Si se repite, el déficit está comiendo músculo y hay que subir proteína y bajar el recorte.</div></div>`:''}
+    <div class="metafase ${m.cumplida?'hecha':'activa'}">
+      <div class="flex between" style="align-items:baseline"><b>Fase 1 · Definición</b>${m.cumplida?`<span class="chip fill">lograda ✓</span>`:`<span class="chip dim">en curso</span>`}</div>
+      <div class="small dim mt4">De <b class="numi">${fmt1(m.peso)} kg</b> a <b class="numi" style="color:var(--ink)">${fmt1(m.objetivo)} kg</b> perdiendo grasa y manteniendo tus ${fmt1(m.magra)} kg de masa magra. Ahí quedas al ${fmt1(m.metaPct)}%.</div>
+      <div class="small dim mt4">Calculado con tu <b>${m.pct}%</b> de grasa medido por ${m.fuente}, o sea <b>${fmt1(Math.round(m.peso*m.pct/100*10)/10)} kg</b> de grasa sobre ${fmt1(m.peso)} kg. Si ese número de kilos no te cuadra, revisa el dato: el campo del check-in es el PORCENTAJE, no los kilos.</div>
+      ${!m.cumplida?`<div class="goalbar mt8"><i style="width:${clamp(Math.round((1-m.kgPorPerder/Math.max(m.peso-m.objetivo,0.1))*100),0,100)}%"></i></div>
+        <div class="small mt4">Te faltan <b class="numi">${fmt1(m.kgPorPerder)} kg</b> de grasa.</div>`:''}
+      ${m.sinProgreso?`<div class="small mt8" style="color:var(--gold)">Sin progreso medible en las últimas 4 semanas. Mira abajo qué ajustar.</div>`
+        :m.fecha?`<div class="small mt8" style="line-height:1.5">A tu ritmo ${m.real?'real':'sostenible'} de <b>${fmt1(m.tasa)} kg/semana</b> llegarías entre <b>${fmtDiaMes(m.desde)}</b> y <b>${fmtDiaMes(m.hasta)}</b>${m.real?'':' (estimado con el 0,5% del peso por semana)'}.</div>
+        <div class="small dim mt4">Es un rango de ±3 semanas, no una fecha exacta: el cuerpo no va en línea recta.</div>`:''}
+    </div>
+    <div class="metafase mt8">
+      <div class="flex between" style="align-items:baseline"><b>Fase 2 · Recomposición</b><span class="chip dim">después</span></div>
+      <div class="small dim mt4">De ${fmt1(m.objetivo)} a <b class="numi" style="color:var(--ink)">${fmt1(m.fase2)} kg</b> ganando 2 kg de músculo y manteniendo el ${fmt1(m.metaPct)}%. Horizonte de 6 a 12 meses; es la meta de siempre, solo que va después.</div>
+    </div>
+    <div class="small dim mt12" style="line-height:1.5">La meta bajó de 89 a ${fmt1(m.objetivo)} kg porque la de 89 asumía más masa magra de la que tienes hoy. No es un retroceso: es la misma meta, ordenada.</div>
+  </section>`;
+}
+/* ============ PROPORCIONES ============
+   Dos sistemas distintos porque el ancla es distinta:
+   - HOMBRE: todo cuelga de la MUÑECA (método McCallum). El hueso de la muñeca predice
+     el marco que puede sostener el cuerpo.
+   - MUJER: el ancla es la CADERA, porque la estructura pélvica manda y no se modifica.
+   Son convenciones ESTÉTICAS, no umbrales de salud: la única con respaldo clínico es
+   cintura/estatura, y eso se dice en pantalla. Si la estructura deja un objetivo
+   lejos, se explica en vez de dejar un número en rojo para siempre. */
+function propObjetivos(){
+  const g=k=>{ const u=medUltimo(k); return u?u.v:null; };
+  const est=g('estatura');
+  if(UID==='cami'){
+    const cad=g('cadera');
+    if(!cad) return {ok:false, falta:'cadera', txt:'la cadera'};
+    const brazo=cad*0.265;
+    return {ok:true, ancla:{k:'cadera', n:'cadera', v:cad},
+      obj:[
+        {k:'cintura', n:'Cintura',    o:cad*0.70, dir:'baja'},
+        {k:'pecho',   n:'Busto',      o:cad*1.00, dir:'sube', tol:3},
+        {k:'hombros', n:'Hombros',    o:cad*1.00, dir:'sube', tol:3},
+        {k:'muslo_der', n:'Muslo',    o:cad*0.585, dir:'sube', tol:1.5},
+        {k:'pantorrilla_der', n:'Pantorrilla', o:cad*0.35, dir:'sube', tol:1},
+        {k:'brazo_flex_der',  n:'Brazo (contraído)', o:brazo, dir:'sube', tol:1.5},
+        {k:'antebrazo_der',   n:'Antebrazo', o:brazo*0.80, dir:'sube', tol:1},
+      ],
+      ratios:[
+        {n:'Cintura / cadera',   v:g('cintura')&&cad? g('cintura')/cad:null, meta:0.70, salud:0.85, menor:true},
+        {n:'Hombros / cintura',  v:g('hombros')&&g('cintura')? g('hombros')/g('cintura'):null, meta:1.425, menor:false},
+        {n:'Cintura / estatura', v:g('cintura')&&est? g('cintura')/est:null, meta:0.45, salud:0.50, menor:true, clinico:true},
+      ]};
+  }
+  const mun=g('muneca');
+  if(!mun) return {ok:false, falta:'muneca', txt:'la muñeca'};
+  const pecho=mun*6.5;
+  return {ok:true, ancla:{k:'muneca', n:'muñeca', v:mun}, pechoBase:pecho,
+    obj:[
+      {k:'pecho',   n:'Pecho',    o:pecho,       dir:'sube'},
+      {k:'cintura', n:'Cintura',  o:pecho*0.70,  dir:'baja'},
+      {k:'cadera',  n:'Cadera',   o:pecho*0.85,  dir:'baja'},
+      {k:'muslo_der', n:'Muslo',  o:pecho*0.53,  dir:'sube'},
+      {k:'cuello',  n:'Cuello',   o:pecho*0.37,  dir:'sube'},
+      {k:'brazo_flex_der', n:'Brazo (contraído)', o:pecho*0.36, dir:'sube'},
+      {k:'pantorrilla_der', n:'Pantorrilla', o:pecho*0.34, dir:'sube'},
+      {k:'antebrazo_der',   n:'Antebrazo',   o:pecho*0.29, dir:'sube'},
+    ],
+    ratios:[
+      {n:'Hombros / cintura',  v:g('hombros')&&g('cintura')? g('hombros')/g('cintura'):null, meta:1.618, menor:false, nota:'la proporción áurea, el indicador de la V'},
+      {n:'Pecho / cintura',    v:g('pecho')&&g('cintura')? g('pecho')/g('cintura'):null, meta:1.425, menor:false},
+      {n:'Cintura / cadera',   v:g('cintura')&&g('cadera')? g('cintura')/g('cadera'):null, meta:0.85, salud:0.90, menor:true},
+      {n:'Cintura / estatura', v:g('cintura')&&est? g('cintura')/est:null, meta:0.47, salud:0.50, menor:true, clinico:true},
+    ]};
+}
+/* simetria de Reeves: brazo contraido, pantorrilla y cuello deberian medir casi lo
+   mismo. No es un objetivo de tamaño, es un chequeo de equilibrio. */
+function propReeves(){
+  const b=medUltimo('brazo_flex_der'), p=medUltimo('pantorrilla_der'), c=medUltimo('cuello');
+  if(!b||!p||!c) return null;
+  const vs=[{n:'brazo',v:b.v},{n:'pantorrilla',v:p.v},{n:'cuello',v:c.v}];
+  const mx=Math.max(...vs.map(x=>x.v)), mn=Math.min(...vs.map(x=>x.v));
+  return {vs, dif:Math.round((mx-mn)*10)/10, ok:(mx-mn)<=1};
+}
+function propCard(){
+  const P=propObjetivos();
+  if(!P.ok) return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('target',16)} Proporciones</span></div>
+    <div class="small dim" style="line-height:1.5">Para calcular tus proporciones necesito <b>${esc(P.txt)}</b>. Es la medida que ancla todo el sistema${UID==='cami'?' en mujeres':' en hombres'}, así que sin ella no calculo nada a medias.</div>
+    <button class="btn primary full mt12" data-a="medAbrir" data-g="${P.falta==='muneca'?'anio':'mes'}">${ic('ruler',13)} Medir ${esc(P.txt)}</button></section>`;
+  /* se ordena por diferencia RELATIVA: la primera fila es siempre en lo que hay que
+     trabajar, sin que haya que interpretar nada */
+  const filas=P.obj.map(o=>{
+    const u=medUltimo(o.k);
+    return {...o, act:u?u.v:null, rel:u?Math.abs(u.v-o.o)/o.o:-1};
+  }).sort((a,b)=>b.rel-a.rel);
+  const reeves=propReeves();
+  return `<section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('target',16)} Proporciones</span><span class="chip dim">${P.ancla.n} ${fmt1(P.ancla.v)} cm</span></div>
+    <div class="small dim mb12" style="line-height:1.5">Todo se calcula desde tu ${P.ancla.n}${UID!=='cami'?` (marco de pecho ${fmt1(P.pechoBase)} cm)`:''}. Son referencias <b>estéticas</b>, no de salud: la única con respaldo clínico es cintura/estatura.</div>
+    ${filas.map(f=>{
+      if(f.act==null) return `<div class="proprow"><span class="grow"><b>${f.n}</b><i class="small dim" style="display:block">objetivo ${fmt1(f.o)} cm · sin medir</i></span></div>`;
+      const dif=f.act-f.o, tol=f.tol||0;
+      const logrado = f.dir==='baja' ? (dif<=tol) : (dif>=-tol);
+      const pct=clamp(f.dir==='baja' ? (f.o/f.act)*100 : (f.act/f.o)*100, 0, 100);
+      return `<div class="proprow">
+        <div class="flex between" style="align-items:baseline">
+          <b class="small">${f.n}</b>
+          <span class="medval"><b class="${logrado?'mint':''}">${fmt1(f.act)}</b><em>de ${fmt1(f.o)} cm</em></span>
+        </div>
+        <div class="fzabar mt4"><i style="width:${Math.round(pct)}%;background:${logrado?'linear-gradient(90deg,var(--mint),var(--mint2))':'linear-gradient(90deg,rgba(var(--acc-rgb),.9),rgba(var(--acc-rgb),.5))'}"></i></div>
+        <div class="small mt4" style="color:${logrado?'var(--mint)':'var(--ink2)'}">${logrado?'En rango ✓':(f.dir==='baja'?`${fmt1(Math.abs(dif))} cm por bajar`:`${fmt1(Math.abs(dif))} cm por ganar`)}</div>
+      </div>`;
+    }).join('')}
+    <span class="lbl" style="display:block;margin-top:14px">FORMA</span>
+    ${P.ratios.filter(r=>r.v!=null).map(r=>{
+      const ok = r.menor ? r.v<=r.meta : r.v>=r.meta;
+      const okSalud = r.salud!=null ? (r.menor? r.v<=r.salud : r.v>=r.salud) : null;
+      return `<div class="proprow"><div class="flex between" style="align-items:baseline">
+        <b class="small">${r.n}${r.clinico?' <i class="small" style="color:var(--mint);font-style:normal">· salud</i>':''}</b>
+        <span class="medval"><b class="${ok?'mint':okSalud===false?'red':''}">${r.v.toFixed(2)}</b><em>meta ${r.meta.toFixed(r.meta<1?2:3)}</em></span></div>
+        ${r.nota?`<div class="small dim mt4">${r.nota}</div>`:''}
+        ${(!ok&&okSalud)?`<div class="small dim mt4">Por encima de la referencia estética, pero dentro del rango sano (${r.salud.toFixed(2)}).</div>`:''}
+      </div>`;
+    }).join('')}
+    ${reeves?`<div class="mt12"><span class="lbl">SIMETRÍA DE REEVES</span>
+      <div class="small mt4" style="line-height:1.5">Brazo, pantorrilla y cuello deberían medir casi lo mismo: ${reeves.vs.map(x=>`${x.n} <b>${fmt1(x.v)}</b>`).join(' · ')}.
+      ${reeves.ok?'Están parejos ✓':`Hay <b>${fmt1(reeves.dif)} cm</b> de diferencia entre el mayor y el menor.`}</div></div>`:''}
+    <div class="small dim mt12" style="line-height:1.5">${UID==='cami'
+      ? 'Tu cadera y tu estructura ósea no cambian con entrenamiento. Si algún objetivo queda lejos por estructura, no es un fallo tuyo: es el sistema pidiendo algo que tu esqueleto no da.'
+      : 'La muñeca es hueso: no se entrena. Si un objetivo queda lejos, se trabaja con años de entreno, no con dieta.'}</div>
+  </section>`;
 }
 /* ============ NIVEL DE FUERZA vs ESTANDARES ============
    Un 1RM suelto no dice nada: 100 kg de sentadilla es otra cosa a 60 kg que a 95.
@@ -2905,14 +3181,17 @@ function medPanelZona(zona){
   return `<div class="medpanel">${filas}${asim}${ayudaTxt?`<div class="small dim mt8" style="line-height:1.5">${ic('ruler',11)} ${esc(ayudaTxt)}</div>`:''}</div>`;
 }
 /* ---- la vista ---- */
-function vMedidas(){
+/* Medidas vive DENTRO de Progreso (es donde se buscan los datos del cuerpo) y
+   tambien como vista propia a la que se llega desde el Perfil. El cuerpo es el
+   mismo; solo cambia si lleva cabecera de pantalla. */
+function vMedidas(){ return pageHead('Medidas', 'tu cuerpo en números, sin drama')+vMedidasCuerpo(); }
+function vMedidasCuerpo(){
   const sel=UI.medZona||null;
   const nav=medNavy(), r=medRatios(), pend=medPendientes(), fase=medAvisoFase();
   const pm=pesoProm7();
   const est=medUltimo('estatura');
   const hoyForm=UI.medForm ? medCamposHoy(UI.medForm) : null;
   return `
-  ${pageHead('Medidas', 'tu cuerpo en números, sin drama')}
   ${pend.length?`<section class="mod tight glowtop">
     <div class="flex" style="gap:10px;align-items:flex-start">${ic('bell',16)}
       <div class="grow" style="min-width:0"><b>Hoy toca: ${pend.map(p=>p.n.toLowerCase()).join(' y ')}</b>
@@ -2931,6 +3210,8 @@ function vMedidas(){
     </div>
   </section>
   ${hoyForm?medForm(hoyForm):''}
+  ${metaGrasaCard()}
+  ${metaCard()}
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('ruler',16)} Tu cuerpo</span>${sel?`<button class="btn sm ghost" data-a="medZona" data-z="">Ver todo</button>`:''}</div>
     <div class="medwrap"><div class="${sel?'hassel':''}" style="display:contents">${medMapa(sel).replace('class="medsvg"', 'class="medsvg'+(sel?' hassel':'')+'"')}</div></div>
@@ -2952,6 +3233,11 @@ function vMedidas(){
         <div class="medfx mt8">${nav.formula.txt}</div>
         <div class="medfx sust mt4">${nav.formula.sust}</div>
         <div class="small dim mt8">Medidas usadas: cuello ${fmt1(nav.cue)} · cintura ${fmt1(nav.cin)}${UID==='cami'?' · cadera '+fmt1(nav.cad):''} · estatura ${fmt1(nav.est)} cm.</div>
+        ${(UID==='cami'&&(()=>{ const r=medRatios();
+          /* con cintura estrecha respecto a cadera Y respecto a estatura, la formula
+             femenina (que pondera mucho la cadera) sobreestima: se dice, porque el
+             numero asusta sin razon y empuja a metas mas agresivas de la cuenta */
+          return r.cc && r.ce && r.cc.v<=0.75 && r.ce.v<=0.46; })())?`<div class="nkcalert mt8">${ic('alert',14)}<div><b>Este número está probablemente inflado.</b> Tu cintura es estrecha para tu cadera (${medRatios().cc.v.toFixed(2)}) y para tu estatura (${medRatios().ce.v.toFixed(2)}), y la fórmula femenina pondera mucho la cadera. Fíate más de esos dos ratios que del porcentaje.</div></div>`:''}
         ${UID==='cami'?(()=>{ /* la cadera ancha por estructura infla el resultado: se
             muestra cuanto pesa en el numero para que no se lea como dogma */
             const alt=495/(1.29579 - 0.35004*log10(nav.cin+(nav.cad-5)-nav.cue) + 0.22100*log10(nav.est)) - 450;
@@ -2965,6 +3251,7 @@ function vMedidas(){
     ${r.ce?medRatioRow('Cintura / estatura', r.ce.v, r.ce.umbral, 'Por debajo de 0,50 es la referencia de salud, igual para todos.'):''}
     ${r.cc?medRatioRow('Cintura / cadera', r.cc.v, r.cc.umbral, UID==='cami'?'Referencia en mujeres: por debajo de 0,85.':'Referencia en hombres: por debajo de 0,90.'):''}
   </section>`:''}
+  ${propCard()}
   ${(()=>{ const as=medAsimetrias(); if(!as.length) return '';
     return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('alert',16)} Diferencias entre lados</span></div>
       ${as.map(a=>`<div class="medrow"><span class="grow"><b>${esc(a.n)}</b><i class="small dim" style="display:block">der ${fmt1(a.der)} · izq ${fmt1(a.izq)} cm</i></span>
@@ -11551,8 +11838,8 @@ function progGrpSelector(grp){
 /* Progreso vive en dos grupos grandes: actividad fisica (general, peso, volumen, tiempo, fuerza,
    pasos) y nutricion. El grupo se deduce de la sub-vista activa, asi ?sub= y los atajos viejos
    siguen sirviendo. */
-const PROG_ACT=[['general','General','target'],['peso','Peso','scale'],['volumen','Volumen','chart'],['tiempo','Tiempo','timer'],['ejercicios','Fuerza','barbell'],['pasos','Pasos','steps']];
-const PROG_KEYS=['general','peso','volumen','tiempo','ejercicios','pasos','nutri'];
+const PROG_ACT=[['general','General','target'],['peso','Peso','scale'],['medidas','Medidas','ruler'],['volumen','Volumen','chart'],['tiempo','Tiempo','timer'],['ejercicios','Fuerza','barbell'],['pasos','Pasos','steps']];
+const PROG_KEYS=['general','peso','medidas','volumen','tiempo','ejercicios','pasos','nutri'];
 function progGroup(){ return UI.sub.prog==='nutri' ? 'nutri' : 'act'; }
 function vProgreso(){
   let sub=UI.sub.prog;
@@ -11568,7 +11855,7 @@ function vProgreso(){
       ${PROG_ACT.map(([id,lb,icn])=>`<button class="chip ${sub===id?'fill':''}" data-a="progSub" data-s="${id}">${ic(icn,12)} ${lb}</button>`).join('')}
     </div>
   </section>
-  ${sub==='peso'?vPeso():sub==='volumen'?vVolumen():sub==='tiempo'?vTiempo():sub==='ejercicios'?vEjercicios():sub==='pasos'?vPasos():''}`
+  ${sub==='peso'?vPeso():sub==='medidas'?vMedidasCuerpo():sub==='volumen'?vVolumen():sub==='tiempo'?vTiempo():sub==='ejercicios'?vEjercicios():sub==='pasos'?vPasos():''}`
   :`
   <section class="mod tight">
     <div class="small dim">Proteína, calorías y adherencia de tu alimentación. Lo que comes se registra en COMIDA.</div>
@@ -14319,6 +14606,11 @@ const CHANGES = {
     if(v>0) a.run.min=v; else delete a.run.min;
     save('acts'); render(); },
   medIn(){ /* se lee al guardar: re-pintar por tecla destruiria el campo enfocado */ },
+  metaGrasa(el){
+    const c=metaGrasaCfg();
+    S.cfg.metaGrasa=clamp(+el.value||c.def, c.min, 40);   /* el tope se respeta aqui tambien */
+    save('cfg'); render();
+  },
   goalq(el){ UI.goalQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=goalq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   goalw(el){ UI.goalW=el.value; render(); const inp=document.getElementById('goalW'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   goalr(el){ UI.goalR=el.value; render(); const inp=document.getElementById('goalR'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },

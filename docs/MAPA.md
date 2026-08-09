@@ -320,7 +320,8 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 - **P8** Vista Pasos (`vPasos`)
 - **P9** Nutrición en Progreso: adherencia, kcal, dona de macros, top alimentos (`vNutriStats`)
 
-## MD · Medidas (sección propia, `vMedidas`, se entra desde PF7)
+## MD · Medidas (categoría de Progreso, `vMedidasCuerpo`; también vista propia
+`vMedidas` a la que se llega desde PF7)
 
 - **MD1** Aviso de lo que toca hoy: cada grupo tiene su cadencia (peso diario,
   cintura y cuello cada 14 días, set completo cada 28, estatura cada 365). Si
@@ -339,6 +340,19 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   resultado, con el cálculo alternativo para que se vea cuánto pesa (`medNavy`)
 - **MD5** Proporciones: cintura/estatura (≤0,50) y cintura/cadera (≤0,90 él, ≤0,85
   ella) (`medRatios`); diferencias entre lados desde 1 cm (`medAsimetrias`)
+- **MD7** Meta de grasa (`metaGrasaCard`): slider con **tope duro por sexo** (mínimo
+  8% él, 18% ella; por defecto 15% y 22%). El tope se aplica también en
+  `metaGrasaDe`, así que no se salta con un dato guardado ni escribiéndolo a mano.
+  Bajo 20% en mujer sale el aviso de ciclo y densidad ósea. Tabla de rangos por sexo
+- **MD8** Meta en dos fases (`metaFases`, `metaCard`): Fase 1 definición hasta tu %
+  meta con la masa magra de hoy; Fase 2 recomposición hasta los 89 kg, que no se
+  borran. La fecha sale de la tasa real de 4 semanas (o del 0,5%/semana si no hay
+  historia) y **siempre con rango de ±3 semanas**. `metaGuardia` avisa si la magra
+  cae más de 1 kg sin que baje la grasa, preguntando antes por hidratación
+- **MD9** Proporciones (`propObjetivos`, `propCard`): ancla en la muñeca (él,
+  McCallum) o en la cadera (ella). Ordena por diferencia relativa, semáforo por
+  categoría (nunca rojo por superar un objetivo), ratios de forma con la áurea y
+  simetría de Reeves. Sin el ancla no calcula nada parcial
 - **MD6** "Qué hacer con esto": lee la tendencia de cintura contra el peso promedio
   y devuelve máximo 3 frases con una acción concreta (`medPlan`)
 

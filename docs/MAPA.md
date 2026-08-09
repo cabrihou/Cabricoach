@@ -20,7 +20,8 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 - **I1** Hero del peso: número grande, "toca para registrar", slider y meta (`.bignum`, `.wtap`)
 - **I2** Checkpoint del día: tarjetas de atajos (`ckSection`)
   - I2a Entreno ("Ir a entrenar" + check que completa la rutina)
-  - I2b Pasos · I2c Agua · I2d Check-in · I2e Foto del día
+  - I2b Pasos · I2c Agua · **I2d Medidas** (lleva a Progreso → Medidas, `medGo`; dice
+    qué toca hoy o en cuántos días) · I2e Foto del día
 - **I4x** Guardar una combinación como **plato reutilizable** (alimento compuesto en
   customFoods, sale en la categoría Platos y se registra con su desglose). Se puede
   desde el borrador (`platoGuardar`) **y desde un loggeo ya guardado** con 2+
@@ -324,16 +325,25 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 `vMedidas` a la que se llega desde PF7)
 
 - **MD1** Aviso de lo que toca hoy: cada grupo tiene su cadencia (peso diario,
-  cintura y cuello cada 14 días, set completo cada 28, estatura cada 365). Si
+  **cintura y cuello cada 8 días**, resto del set cada 15, estructura cada 365). Si
   coinciden varios se funden en un solo formulario (`medEstado`, `medCamposHoy`).
   Se puede medir cuando se quiera con los chips de abajo, no solo el día que toca.
-  Para Cami, si el set mensual cae en fase menstrual se SUGIERE aplazar (`medAvisoFase`)
-- **MD2** Mapa corporal: cabrito bípedo en SVG con 12 zonas tocables por `<path>`
-  (`medMapa`). Al elegir una, el resto baja a 0,35 de opacidad y la activa toma el
-  color del usuario. Navegable por teclado, cada zona con `aria-label`
-- **MD3** Panel de la zona: valor, fecha, delta contra la medición anterior y
-  sparkline de las últimas 6 (`medPanelZona`, `medSpark`). El delta solo se colorea
-  en cintura y cadera: en brazo o pecho subir no es malo
+  Para Cami, si el set cae en fase menstrual se SUGIERE aplazar (`medAvisoFase`)
+- **MD2** Mapa corporal (`medMapa`): **plano técnico de líneas blancas**, sin relleno.
+  12 zonas tocables; la elegida se ilumina con el color del usuario y un
+  `feGaussianBlur`, el resto baja a 0,22 de opacidad. Al lado de cada zona va su
+  etiqueta de plano con línea guía, el valor y el **indicador de cambio**: el
+  triángulo apunta según el signo, el color según si ese cambio es bueno en esa
+  zona (bajar es bueno en cintura y cadera, subir en el resto). Navegable por teclado
+- **MD3** Panel de la zona (`medPanelZona`): valor, fecha, delta y sparkline, más
+  **medida objetivo** con barra de avance (`medObjetivoDe`), **histórico de hasta 8
+  tomas con el peso promedio de ese día al lado** y una **sugerencia por zona**
+  (`medSugerenciaZona`). En cintura el objetivo sale de despejar el Navy al % de
+  grasa meta (`medCinturaObjetivo`); si esa inversión cae por debajo de 0,40 de
+  cintura/estatura se marca imposible y se explica en vez de mostrar un número irreal
+  (es lo que pasa con la cadera de Cami). En Cami el pecho no lleva objetivo: es busto
+- **MD10** "Cada cuánto medirte" (`medCadenciaCard`): las cuatro cadencias con el
+  porqué de cada una, cuáles son clave y cuántos días faltan para la próxima
 - **MD4** Bloque Navy: % de grasa, masa grasa y magra sobre el promedio de 7 días,
   la fórmula literal con los valores sustituidos y el margen de error (±3-4 puntos).
   Para Cami añade el aviso de que su cadera ancha es estructural e infla el

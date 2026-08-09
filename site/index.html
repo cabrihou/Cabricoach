@@ -865,6 +865,33 @@ svg .acc{fill:var(--mint);stroke:none}
 .medwrap{display:flex;justify-content:center;margin:4px 0 6px}
 .medsvg{width:min(230px,72vw);height:auto}
 .medpanel{margin-top:12px;padding-top:10px;border-top:1px solid var(--line2)}
+.medobj{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid var(--line2);border-radius:12px;background:rgba(255,255,255,.02)}
+.medobj.ok{border-color:rgba(88,223,163,.35);background:rgba(88,223,163,.06)}
+.medobjv{font:800 16px var(--num);color:var(--acc);white-space:nowrap;display:flex;align-items:center;gap:4px}
+.medobjv em{font:600 9px var(--ui);color:var(--smoke);font-style:normal}
+.medobj.ok .medobjv{color:var(--mint);font-size:13px}
+.medbar{height:5px;border-radius:3px;background:var(--line2);overflow:hidden;margin-top:8px}
+.medbar i{display:block;height:100%;border-radius:3px;background:var(--acc);box-shadow:0 0 10px color-mix(in srgb,var(--acc) 55%,transparent)}
+.medhist{margin-top:12px}
+.medhist summary{cursor:pointer;font:600 12px var(--ui);color:var(--smoke);list-style:none;padding:6px 0}
+.medhist summary::-webkit-details-marker{display:none}
+.medhist summary:before{content:'+ ';font-weight:800}
+.medhist[open] summary:before{content:'− '}
+.medtab{width:100%;border-collapse:collapse;font:600 12px var(--num)}
+.medtab th{font:600 9px var(--ui);color:var(--smoke);text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:4px 0;border-bottom:1px solid var(--line2)}
+.medtab td{padding:5px 0;border-bottom:1px solid var(--line2);color:var(--ink)}
+.medtab td.dim{color:var(--smoke)} .medtab td.mint{color:var(--mint)} .medtab td.red{color:#FF6B6B}
+.medtab th:not(:first-child),.medtab td:not(:first-child){text-align:right}
+.medsug{display:flex;gap:8px;align-items:flex-start;margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.03);font:400 12.5px/1.55 var(--ui);color:var(--ink2)}
+.medsug b{color:var(--ink)}
+.medcad{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line2)}
+.medcad:last-child{border-bottom:0}
+.medcad .cadn{width:52px;flex:none;text-align:center}
+.medcad .cadn b{display:block;font:800 17px var(--num);color:var(--acc);line-height:1}
+.medcad .cadn i{font:600 8.5px var(--ui);color:var(--smoke);font-style:normal;letter-spacing:.05em;text-transform:uppercase}
+.medcad.key .cadn b{color:var(--gold)}
+.medcad .cadok{font:600 10px var(--ui);white-space:nowrap;color:var(--smoke)}
+.medcad .cadok.due{color:var(--gold)} .medcad .cadok.late{color:#FF6B6B}
 .medrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line)}
 .medrow:last-child{border-bottom:none}
 .medval{flex:none;text-align:right;line-height:1.15}
@@ -1446,7 +1473,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 143';
+const APPREV='REV 144';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2581,11 +2608,25 @@ const MED_CAMPOS=[
   {k:'tobillo', n:'Tobillo', zona:'pantorrilla-der',g:'anio', ancla:1, ayuda:'En el punto más estrecho, sobre los tobillos. Es hueso: no cambia.'},
   {k:'rodilla', n:'Rodilla', zona:'muslo-der',      g:'anio', ancla:1, ayuda:'Por el medio de la rótula, pierna estirada y relajada. Es hueso: no cambia.'},
 ];
+/* Cada cuanto se toma cada cosa. La regla no es capricho: se mide con la frecuencia
+   con la que el dato REALMENTE cambia, si no solo se mide el ruido de la cinta.
+   - peso: diario, es lo unico que se mueve todos los dias (y se lee en promedio de 7).
+   - cintura y cuello cada 8 dias: son las dos que entran en el Navy, o sea las que
+     mueven el % de grasa y por tanto la meta. Ocho dias ya dan señal por encima del
+     error de medicion (±0,5 cm) sin volverlo una obsesion diaria.
+   - el resto del set cada 15 dias: un musculo no cambia 1 cm en una semana, medirlo
+     mas seguido solo genera falsos avances.
+   - estructura (muñeca, tobillo, rodilla, estatura) una vez al año: es hueso.
+   `clave` marca las que no se pueden saltar. `porque` sale en la tarjeta de cadencia. */
 const MED_GRUPOS={
-  dia:  {n:'Peso de hoy',   cada:1,   tol:0, campos:['peso']},
-  quin: {n:'Cintura y cuello', cada:14, tol:2, campos:['cintura','cuello']},
-  mes:  {n:'Set completo',  cada:28,  tol:4, campos:MED_CAMPOS.filter(c=>c.g==='mes').map(c=>c.k).concat(['cintura','cuello'])},
-  anio: {n:'Estructura',    cada:365, tol:0, campos:['estatura','muneca','tobillo','rodilla']},
+  dia:  {n:'Peso de hoy',   cada:1,   tol:0, clave:true, campos:['peso'],
+         porque:'Se mueve todos los días. No lo leas suelto: lo que vale es el promedio de 7.'},
+  ocho: {n:'Cintura y cuello', cada:8, tol:2, clave:true, campos:['cintura','cuello'],
+         porque:'Son las dos que entran en el cálculo Navy: de aquí sale tu % de grasa y tu meta de peso. Si solo tomas una medida al mes, que sea esta.'},
+  quince:{n:'Resto del set', cada:15, tol:4, campos:MED_CAMPOS.filter(c=>c.g==='mes').map(c=>c.k),
+         porque:'Brazos, muslos, pecho y cadera cambian lento. Cada 15 días el cambio ya está por encima del error de la cinta.'},
+  anio: {n:'Estructura',    cada:365, tol:0, campos:['estatura','muneca','tobillo','rodilla'],
+         porque:'Hueso: muñeca, tobillo, rodilla y estatura. Se toman una vez y anclan todas tus proporciones objetivo.'},
 };
 /* la cintura de la mujer se mide en el punto MAS ESTRECHO del torso para la formula
    Navy; la del hombre, al ombligo. El texto de ayuda cambia con el usuario porque
@@ -2694,10 +2735,38 @@ function medEstado(){
   return out;
 }
 function medPendientes(){ return medEstado().filter(x=>x.pend); }
+/* dias que faltan para la proxima toma (sin contar el peso, que es diario) */
+function medFaltanDias(){
+  const f=medEstado().filter(x=>x.g!=='dia'&&!x.pend&&x.dias!=null).map(x=>x.cada-x.dias);
+  return f.length?Math.max(0,Math.min(...f)):0;
+}
+/* tarjeta de cadencia: cada cuanto, por que, y que tan al dia va cada grupo */
+function medCadenciaCard(){
+  const st=medEstado();
+  const filas=st.map(x=>{
+    const cfg=MED_GRUPOS[x.g];
+    const falta=x.dias==null?null:x.cada-x.dias;
+    const est = x.ult===null ? {c:'due', t:'nunca'}
+      : x.tarde ? {c:'late', t:`${x.dias-x.cada} d de retraso`}
+      : x.pend ? {c:'due', t:'toca hoy'}
+      : {c:'', t:`en ${falta} d`};
+    return `<div class="medcad ${cfg.clave?'key':''}">
+      <div class="cadn"><b>${x.cada===365?'1':x.cada}</b><i>${x.cada===365?'al año':x.cada===1?'día':'días'}</i></div>
+      <div class="grow" style="min-width:0"><b>${esc(x.n)}${cfg.clave?' <span class="chip xs gold">clave</span>':''}</b>
+        <div class="small dim mt4" style="line-height:1.5">${esc(cfg.porque||'')}</div></div>
+      <span class="cadok ${est.c}">${est.t}</span></div>`;
+  }).join('');
+  return `<section class="mod">
+    <div class="modh">${ic('bell',16)}<h3>Cada cuánto medirte</h3></div>
+    <p class="small dim" style="line-height:1.55;margin:0 0 4px">Puedes medirte el día que quieras, esto es solo el ritmo que hace que los números signifiquen algo. Si te mides más seguido, lo que ves es el error de la cinta, no tu progreso.</p>
+    ${filas}
+    <div class="small dim mt12" style="line-height:1.5">${ic('ruler',11)} Siempre a la misma hora, en ayunas, antes de entrenar y con la cinta pegada sin apretar. Dos tomas seguidas: si difieren más de 0,5 cm, toma una tercera.</div>
+  </section>`;
+}
 /* campos a pedir hoy: si coinciden varios grupos se funden en un solo formulario */
 function medCamposHoy(forzar){
   const g=new Set();
-  if(forzar) (forzar==='todo'?['dia','quin','mes','anio']:[forzar]).forEach(x=>g.add(x));
+  if(forzar) (forzar==='todo'?Object.keys(MED_GRUPOS):[forzar]).forEach(x=>g.add(x));
   else medPendientes().forEach(p=>g.add(p.g));
   const ks=new Set();
   g.forEach(x=>MED_GRUPOS[x].campos.forEach(k=>ks.add(k)));
@@ -3099,43 +3168,101 @@ function fzaCard(){
    no por el de la imagen. */
 function medMapa(sel){
   const acc = UID==='cami' ? '#FFC94D' : '#5C8DFF';
-  const piel = UID==='cami' ? '#F0E4D2' : '#C69C6D';
-  const z=(id,lb,d)=>`<g class="mzone ${sel===id?'on':''}" data-a="medZona" data-z="${id}" role="button" tabindex="0"
+  /* delta de una medida contra la anterior, para el indicador de al lado */
+  const delta=k=>{ const s=medSerie(k); if(s.length<2) return null;
+    const d=s[s.length-1].v-s[s.length-2].v;
+    return Math.abs(d)<0.05?null:Math.round(d*10)/10; };
+  const val=k=>{ const u=medUltimo(k); return u?u.v:null; };
+  /* que direccion es "mejor" en cada zona: en cintura y cadera bajar; en el resto
+     subir. La flecha verde/roja se pinta con eso, no con el signo del cambio. */
+  const MEJOR={cuello:'sube', pecho:'sube', cintura:'baja', cadera:'baja', hombros:'sube',
+    brazo_flex_der:'sube', antebrazo_der:'sube', muslo_der:'sube', pantorrilla_der:'sube'};
+  const z=(id,lb,d)=>`<g class="bz ${sel===id?'on':''}" data-a="medZona" data-z="${id}" role="button" tabindex="0"
       aria-label="${lb}${sel===id?', seleccionada':''}" aria-pressed="${sel===id?'true':'false'}">${d}</g>`;
-  return `<svg class="medsvg" viewBox="0 0 200 350" role="group" aria-label="Mapa del cuerpo: toca una zona para ver su medida">
-    <defs><style>
-      .mzone .zp{fill:${piel};stroke:#0B0D0F;stroke-width:2;stroke-linejoin:round;transition:fill .18s,opacity .18s}
-      .mzone.on .zp{fill:${acc};stroke:#fff;stroke-width:2.6}
-      .medsvg.hassel .mzone:not(.on){opacity:.35}
-      .mzone{cursor:pointer}
-      .mzone:focus-visible{outline:none}
-      .mzone:focus-visible .zp{stroke:#fff;stroke-width:3}
-      .mfix{fill:${piel};stroke:#0B0D0F;stroke-width:2;stroke-linejoin:round}
-    </style></defs>
-    <!-- cabeza, cuernos y orejas: decorativo, no medible -->
-    <g class="mfix">
-      <path d="M78 34 Q70 14 82 17 Q90 20 91 30"/>
-      <path d="M122 34 Q130 14 118 17 Q110 20 109 30"/>
-      <ellipse cx="100" cy="44" rx="27" ry="25"/>
-      <path d="M74 42 Q58 38 56 48 Q62 56 76 52"/>
-      <path d="M126 42 Q142 38 144 48 Q138 56 124 52"/>
+  /* etiqueta de plano: linea guia + nombre + valor + indicador de cambio */
+  const et=(x,y,ax,ay,k,nom,zona,lado)=>{
+    const v=val(k), dl=delta(k);
+    const dir=MEJOR[k]||'sube';
+    const bien = dl==null?null : (dir==='baja' ? dl<0 : dl>0);
+    const anchor = lado==='i' ? 'end' : 'start';
+    const sx = lado==='i' ? x+4 : x-4;
+    const sube = dl>0;
+    return `<g class="bet ${sel===zona?'on':''}" data-a="medZona" data-z="${zona}" role="button" tabindex="0" aria-label="${nom}${v!=null?': '+fmt1(v)+' centímetros':', sin medir'}${dl!=null?', '+(bien?'mejoró':'empeoró')+' '+fmt1(Math.abs(dl))+' centímetros':''}">
+      <path class="bline" d="M${sx} ${y} L${ax} ${ay}"/>
+      <circle class="bdot" cx="${ax}" cy="${ay}" r="2.4"/>
+      <text class="bnom" x="${x}" y="${y-7}" text-anchor="${anchor}">${nom}</text>
+      <text class="bval" x="${x}" y="${y+9}" text-anchor="${anchor}">${v!=null?fmt1(v):'—'}<tspan class="bun"> cm</tspan></text>
+      ${dl!=null?`<g class="bdel ${bien?'good':'bad'}" transform="translate(${lado==='i'?x-2:x+2},${y+22})">
+        <path d="${sube?'M0 4 L4 -3 L8 4 Z':'M0 -3 L4 4 L8 -3 Z'}" transform="translate(${lado==='i'?-58:0},-4)"/>
+        <text x="${lado==='i'?-46:12}" y="0" text-anchor="start">${dl>0?'+':'−'}${fmt1(Math.abs(dl))}</text>
+      </g>`:''}
+    </g>`;
+  };
+  return `<svg class="bp ${sel?'hassel':''}" viewBox="0 0 360 360" role="group" aria-label="Plano del cuerpo: toca una zona para ver su medida">
+    <defs>
+      <filter id="bpglow" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <style>
+        .bp{--bp:#E7EDF3;--acc:${acc}}
+        .bp .st{fill:none;stroke:var(--bp);stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round;opacity:.55}
+        .bz .st{transition:stroke .2s,opacity .2s,stroke-width .2s}
+        .bz .hit{fill:transparent;stroke:none}
+        .bz{cursor:pointer}
+        .bz.on .st{stroke:var(--acc);stroke-width:2.4;opacity:1;filter:url(#bpglow)}
+        .bp.hassel .bz:not(.on) .st{opacity:.22}
+        .bz:focus-visible .st{stroke:#fff;opacity:1;stroke-width:2.4}
+        .bfix{fill:none;stroke:var(--bp);stroke-width:1.5;opacity:.4;stroke-linejoin:round}
+        .bline{stroke:var(--bp);stroke-width:.9;opacity:.3;stroke-dasharray:2 3}
+        .bdot{fill:var(--bp);opacity:.5}
+        .bnom{font:600 8.5px var(--ui);fill:var(--smoke);letter-spacing:.06em;text-transform:uppercase}
+        .bval{font:700 14px var(--num);fill:var(--bp)}
+        .bun{font:600 8px var(--ui);fill:var(--smoke)}
+        .bdel text{font:700 9.5px var(--num)}
+        .bdel.good path,.bdel.good text{fill:#58DFA3}
+        .bdel.bad path,.bdel.bad text{fill:#FF6B6B}
+        .bet{cursor:pointer}
+        .bet.on .bval{fill:var(--acc)} .bet.on .bline{opacity:.7;stroke:var(--acc)} .bet.on .bdot{fill:var(--acc);opacity:1}
+        .bet:focus-visible .bval{fill:#fff}
+      </style>
+    </defs>
+    <!-- rejilla tenue de plano -->
+    <g opacity=".07" stroke="#E7EDF3" stroke-width=".5">
+      ${[60,120,180,240,300].map(y=>`<path d="M120 ${y} H240"/>`).join('')}
+      <path d="M180 26 V336"/>
     </g>
-    <rect x="73" y="30" width="54" height="9" rx="4" fill="#D64545" stroke="#0B0D0F" stroke-width="1.6"/>
-    ${UID==='cami'?`<path d="M128 30 l10 -7 l2 9 l-10 3 z" fill="#FFC94D" stroke="#0B0D0F" stroke-width="1.6"/>`:''}
-    ${z('cuello','Cuello','<path class="zp" d="M88 64 h24 v16 h-24 z"/>')}
-    ${z('pecho','Pecho','<path class="zp" d="M72 80 q28 -9 56 0 l-3 52 q-25 7 -50 0 z"/>')}
-    ${z('cintura','Cintura','<path class="zp" d="M75 132 q25 7 50 0 l-2 40 q-23 6 -46 0 z"/>')}
-    ${z('cadera','Cadera','<path class="zp" d="M77 172 q23 6 46 0 l5 34 q-28 8 -56 0 z"/>')}
-    ${z('brazo-der','Brazo derecho','<path class="zp" d="M70 84 q-16 3 -19 16 l-4 46 q9 5 19 0 l7 -46 z"/>')}
-    ${z('brazo-izq','Brazo izquierdo','<path class="zp" d="M130 84 q16 3 19 16 l4 46 q-9 5 -19 0 l-7 -46 z"/>')}
-    ${z('antebrazo-der','Antebrazo derecho','<path class="zp" d="M47 146 q9 5 19 0 l3 46 q-11 5 -21 0 z"/>')}
-    ${z('antebrazo-izq','Antebrazo izquierdo','<path class="zp" d="M153 146 q-9 5 -19 0 l-3 46 q11 5 21 0 z"/>')}
-    ${z('muslo-der','Muslo derecho','<path class="zp" d="M74 206 q13 5 25 2 l-2 58 q-12 4 -24 0 z"/>')}
-    ${z('muslo-izq','Muslo izquierdo','<path class="zp" d="M126 206 q-13 5 -25 2 l2 58 q12 4 24 0 z"/>')}
-    ${z('pantorrilla-der','Pantorrilla derecha','<path class="zp" d="M73 266 q12 4 24 0 l-3 48 q-9 4 -18 0 z"/>')}
-    ${z('pantorrilla-izq','Pantorrilla izquierda','<path class="zp" d="M127 266 q-12 4 -24 0 l3 48 q9 4 18 0 z"/>')}
-    <g class="mfix"><path d="M76 314 h18 v10 h-18 z"/><path d="M106 314 h18 v10 h-18 z"/>
-      <path d="M46 192 q10 6 21 0 l1 12 q-11 5 -22 0 z"/><path d="M154 192 q-10 6 -21 0 l-1 12 q11 5 22 0 z"/></g>
+    <!-- cabeza: contorno, no medible -->
+    <g class="bfix">
+      <path d="M158 40 q-7 -19 5 -16 q8 3 9 13"/>
+      <path d="M202 40 q7 -19 -5 -16 q-8 3 -9 13"/>
+      <ellipse cx="180" cy="50" rx="24" ry="22"/>
+      <path d="M156 48 q-14 -4 -16 5 q5 8 17 4"/>
+      <path d="M204 48 q14 -4 16 5 q-5 8 -17 4"/>
+      <path d="M160 40 h40"/>
+    </g>
+    ${z('cuello','Cuello','<path class="st" d="M170 70 v12 h20 v-12"/><rect class="hit" x="164" y="66" width="32" height="20"/>')}
+    ${z('hombros','Hombros','<path class="st" d="M147 96 q33 -14 66 0"/><rect class="hit" x="140" y="84" width="80" height="18"/>')}
+    ${z('pecho','Pecho','<path class="st" d="M152 100 q28 -8 56 0 l-2 34 q-26 7 -52 0 z"/><rect class="hit" x="150" y="98" width="60" height="40"/>')}
+    ${z('cintura','Cintura','<path class="st" d="M154 136 q26 7 52 0 l-2 30 q-24 6 -48 0 z"/><rect class="hit" x="152" y="134" width="56" height="36"/>')}
+    ${z('cadera','Cadera','<path class="st" d="M156 168 q24 6 48 0 l4 28 q-28 8 -56 0 z"/><rect class="hit" x="150" y="166" width="60" height="34"/>')}
+    ${z('brazo-der','Brazo derecho','<path class="st" d="M150 100 q-14 4 -16 15 l-3 38 q8 4 16 0 l6 -38"/><rect class="hit" x="126" y="98" width="30" height="60"/>')}
+    ${z('brazo-izq','Brazo izquierdo','<path class="st" d="M210 100 q14 4 16 15 l3 38 q-8 4 -16 0 l-6 -38"/><rect class="hit" x="204" y="98" width="30" height="60"/>')}
+    ${z('antebrazo-der','Antebrazo derecho','<path class="st" d="M131 155 q8 4 16 0 l3 38 q-9 4 -18 0 z"/><rect class="hit" x="128" y="153" width="26" height="46"/>')}
+    ${z('antebrazo-izq','Antebrazo izquierdo','<path class="st" d="M229 155 q-8 4 -16 0 l-3 38 q9 4 18 0 z"/><rect class="hit" x="206" y="153" width="26" height="46"/>')}
+    ${z('muslo-der','Muslo derecho','<path class="st" d="M154 198 q12 5 24 2 l-2 52 q-11 4 -22 0 z"/><rect class="hit" x="150" y="196" width="32" height="60"/>')}
+    ${z('muslo-izq','Muslo izquierdo','<path class="st" d="M206 198 q-12 5 -24 2 l2 52 q11 4 22 0 z"/><rect class="hit" x="178" y="196" width="32" height="60"/>')}
+    ${z('pantorrilla-der','Pantorrilla derecha','<path class="st" d="M154 252 q11 4 22 0 l-3 44 q-8 4 -16 0 z"/><rect class="hit" x="150" y="250" width="30" height="52"/>')}
+    ${z('pantorrilla-izq','Pantorrilla izquierda','<path class="st" d="M206 252 q-11 4 -22 0 l3 44 q8 4 16 0 z"/><rect class="hit" x="180" y="250" width="30" height="52"/>')}
+    <g class="bfix"><path d="M157 298 h16 v8 h-16 z"/><path d="M187 298 h16 v8 h-16 z"/></g>
+    ${et(112,76,168,76,'cuello','Cuello','cuello','i')}
+    ${et(112,120,154,116,'pecho','Pecho','pecho','i')}
+    ${et(112,164,156,150,'cintura','Cintura','cintura','i')}
+    ${et(112,212,158,182,'cadera','Cadera','cadera','i')}
+    ${et(248,92,212,94,'hombros','Hombros','hombros','d')}
+    ${et(248,136,226,124,'brazo_flex_der','Brazo','brazo-der','d')}
+    ${et(248,182,228,172,'antebrazo_der','Antebrazo','antebrazo-der','d')}
+    ${et(248,232,206,222,'muslo_der','Muslo','muslo-der','d')}
+    ${et(248,286,206,274,'pantorrilla_der','Pantorrilla','pantorrilla-der','d')}
   </svg>`;
 }
 /* sparkline de una serie de medidas, sin ejes: solo la forma del cambio */
@@ -3152,6 +3279,42 @@ function medSpark(serie){
 /* panel de la zona tocada: valor, delta contra la medicion anterior y sparkline.
    El color del delta es NEUTRO salvo en cintura y cadera: en brazos, pecho, muslo o
    pantorrilla subir no es malo, asi que pintarlo de rojo mentiria. */
+/* Navy al reves: dada la meta de grasa, que cintura hay que tener.
+   Es el unico objetivo de medida que no sale de una proporcion estetica sino del
+   mismo calculo que ya usamos para el % de grasa, asi que se mueve solo cuando
+   cambia la meta (15% en Andres) o cuando cambian cuello, cadera o estatura. */
+function medCinturaObjetivo(){
+  const g=k=>{ const u=medUltimo(k); return u?u.v:null; };
+  const est=g('estatura'), cue=g('cuello');
+  const meta=(typeof metaGrasaDe==='function')?metaGrasaDe():15;
+  if(!est||!cue||!meta) return null;
+  const L=Math.log10;
+  /* piso fisiologico: por debajo de 0,40 de cintura/estatura ya no es composicion,
+     es una cifra que la formula escupe pero que ningun cuerpo sostiene */
+  const piso=est*0.40;
+  if(UID==='cami'){
+    const cad=g('cadera'); if(!cad) return null;
+    const x=(1.29579 + 0.22100*L(est) - 495/(meta+450))/0.35004;
+    const c=Math.pow(10,x)-cad+cue;    /* despeja de cintura + cadera - cuello */
+    if(!isFinite(c) || c<piso || c>200) return {imposible:true, meta, piso};
+    return {v:c, meta};
+  }
+  const x=(1.0324 + 0.15456*L(est) - 495/(meta+450))/0.19077;
+  const c=Math.pow(10,x)+cue;          /* despeja de cintura - cuello */
+  if(!isFinite(c) || c<piso || c>200) return {imposible:true, meta, piso};
+  return {v:c, meta};
+}
+/* objetivo de una medida concreta: la cintura manda el Navy, el resto la proporcion */
+function medObjetivoDe(k){
+  if(k==='cintura'){ const c=medCinturaObjetivo();
+    if(c && c.v) return {o:c.v, dir:'baja', fuente:`para llegar al ${fmt1(c.meta)}% de grasa`}; }
+  /* el busto de una mujer no es una meta de entrenamiento: no se pinta como objetivo */
+  if(k==='pecho' && UID==='cami') return null;
+  const P=propObjetivos();
+  if(!P||!P.ok) return null;
+  const o=P.obj.find(x=>x.k===k);
+  return o?{o:o.o, dir:o.dir, tol:o.tol, fuente:`proporción sobre tu ${P.ancla.n}`}:null;
+}
 function medPanelZona(zona){
   const campos=MED_CAMPOS.filter(c=>c.zona===zona);
   if(!campos.length) return '';
@@ -3178,7 +3341,69 @@ function medPanelZona(zona){
   }
   const ayuda=(campos.find(c=>c.ayuda)||{}).ayuda;
   const ayudaTxt = zona==='cintura' ? medAyudaCintura() : ayuda;
-  return `<div class="medpanel">${filas}${asim}${ayudaTxt?`<div class="small dim mt8" style="line-height:1.5">${ic('ruler',11)} ${esc(ayudaTxt)}</div>`:''}</div>`;
+  /* objetivo: cuanto falta y en que direccion, con la fuente del numero a la vista */
+  const cPrin=campos.find(c=>medUltimo(c.k)&&medObjetivoDe(c.k)) || campos.find(c=>medUltimo(c.k)) || campos[0];
+  const kPrin=cPrin.k, obj=medObjetivoDe(kPrin), act=medUltimo(kPrin);
+  let objHtml='';
+  if(obj && act){
+    const falta=obj.o-act.v, tol=obj.tol||0;
+    const enRango = obj.dir==='baja' ? act.v<=obj.o+tol : act.v>=obj.o-tol;
+    objHtml=`<div class="medobj ${enRango?'ok':''}">
+      <div class="grow" style="min-width:0"><b>Objetivo ${fmt1(obj.o)} cm</b>
+        <i class="small dim" style="display:block">${esc(obj.fuente)}</i></div>
+      <span class="medobjv">${enRango?`${ic('check',13)} logrado`
+        :`${obj.dir==='baja'?'−':'+'}${fmt1(Math.abs(falta))} <em>cm</em>`}</span>
+    </div>
+    <div class="medbar"><i style="width:${clamp(obj.dir==='baja'
+      ? (act.v<=obj.o?100:clamp(100-(act.v-obj.o)/Math.max(obj.o*0.18,1)*100,4,100))
+      : (act.v>=obj.o?100:clamp(act.v/obj.o*100,4,100)),4,100)}%"></i></div>`;
+  } else if(!obj){
+    objHtml=`<div class="small dim mt8">Para calcular el objetivo de esta zona falta ${UID==='cami'?'la cadera':'la muñeca'} en Estructura.</div>`;
+  }
+  /* historico: la medida al lado del peso de ese dia, porque una medida sin el peso
+     al lado no dice si creciste o si simplemente pesabas mas */
+  const hs=medSerie(kPrin).slice(-8).reverse();
+  const hist=hs.length<2?'':`<details class="medhist"><summary>Histórico · ${hs.length} registro${hs.length===1?'':'s'}</summary>
+    <table class="medtab"><thead><tr><th>Fecha</th><th>${esc(cPrin.n)}</th><th>Peso</th><th>Cambio</th></tr></thead><tbody>
+    ${hs.map((r,i)=>{ const pv=pesoProm7(r.d), sig=hs[i+1];
+      const d=sig?Math.round((r.v-sig.v)*10)/10:null;
+      const bien = d==null?null:(dirige? d<0 : d>0);
+      return `<tr><td>${fmtD(r.d)}</td><td><b>${fmt1(r.v)}</b></td><td class="dim">${pv?fmt1(pv.kg)+' kg':'—'}</td>
+        <td class="${d==null?'dim':bien?'mint':'red'}">${d==null?'—':(d>0?'+':'−')+fmt1(Math.abs(d))}</td></tr>`;
+    }).join('')}</tbody></table></details>`;
+  const sug=medSugerenciaZona(zona, kPrin, obj, act);
+  return `<div class="medpanel">${filas}${objHtml}${asim}${hist}
+    ${sug?`<div class="medsug">${ic('zap',12)}<div>${sug}</div></div>`:''}
+    ${ayudaTxt?`<div class="small dim mt8" style="line-height:1.5">${ic('ruler',11)} ${esc(ayudaTxt)}</div>`:''}</div>`;
+}
+/* que hacer con esta zona: se apoya en el objetivo y en si la zona sube o baja */
+function medSugerenciaZona(zona, k, obj, act){
+  if(!act) return 'Todavía no has medido esta zona. Tómala hoy para tener el punto de partida.';
+  if(zona==='cintura'){
+    const c=medCinturaObjetivo(), nav=medNavy(), r=medRatios();
+    if(c && c.imposible) return `Aquí el cálculo Navy se rompe: para darte ${fmt1(c.meta)}% tendría que pedirte una cintura por debajo de ${fmt1(c.piso)} cm, que no es una meta, es un número que escupe la fórmula porque tu cadera entra sumando. <b>Tu cintura ya no es el problema</b>${r.ce?`: está en ${(r.ce.v).toFixed(2)} de tu estatura, debajo de la referencia de 0,50`:''}. Guíate por la tendencia y por la ropa, no por ese porcentaje.`;
+    if(c && c.v && nav && nav.ok) return `Tu cintura es la que manda el cálculo: con <b>${fmt1(act.v)} cm</b> el Navy te da <b>${fmt1(nav.pct)}%</b> de grasa. Bajarla a <b>${fmt1(c.v)} cm</b>, sin tocar el cuello, es exactamente llegar al <b>${fmt1(c.meta)}%</b>. Se baja con déficit y pasos, no con abdominales.`;
+    return 'La cintura es la única medida que baja con déficit calórico. Sostén la proteína alta para no perder músculo mientras baja.';
+  }
+  if(zona==='cadera') return UID==='cami'
+    ? 'Tu cadera es estructura, no grasa: es el ancla de todas tus proporciones. No busques bajarla, busca que la cintura se aleje de ella.'
+    : 'La cadera baja sola cuando baja la cintura. No hay ejercicio que la reduzca directo.';
+  if(zona==='cuello') return 'El cuello casi no cambia. Si sube mucho de golpe, casi siempre es que mediste más arriba o más abajo que la vez pasada.';
+  if(!obj) return '';
+  const falta=obj.o-act.v;
+  if(zona==='pecho' && UID==='cami')
+    return 'Esta medida pasa por el busto, que es tejido mamario: no crece ni se moldea entrenando, y de hecho baja un poco cuando bajas grasa. Lo que sí se entrena es el pectoral de abajo (press y fondos), y eso mejora la forma sin cambiar el número. <b>No la persigas como objetivo.</b>';
+  const COMO={
+    pecho:'press de banca e inclinado, más fondos: volumen en empuje horizontal',
+    hombros:'press militar y elevaciones laterales, 2 veces por semana',
+    'brazo_flex_der':'curl y tríceps al final de la sesión, series de 8 a 12',
+    'antebrazo_der':'agarre: colgarse de la barra y cargadas de granjero',
+    'muslo_der':'sentadilla y prensa pesadas, más peso muerto rumano',
+    'pantorrilla_der':'gemelos de pie, series largas de 15 a 20, casi todos los días',
+  };
+  const como=COMO[k]||'';
+  if(falta<=0.3) return `Ya estás en el objetivo de esta zona. Ahora se trata de <b>mantenerla</b> mientras baja la cintura: ahí es donde se nota la forma.`;
+  return `Te faltan <b>${fmt1(falta)} cm</b> para el objetivo${como?`. Lo que los pone: <b>${como}</b>`:''}. Con superávit limpio esto toma meses, no semanas: 1 cm de brazo real es medio año de trabajo.`;
 }
 /* ---- la vista ---- */
 /* Medidas vive DENTRO de Progreso (es donde se buscan los datos del cuerpo) y
@@ -3257,6 +3482,7 @@ function vMedidasCuerpo(){
       ${as.map(a=>`<div class="medrow"><span class="grow"><b>${esc(a.n)}</b><i class="small dim" style="display:block">der ${fmt1(a.der)} · izq ${fmt1(a.izq)} cm</i></span>
         <span class="medval"><b>${fmt1(a.dif)}</b><em>cm</em></span></div>`).join('')}
       <div class="small dim mt8">Hasta 1 cm es normal. Desde 1,5 conviene trabajo unilateral del grupo.</div></section>`;})()}
+  ${medCadenciaCard()}
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('zap',16)} Qué hacer con esto</span></div>
     ${medPlan().map(p=>`<div class="flex mt8" style="gap:9px;align-items:flex-start">${ic(p.t==='ok'?'check':'alert',14)}<div class="small grow" style="line-height:1.5">${p.x}</div></div>`).join('')}
@@ -8432,10 +8658,14 @@ function ckSection(){
         ${waterUI(t,'water')}
       </div>
       ${(()=>{const ciDone=S.checkins.some(c=>c.d>=mondayOf(t));
-      return `<div class="cktile ${ciDone?'on':''}" data-a="ckGo" role="button" style="cursor:pointer;position:relative;overflow:hidden">
-        <b>${ic('clip',16)} Check-in${ciDone?`<span class="tick">${ic('check',11)}</span>`:''}</b>
-        <span class="small dim" style="max-width:52%">${ciDone?'Hecho esta semana':fromISO(t).getDay()===0?'Hoy toca: peso y medidas':'Domingos · peso y medidas'}</span>
-        <span class="chip ${ciDone?'dim':'fill'} mt8">${ciDone?'VER':'ABRIR'}</span>
+      const mp=(typeof medPendientes==='function')?medPendientes().filter(x=>x.g!=='dia'):[];
+      const mTarde=mp.some(x=>x.tarde);
+      return `<div class="cktile ${ciDone&&!mp.length?'on':''}" data-a="medGo" role="button" style="cursor:pointer;position:relative;overflow:hidden">
+        <b>${ic('ruler',16)} Medidas${ciDone&&!mp.length?`<span class="tick">${ic('check',11)}</span>`:''}</b>
+        <span class="small dim" style="max-width:52%">${mp.length
+          ?`Hoy toca: ${mp.map(x=>x.n.toLowerCase()).join(' y ')}${mTarde?' (con retraso)':''}`
+          :'Al día · toca en '+medFaltanDias()+' días'}</span>
+        <span class="chip ${mp.length?'fill':'dim'} mt8">${mp.length?'MEDIR':'VER'}</span>
         <img loading="lazy" src="${UID==='andres'?CAB.tileCheckA:CAB.tileCheckC}" alt="" decoding="async" style="position:absolute;right:-6px;bottom:0;height:134px;filter:drop-shadow(0 6px 12px rgba(0,0,0,.45))">
       </div>`})()}
       ${''/* la caja de comidas se unificó en la sección NUTRICIÓN de abajo */}
@@ -13740,6 +13970,10 @@ const ACTIONS = {
   mealAt(d){ const m=S.meals[UI.calSel]||{}; m[d.m]=!m[d.m]; S.meals[UI.calSel]=m; save('meals'); render(); },
   waterAt(d){ S.water[UI.calSel]=Math.max(0,(S.water[UI.calSel]||0)+Number(d.n)); save('water'); render(); },
   /* Check-in y Fotos son vistas propias (no estan en el nav): guardo de donde vine para el boton volver */
+  medGo(){ UI.backTo=UI.tab; UI.tab='progreso'; UI.sub.prog='medidas'; UI.session=null;
+    const p=medPendientes().filter(x=>x.g!=='dia');
+    if(p.length) UI.medForm='todo';
+    render(); window.scrollTo({top:0}); },
   ckGo(){ UI.backTo=(UI.tab==='checkin'||UI.tab==='fotos')?(UI.backTo||'inicio'):UI.tab; UI.tab='checkin'; UI.session=null; render(); window.scrollTo({top:0}); },
   volver(){ const t=UI.backTo||'inicio'; UI.backTo=null; UI.tab=VIEWS[t]?t:'inicio'; UI.session=null; render(); window.scrollTo({top:0}); },
   progGo(){ UI.tab='progreso'; UI.sub.prog=UI.progAct||'general'; UI.session=null; render(); window.scrollTo({top:0}); },

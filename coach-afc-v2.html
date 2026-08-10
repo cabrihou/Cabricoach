@@ -1526,7 +1526,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 149';
+const APPREV='REV 150';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3511,13 +3511,68 @@ const MED_COTAS={"frente":[["cuello","cuello","i",330,300,400],["pecho","pecho",
    biceps de quien entrena espalda sale a la mitad de lo que realmente recibe.
    Los multiarticulares olimpicos son los mas discutibles: ahi el reparto depende mucho de
    la tecnica y de la carga relativa. */
-const EJ_PATRONES={"press_horizontal":{"pectoral":65,"deltoide_anterior":20,"triceps":15},"press_cerrado":{"triceps":45,"pectoral":40,"deltoide_anterior":15},"palanca_frontal":{"dorsal":45,"abdomen":30,"lumbar":15,"triceps":10},"parada_manos":{"deltoide_anterior":45,"triceps":30,"trapecio":15,"abdomen":10},"sosten_anillas":{"triceps":40,"pectoral":30,"deltoide_anterior":20,"abdomen":10},"agarre_antebrazo":{"antebrazo":85,"biceps":15},"abduccion_cadera":{"gluteo":90,"aductor":10},"aduccion_cadera":{"aductor":90,"gluteo":10},"extension_lumbar":{"lumbar":45,"gluteo":35,"isquiotibial":20},"press_inclinado":{"pectoral":55,"deltoide_anterior":30,"triceps":15},"press_declinado":{"pectoral":70,"deltoide_anterior":15,"triceps":15},"fondo_pecho":{"pectoral":50,"triceps":45,"deltoide_anterior":5},"apertura_pecho":{"pectoral":85,"deltoide_anterior":15},"flexion_pecho":{"pectoral":60,"triceps":25,"deltoide_anterior":15},"press_vertical":{"deltoide_anterior":45,"triceps":30,"deltoide_lateral":20,"deltoide_posterior":5},"elevacion_lateral":{"deltoide_lateral":60,"deltoide_anterior":20,"deltoide_posterior":20},"elevacion_frontal":{"deltoide_anterior":70,"pectoral":20,"deltoide_lateral":10},"pajaro_posterior":{"deltoide_posterior":70,"trapecio":20,"deltoide_lateral":10},"jalon_vertical":{"dorsal":55,"biceps":20,"trapecio":15,"romboides":10},"remo_horizontal":{"dorsal":55,"trapecio":20,"biceps":15,"romboides":10},"remo_unilateral":{"dorsal":55,"biceps":20,"trapecio":15,"romboides":10},"remo_invertido":{"dorsal":50,"trapecio":25,"biceps":15,"romboides":10},"muscle_up":{"dorsal":30,"pectoral":20,"triceps":20,"biceps":15,"trapecio":15},"pullover":{"pectoral":50,"dorsal":35,"triceps":15},"encogimiento_trapecio":{"trapecio":90,"romboides":10},"curl_biceps":{"biceps":85,"antebrazo":15},"curl_martillo":{"biceps":70,"antebrazo":30},"extension_triceps":{"triceps":95,"antebrazo":5},"fondo_triceps":{"triceps":90,"deltoide_anterior":10},"sentadilla":{"cuadriceps":55,"gluteo":30,"isquiotibial":15},"prensa":{"cuadriceps":70,"gluteo":20,"isquiotibial":10},"zancada":{"cuadriceps":45,"gluteo":40,"isquiotibial":15},"extension_cuadriceps":{"cuadriceps":100},"curl_femoral":{"isquiotibial":100},"peso_muerto_convencional":{"isquiotibial":35,"cuadriceps":30,"gluteo":20,"lumbar":15},"peso_muerto_rumano":{"isquiotibial":50,"gluteo":35,"lumbar":15},"hip_thrust":{"gluteo":85,"isquiotibial":10,"cuadriceps":5},"gemelo_de_pie":{"pantorrilla":100},"gemelo_sentado":{"pantorrilla":100},"plancha_core":{"abdomen":85,"isquiotibial":15},"crunch_abdominal":{"abdomen":100},"elevacion_piernas":{"abdomen":100},"rotacion_core":{"oblicuos":70,"abdomen":30},"cargada_olimpica":{"gluteo":25,"isquiotibial":20,"cuadriceps":20,"trapecio":20,"lumbar":15},"arrancada_olimpica":{"gluteo":25,"isquiotibial":20,"cuadriceps":20,"deltoide_anterior":20,"trapecio":15},"farmer_walk":{"trapecio":45,"antebrazo":35,"abdomen":20}};
+const EJ_PATRONES={"press_horizontal":{"pectoral":65,"deltoide_anterior":20,"triceps":15},"press_cerrado":{"triceps":45,"pectoral":40,"deltoide_anterior":15},"palanca_frontal":{"dorsal":45,"abdomen":30,"lumbar":15,"triceps":10},"parada_manos":{"deltoide_anterior":45,"triceps":30,"trapecio":15,"abdomen":10},"sosten_anillas":{"triceps":40,"pectoral":30,"deltoide_anterior":20,"abdomen":10},"agarre_antebrazo":{"antebrazo":85,"biceps":15},"abduccion_cadera":{"gluteo":90,"aductor":10},"aduccion_cadera":{"aductor":90,"gluteo":10},"extension_lumbar":{"lumbar":45,"gluteo":35,"isquiotibial":20},"press_inclinado":{"pectoral":55,"deltoide_anterior":30,"triceps":15},"press_declinado":{"pectoral":70,"deltoide_anterior":15,"triceps":15},"fondo_pecho":{"pectoral":50,"triceps":45,"deltoide_anterior":5},"apertura_pecho":{"pectoral":85,"deltoide_anterior":15},"flexion_pecho":{"pectoral":60,"triceps":25,"deltoide_anterior":15},"press_vertical":{"deltoide_anterior":45,"triceps":30,"deltoide_lateral":20,"deltoide_posterior":5},"elevacion_lateral":{"deltoide_lateral":60,"deltoide_anterior":20,"deltoide_posterior":20},"elevacion_frontal":{"deltoide_anterior":70,"pectoral":20,"deltoide_lateral":10},"pajaro_posterior":{"deltoide_posterior":70,"trapecio":20,"deltoide_lateral":10},"jalon_vertical":{"dorsal":55,"biceps":20,"trapecio":15,"romboides":10},"remo_horizontal":{"dorsal":55,"trapecio":20,"biceps":15,"romboides":10},"remo_unilateral":{"dorsal":55,"biceps":20,"trapecio":15,"romboides":10},"remo_invertido":{"dorsal":50,"trapecio":25,"biceps":15,"romboides":10},"remo_alto":{"deltoide_posterior":35,"trapecio":30,"romboides":20,"dorsal":15},"muscle_up":{"dorsal":30,"pectoral":20,"triceps":20,"biceps":15,"trapecio":15},"pullover":{"pectoral":50,"dorsal":35,"triceps":15},"encogimiento_trapecio":{"trapecio":90,"romboides":10},"curl_biceps":{"biceps":85,"antebrazo":15},"curl_martillo":{"biceps":70,"antebrazo":30},"extension_triceps":{"triceps":95,"antebrazo":5},"fondo_triceps":{"triceps":90,"deltoide_anterior":10},"sentadilla":{"cuadriceps":55,"gluteo":30,"isquiotibial":15},"prensa":{"cuadriceps":70,"gluteo":20,"isquiotibial":10},"zancada":{"cuadriceps":45,"gluteo":40,"isquiotibial":15},"extension_cuadriceps":{"cuadriceps":100},"curl_femoral":{"isquiotibial":100},"peso_muerto_convencional":{"isquiotibial":35,"cuadriceps":30,"gluteo":20,"lumbar":15},"peso_muerto_rumano":{"isquiotibial":50,"gluteo":35,"lumbar":15},"hip_thrust":{"gluteo":85,"isquiotibial":10,"cuadriceps":5},"gemelo_de_pie":{"pantorrilla":100},"gemelo_sentado":{"pantorrilla":100},"plancha_core":{"abdomen":85,"isquiotibial":15},"crunch_abdominal":{"abdomen":100},"elevacion_piernas":{"abdomen":100},"rotacion_core":{"oblicuos":70,"abdomen":30},"cargada_olimpica":{"gluteo":25,"isquiotibial":20,"cuadriceps":20,"trapecio":20,"lumbar":15},"arrancada_olimpica":{"gluteo":25,"isquiotibial":20,"cuadriceps":20,"deltoide_anterior":20,"trapecio":15},"farmer_walk":{"trapecio":45,"antebrazo":35,"abdomen":20}};
 /* Volumen semanal de referencia en SERIES EFECTIVAS por musculo (Renaissance Periodization
    y literatura reciente de hipertrofia):
    MEV = minimo para crecer · MAV = punto optimo · MRV = maximo que se recupera.
    Varia mucho por persona (años de entreno, sueño, comida): son referencias, no leyes.
    El deltoide anterior lleva MEV 0 a proposito: se llena solo con cualquier press. */
 const MUSC_VOL={"pectoral":{"mev":8,"mav":14,"mrv":20},"dorsal":{"mev":8,"mav":14,"mrv":20},"deltoide_lateral":{"mev":10,"mav":15,"mrv":22},"deltoide_posterior":{"mev":8,"mav":12,"mrv":18},"deltoide_anterior":{"mev":0,"mav":8,"mrv":16},"triceps":{"mev":8,"mav":14,"mrv":20},"biceps":{"mev":8,"mav":12,"mrv":18},"antebrazo":{"mev":4,"mav":8,"mrv":14},"cuadriceps":{"mev":10,"mav":14,"mrv":20},"isquiotibial":{"mev":8,"mav":12,"mrv":18},"gluteo":{"mev":8,"mav":14,"mrv":20},"pantorrilla":{"mev":6,"mav":10,"mrv":16},"abdomen":{"mev":6,"mav":10,"mrv":12},"trapecio":{"mev":8,"mav":12,"mrv":18},"romboides":{"mev":4,"mav":8,"mrv":14},"lumbar":{"mev":2,"mav":6,"mrv":10},"oblicuos":{"mev":4,"mav":8,"mrv":12},"aductor":{"mev":4,"mav":8,"mrv":14}};
+/* ============ EXIGENCIA POR IMPLEMENTO ============
+   Tres series de dominadas en anillas no cuestan lo mismo que tres en barra fija: las
+   anillas se mueven en los tres ejes y el cuerpo tiene que estabilizarlas mientras tira.
+   El factor multiplica el ESFUERZO, no las series: las series efectivas se dejan como
+   estan (es una medida estandar y compararla con las referencias de volumen exige que lo
+   sea), y la exigencia se muestra aparte. Recopilado el 09/08/2026 de estudios de EMG
+   comparando implementos. Referencia 1,00 = barra. */
+const EX_ESFUERZO={"anillas":{"f":1.28,"x":"Las anillas se mueven en los tres ejes: el cuerpo tiene que estabilizarlas mientras tira. En EMG sale más trapecio, bíceps y antebrazo que en la misma dominada en barra."},"suspension":{"f":1.18,"x":"Las correas de suspensión piden 15-20% más de activación del core que la versión estable."},"peso_corporal":{"f":1.12,"x":"Sin apoyo externo: controlas tu propio cuerpo, no una trayectoria."},"mancuerna":{"f":1.13,"x":"Cada brazo estabiliza por su cuenta: 11-15% más de deltoide anterior y pectoral que con barra."},"kettlebell":{"f":1.14,"x":"El centro de masa cuelga por debajo del agarre y eso obliga a corregir todo el rato."},"barra":{"f":1.0,"x":"La referencia: trayectoria libre pero simétrica y con las dos manos unidas."},"banda":{"f":1.03,"x":"La resistencia sube con el recorrido y la vuelta pide más freno."},"polea":{"f":0.92,"x":"Tensión constante y trayectoria guiada: menos estabilización que un peso libre."},"maquina":{"f":0.85,"x":"La trayectoria fija quita casi toda la demanda de equilibrio: 15-20% menos estabilizadores."},"smith":{"f":0.8,"x":"Barra guiada en vertical: hasta un 43% menos de activación de estabilizadores que la barra libre."}};
+const EX_UNILAT_EXTRA=0.18;   /* trabajar un lado a la vez pide ~20% mas de core estabilizador */
+function esfuerzoEx(id){
+  const x=excatById(id)||{};
+  let eq=x.equip||null;
+  if(!eq){ const n=(exNombre(id)||'').toLowerCase();
+    eq = /anilla|ring/.test(n)?'anillas' : /trx|suspensi/.test(n)?'suspension'
+       : /mancuerna|dumbbell/.test(n)?'mancuerna' : /polea|cable/.test(n)?'polea'
+       : /m[aá]quina|machine/.test(n)?'maquina' : /smith/.test(n)?'smith'
+       : /banda|band/.test(n)?'banda' : /kettle/.test(n)?'kettlebell' : 'barra'; }
+  const base=EX_ESFUERZO[eq]||EX_ESFUERZO.barra;
+  let f=base.f;
+  if(exPorLado(id)) f+=EX_UNILAT_EXTRA;
+  return {f:Math.round(f*100)/100, eq, porque:base.x, extra:exPorLado(id)};
+}
+/* ---- correr ---- */
+/* MET por ritmo, del ACSM Compendium of Physical Activities (categoria running).
+   Contrastados contra la regla de ~1 kcal por kg y por km: la primera recopilacion los
+   traia inflados un 40% en la zona rapida y daba 828 kcal en 6 km. Con estos da 557,
+   que es lo que corresponde. Con el MET salen las kcal y una carga comparable con la de
+   pesas, para no tener el running como un mundo aparte. */
+const CORR_MET=[[9.4,6.0,"trote muy suave"],[7.5,8.3,"trote suave"],[7.1,9.0,"trote"],[6.2,9.8,"ritmo cómodo"],[5.6,10.5,"ritmo de fondo"],[5.3,11.0,"ritmo firme"],[5.0,11.8,"ritmo umbral"],[4.4,12.3,"ritmo rápido"],[4.1,12.8,"muy rápido"],[3.7,14.5,"casi a tope"],[3.4,16.0,"a tope"]];
+function corrMet(minKm){
+  if(!minKm||minKm<=0) return null;
+  const T=CORR_MET;
+  if(minKm>=T[0][0]) return {met:T[0][1], lb:T[0][2]};
+  if(minKm<=T[T.length-1][0]) return {met:T[T.length-1][1], lb:T[T.length-1][2]};
+  for(let i=0;i<T.length-1;i++){
+    const a=T[i], b=T[i+1];
+    if(minKm<=a[0] && minKm>=b[0]){
+      const k=(a[0]-minKm)/(a[0]-b[0]);
+      return {met:Math.round((a[1]+(b[1]-a[1])*k)*10)/10, lb: k>0.5?b[2]:a[2]};
+    }
+  }
+  return {met:T[0][1], lb:T[0][2]};
+}
+/* esfuerzo de una carrera: kcal y carga en unidades sRPE (minutos x esfuerzo percibido),
+   que es como se compara una sesion de carrera con una de pesas */
+function corrEsfuerzo(min, km, pesoKg){
+  if(!min||min<=0) return null;
+  const pc=pesoKg||fzaPesoCorporal()||70;
+  const minKm = km>0 ? min/km : null;
+  const m = minKm ? corrMet(minKm) : {met:9.3, lb:'trote suave'};
+  const kcal=Math.round(m.met*3.5*pc/200*min);
+  /* RPE aproximado desde el MET: 9 MET ~ 5/10, 19 MET ~ 10/10 */
+  const rpe=clamp(Math.round((m.met-6)/1.4), 1, 10);
+  return {met:m.met, etiqueta:m.lb, kcal, rpe, carga:Math.round(min*rpe), minKm};
+}
 const MUSC_NOM={pectoral:'Pectoral', deltoide_anterior:'Deltoide anterior', deltoide_lateral:'Deltoide lateral',
   deltoide_posterior:'Deltoide posterior', triceps:'Tríceps', biceps:'Bíceps', antebrazo:'Antebrazo',
   dorsal:'Dorsal', trapecio:'Trapecio', romboides:'Romboides', lumbar:'Lumbar', abdomen:'Abdomen',
@@ -3580,6 +3635,7 @@ const EJ_PATRON_NOM=[
   [/arnold|push press|militar|overhead|shoulder press|press.*(militar|hombro|overhead)|hombro.*press/i,'press_vertical'],
   [/elevaci[oó]n.*lateral|lateral raise/i,'elevacion_lateral'],
   [/elevaci[oó]n.*frontal|front raise/i,'elevacion_frontal'],
+  [/remo alto|high row|ring face|face.?pull.*anilla/i,'remo_alto'],
   [/p[aá]jaro|posterior|rear delt|face.?pull/i,'pajaro_posterior'],
   [/dominad|pull.?up|chin.?up|jal[oó]n|lat pulldown|pulldown/i,'jalon_vertical'],
   [/remo invertido|inverted row|australian/i,'remo_invertido'],
@@ -3999,6 +4055,27 @@ function vCarga(){
         <span class="cb"><i style="width:${clamp(f.s/v.mrv*100,0,100)}%;background:${f.nv.c}"></i>
           <b class="cmev" style="left:${clamp(v.mev/v.mrv*100,0,100)}%"></b></span>
         <span class="cv">${fmt1(f.s)}</span></div>`;}).join('')}
+    ${(()=>{ /* esfuerzo del periodo: series por el factor del implemento, mas la carrera */
+      const hoy=TODAY(), desde=addDays(hoy,-(dias-1));
+      let sB=0, sA=0, dur=0, kcal=0, kmT=0;
+      Object.entries(S.logs||{}).forEach(([id,h])=>{
+        const s=h.filter(e=>e.d>=desde&&e.d<=hoy).reduce((a,e)=>a+(e.sets||[]).length,0);
+        if(!s) return; sB+=s; sA+=s*esfuerzoEx(id).f;
+      });
+      Object.entries(S.acts||{}).forEach(([d,a])=>{
+        if(d<desde||d>hoy||!a||a.t!=='run'||!a.run) return;
+        const km=+a.run.km||0, min=+a.run.min||0;
+        if(km<=0&&min<=0) return;
+        const e=corrEsfuerzo(min, km, null);
+        if(e){ dur+=min; kcal+=e.kcal; kmT+=km; } });
+      if(!sB && !kmT) return '';
+      const dif=sB?Math.round((sA/sB-1)*100):0;
+      return `<div class="mt12" style="padding-top:10px;border-top:1px solid var(--line2)">
+        <div class="flex between" style="align-items:baseline"><b class="small">Cuánto te costó de verdad</b>
+          <span class="medval"><b>${fmt1(sA)}</b><em>de esfuerzo</em></span></div>
+        <div class="small dim mt4" style="line-height:1.5">Hiciste <b>${sB}</b> series. Contando lo que exige cada implemento (las anillas y las mancuernas piden más que una máquina) equivalen a <b style="color:var(--ink)">${fmt1(sA)}</b> series de barra${dif?`, un ${dif>0?'+':''}${dif}%`:''}.
+        ${kmT?`<div class="mt4">Y ${fmt1(kmT)} km corridos: ${fmtInt(kcal)} kcal en ${Math.round(dur)} minutos. Eso también es carga, aunque no salga en el mapa.</div>`:''}</div>
+      </div>`;})()}
     <div class="small dim mt8" style="line-height:1.5">La marca en cada barra es el <b>mínimo semanal</b> de ese músculo; el final de la barra, el máximo que se recupera. Referencias de EMG y de volumen semanal, no leyes: ajústalas a cómo te recuperas.</div>
     ${carga.sinMapear.length?`<div class="small dim mt8">No supe repartir: ${esc(carga.sinMapear.slice(0,4).join(', '))}. Si son tuyos, dime y los agrego.</div>`:''}
   </section>`;
@@ -4327,6 +4404,7 @@ const EXCAT_RAW=[
 ["nordic_curl","Nordic Hamstring Curl","calistenia","peso_corporal","compuesto","nordic_curl.jpg","pierna","Rodillas fijas en el piso: baja el torso recto frenando con los femorales y vuelve."],
 /* anillas: el bloque completo, de basicos a habilidades */
 ["ring_row","Ring Row (remo en anillas)","anillas","anillas","compuesto","ring_row.jpg","espalda","Cuerpo recto bajo las anillas: hala el pecho hacia ellas y baja con control."],
+["ring_facepull","Ring Face Pull (remo alto en anillas)","anillas","anillas","compuesto","ring_facepull.jpg","espalda","Colgado de las anillas con los brazos arriba y abiertos: hala llevando los codos abajo y atras, juntando las escapulas y abriendo el pecho. El tiron sale de la espalda alta, no de los brazos."],
 ["ring_row_archer","Ring Archer Row","anillas","anillas","compuesto","ring_row_archer.jpg","espalda","Remo con un brazo estirado al lado: un lado hala casi todo, el otro asiste."],
 ["ring_pushup","Ring Push Up","anillas","anillas","compuesto","ring_pushup.jpg","pecho","Flexión sobre anillas cerca del piso: estabiliza y gira las anillas al estirar los brazos."],
 ["ring_fly","Ring Fly","anillas","anillas","aislado","ring_fly.jpg","pecho","Cuerpo recto: los brazos se abren a los lados y regresan al centro. Empieza con poco rango."],
@@ -9706,6 +9784,14 @@ function excatDetailBox(id){
         <div class="small dim mt4" style="line-height:1.45">Si apuntas 27 en un curl con mancuerna y son 27 <b>por brazo</b>, márcalo: son 54 kg de trabajo real y así cuadran el tonelaje y tu nivel.</div></div>
       <button class="chip ${exPorLado(id)?'fill':''}" data-a="exLado" data-id="${id}" style="flex:none">${exPorLado(id)?'Por lado':'Total'}</button>
     </div>`:''}
+    ${(()=>{const e=esfuerzoEx(id); if(Math.abs(e.f-1)<0.02 && !e.extra) return '';
+      const mas=e.f>1;
+      return `<div class="mt12 muscrep">
+        <div class="flex between" style="align-items:baseline"><b class="small">Qué tan exigente es</b>
+          <span class="medval"><b style="color:${mas?'var(--gold)':'var(--mint)'}">${e.f.toFixed(2)}×</b><em>vs barra</em></span></div>
+        <div class="small dim mt4" style="line-height:1.5">${esc(e.porque)}${e.extra?' Además lo tienes marcado como <b>por lado</b>, que suma otro 18% de core estabilizador.':''}
+          <div class="mt4">Tres series aquí cuestan como <b style="color:var(--ink)">${fmt1(3*e.f)}</b> en barra. No cambia tu volumen, pero sí lo cansado que sales.</div></div>
+      </div>`;})()}
     ${muscReparto(id, x.name)}
     ${canAdd?`<button class="btn primary full mt12" id="fadd">${ic('plus',14)} Agregar a la sesión de hoy</button>`:''}
   </div>`;

@@ -98,3 +98,43 @@ Fuentes: [StrengthLevel](https://strengthlevel.com/strength-standards),
 [Symmetric Strength](https://symmetricstrength.com/standards),
 [Fitness Volt](https://fitnessvolt.com/strength-standards/).
 
+## Exigencia por implemento y esfuerzo de la carrera
+
+Tres series de dominadas en anillas no cuestan lo mismo que tres en barra fija. `EX_ESFUERZO`
+guarda un factor por implemento (referencia 1,00 = barra), de estudios de EMG que comparan
+activación de estabilizadores:
+
+| Implemento | Factor |
+|---|---|
+| Anillas | 1,28 |
+| Suspensión (TRX) | 1,18 |
+| Kettlebell | 1,14 |
+| Mancuerna | 1,13 |
+| Peso corporal | 1,12 |
+| Banda | 1,03 |
+| **Barra** | **1,00** |
+| Polea | 0,92 |
+| Máquina | 0,85 |
+| Smith | 0,80 |
+
+Trabajar un lado a la vez suma otro **+0,18** (`EX_UNILAT_EXTRA`).
+
+**El factor multiplica el esfuerzo, no las series.** Las series efectivas se dejan como están,
+porque es una medida estándar y compararla con las referencias de volumen exige que lo sea. La
+exigencia se muestra aparte: "hiciste 6 series, equivalen a 6,4 de barra".
+
+### Correr
+
+`CORR_MET` son los MET por ritmo del **ACSM Compendium of Physical Activities**, y de ahí salen
+las kcal y una carga sRPE comparable con la de pesas.
+
+La primera recopilación traía los MET **inflados un 40% en la zona rápida**: daba 828 kcal en
+6 km para 90 kg. Contrastado contra la regla de ~1 kcal por kg y por km (540 kcal), estaba
+claramente mal. Con la tabla del compendium da 557, que sí cuadra. Verificado en cuatro ritmos:
+6 km/34 min → 557 (regla 540) · 10 km/60 min → 945 (900) · 5 km/22 min → 426 (450) ·
+3 km/20 min → 296 (270).
+
+Fuentes: [ACSM Compendium](https://pacompendium.com/running/),
+[Foster 2001 · sRPE](https://pmc.ncbi.nlm.nih.gov/articles/PMC5294946/),
+[EMG suspensión e inestabilidad](https://pubmed.ncbi.nlm.nih.gov/38288256/).
+

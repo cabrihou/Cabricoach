@@ -1543,7 +1543,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 153';
+const APPREV='REV 154';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3340,6 +3340,19 @@ function exUnilateral(id){
   return pat==='remo_unilateral' || pat==='zancada';
 }
 function exPorLado(id){ return !!((S.cfg&&S.cfg.porLado)||{})[id]; }
+/* En anillas, dominadas y demas peso corporal, dejar el kg vacio NO es un dato que falta:
+   significa peso limpio, sin lastre. Antes la app pedia escribir un numero para poder
+   registrar la serie, que es justo lo contrario de facil de llenar. */
+function serieW(exId, s){
+  const v=(s&&s.w!==undefined)?s.w:'';
+  if((v===''||v==null) && exPesoCorporal(exId)) return 0;
+  return v;
+}
+function serieValida(exId, s){
+  if(!s) return false;
+  const w=serieW(exId,s), r=s.r;
+  return w!=='' && w!=null && r!=='' && r!=null && Number.isFinite(+w) && Number.isFinite(+r) && +r>0;
+}
 /* Ejercicios donde lo que mueves es tu cuerpo: anillas, dominadas, fondos, flexiones.
    Ahi el numero que uno apunta es el LASTRE (0 si va a peso limpio), y el peso real de la
    serie es el corporal de ese dia mas ese lastre. Sin esto una dominada contaba 0 kg. */
@@ -10676,7 +10689,7 @@ function setTable(e){
       return `<div class="settbl srow ${s.done?'done':''}" data-ex="${e.id}" data-i="${i}">
         <span class="sidx">${i+1}${dl&&i>=2?'*':''}</span>
         <span class="sprev">${pv}</span>
-        <input class="in ctr" inputmode="decimal" placeholder="kg" value="${s.w}" data-ch="set" data-ex="${e.id}" data-i="${i}" data-f="w">
+        <input class="in ctr" inputmode="decimal" placeholder="${exPesoCorporal(e.id)?'lastre':'kg'}" value="${s.w}" data-ch="set" data-ex="${e.id}" data-i="${i}" data-f="w" aria-label="${exPesoCorporal(e.id)?'lastre en kilos, vacío es peso limpio':'peso en kilos'}">
         <input class="in ctr" inputmode="numeric" placeholder="${e.reps[0]}" value="${s.r}" data-ch="set" data-ex="${e.id}" data-i="${i}" data-f="r">
         <button class="okbtn2" data-a="mark" data-ex="${e.id}" data-i="${i}" data-rest="${e.rest}" data-n="${esc(alt||e.name)}">${ic('check',15)}</button>
         <button class="delset" data-a="delSet" data-ex="${e.id}" data-i="${i}" aria-label="Borrar serie ${i+1}" ${data.length>1?'':'disabled'}>${ic('x',14)}</button>
@@ -14204,7 +14217,7 @@ function doFinish(completeAll){
   let retroSeries=0, retroEj=0;
   sessEx(r).forEach(e=>{
     const arr=S.draft.data[e.id];
-    const done=arr.filter(s=>s.w!==''&&s.r!==''&&Number.isFinite(+s.w)&&Number.isFinite(+s.r));
+    const done=arr.filter(s=>serieValida(e.id, s));
     if(done.length){
       const hist=S.logs[e.id]||[];
       const prevSess=hist[hist.length-1];
@@ -14228,7 +14241,7 @@ function doFinish(completeAll){
         /* solo cuenta para el proporcional lo que mark/exDoneAll/completePending no
            hayan pagado ya en esta misma sesion */
         const paid=(S.draft.xpPaid&&S.draft.xpPaid[e.id])||[];
-        const idxsValid=arr.map((s,i)=>({s,i})).filter(({s})=>s.w!==''&&s.r!==''&&Number.isFinite(+s.w)&&Number.isFinite(+s.r)).map(({i})=>i);
+        const idxsValid=arr.map((s,i)=>({s,i})).filter(({s})=>serieValida(e.id, s)).map(({i})=>i);
         retroSeries += idxsValid.filter(i=>!paid.includes(i)).length;
         if(idxsValid.length===arr.length && !paid.includes('all')) retroEj++;
       }
@@ -14445,7 +14458,8 @@ const ACTIONS = {
       const ex=EXMAP[d.ex];
       if(ex){
         const hist=S.logs[d.ex]||[], last=hist[hist.length-1];
-        if(arr[i].w===''||arr[i].w==null) arr[i].w = last?.sets?.[i]?.w ?? last?.sets?.[0]?.w ?? '';
+        if((arr[i].w===''||arr[i].w==null) && !exPesoCorporal(d.ex))
+          arr[i].w = last?.sets?.[i]?.w ?? last?.sets?.[0]?.w ?? '';
         if(arr[i].r===''||arr[i].r==null) arr[i].r = last?.sets?.[i]?.r ?? last?.sets?.[0]?.r ?? ex.reps[0];
       }
     }
@@ -15366,7 +15380,8 @@ const ACTIONS = {
     let nEj=0, nSer=0;
     L.items.forEach(it=>{
       const s=clamp(parseInt(it.s,10)||0,0,20);
-      const w=parseFloat(String(it.w).replace(',','.'));
+      let w=parseFloat(String(it.w).replace(',','.'));
+      if(!isFinite(w) && exPesoCorporal(it.id)) w=0;      /* peso limpio */
       const r=clamp(parseInt(it.r,10)||0,0,100);
       if(!s || !r || !isFinite(w)) return;
       const sets=Array.from({length:s},()=>({w, r}));

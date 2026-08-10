@@ -573,3 +573,11 @@ En el editor de rutinas y en el registro libre, sin búsqueda escrita se ve el c
 como uno busca cuando no tiene el nombre en la cabeza. Al escribir, pasa a resultados de
 texto.
 
+### Peso limpio en anillas y calistenia
+
+En esos ejercicios dejar el kg vacío **no es un dato que falta**: significa peso limpio, sin
+lastre. Antes la app exigía escribir un número para poder registrar la serie, que es justo
+lo contrario de fácil de llenar. `serieW` / `serieValida` tratan el vacío como 0 cuando
+`exPesoCorporal(id)`, el campo muestra **"lastre"** en vez de "kg", y al marcar una serie no
+se rellena el peso desde el histórico. Sirve igual en la sesión y en el registro libre.
+

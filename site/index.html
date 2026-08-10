@@ -953,6 +953,13 @@ img{-webkit-user-drag:none;user-select:none}
 .mrlist span{display:flex;align-items:center;gap:5px}
 .mrlist i{width:8px;height:8px;border-radius:2px;display:block}
 .mrlist b{color:var(--ink)}
+.crucecard{padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--line2);margin-bottom:8px}
+.crucemini{display:flex;flex-wrap:wrap;gap:5px}
+.crucemini span{display:flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;
+  background:rgba(255,255,255,.05);font:700 10.5px var(--num);color:var(--ink2)}
+.crucemini i{font:600 8px var(--ui);font-style:normal;color:var(--smoke)}
+.seg.cols4{grid-template-columns:repeat(4,1fr)}
+.seg.cols4 button{font-size:11.5px;padding-left:2px;padding-right:2px}
 .cargaleg{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:8px 0 2px;font:600 10px var(--ui);color:var(--smoke)}
 .cargaleg span{display:flex;align-items:center;gap:4px}
 .cargaleg i{width:9px;height:9px;border-radius:3px;display:block}
@@ -1584,7 +1591,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 160';
+const APPREV='REV 161';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -4317,6 +4324,134 @@ function fzaPorZona(vista){
   });
   return out;
 }
+/* Que meter para subir de nivel en esa zona: los ejercicios que mas la cargan, sacados
+   del mismo reparto EMG que usa el mapa de carga. Cierra el circulo entre "estoy flojo
+   aqui" y "haz esto". */
+function fzaQueMeter(vista, zona, yaTiene){
+  const ms=(ZONA_MUSC[vista]||{})[zona]||[];
+  const m=ms.find(x=>ejerciciosDe(x).length); if(!m) return '';
+  const tengo=new Set(yaTiene||[]);
+  const top=ejerciciosDe(m).filter(e=>!tengo.has(e.x.id)).slice(0,3);
+  if(!top.length) return '';
+  return `<div class="medsug mt8">${ic('zap',12)}<div>
+    <b>Para subir aquí</b>, lo que más carga ${esc((MUSC_NOM[m]||m).toLowerCase())}:
+    ${top.map(e=>`<b style="color:var(--ink)">${esc(shortEx(e.x.name))}</b> (${e.pc}%)`).join(', ')}.
+    <div class="flex wrapf mt8" style="gap:6px">${top.map(e=>
+      `<button class="chip" data-a="excatOpen" data-id="${e.x.id}">${ic('plus',9)} ${esc(shortEx(e.x.name))}</button>`).join('')}</div>
+  </div></div>`;
+}
+/* Desequilibrio entre lados: la medida ya la teniamos, y si hay registros de un ejercicio
+   unilateral tambien se puede comparar la fuerza. Un lado que mide igual pero levanta
+   menos es un desequilibrio real, no una diferencia de cinta. */
+function fzaAsimetria(){
+  const med=medAsimetrias();
+  const out=med.map(a=>({tipo:'medida', n:a.n, dif:a.dif, der:a.der, izq:a.izq, fuerte:a.fuerte}));
+  if(!out.length) return '';
+  return `<section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('alert',16)} Lado contra lado</span></div>
+    ${out.map(a=>`<div class="medrow"><span class="grow"><b>${esc(a.n)}</b>
+      <i class="small dim" style="display:block">derecho ${fmt1(a.der)} · izquierdo ${fmt1(a.izq)} cm</i></span>
+      <span class="medval"><b class="${a.fuerte?'red':''}">${fmt1(a.dif)}</b><em>cm</em></span></div>`).join('')}
+    <div class="small dim mt8" style="line-height:1.5">Hasta 1 cm de diferencia es normal y no significa nada. Desde 1,5 conviene empezar la sesión por el lado flojo y hacer el mismo número de repeticiones con los dos, no el mismo peso.
+    ${out.some(a=>a.fuerte)?'<b> Tienes alguna por encima de ese umbral.</b>':''}</div>
+  </section>`;
+}
+/* ============ EL CRUCE ============
+   Las tres capas por separado dicen donde estas. Lo que de verdad informa es la
+   CONTRADICCION entre ellas: un musculo fuerte que ya casi no entrenas, uno al que le
+   metes mucho volumen y no crece, uno flojo y ademas abandonado. Eso no lo dice ninguna
+   de las tres sola. */
+function cruceDatos(){
+  const carga=cargaMuscular(28);
+  const tb=fzaTabla();
+  const vista='frente';
+  const out=[];
+  Object.keys(MUSC_VOL).forEach(m=>{
+    const ser=((carga.musc[m]||{}).series)||0;
+    const semanas=28/7, porSem=ser/semanas;
+    const v=MUSC_VOL[m], nv=cargaNivel(m, porSem);
+    /* fuerza: el mejor basico que cargue este musculo al menos un 25% */
+    let fza=null;
+    tb.forEach(x=>{ const pat=ejPatron(x.ex, exNombre(x.ex)); if(!pat) return;
+      if(((EJ_PATRONES[pat]||{})[m]||0)>=25 && (!fza || x.nivel>fza.nivel)) fza=x; });
+    /* medida: la zona del cuerpo donde vive este musculo, y como va su tendencia */
+    let zona=null;
+    Object.keys(ZONA_MUSC.frente).forEach(z=>{ if((ZONA_MUSC.frente[z]||[]).includes(m) && !zona) zona=z; });
+    let med=null;
+    if(zona){
+      const campos=MED_CAMPOS.filter(c=>c.zona===zona);
+      const cp=campos.find(c=>medSerie(c.k).length>1);
+      if(cp){ const s=medSerie(cp.k);
+        med={n:cp.n, k:cp.k, act:s[s.length-1].v, dif:Math.round((s[s.length-1].v-s[0].v)*10)/10,
+             desde:s[0].d, baja:(zona==='cintura'||zona==='cadera')};
+      }
+    }
+    if(!ser && !fza && !med) return;
+    out.push({m, ser:Math.round(ser*10)/10, porSem:Math.round(porSem*10)/10, nv, v, fza, med, zona});
+  });
+  /* el diagnostico: donde las capas se contradicen */
+  out.forEach(o=>{
+    const fuerte = o.fza && o.fza.nivel>=2;
+    const flojo = o.fza && o.fza.nivel<=1;
+    const pocoVol = o.porSem < o.v.mev;
+    const muchoVol = o.porSem >= o.v.mav;
+    const crece = o.med && (o.med.baja ? o.med.dif<-0.3 : o.med.dif>0.3);
+    const estanca = o.med && Math.abs(o.med.dif)<=0.3;
+    if(fuerte && pocoVol){ o.d={t:'ojo', ttl:'Fuerte pero abandonado',
+      x:`Estás <b>${o.fza.nombre.toLowerCase()}</b> en ${esc(o.fza.n.toLowerCase())} pero solo le llegan <b>${fmt1(o.porSem)} series</b> por semana, menos del mínimo de ${o.v.mev}. La fuerza se sostiene un tiempo sin volumen, el tamaño no.`}; return; }
+    if(muchoVol && estanca){ o.d={t:'ojo', ttl:'Mucho trabajo, cero cambio',
+      x:`Le metes <b>${fmt1(o.porSem)} series</b> por semana y ${esc(o.med.n.toLowerCase())} lleva ${fmt1(Math.abs(o.med.dif))} cm desde ${fmtD(o.med.desde)}. Más volumen no es la respuesta: mira la comida y si de verdad estás subiendo el peso.`}; return; }
+    if(flojo && pocoVol){ o.d={t:'foco', ttl:'Aquí está la ganancia fácil',
+      x:`${esc(o.fza.n)} va en <b>${o.fza.nombre.toLowerCase()}</b> y encima recibe <b>${fmt1(o.porSem)} series</b> por semana. Súbelo a ${o.v.mev} y ponlo de primero en la sesión: es donde más rápido vas a ver diferencia.`}; return; }
+    if(crece && !pocoVol){ o.d={t:'ok', ttl:'Va bien, no lo toques',
+      x:`${esc(o.med.n)} ${o.med.baja?'bajó':'subió'} <b>${fmt1(Math.abs(o.med.dif))} cm</b> desde ${fmtD(o.med.desde)} con ${fmt1(o.porSem)} series por semana. Lo que estás haciendo funciona.`}; return; }
+    if(pocoVol && o.porSem>0){ o.d={t:'foco', ttl:'Por debajo del mínimo',
+      x:`<b>${fmt1(o.porSem)} series</b> por semana, el mínimo son ${o.v.mev}. Un ejercicio más donde ya lo tocas y queda resuelto.`}; return; }
+    if(!o.porSem){ o.d={t:'ojo', ttl:'Sin trabajo',
+      x:`No le llegó nada en 28 días. Con ${o.v.mev} series a la semana ya no lo pierdes.`}; return; }
+    o.d={t:'ok', ttl:'En orden', x:`${fmt1(o.porSem)} series por semana, dentro de rango.`};
+  });
+  const orden={ojo:0, foco:1, ok:2};
+  return out.sort((a,b)=> orden[a.d.t]-orden[b.d.t] || b.ser-a.ser);
+}
+function vCruce(){
+  const datos=cruceDatos();
+  if(!datos.length) return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('target',16)} El cruce</span></div>
+    <div class="small dim">Necesito medidas, entrenos registrados y algún básico para cruzar las tres capas.</div></section>`;
+  const hallazgos=datos.filter(o=>o.d.t!=='ok');
+  const bien=datos.filter(o=>o.d.t==='ok');
+  const ICO={ojo:'alert', foco:'target', ok:'check'};
+  const COL={ojo:'#FF9F45', foco:'var(--acc)', ok:'#58DFA3'};
+  return `
+  <section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('target',16)} El cruce</span><span class="chip dim">28 días</span></div>
+    <p class="small dim" style="margin:0 0 10px;line-height:1.55">Las otras tres pestañas te dicen dónde estás. Esta busca <b>dónde se contradicen</b>: un músculo fuerte que ya casi no entrenas, uno que recibe mucho y no cambia, uno flojo y encima abandonado. Eso no lo dice ninguna de las tres por separado.</p>
+    ${hallazgos.length?hallazgos.map(o=>`
+      <div class="crucecard" style="border-color:${COL[o.d.t]}40">
+        <div class="flex" style="gap:9px;align-items:flex-start">
+          <span style="color:${COL[o.d.t]};flex:none;margin-top:1px">${ic(ICO[o.d.t],15)}</span>
+          <div class="grow" style="min-width:0">
+            <div class="flex between" style="align-items:baseline;gap:8px">
+              <b style="font:600 14px var(--ui)">${esc(MUSC_NOM[o.m]||o.m)}</b>
+              <span class="small" style="color:${COL[o.d.t]}">${esc(o.d.ttl)}</span></div>
+            <div class="small dim mt4" style="line-height:1.55">${o.d.x}</div>
+            <div class="crucemini mt8">
+              <span>${ic('flame',10)} ${fmt1(o.porSem)}<i>ser/sem</i></span>
+              ${o.fza?`<span>${ic('trend',10)} ${o.fza.nombre}</span>`:''}
+              ${o.med?`<span>${ic('ruler',10)} ${fmt1(o.med.act)}<i>cm</i> ${o.med.dif>0?'+':''}${fmt1(o.med.dif)}</span>`:''}
+            </div>
+          </div>
+        </div>
+      </div>`).join('')
+      :`<div class="propfoco ok">${ic('check',15)}<div><b>Nada que corregir.</b>
+        <div class="small dim mt4">Las tres capas coinciden en todo lo que hay medido.</div></div></div>`}
+    ${bien.length?`<details class="medhist mt8"><summary>Los ${bien.length} que van en orden</summary>
+      ${bien.map(o=>`<div class="medrow"><span class="grow"><b>${esc(MUSC_NOM[o.m]||o.m)}</b>
+        <i class="small dim" style="display:block">${esc(o.d.x.replace(/<[^>]+>/g,''))}</i></span></div>`).join('')}
+    </details>`:''}
+    <div class="small dim mt12" style="line-height:1.5">Se mira sobre <b>28 días</b>, no una semana: una semana suelta no distingue entre un músculo abandonado y una semana rara.</div>
+  </section>`;
+}
 function vFuerzaCuerpo(){
   const vista = MED_ZONAS[UI.medVista] ? UI.medVista : 'frente';
   const pc=fzaPesoCorporal();
@@ -4348,8 +4483,10 @@ function vFuerzaCuerpo(){
     ${zs?`<div class="medpanel">
       <div class="medph">${ic('barbell',13)} <b>${esc(medNomZona(sel))}</b><span class="small dim">${zs.lista.length} ejercicio${zs.lista.length===1?'':'s'} que la cargan</span></div>
       ${zs.lista.map(x=>fzaFilaHTML(x, pc, COL)).join('')}
+      ${fzaQueMeter(vista, sel, zs.lista.map(x=>x.ex))}
     </div>`:`<div class="small dim tc mt8">Toca una zona para ver sus ejercicios y su nivel.</div>`}
   </section>
+  ${fzaAsimetria()}
   ${fzaCard()}`;
 }
 function vCarga(){
@@ -13447,12 +13584,14 @@ function vProgreso(){
   return `
   ${progGrpSelector(grp)}
   ${grp==='cuerpo'? `<section class="mod tight">
-      <div class="seg cols3">
-        <button class="${(UI.cuerpoSub!=='carga'&&UI.cuerpoSub!=='fuerza')?'on':''}" data-a="cuerpoSub" data-s="medidas">${ic('ruler',15)} Medidas</button>
+      <div class="seg cols4">
+        <button class="${(UI.cuerpoSub!=='carga'&&UI.cuerpoSub!=='fuerza'&&UI.cuerpoSub!=='cruce')?'on':''}" data-a="cuerpoSub" data-s="medidas">${ic('ruler',15)} Medidas</button>
         <button class="${UI.cuerpoSub==='carga'?'on':''}" data-a="cuerpoSub" data-s="carga">${ic('flame',15)} Carga</button>
         <button class="${UI.cuerpoSub==='fuerza'?'on':''}" data-a="cuerpoSub" data-s="fuerza">${ic('trend',15)} Fuerza</button>
+        <button class="${UI.cuerpoSub==='cruce'?'on':''}" data-a="cuerpoSub" data-s="cruce">${ic('target',15)} Cruce</button>
       </div></section>
-    ${UI.cuerpoSub==='carga' ? vCarga() : UI.cuerpoSub==='fuerza' ? vFuerzaCuerpo() : vMedidasCuerpo()}` : grp==='act'?`
+    ${UI.cuerpoSub==='carga' ? vCarga() : UI.cuerpoSub==='fuerza' ? vFuerzaCuerpo()
+      : UI.cuerpoSub==='cruce' ? vCruce() : vMedidasCuerpo()}` : grp==='act'?`
   ${metasCard()}
   ${rendimientoCard(sub)}
   <section class="mod tight">

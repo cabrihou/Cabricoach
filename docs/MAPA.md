@@ -693,3 +693,33 @@ práctica no aparecía casi nunca.
 `exVariante` da el nombre distintivo: `shortEx` corta en el paréntesis y dejaba siete
 candidatos llamados todos "Bench Press", que es justo lo que hay que diferenciar.
 
+## El Cruce (Medidas → Cruce) · cuarta pestaña
+
+Las otras tres dicen dónde estás. Esta busca **dónde se contradicen**, que es lo único que
+ninguna da por separado. Mira sobre **28 días**, no una semana: una semana suelta no
+distingue entre un músculo abandonado y una semana rara.
+
+`cruceDatos()` junta por músculo las tres capas (series efectivas por semana, nivel del mejor
+básico que lo carga al 25% o más, y la tendencia de la medida de su zona) y saca un
+diagnóstico:
+
+| Situación | Qué dice |
+|---|---|
+| Fuerte + poco volumen | *"Fuerte pero abandonado"* · la fuerza aguanta un tiempo sin volumen, el tamaño no |
+| Mucho volumen + medida estancada | *"Mucho trabajo, cero cambio"* · más volumen no es la respuesta, mira la comida |
+| Flojo + poco volumen | *"Aquí está la ganancia fácil"* · ponlo de primero en la sesión |
+| Medida creciendo + volumen ok | *"Va bien, no lo toques"* |
+
+Los que están en orden se pliegan aparte para no hacer ruido.
+
+## Lado contra lado (Fuerza)
+
+`fzaAsimetria` compara las medidas de ambos lados. Hasta 1 cm no significa nada; desde 1,5 la
+recomendación es empezar por el lado flojo y **igualar repeticiones, no peso**.
+
+## Qué meter para subir de nivel (Fuerza → zona)
+
+`fzaQueMeter` propone los tres ejercicios que más cargan esa zona, con su porcentaje, sacados
+del mismo reparto EMG del mapa de carga y descartando los que ya haces. Cierra el círculo
+entre "estoy flojo aquí" y "haz esto".
+

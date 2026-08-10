@@ -775,3 +775,13 @@ Sobre qué registro se usa: `fzaMejor1RM` recorre **todo el historial** y se que
 más alto, no con el último. Verificado con tres series del mismo ejercicio (100×5 → 116,7 ·
 180×5 → 210 · 150×3 → 165): toma los 210. La escalera lo dice en pantalla.
 
+### La tarjeta de ejercicio (Fuerza)
+
+Rectangular, con la foto a 56 px, el peso en grande, **barra de avance hacia el siguiente
+nivel** y pie con el nivel actual y lo que falta. El fondo lleva un degradado suave del color
+del nivel en la esquina, y los que no has registrado salen en gris y con la foto
+desaturada. Antes era una fila de texto donde el progreso no se veía.
+
+El nombre que se muestra es **el de la lista** (Fondos lastrados), no el del id registrado
+(Chest Dip); el nombre real solo aparece en el detalle, y únicamente si es distinto.
+

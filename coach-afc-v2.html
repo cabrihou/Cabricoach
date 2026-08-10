@@ -979,13 +979,31 @@ img{-webkit-user-drag:none;user-select:none}
   backdrop-filter:blur(8px);color:var(--ink2);font:600 11px var(--ui);cursor:pointer}
 .chip.tach{text-decoration:line-through;opacity:.45}
 .fzafnt{margin-top:10px;padding-top:9px;border-top:1px solid var(--line2)}
-.fzaej{border-top:1px solid var(--line2)}
-.fzaejh{display:flex;align-items:center;gap:9px;width:100%;padding:8px 0;background:transparent;border:0;color:var(--ink);cursor:pointer;text-align:left}
-.fzaejimg{width:38px;height:38px;border-radius:10px;object-fit:cover;flex:none;background:var(--paper2)}
+.fzaej{margin:8px 0}
+.fzaejh{display:flex;flex-direction:column;gap:10px;width:100%;padding:13px 14px;cursor:pointer;text-align:left;
+  border:1px solid var(--line2);border-radius:18px;color:var(--ink);
+  background:linear-gradient(150deg, color-mix(in srgb, var(--nc) 13%, transparent) 0%, transparent 58%), var(--paper2);
+  transition:border-color .2s,transform .12s}
+.fzaejh:active{transform:scale(.995)}
+.fzaej.open .fzaejh{border-color:color-mix(in srgb, var(--nc) 45%, transparent)}
+.fzaejtop{display:flex;align-items:center;gap:12px;width:100%}
+.fzaejimg{width:56px;height:56px;border-radius:14px;object-fit:cover;flex:none;background:var(--card2)}
 .fzaejimg.ph{display:flex;align-items:center;justify-content:center;color:var(--smoke)}
-.fzaej.sin .fzaejh{opacity:.55}
+.fzaejtxt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.fzaejn{font:600 15px/1.25 var(--ui);color:var(--ink)}
+.fzaejkg{display:flex;align-items:baseline;gap:4px;font:800 21px/1 var(--num);color:var(--ink)}
+.fzaejkg em{font:600 10px var(--ui);font-style:normal;color:var(--smoke)}
+.fzaejsub{font:500 10.5px var(--ui);color:var(--smoke);font-style:normal}
+.fzaejbar{display:block;height:7px;border-radius:4px;background:var(--line2);overflow:hidden}
+.fzaejbar i{display:block;height:100%;border-radius:4px;transition:width .45s cubic-bezier(.32,.72,0,1)}
+.fzaejpie{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.fzaejpie em{font:700 11.5px var(--ui);font-style:normal}
+.fzaejpie span{font:500 10.5px var(--ui);color:var(--smoke);text-align:right}
+.fzaej.sin .fzaejh{opacity:.6}
+.fzaej.sin .fzaejimg{filter:grayscale(1)}
 .fzaej.open .nfchev{transform:rotate(90deg)}
-.fzaejb{padding:2px 0 12px}
+.fzaejb{padding:12px 14px 14px;margin-top:-8px;border:1px solid var(--line2);border-top:0;
+  border-radius:0 0 18px 18px;background:var(--paper2)}
 .fzamusn.dim{color:var(--smoke)}
 .fzamus{border-bottom:1px solid var(--line2)}
 .fzamus:last-of-type{border-bottom:0}
@@ -1633,7 +1651,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 170';
+const APPREV='REV 171';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -4795,21 +4813,37 @@ function fzaEjHTML(e, pc, COL, gk){
   const foto=(()=>{ for(const id of e.ids){ const x=excatById(id); if(x&&x.img) return 'assets/ej/'+x.img; }
     for(const id of e.ids){ const s=exFotoSrc(id); if(s) return s; } return null; })();
   const notas=[e.corp?'cuerpo + lastre':'', e.anillas?'anillas':'', e.lado?'peso por lado':''].filter(Boolean).join(' · ');
+  /* tarjeta: foto grande, el nombre del ejercicio tal como lo llamamos, el peso en grande
+     y una barra de avance hacia el siguiente nivel. El progreso es lo que uno quiere ver de
+     un vistazo, no una fila de texto */
+  const col=e.sin?'var(--smoke)':COL(e.nivel);
+  const pct=e.sin?0:Math.round(e.pct);
+  const falta=(!e.sin&&e.nivel<4)?Math.max(0,Math.round((e.proxKg-e.rm)*10)/10):0;
   return `<div class="fzaej ${ab?'open':''} ${e.sin?'sin':''}">
-    <button class="fzaejh" data-a="fzaEjTgl" data-k="${esc(key)}" aria-expanded="${ab?'true':'false'}">
-      ${foto?`<img loading="lazy" class="fzaejimg" src="${foto}" alt="" decoding="async" onerror="this.remove()">`
-            :`<span class="fzaejimg ph">${ic('barbell',15)}</span>`}
-      <span class="grow tl" style="min-width:0"><b class="small" style="display:block">${esc(e.n)}</b>
-        <i class="small dim">${e.sin?'sin registros':fmt1(e.rm)+' kg · '+e.ratio+'× tu peso'}${notas?' · '+notas:''}</i></span>
-      ${e.sin?'<span class="small dim">—</span>'
-        :`<span class="fzamusn" style="color:${COL(e.nivel)}">${e.nombre}</span>`}
-      <span class="nfchev">${ic('chevR',13)}</span>
+    <button class="fzaejh" data-a="fzaEjTgl" data-k="${esc(key)}" aria-expanded="${ab?'true':'false'}"
+      style="--nc:${col}">
+      <span class="fzaejtop">
+        ${foto?`<img loading="lazy" class="fzaejimg" src="${foto}" alt="" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'fzaejimg ph'}))">`
+              :`<span class="fzaejimg ph">${ic('barbell',20)}</span>`}
+        <span class="fzaejtxt">
+          <b class="fzaejn">${esc(e.n)}</b>
+          ${e.sin?'<i class="fzaejsub">sin registros todavía</i>'
+            :`<span class="fzaejkg">${fmt1(e.rm)}<em>kg · ${e.ratio}×</em></span>`}
+          ${notas?`<i class="fzaejsub">${esc(notas)}</i>`:''}
+        </span>
+        <span class="nfchev">${ic('chevR',14)}</span>
+      </span>
+      ${e.sin?'':`<span class="fzaejbar"><i style="width:${clamp(pct,3,100)}%;background:${col}"></i></span>
+      <span class="fzaejpie">
+        <em style="color:${col}">${e.nombre}</em>
+        <span>${e.nivel>=4?'tope de la tabla':'te falta llegar a '+fmt1(e.proxKg)+' kg'}</span>
+      </span>`}
     </button>
     ${ab?`<div class="fzaejb" data-a="nada">
       ${e.sin?`<div class="small dim" style="line-height:1.5">Todavía no has registrado este ejercicio. En cuanto lo hagas, aquí sale tu nivel.</div>`
         :`<div class="fzafuente">
           <span class="lbl">DE DÓNDE SALE</span>
-          <div class="small mt4" style="line-height:1.55">El <b>${fmtD(e.d)}</b> hiciste <b style="color:var(--ink)">${fmt1(e.sw)} kg${e.corp?' de lastre':''}${e.lado&&exPorLado(e.ex)?' por lado':''} × ${e.sr}</b> en ${esc(shortEx(exNombre(e.ex)))}.</div>
+          <div class="small mt4" style="line-height:1.55">El <b>${fmtD(e.d)}</b> hiciste <b style="color:var(--ink)">${fmt1(e.sw)} kg${e.corp?' de lastre':''}${e.lado&&exPorLado(e.ex)?' por lado':''} × ${e.sr}</b>${nrmTxt(exNombre(e.ex))!==nrmTxt(e.n)?' en '+esc(shortEx(exNombre(e.ex))):''}.</div>
           <div class="small dim mt4">${e.corp?`Cuenta ${exFraccion(e.ex)<1?`el ${Math.round(exFraccion(e.ex)*100)}% de tu peso de ese día (el resto lo sostiene la inclinación)`:`tu peso de ese día`} (${fmt1(pesoDeDia(e.d)*exFraccion(e.ex))} kg) más el lastre: ${fmt1(exPesoReal(e.ex, e.sw, e.d))} kg movidos. `:''}${exTara(e.ex)?`Más los ${fmt1(exTara(e.ex))} kg del carro: ${fmt1(exPesoReal(e.ex, e.sw, e.d))} kg. `:''}${exPorLado(e.ex)?`Como está marcado por lado, cuentan ${fmt1((e.sw+exTara(e.ex))*2)} kg. `:''}De ahí sale tu 1RM de <b>${fmt1(e.rm)} kg</b>.</div>
           <div class="mt8 flex between" style="align-items:center;gap:8px">
             <span class="small dim grow">¿El peso es por brazo o pierna, o el total?</span>

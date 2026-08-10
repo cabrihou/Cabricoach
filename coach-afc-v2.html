@@ -870,20 +870,29 @@ img{-webkit-user-drag:none;user-select:none}
 .fzabar{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
 .fzabar i{display:block;height:100%;border-radius:99px;transition:width .4s ease}
 .medwrap{display:block;margin:4px 0 6px;position:relative}
-.zpop{position:absolute;z-index:4;width:min(58%,230px);padding:12px 13px 11px;border-radius:16px;
-  background:rgb(var(--acc-rgb));color:#0B0D0F;box-shadow:0 12px 30px rgba(0,0,0,.55);animation:fadeIn .18s}
-.zpop .zpx{position:absolute;top:7px;right:7px;width:20px;height:20px;border:0;border-radius:7px;
-  background:rgba(0,0,0,.14);color:#0B0D0F;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.zpop .zph{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;padding-right:18px}
-.zpop .zph b{font:600 14px var(--ui)}
-.zpop .zpv{font:800 26px var(--num);display:flex;align-items:baseline;gap:2px;line-height:1}
-.zpop .zpv em{font:600 10px var(--ui);font-style:normal;opacity:.7}
-.zpop .zpd{font:700 12px var(--num);margin-top:3px}
-.zpop .zpd.good{color:#0d5c3c} .zpop .zpd.bad{color:#8c1d1d}
-.zpop .zpl{list-style:none;margin:9px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
-.zpop .zpl li{position:relative;padding-left:10px;font:500 11.5px/1.45 var(--ui);opacity:.88}
-.zpop .zpl li:before{content:'–';position:absolute;left:0;opacity:.6}
-@media (max-width:360px){.zpop{width:min(64%,205px);padding:10px 11px}.zpop .zpv{font-size:22px}}
+.zpop{position:absolute;z-index:4;width:min(50%,178px);padding:11px 12px 12px;border-radius:18px;
+  background:rgba(14,17,22,.93);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(var(--acc-rgb),.55);color:#fff;
+  box-shadow:0 14px 34px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04) inset, 0 0 24px rgba(var(--acc-rgb),.18);
+  animation:fadeIn .18s}
+.zpop .zpx{position:absolute;top:8px;right:8px;width:19px;height:19px;border:0;border-radius:7px;
+  background:rgba(255,255,255,.09);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.7}
+.zpop .zpx:active{opacity:1}
+.zpop .zpn{display:block;font:600 9px var(--ui);letter-spacing:.1em;color:rgb(var(--acc-rgb));padding-right:20px}
+.zpop .zpv{display:flex;align-items:baseline;gap:3px;font:800 30px/1 var(--num);color:#fff;margin-top:5px}
+.zpop .zpv em{font:600 11px var(--ui);font-style:normal;color:var(--smoke)}
+.zpop .zpd{display:flex;align-items:baseline;gap:5px;font:700 13px var(--num);margin-top:5px}
+.zpop .zpd i{font:500 9px var(--ui);font-style:normal;color:var(--smoke)}
+.zpop .zpd.good{color:#58DFA3} .zpop .zpd.bad{color:#FF6B6B}
+.zpop .zpo{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,.1)}
+.zpop .zpol{font:600 9px var(--ui);letter-spacing:.06em;text-transform:uppercase;color:var(--smoke)}
+.zpop .zpov{font:700 15px var(--num);color:#fff;display:flex;align-items:baseline;gap:2px}
+.zpop .zpov em{font:600 8px var(--ui);font-style:normal;color:var(--smoke)}
+.zpop .zpf{margin-left:auto;font:700 13px var(--num)}
+.zpop .zpf.down{color:#FF6B6B} .zpop .zpf.up{color:#58DFA3}
+.zpop .zpok{margin-left:auto;display:flex;align-items:center;gap:3px;font:700 10px var(--ui);color:#58DFA3}
+.zpop .zps{margin:9px 0 0;font:400 10.5px/1.5 var(--ui);color:var(--ink2)}
+@media (max-width:360px){.zpop{width:min(56%,162px);padding:9px 10px 10px}.zpop .zpv{font-size:26px}.zpop .zps{font-size:10px}}
 .medsvg{width:min(230px,72vw);height:auto}
 .medpanel{margin-top:12px;padding-top:10px;border-top:1px solid var(--line2)}
 .chart .trendl.far{opacity:.4;stroke-dasharray:2 6}
@@ -895,7 +904,7 @@ img{-webkit-user-drag:none;user-select:none}
 .mrotb{flex:none;padding:7px 15px;border-radius:999px;border:1px solid var(--line2);background:transparent;
   color:var(--smoke);font:600 12px var(--ui);cursor:pointer;transition:.18s}
 .mrotb.on{background:var(--acc);border-color:var(--acc);color:#0B0D0F}
-.medbp{width:100%;height:auto;display:block;max-height:56vh;touch-action:pan-y;border-radius:16px;transition:max-height .25s}
+.medbp{width:100%;height:auto;display:block;max-height:56vh;touch-action:pan-y;transition:max-height .25s}
 .medbp.hassel{max-height:42vh}
 .librow{padding:8px 0;border-bottom:1px solid var(--line2)}
 .librow:last-of-type{border-bottom:0}
@@ -1569,7 +1578,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 157';
+const APPREV='REV 158';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3988,14 +3997,14 @@ function medMapa(sel, o){
       </style>
     </defs>
     <g class="mzarte" id="mzarte" transform="translate(${OFF},0)">${MED_ARTE[vista].join("")}</g>
-    ${calor?`<rect x="0" y="0" width="1100" height="1500" fill="#0B0D0F" opacity=".45"/>`:''}
+
     ${calor?Object.keys(zs).map(z=>{
       const c=calor[z]; if(!c||!c.col) return '';
       const ps=(MED_MUSC[vista][z]||[]); if(!ps.length) return '';
       return `<mask id="mk_${z}"><g class="mzmk" transform="translate(${OFF},0)">${ps.map(i=>MED_ARTE[vista][i]).join('')}</g></mask>
         <rect x="0" y="0" width="1100" height="1500" mask="url(#mk_${z})" fill="${c.col}" opacity="${c.op}"/>`;
     }).join(''):''}
-    ${zsel?`${calor?'':'<rect class="mvelo" x="0" y="0" width="1100" height="1500"/>'}
+    ${zsel?`
       ${calor?'':'<rect class="mfill" x="0" y="0" width="1100" height="1500" mask="url(#mzclip)"/>'}
       <g class="mline" transform="translate(${OFF},0)">${
         (MED_MUSC[vista][sel]||[]).map(i=>MED_ARTE[vista][i]).join('')}</g>`:''}
@@ -4093,19 +4102,35 @@ function medZonaPop(zona){
   /* se coloca al lado con mas hueco y desplazada en vertical, para no tapar justo la zona
      que se acaba de tocar: si esta arriba la tarjeta baja, y al reves */
   const cx=(z[0]+z[2]/2+200)/1100, cy=(z[1]+z[3]/2)/1500;
-  const der = cx<0.48;
-  const arriba = cy<0.45;
-  const styl = `${der?'left':'right'}:3%; top:${clamp(arriba? cy*100+8 : cy*100-42, 2, 56)}%`;
+  /* centrada a la altura de la zona (la tarjeta mide ~50% del alto del mapa) y pegada al
+     lado con mas hueco; las centrales van a la izquierda, que es donde estorba menos */
+  const der = cx<0.5;
+  /* la tarjeta ocupa medio mapa de alto, asi que no puede ir centrada en la zona sin
+     salirse o taparle la cara al cabrito: si la zona esta arriba baja, si esta abajo sube,
+     y solo las del medio se centran */
+  /* las zonas bajas se anclan por abajo: con top la tarjeta se salia del lienzo */
+  const vert = cy>0.58 ? `bottom:${clamp(100-cy*100-14, 3, 58)}%` : `top:${clamp(cy*100-13, 3, 42)}%`;
+  const styl = `${der?'left':'right'}:2.5%; ${vert}`;
+  /* cuanto falta y hacia donde: el numero que hay que mover, en verde si vas bien */
+  let falta=null, faltaOk=false;
+  if(u && obj){
+    const d2=obj.o-u.v, tol=obj.tol||0;
+    faltaOk = obj.dir==='baja' ? u.v<=obj.o+tol : u.v>=obj.o-tol;
+    if(!faltaOk) falta={v:Math.abs(d2), sube:obj.dir!=='baja'};
+  }
   return `<div class="zpop ${der?'d':'i'}" style="${styl}" role="dialog" aria-label="${esc(medNomZona(zona))}">
-    <button class="zpx" data-a="medZona" data-z="" aria-label="Cerrar">${ic('x',11)}</button>
-    <div class="zph"><b>${esc(cPrin.n.replace(' der.','').replace(' izq.',''))}</b>
-      <span class="zpv">${u?fmt1(u.v):'—'}<em>cm</em></span></div>
-    ${dif!=null?`<div class="zpd ${bien?'good':'bad'}">${dif>0?'▲ +':'▼ −'}${fmt1(Math.abs(dif))} cm</div>`:''}
-    <ul class="zpl">
-      ${u?`<li>${fmt1(u.v)} cm · ${fmtD(u.d)}</li>`:'<li>Sin medir todavía</li>'}
-      ${estado?`<li>${esc(estado)}</li>`:''}
-      <li>${esc(sug.length>150?sug.slice(0,148)+'…':sug)}</li>
-    </ul>
+    <button class="zpx" data-a="medZona" data-z="" aria-label="Cerrar">${ic('x',10)}</button>
+    <span class="zpn">${esc(cPrin.n.replace(' der.','').replace(' izq.','').toUpperCase())}</span>
+    <div class="zpv">${u?fmt1(u.v):'—'}<em>cm</em></div>
+    ${dif!=null?`<div class="zpd ${bien?'good':'bad'}">${dif>0?'▲':'▼'} ${dif>0?'+':'−'}${fmt1(Math.abs(dif))}<i>desde ${fmtD(s[s.length-2].d)}</i></div>`
+      :(u?`<div class="zpd" style="color:var(--smoke)"><i>medido el ${fmtD(u.d)}</i></div>`:'')}
+    ${(obj&&u)?`<div class="zpo">
+      <span class="zpol">Objetivo</span>
+      <span class="zpov">${fmt1(obj.o)}<em>cm</em></span>
+      ${faltaOk?`<span class="zpok">${ic('check',10)} logrado</span>`
+        :`<span class="zpf ${falta.sube?'up':'down'}">${falta.sube?'▲':'▼'} ${fmt1(falta.v)} cm</span>`}
+    </div>`:''}
+    ${(!u)?`<p class="zps">Sin medir todavía.</p>`:''}
   </div>`;
 }
 function medPanelZona(zona){

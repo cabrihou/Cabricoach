@@ -632,14 +632,22 @@ teniendo 10. Ahora ambos lados se miden igual.
 
 ### El detalle de la zona, flotando sobre el mapa
 
-Al tocar una zona sale una **tarjeta sobre el cuerpo** (`medZonaPop`) con el valor grande,
-el cambio, la fecha, cómo va contra su objetivo y qué hacer. Antes eso vivía en un panel
-debajo del cuerpo y obligaba a bajar la vista para leer lo que acababas de tocar. Se coloca
-en el lado con más hueco y desplazada en vertical para no tapar justo la zona tocada. Debajo
-queda el histórico y el objetivo con más detalle.
+Al tocar una zona sale una **tarjeta sobre el cuerpo** (`medZonaPop`): nombre en el color de
+acento, valor grande en blanco, el cambio en verde o rojo según si es bueno en esa zona, y
+debajo el objetivo con **cuánto falta y hacia dónde** (▲ verde si hay que subir, ▼ rojo si
+hay que bajar). Antes eso vivía en un panel debajo del cuerpo y había que bajar la vista.
+
+Medidas de la tarjeta: **92-149 px sobre un mapa de 354**. La primera versión llevaba también
+la sugerencia y medía 237 px, o sea dos tercios del mapa: se salía por abajo y le tapaba la
+cara al cabrito. La sugerencia se quedó en el panel de abajo. Las zonas altas se anclan con
+`top` y las bajas (cy > 0,58) con `bottom`, que es lo único que evita que se salga del lienzo.
+Verificado en las **70 combinaciones** de zona × vista × usuario: cero desbordes.
 
 Ojo con el color: el acento se usa como `rgb(var(--acc-rgb))`, **no** `var(--acc)`, que solo
 existe dentro del `<style>` del SVG del mapa. Usarlo fuera deja el fondo transparente.
+
+El **recuadro oscuro** que se veía alrededor del cuerpo era un `<rect>` que cubría todo el
+lienzo para atenuar el fondo. Se quitó: ahora la atenuación es la opacidad del propio arte.
 
 ## Ficha de cada ejercicio (`EJ_DATA`)
 

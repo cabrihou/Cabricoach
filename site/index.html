@@ -1771,7 +1771,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 174';
+const APPREV='REV 175';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -1884,6 +1884,16 @@ function pcVid(vid){ return REDUCE?'':`<video class="pcvid" src="assets/anim/${v
 
 /* ============ ICONOGRAFIA (linea 1.75, estilo tecnico) ============ */
 const ICONS = {
+  eqBarra:'<path d="M2 12h2M20 12h2M6 8v8M18 8v8M9.5 10v4M14.5 10v4M9.5 12h5"/>',
+  eqMancuerna:'<path d="M4 9v6M7 6.5v11M17 6.5v11M20 9v6M9 12h6"/>',
+  eqMaquina:'<path d="M4 4h7v16H4z"/><path d="M4 8.5h7M4 13h7M4 17.5h7"/><path d="M15 20v-5a4 4 0 0 1 4-4h1"/>',
+  eqPolea:'<circle cx="12" cy="5" r="2.6"/><path d="M12 7.6V13"/><path d="M8.5 13h7"/><path d="M9.6 13v2.6a2.4 2.4 0 0 0 4.8 0V13"/>',
+  eqBanda:'<path d="M3 9c3-3.2 6 3.2 9 0s6-3.2 9 0"/><path d="M3 15c3-3.2 6 3.2 9 0s6-3.2 9 0"/>',
+  eqCuerpo:'<circle cx="12" cy="4.6" r="2.3"/><path d="M12 7.2v6.1M12 9.3 7.8 11.8M12 9.3l4.2 2.5M12 13.3 9 20.5M12 13.3l3 7.2"/>',
+  eqAnillas:'<path d="M7 2.5v4.2M17 2.5v4.2"/><circle cx="7" cy="12.5" r="4.6"/><circle cx="17" cy="12.5" r="4.6"/>',
+  eqKettle:'<path d="M9 8.2a3 3 0 0 1 6 0"/><path d="M8.6 8.2h6.8c2 1.7 3.4 4.2 3.4 6.9 0 3-3.1 5.2-6.8 5.2s-6.8-2.2-6.8-5.2c0-2.7 1.4-5.2 3.4-6.9Z"/>',
+  eqSmith:'<path d="M5 2.5v19M19 2.5v19"/><path d="M5 11.5h14"/><path d="M8.5 8.5v6M15.5 8.5v6"/>',
+  eqOtro:'<path d="M3 8 12 4l9 4-9 4-9-4Z"/><path d="M3 8v8l9 4 9-4V8"/>',
   beef:'<path d="M3.5 12.8C3.5 9 7.3 6 12 6s8.5 3 8.5 6.8-3.8 5.7-8.5 5.7-8.5-1.9-8.5-5.7Z"/><path d="M7.5 11.2c.8-1.6 2.5-2.6 4.5-2.6M12 18.5v2M8 18v2M16 18v2"/><circle cx="14.6" cy="12.4" r="1.1" class="acc"/>',
   drum:'<path d="M13.1 2.6a6.6 6.6 0 0 1 8.3 8.3c-1.7 2.9-5.3 4.2-8.7 3l-2.4 2.4c.3 1-.1 2-1 2.5-.5.3-1 .3-1.5.2-.1.5-.4 1-.9 1.3a2.1 2.1 0 0 1-2.9-.8 2.1 2.1 0 0 1 .5-2.7c-.4-.4-.6-.9-.6-1.4 0-1.2 1-2.1 2.2-2.1h.3l2.5-2.5c-1.2-3.4.1-7 3-8.7"/>',
   pig:'<path d="M4.2 9.5C3 10.8 2.5 12.4 2.5 14c0 3.9 4.3 6.5 9.5 6.5s9.5-2.6 9.5-6.5c0-1.6-.5-3.2-1.7-4.5"/><path d="M4.2 9.5 2.5 5l4.3 1.2M19.8 9.5 21.5 5l-4.3 1.2"/><path d="M6.8 6.2C8.2 5 10 4.4 12 4.4s3.8.6 5.2 1.8"/><rect x="8.6" y="11.4" width="6.8" height="4.6" rx="2.3"/><circle cx="10.9" cy="13.7" r=".9" class="acc"/><circle cx="13.5" cy="13.7" r=".9" class="acc"/>',
@@ -4252,9 +4262,10 @@ const MED_CAPAS=[['medidas','Medidas','ruler'],['carga','Carga','flame'],['fuerz
   ['cruce','Cruce','target'],['grasa','Grasa','drop'],['meta','Meta','scale']];
 /* Fila de pestañas expandibles: en reposo solo el icono, la elegida saca su nombre.
    items: {k,n,i} o el string "|" para un separador. */
-function xtabs(items, act, accion, cls){
+function xtabs(items, act, accion, cls, attr){
+  attr=attr||'s';
   return `<div class="xtabs ${cls||''}" role="tablist">${items.map(x=> x==='|' ? '<i class="xtsep" aria-hidden="true"></i>' :
-    `<button class="xtab ${x.k===act?'on':''}" data-a="${accion}" data-s="${esc(x.k)}" role="tab"
+    `<button class="xtab ${x.k===act?'on':''}" data-a="${accion}" data-${attr}="${esc(x.k)}" role="tab"
       aria-selected="${x.k===act?'true':'false'}" aria-label="${esc(x.n)}" title="${esc(x.n)}">${ic(x.i,17)}<span>${esc(x.n)}</span></button>`).join('')}</div>`;
 }
 /* Tarjeta destacada: degradado con trama, marcador con icono, una cifra grande y su accion. */
@@ -4338,8 +4349,8 @@ function medMapa(sel, o){
         (MED_MUSC[vista][sel]||[]).map(i=>MED_ARTE[vista][i]).join('')}</g></mask>`:''}
       <style>
         .medbp{--acc:${accHex}}
-        .mzarte .a{fill:#C9D2DC}.mzarte .b{fill:#9AA5B1}.mzarte .c{fill:#6E7783}
-        .mzarte .d{fill:#4A515A}.mzarte .e{fill:#3E444C}.mzarte .f{fill:#2B3036}
+        .mzarte .a{fill:#7C8694}.mzarte .b{fill:#68717E}.mzarte .c{fill:#4E5762}
+        .mzarte .d{fill:#3A414A}.mzarte .e{fill:#31373F}.mzarte .f{fill:#242A31}
         .mzarte{opacity:.9;transition:opacity .25s}
         .medbp.hassel .mzarte{opacity:.82}
         .mvelo{fill:#0B0D0F;opacity:.3}
@@ -4371,7 +4382,12 @@ function medMapa(sel, o){
       const c=calor[z]; if(!c||!c.col) return '';
       const ps=(MED_MUSC[vista][z]||[]); if(!ps.length) return '';
       return `<mask id="mk_${z}"><g class="mzmk" transform="translate(${OFF},0)">${ps.map(i=>MED_ARTE[vista][i]).join('')}</g></mask>
-        <rect x="0" y="0" width="1100" height="1500" mask="url(#mk_${z})" fill="${c.col}" opacity="${c.op}"/>`;
+        <linearGradient id="gr_${z}" x1="0" y1="0" x2="0.28" y2="1">
+          <stop offset="0" stop-color="${c.col}" stop-opacity="1"/>
+          <stop offset="0.55" stop-color="${c.col}" stop-opacity="0.78"/>
+          <stop offset="1" stop-color="${c.col}" stop-opacity="0.42"/>
+        </linearGradient>
+        <rect x="0" y="0" width="1100" height="1500" mask="url(#mk_${z})" fill="url(#gr_${z})" opacity="${c.op}"/>`;
     }).join(''):''}
     ${zsel?`
       ${calor?'':'<rect class="mfill" x="0" y="0" width="1100" height="1500" mask="url(#mzclip)"/>'}
@@ -10947,15 +10963,15 @@ function excatRow(x){
    que los conteos de cada categoria ya reflejan el equipo elegido. */
 const EXCAT_EQUIP_ORDER=['barra','mancuerna','maquina','polea','banda','peso_corporal','anillas','kettlebell','smith','otro'];
 const EXCAT_EQUIP_LABELS={barra:'Barra', mancuerna:'Mancuerna', maquina:'Máquina', polea:'Polea', banda:'Banda', peso_corporal:'Peso corporal', anillas:'Anillas', kettlebell:'Kettlebell', smith:'Smith', otro:'Otro'};
+const EXCAT_EQUIP_ICO={barra:'eqBarra', mancuerna:'eqMancuerna', maquina:'eqMaquina', polea:'eqPolea',
+  banda:'eqBanda', peso_corporal:'eqCuerpo', anillas:'eqAnillas', kettlebell:'eqKettle', smith:'eqSmith', otro:'eqOtro'};
 function vExcat(){
   const q=(UI.excatQ||'').trim();
   const eq=UI.excatEquip||null;
   const base=eq?EXCAT.filter(x=>x.equip===eq):EXCAT;
   const equipRow=`<section class="mod tight">
-    <div class="flex wrapf" style="gap:6px">
-      ${EXCAT_EQUIP_ORDER.map(id=>`<button class="chip ${eq===id?'fill':''}" data-a="excatEquip" data-eq="${id}" aria-label="Filtrar por ${EXCAT_EQUIP_LABELS[id]}" aria-pressed="${eq===id?'true':'false'}">${EXCAT_EQUIP_LABELS[id]}</button>`).join('')}
-      ${eq?`<button class="chip" data-a="excatEquipClear" aria-label="Quitar filtro de equipo">${ic('x',10)} Quitar filtro</button>`:''}
-    </div>
+    ${xtabs(EXCAT_EQUIP_ORDER.map(id=>({k:id, n:EXCAT_EQUIP_LABELS[id], i:EXCAT_EQUIP_ICO[id]})), eq, 'excatEquip', '', 'eq')}
+    ${eq?`<div class="tc mt8"><button class="chip" data-a="excatEquipClear" aria-label="Quitar filtro de equipo">${ic('x',10)} Quitar filtro</button></div>`:''}
   </section>`;
   const searchBox=`<section class="mod tight">
     <div class="inwrap">${ic('search',16)}<input class="in has-ic" placeholder="Busca un ejercicio…" value="${esc(q)}" data-ch="excatq"></div>

@@ -869,7 +869,21 @@ img{-webkit-user-drag:none;user-select:none}
 .fzarow:last-child{border-bottom:none}
 .fzabar{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
 .fzabar i{display:block;height:100%;border-radius:99px;transition:width .4s ease}
-.medwrap{display:block;margin:4px 0 6px}
+.medwrap{display:block;margin:4px 0 6px;position:relative}
+.zpop{position:absolute;z-index:4;width:min(58%,230px);padding:12px 13px 11px;border-radius:16px;
+  background:rgb(var(--acc-rgb));color:#0B0D0F;box-shadow:0 12px 30px rgba(0,0,0,.55);animation:fadeIn .18s}
+.zpop .zpx{position:absolute;top:7px;right:7px;width:20px;height:20px;border:0;border-radius:7px;
+  background:rgba(0,0,0,.14);color:#0B0D0F;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.zpop .zph{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;padding-right:18px}
+.zpop .zph b{font:600 14px var(--ui)}
+.zpop .zpv{font:800 26px var(--num);display:flex;align-items:baseline;gap:2px;line-height:1}
+.zpop .zpv em{font:600 10px var(--ui);font-style:normal;opacity:.7}
+.zpop .zpd{font:700 12px var(--num);margin-top:3px}
+.zpop .zpd.good{color:#0d5c3c} .zpop .zpd.bad{color:#8c1d1d}
+.zpop .zpl{list-style:none;margin:9px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
+.zpop .zpl li{position:relative;padding-left:10px;font:500 11.5px/1.45 var(--ui);opacity:.88}
+.zpop .zpl li:before{content:'–';position:absolute;left:0;opacity:.6}
+@media (max-width:360px){.zpop{width:min(64%,205px);padding:10px 11px}.zpop .zpv{font-size:22px}}
 .medsvg{width:min(230px,72vw);height:auto}
 .medpanel{margin-top:12px;padding-top:10px;border-top:1px solid var(--line2)}
 .chart .trendl.far{opacity:.4;stroke-dasharray:2 6}
@@ -1555,7 +1569,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 156';
+const APPREV='REV 157';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3347,6 +3361,9 @@ function fzaTabla(){
    por brazo son 54 kg de trabajo. La app no lo puede adivinar, asi que se marca a mano
    y a partir de ahi cuadra el tonelaje y la comparacion con los estandares. */
 function exUnilateral(id){
+  /* la pregunta real es "el peso que apuntas, ¿es de un lado o el total?", asi que vale
+     tanto para los que se hacen un lado a la vez como para los de dos mancuernas */
+  const f=ejFicha(id); if(f && f.u) return true;
   const n=(exNombre(id)||'').toLowerCase();
   if(/unilateral|por lado|single|one arm|un brazo|una pierna|b[uú]lgar|zancada|lunge|step.?up|kickback|martillo|hammer|concentrad|mancuerna|dumbbell|db\b/.test(n)) return true;
   const pat=ejPatron(id, exNombre(id));
@@ -3370,6 +3387,7 @@ function serieValida(exId, s){
    Ahi el numero que uno apunta es el LASTRE (0 si va a peso limpio), y el peso real de la
    serie es el corporal de ese dia mas ese lastre. Sin esto una dominada contaba 0 kg. */
 function exPesoCorporal(id){
+  const f=ejFicha(id); if(f) return !!f.c;
   const x=excatById(id)||{};
   if(x.equip==='anillas'||x.equip==='peso_corporal') return true;
   const n=(exNombre(id)||'').toLowerCase();
@@ -3431,7 +3449,9 @@ function fzaNivelOtro(id, rm, pc){
   if(!pc||!rm) return null;
   const nom=exNombre(id)||'';
   let k=null;
-  for(const [re,kk] of FZA_NOM2) if(re.test(nom)){ k=kk; break; }
+  const f=ejFicha(id);
+  if(f && f.t) k = FZA_STD2[f.t] ? f.t : null;
+  if(!k) for(const [re,kk] of FZA_NOM2) if(re.test(nom)){ k=kk; break; }
   if(!k){ const pat=ejPatron(id, nom); if(!pat) return null; k=FZA_PAT2[pat]; }
   if(!k||!FZA_STD2[k]) return null;
   const u=FZA_STD2[k][UID==='cami'?'c':'a'];
@@ -3722,6 +3742,16 @@ const ZONA_MUSC={
 /* de un ejercicio registrado a su patron de movimiento. Primero por id (los de las rutinas
    propias, que son los que de verdad se loguean) y si no, por lo que diga el nombre, que es
    lo unico que traen los importados de Strong. */
+/* ============ FICHA DE CADA EJERCICIO ============
+   Los 301 del catalogo clasificados uno por uno (09/08/2026): patron de movimiento (p),
+   si es de peso corporal y el kg que se apunta es lastre (c), si se hace un lado a la vez
+   (u) y con que tabla de fuerza relativa se compara (t). Antes esto se deducia del nombre
+   con expresiones regulares, que fallaba en los casos raros: el preacher curl se quedaba
+   sin patron, el dragon flag contaba como pecho y un salto al cajon se juzgaba con la
+   tabla de sentadilla. Las reglas por nombre siguen ahi, pero ahora como RESPALDO para lo
+   que se importe de Strong y no este en el catalogo. */
+const EJ_DATA={"pike_pu":{"p":"press_vertical","c":1,"t":"ohp"},"pushup_archer":{"p":"flexion_pecho","c":1,"u":1},"pushup_pseudo":{"p":"flexion_pecho","c":1},"pushup_decline":{"p":"flexion_pecho","c":1},"hollow_hold":{"p":"plancha_core","c":1},"lsit_floor":{"p":"plancha_core","c":1},"dragon_flag":{"p":"elevacion_piernas","c":1},"wall_hs_hold":{"p":"parada_manos","c":1},"tuck_planche":{"p":"plancha_core","c":1},"front_lever_tuck":{"p":"palanca_frontal","c":1},"back_lever_tuck":{"p":"palanca_frontal","c":1},"nordic_curl":{"p":"curl_femoral","c":1,"t":"curl_femoral"},"ring_row":{"p":"remo_invertido","c":1,"t":"row"},"ring_facepull":{"p":"pajaro_posterior","c":1,"t":"face_pull"},"ring_row_archer":{"p":"remo_unilateral","c":1,"u":1,"t":"row"},"ring_pushup":{"p":"flexion_pecho","c":1},"ring_fly":{"p":"apertura_pecho","c":1},"ring_dip":{"p":"fondo_pecho","c":1},"ring_pullup":{"p":"jalon_vertical","c":1,"t":"dominada_lastrada"},"ring_muscleup":{"p":"muscle_up","c":1},"ring_support":{"p":"sosten_anillas","c":1},"ring_lsit":{"p":"plancha_core","c":1},"ring_curl":{"p":"curl_biceps","c":1,"t":"curl"},"ring_triceps_ext":{"p":"extension_triceps","c":1,"t":"triceps_polea"},"skin_the_cat":{"p":"jalon_vertical","c":1},"bayesian":{"p":"curl_biceps","t":"curl"},"bench_dip":{"p":"fondo_triceps","c":1},"bench_close":{"p":"press_cerrado"},"curl_bb":{"p":"curl_biceps","t":"curl"},"curl_cbl":{"p":"curl_biceps","t":"curl"},"curl_db":{"p":"curl_biceps","t":"curl"},"curl_mach":{"p":"curl_biceps","t":"curl"},"curl_incline":{"p":"curl_biceps","u":1,"t":"curl"},"kickback_cbl":{"p":"extension_triceps","t":"triceps_polea"},"curl_conc":{"p":"curl_biceps","u":1,"t":"curl"},"tricep_db":{"p":"extension_triceps","t":"triceps_polea"},"tricep_1arm":{"p":"extension_triceps","t":"triceps_polea"},"hammer_band":{"p":"curl_martillo","t":"curl_martillo"},"hammer_cbl":{"p":"curl_martillo","t":"curl_martillo"},"hammer_db":{"p":"curl_martillo","t":"curl_martillo"},"inccurl_db":{"p":"curl_biceps","t":"curl"},"preach_bb":{"p":"curl_biceps","t":"curl"},"preach_db":{"p":"curl_biceps","t":"curl"},"preach_mach":{"p":"curl_biceps","t":"curl"},"revcurl_band":{"p":"curl_biceps","t":"curl"},"revcurl_bb":{"p":"curl_biceps","t":"curl"},"revcurl_db":{"p":"curl_biceps","t":"curl"},"curl_revconc":{"p":"curl_biceps","u":1,"t":"curl"},"wristcurl_up":{"p":"agarre_antebrazo"},"skull_bb":{"p":"extension_triceps","t":"press_frances"},"skull_db":{"p":"extension_triceps","t":"press_frances"},"tricep_dip":{"p":"fondo_triceps","c":1},"tricep_dip_as":{"p":"fondo_triceps"},"tricep_ext":{"p":"extension_triceps","t":"triceps_polea"},"tricep_ext_bb":{"p":"extension_triceps","t":"press_frances"},"tricep_ext_cbl":{"p":"extension_triceps","t":"triceps_polea"},"tricep_ext_db":{"p":"extension_triceps","t":"triceps_polea"},"tricep_ext_m":{"p":"extension_triceps","t":"triceps_polea"},"tricep_pushdn":{"p":"extension_triceps","t":"triceps_polea"},"tricep_push_sb":{"p":"extension_triceps","t":"triceps_polea"},"uprow_cbl":{"p":"remo_alto","t":"remo_polea"},"wristroller":{"p":"agarre_antebrazo"},"ab_wheel":{"p":"crunch_abdominal"},"crunch_bike":{"p":"crunch_abdominal","c":1},"crunch_cbl":{"p":"crunch_abdominal"},"twist_cbl":{"p":"rotacion_core"},"crunch_cross":{"p":"crunch_abdominal","c":1},"crunch":{"p":"crunch_abdominal","c":1},"crunch_mach":{"p":"crunch_abdominal"},"crunch_ball":{"p":"crunch_abdominal"},"crunch_decline":{"p":"crunch_abdominal","c":1},"kneeraise_flat":{"p":"elevacion_piernas","c":1},"legraise_flat":{"p":"elevacion_piernas","c":1},"kneeraise_hang":{"p":"elevacion_piernas","c":1},"legraise_hang":{"p":"elevacion_piernas","c":1},"jackknife":{"p":"elevacion_piernas","c":1},"kneeraise_capt":{"p":"elevacion_piernas"},"knees2elbows":{"p":"elevacion_piernas","c":1},"crunch_obl":{"p":"crunch_abdominal","c":1},"plank":{"p":"plancha_core","c":1},"crunch_rev":{"p":"crunch_abdominal","c":1},"plank_rev":{"p":"plancha_core","c":1},"rus_twist":{"p":"rotacion_core","c":1},"sidebend_band":{"p":"rotacion_core"},"sidebend_cbl":{"p":"rotacion_core"},"sidebend_db":{"p":"rotacion_core"},"plank_side":{"p":"plancha_core","c":1},"situp":{"p":"crunch_abdominal","c":1},"superman":{"p":"extension_lumbar","c":1},"toes2bar":{"p":"elevacion_piernas","c":1},"torso_rot":{"p":"rotacion_core"},"vup":{"p":"elevacion_piernas","c":1},"backext":{"p":"extension_lumbar","c":1},"backext_mach":{"p":"extension_lumbar"},"row_1arm_db":{"p":"remo_unilateral","u":1,"t":"remo_mancuerna"},"row_bent_band":{"p":"remo_horizontal","t":"row"},"row_bent_bb":{"p":"remo_horizontal","t":"row"},"row_bent_db":{"p":"remo_horizontal","t":"row"},"row_under_bb":{"p":"remo_horizontal","t":"row"},"chinup":{"p":"jalon_vertical","c":1,"t":"dominada_lastrada"},"chinup_asist":{"p":"jalon_vertical"},"dead_bb":{"p":"peso_muerto_convencional","t":"dead"},"good_morning":{"p":"peso_muerto_rumano","t":"rdl"},"incrow_db":{"p":"remo_horizontal","t":"row"},"invertedrow":{"p":"remo_invertido","c":1,"t":"row"},"isorow":{"p":"remo_horizontal","t":"row"},"pullup_kip":{"p":"jalon_vertical","c":1,"t":"dominada_lastrada"},"pulldown_kneel":{"p":"jalon_vertical","t":"pulldown"},"latpull_cbl":{"p":"jalon_vertical","t":"pulldown"},"latpull_mach":{"p":"jalon_vertical","t":"pulldown"},"latpull_1arm":{"p":"jalon_vertical","t":"pulldown"},"latpull_u_band":{"p":"jalon_vertical","t":"pulldown"},"latpull_u_cbl":{"p":"jalon_vertical","t":"pulldown"},"latpull_wide":{"p":"jalon_vertical","t":"pulldown"},"latpull_close":{"p":"jalon_vertical","t":"pulldown"},"lat_pushdown":{"p":"jalon_vertical","t":"pulldown"},"row_pendlay":{"p":"remo_horizontal","t":"row"},"pullup_bw":{"p":"jalon_vertical","c":1,"t":"dominada_lastrada"},"pullup_asist":{"p":"jalon_vertical"},"pullup_band":{"p":"jalon_vertical"},"rackpull":{"p":"peso_muerto_convencional","t":"dead"},"rdl_bb":{"p":"peso_muerto_rumano","t":"rdl"},"row_cbl_uni":{"p":"remo_horizontal","t":"row"},"row_seat_cbl":{"p":"remo_horizontal","t":"remo_polea"},"row_seat_mach":{"p":"remo_horizontal","t":"remo_polea"},"row_seat_wide":{"p":"remo_horizontal","t":"remo_polea"},"shrug_mach":{"p":"encogimiento_trapecio","t":"encogimiento"},"shrug_smith":{"p":"encogimiento_trapecio","t":"encogimiento"},"stiffdead_bb":{"p":"peso_muerto_rumano","t":"rdl"},"sumo_dead":{"p":"peso_muerto_convencional","t":"peso_muerto_sumo"},"tbar_row":{"p":"remo_horizontal","t":"row"},"uprow_bb":{"p":"remo_alto","t":"row"},"pullup_wide":{"p":"jalon_vertical","c":1,"t":"dominada_lastrada"},"kb_swing":{"p":"hip_thrust","t":"hip"},"muscleup":{"p":"muscle_up","c":1},"sumo_highpull":{"p":"remo_alto","t":"remo_polea"},"thruster_bb":{"p":"press_vertical","t":"ohp"},"thruster_kb":{"p":"press_vertical","t":"ohp"},"arnold_db":{"p":"press_vertical","t":"ohp"},"facepull":{"p":"pajaro_posterior","t":"face_pull"},"fraise_band":{"p":"elevacion_frontal","t":"elevacion_lateral"},"fraise_bb":{"p":"elevacion_frontal","t":"elevacion_lateral"},"fraise_cbl":{"p":"elevacion_frontal","t":"elevacion_lateral"},"fraise_db":{"p":"elevacion_frontal","t":"elevacion_lateral"},"fraise_plate":{"p":"elevacion_frontal","t":"elevacion_lateral"},"handstand_pu":{"p":"parada_manos","c":1},"latraise_band":{"p":"elevacion_lateral","t":"elevacion_lateral"},"latraise_cbl":{"p":"elevacion_lateral","t":"elevacion_lateral"},"latraise_db":{"p":"elevacion_lateral","t":"elevacion_lateral"},"latraise_mach":{"p":"elevacion_lateral","t":"elevacion_lateral"},"ohp_bb":{"p":"press_vertical","t":"ohp"},"ohp_cbl":{"p":"press_vertical","t":"ohp"},"ohp_db":{"p":"press_vertical","t":"press_militar_db"},"ohp_smith":{"p":"press_vertical","t":"ohp"},"pushpress":{"p":"press_vertical","t":"ohp"},"revfly_cbl":{"p":"pajaro_posterior","t":"pajaro_posterior"},"revfly_db":{"p":"pajaro_posterior","t":"pajaro_posterior"},"revfly_mach":{"p":"pajaro_posterior","t":"pajaro_posterior"},"ohp_seat_bb":{"p":"press_vertical","t":"ohp"},"ohp_seat_db":{"p":"press_vertical","t":"press_militar_db"},"shpress_mach":{"p":"press_vertical","t":"ohp"},"shpress_plate":{"p":"press_vertical","t":"ohp"},"shrug_bb":{"p":"encogimiento_trapecio","t":"encogimiento"},"shrug_db":{"p":"encogimiento_trapecio","t":"encogimiento"},"military_press":{"p":"press_vertical","t":"ohp"},"uprow_db":{"p":"remo_alto","t":"remo_mancuerna"},"clean_bb":{"p":"cargada_olimpica"},"clean_jerk":{"p":"cargada_olimpica"},"dead_highpull":{"p":"remo_alto","t":"remo_polea"},"hangclean":{"p":"cargada_olimpica"},"hangsnatch":{"p":"arrancada_olimpica"},"jumpshrug":{"p":"encogimiento_trapecio","t":"encogimiento"},"squat_ohead":{"p":"sentadilla","t":"squat"},"powerclean":{"p":"cargada_olimpica"},"powersnatch":{"p":"arrancada_olimpica"},"press_under":{"p":"press_vertical","t":"ohp"},"snatch_bb":{"p":"arrancada_olimpica"},"snatch_pull":{"p":"arrancada_olimpica"},"split_jerk":{"p":"arrancada_olimpica"},"aroundworld":{"p":"apertura_pecho"},"bench_bb":{"p":"press_horizontal","t":"bench"},"bench_cbl":{"p":"press_horizontal","t":"bench"},"bench_db":{"p":"press_horizontal","t":"press_banca_db"},"bench_smith":{"p":"press_horizontal","t":"bench"},"bench_wide":{"p":"press_horizontal","t":"bench"},"crossover":{"p":"apertura_pecho"},"chest_dip":{"p":"fondo_pecho","c":1},"chest_dip_asis":{"p":"fondo_pecho"},"fly_chest":{"p":"apertura_pecho"},"fly_band":{"p":"apertura_pecho"},"fly_db":{"p":"apertura_pecho"},"cpress_band":{"p":"press_horizontal","t":"bench"},"cpress_mach":{"p":"press_horizontal","t":"bench"},"cpress_conv":{"p":"press_horizontal","t":"bench"},"decline_bb":{"p":"press_declinado","t":"bench"},"decline_db":{"p":"press_declinado","t":"bench"},"decline_smith":{"p":"press_declinado","t":"bench"},"floorpress":{"p":"press_horizontal","t":"bench"},"incline_bb":{"p":"press_inclinado","t":"bench"},"incline_cbl":{"p":"press_inclinado","t":"bench"},"incline_db":{"p":"press_inclinado","t":"press_inclinado"},"incline_smith":{"p":"press_inclinado","t":"bench"},"incfly_db":{"p":"apertura_pecho"},"incpress_mach":{"p":"press_inclinado","t":"bench"},"isochest":{"p":"press_horizontal"},"pecdeck":{"p":"apertura_pecho"},"pullover_db":{"p":"pullover"},"pullover_mach":{"p":"pullover"},"pushup":{"p":"flexion_pecho","c":1},"pushup_band":{"p":"flexion_pecho"},"pushup_knees":{"p":"flexion_pecho","c":1},"box_jump":{"p":"sentadilla","c":1},"squat_box":{"p":"sentadilla","t":"squat"},"bulg_split":{"p":"zancada","u":1,"t":"bulgara"},"pullthrough":{"p":"hip_thrust","t":"hip"},"calfpress_lp":{"p":"gemelo_de_pie","t":"gemelo"},"calfpress_slp":{"p":"gemelo_de_pie","t":"gemelo"},"dead_band":{"p":"peso_muerto_convencional","t":"dead"},"dead_db":{"p":"peso_muerto_convencional","t":"dead"},"dead_smith":{"p":"peso_muerto_convencional","t":"dead"},"dead_deficit":{"p":"peso_muerto_convencional","t":"dead"},"squat_front":{"p":"sentadilla","t":"sentadilla_frontal"},"glute_ham":{"p":"curl_femoral","t":"curl_femoral"},"kickback_glute":{"p":"hip_thrust","u":1,"t":"hip"},"squat_goblet":{"p":"sentadilla","t":"squat"},"hacksquat":{"p":"sentadilla","t":"hack"},"hacksquat_bb":{"p":"sentadilla","t":"hack"},"hip_abd":{"p":"abduccion_cadera","t":"abductor"},"hip_add":{"p":"aduccion_cadera","t":"aductor"},"hipthrust_bb":{"p":"hip_thrust","t":"hip"},"hipthrust_bw":{"p":"hip_thrust","c":1,"t":"hip"},"jumpsquat":{"p":"sentadilla","c":1},"boxjump_lat":{"p":"sentadilla","c":1},"legext":{"p":"extension_cuadriceps","t":"ext_cuadriceps"},"legpress":{"p":"prensa","t":"legpress"},"lunge_bb":{"p":"zancada","t":"zancada"},"lunge_bw":{"p":"zancada","c":1,"t":"zancada"},"lunge_db":{"p":"zancada","t":"zancada"},"legcurl_lying":{"p":"curl_femoral","t":"curl_femoral"},"squat_pistol":{"p":"sentadilla","c":1,"t":"squat"},"rdl_db":{"p":"peso_muerto_rumano","t":"rdl"},"calf_se_m":{"p":"gemelo_sentado","t":"gemelo"},"calf_se_plate":{"p":"gemelo_sentado","t":"gemelo"},"legcurl_seat":{"p":"curl_femoral","t":"curl_femoral"},"legpress_seat":{"p":"prensa","t":"legpress"},"bridge_1leg":{"p":"hip_thrust","c":1,"u":1,"t":"hip"},"squat_band":{"p":"sentadilla","t":"squat"},"squat_bb":{"p":"sentadilla","t":"squat"},"squat_bw":{"p":"sentadilla","c":1,"t":"squat"},"squat_db":{"p":"sentadilla","t":"squat"},"squat_mach":{"p":"sentadilla","t":"squat"},"squat_smith":{"p":"sentadilla","t":"squat"},"calf_st_bb":{"p":"gemelo_de_pie","t":"gemelo"},"calf_st_bw":{"p":"gemelo_de_pie","c":1,"t":"gemelo"},"calf_st_db":{"p":"gemelo_de_pie","t":"gemelo"},"calf_st_m":{"p":"gemelo_de_pie","t":"gemelo"},"calf_st_sm":{"p":"gemelo_de_pie","t":"gemelo"},"stepup":{"p":"zancada","c":1,"t":"zancada"},"stiffdead_db":{"p":"peso_muerto_rumano","t":"rdl"},"straightdead":{"p":"peso_muerto_rumano","t":"rdl"},"trapbar_dead":{"p":"peso_muerto_convencional","t":"trap_bar"},"zercher_sq":{"p":"sentadilla","t":"squat"}};
+function ejFicha(id){ return EJ_DATA[id]||null; }
 const EJ_PATRON_ID={
   bench:'press_horizontal', c_chest:'press_horizontal', incdb:'press_inclinado', incmach:'press_inclinado',
   dip:'fondo_pecho', fly:'apertura_pecho', c_fly:'apertura_pecho',
@@ -3794,6 +3824,7 @@ const EJ_PATRON_NOM=[
   [/side bend|lateral de tronco|inclinaci[oó]n lateral/i,'rotacion_core'], [/muscle.?up/i,'muscle_up'],
 ];
 function ejPatron(id, nombre){
+  const f=ejFicha(id); if(f && f.p) return f.p;
   if(id && EJ_PATRON_ID[id]) return EJ_PATRON_ID[id];
   const n=nombre||exNombre(id)||'';
   if(!n) return null;
@@ -4035,6 +4066,48 @@ function medObjetivoDe(k){
   const o=P.obj.find(x=>x.k===kk);
   return o?{o:o.o, dir:o.dir, tol:o.tol, fuente:`proporción sobre tu ${P.ancla.n}`}:null;
 }
+/* Tarjeta flotante sobre el mapa con lo esencial de la zona tocada: el valor grande,
+   cuanto cambio, la fecha, como va contra su objetivo y que hacer. Antes esto vivia en un
+   panel debajo del cuerpo y obligaba a bajar la vista para leer lo que acababas de tocar. */
+function medZonaPop(zona){
+  if(!zona) return '';
+  const vista = MED_ZONAS[UI.medVista] ? UI.medVista : 'frente';
+  const z=(MED_ZONAS[vista]||{})[zona]; if(!z) return '';
+  const campos=MED_CAMPOS.filter(c=>c.zona===zona); if(!campos.length) return '';
+  const cPrin=campos.find(c=>medUltimo(c.k)&&medObjetivoDe(c.k)) || campos.find(c=>medUltimo(c.k)) || campos[0];
+  const u=medUltimo(cPrin.k);
+  const s=medSerie(cPrin.k);
+  const dif = s.length>1 ? Math.round((s[s.length-1].v-s[s.length-2].v)*10)/10 : null;
+  const dirBaja = (zona==='cintura'||zona==='cadera');
+  const bien = dif==null?null:(dirBaja? dif<0 : dif>0);
+  const obj=medObjetivoDe(cPrin.k);
+  let estado='';
+  if(u && obj){
+    const falta=obj.o-u.v, tol=obj.tol||0;
+    const ok = obj.dir==='baja' ? u.v<=obj.o+tol : u.v>=obj.o-tol;
+    estado = ok ? 'Logrado, en rango.'
+      : (obj.dir==='baja' ? `Te faltan ${fmt1(Math.abs(falta))} cm por bajar, objetivo ${fmt1(obj.o)}.`
+                          : `Te faltan ${fmt1(Math.abs(falta))} cm por ganar, objetivo ${fmt1(obj.o)}.`);
+  }
+  const sug = u ? medSugerenciaZona(zona, cPrin.k, obj, u).replace(/<[^>]+>/g,'') : 'Sin medir todavía.';
+  /* se coloca al lado con mas hueco y desplazada en vertical, para no tapar justo la zona
+     que se acaba de tocar: si esta arriba la tarjeta baja, y al reves */
+  const cx=(z[0]+z[2]/2+200)/1100, cy=(z[1]+z[3]/2)/1500;
+  const der = cx<0.48;
+  const arriba = cy<0.45;
+  const styl = `${der?'left':'right'}:3%; top:${clamp(arriba? cy*100+8 : cy*100-42, 2, 56)}%`;
+  return `<div class="zpop ${der?'d':'i'}" style="${styl}" role="dialog" aria-label="${esc(medNomZona(zona))}">
+    <button class="zpx" data-a="medZona" data-z="" aria-label="Cerrar">${ic('x',11)}</button>
+    <div class="zph"><b>${esc(cPrin.n.replace(' der.','').replace(' izq.',''))}</b>
+      <span class="zpv">${u?fmt1(u.v):'—'}<em>cm</em></span></div>
+    ${dif!=null?`<div class="zpd ${bien?'good':'bad'}">${dif>0?'▲ +':'▼ −'}${fmt1(Math.abs(dif))} cm</div>`:''}
+    <ul class="zpl">
+      ${u?`<li>${fmt1(u.v)} cm · ${fmtD(u.d)}</li>`:'<li>Sin medir todavía</li>'}
+      ${estado?`<li>${esc(estado)}</li>`:''}
+      <li>${esc(sug.length>150?sug.slice(0,148)+'…':sug)}</li>
+    </ul>
+  </div>`;
+}
 function medPanelZona(zona){
   const campos=MED_CAMPOS.filter(c=>c.zona===zona);
   if(!campos.length) return '';
@@ -4092,7 +4165,7 @@ function medPanelZona(zona){
         <td class="${d==null?'dim':bien?'mint':'red'}">${d==null?'—':(d>0?'+':'−')+fmt1(Math.abs(d))}</td></tr>`;
     }).join('')}</tbody></table></details>`;
   const sug=medSugerenciaZona(zona, kPrin, obj, act);
-  return `<div class="medpanel"><div class="medph">${ic('ruler',13)} <b>${esc(medNomZona(zona))}</b><span class="small dim">detalle de la zona</span></div>
+  return `<div class="medpanel"><div class="medph">${ic('ruler',13)} <b>${esc(medNomZona(zona))}</b><span class="small dim">histórico y objetivo</span></div>
     ${filas}${objHtml}${asim}${hist}
     ${sug?`<div class="medsug">${ic('zap',12)}<div>${sug}</div></div>`:''}
     ${ayudaTxt?`<div class="small dim mt8" style="line-height:1.5">${ic('ruler',11)} ${esc(ayudaTxt)}</div>`:''}</div>`;
@@ -4299,7 +4372,7 @@ function vMedidasCuerpo(){
   ${box==='cuerpo'?`
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('ruler',16)} Tu cuerpo</span>${sel?`<button class="btn sm ghost" data-a="medZona" data-z="">Ver todo</button>`:''}</div>
-    <div class="medwrap">${medMapa(sel)}</div>
+    <div class="medwrap">${medMapa(sel)}${medZonaPop(sel)}</div>
     <div class="small dim tc">${sel?'Toca otra zona para cambiar':'Toca una zona del cuerpo para ver su medida'}</div>
     ${sel?medPanelZona(sel):''}
   </section>

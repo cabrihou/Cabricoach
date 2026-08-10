@@ -630,3 +630,28 @@ más cuántas sesiones faltan a ese paso.
 actual se calculaba con el cuerpo sumado, así que una meta de 25 kg de lastre salía cumplida
 teniendo 10. Ahora ambos lados se miden igual.
 
+### El detalle de la zona, flotando sobre el mapa
+
+Al tocar una zona sale una **tarjeta sobre el cuerpo** (`medZonaPop`) con el valor grande,
+el cambio, la fecha, cómo va contra su objetivo y qué hacer. Antes eso vivía en un panel
+debajo del cuerpo y obligaba a bajar la vista para leer lo que acababas de tocar. Se coloca
+en el lado con más hueco y desplazada en vertical para no tapar justo la zona tocada. Debajo
+queda el histórico y el objetivo con más detalle.
+
+Ojo con el color: el acento se usa como `rgb(var(--acc-rgb))`, **no** `var(--acc)`, que solo
+existe dentro del `<style>` del SVG del mapa. Usarlo fuera deja el fondo transparente.
+
+## Ficha de cada ejercicio (`EJ_DATA`)
+
+Los 301 del catálogo clasificados uno por uno: patrón de movimiento, si es de peso corporal
+(el kg que se apunta es lastre), si se hace un lado a la vez y con qué tabla de fuerza se
+compara. Antes todo eso se deducía del nombre con expresiones regulares y fallaba en los
+casos raros: el preacher curl se quedaba sin patrón, el dragon flag contaba como pecho y un
+salto al cajón se juzgaba con la tabla de sentadilla. Las reglas por nombre siguen ahí como
+**respaldo** para lo que se importe de Strong y no esté en el catálogo.
+
+Correcciones aplicadas sobre lo que devolvió la clasificación automática: preacher curl sin
+patrón, fondo en banco como press, dragon flag como pecho, back lever como jalón, muscle up
+sin patrón, remo al mentón como remo horizontal, curl de muñeca como bíceps, y las asistidas
+y los saltos comparándose con tablas que no les corresponden.
+

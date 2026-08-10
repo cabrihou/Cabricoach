@@ -609,3 +609,24 @@ de qué ejercicios. Los minutos de carrera aparecen como series equivalentes.
 de anillas, el banner es `ring_pullup.jpg` en vez del de push/pull genérico. El nodo del
 banner propio (`BAN — rutina_anillas`) está creado en Magnific, sin generar.
 
+### Elegir la tabla con la que se compara (P7a)
+
+Un peso muerto rumano no se juzga con la tabla del convencional, ni una dominada lastrada
+con la del jalón: el mismo número significa cosas distintas. `FZA_VARIANTES` lista, por cada
+básico, las tablas que tienen sentido, y se elige desde la fila abierta
+(`S.cfg.fzaTabla[k]`). Medido: una dominada con 20 kg de lastre pasa de **Avanzado** con la
+tabla de jalón a **Intermedio** con la de dominada lastrada, que es el listón correcto.
+
+Baremos nuevos para las variantes: `dominada_lastrada`, `peso_muerto_sumo`, `trap_bar`.
+
+### Metas · qué hacer la próxima sesión
+
+Una gráfica te dice dónde estás, no qué hacer mañana. Cada meta lleva ahora `goalProxima`:
+mira la última serie y aplica la regla de progresión (si completaste el tope de repeticiones
+sube peso, si no suma una repetición), y dice el peso y las reps concretas de la próxima vez
+más cuántas sesiones faltan a ese paso.
+
+**Corregido de paso**: en ejercicios de peso corporal la meta se guarda como lastre pero el
+actual se calculaba con el cuerpo sumado, así que una meta de 25 kg de lastre salía cumplida
+teniendo 10. Ahora ambos lados se miden igual.
+

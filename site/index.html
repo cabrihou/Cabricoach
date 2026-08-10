@@ -896,6 +896,9 @@ img{-webkit-user-drag:none;user-select:none}
 .fzasig{flex:none;width:28px;height:28px;border-radius:9px;border:1px solid var(--line2);background:transparent;color:var(--smoke);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.18s}
 .fzasig.on{background:var(--gold);border-color:var(--gold);color:#0B0D0F}
 .porlado{font:600 9px var(--ui);color:var(--gold);font-style:normal;border:1px solid rgba(255,201,77,.4);border-radius:5px;padding:1px 4px;vertical-align:middle}
+.goalprox{display:flex;gap:9px;align-items:flex-start;margin-top:10px;padding:10px 12px;border-radius:12px;
+  background:rgba(var(--acc-rgb),.1);border:1px solid rgba(var(--acc-rgb),.24)}
+.goalprox.ok{background:rgba(88,223,163,.09);border-color:rgba(88,223,163,.3)}
 .goalbase{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:9px 11px;border-radius:12px;background:rgba(143,160,255,.09);border:1px solid rgba(143,160,255,.22)}
 .fzafuente{padding:10px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line2)}
 .fzarow{cursor:pointer;transition:background .18s;border-radius:12px;padding:8px 10px;margin:0 -10px}
@@ -1552,7 +1555,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 155';
+const APPREV='REV 156';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3330,10 +3333,11 @@ function fzaTabla(){
     const mejor=fzaMejor1RM(exId);
     if(!mejor) return;
     const ratio=mejor.rm/pc;
-    const nv=fzaNivelDe(ratio, FZA_STD[k][key]);
-    out.push({k, n:FZA_STD[k].n, ex:exId, cands, manual:!!elegido[k], rm:Math.round(mejor.rm*10)/10, d:mejor.d, sw:mejor.w, sr:mejor.r, ratio:Math.round(ratio*100)/100, ...nv,
+    const TB=fzaTablaDe(k);
+    const nv=fzaNivelDe(ratio, TB.u);
+    out.push({k, n:FZA_STD[k].n, tabla:TB, ex:exId, cands, manual:!!elegido[k], rm:Math.round(mejor.rm*10)/10, d:mejor.d, sw:mejor.w, sr:mejor.r, ratio:Math.round(ratio*100)/100, ...nv,
       /* puntaje comparable entre ejercicios: cuanto del camino a elite lleva */
-      score: ratio/FZA_STD[k][key][3]});
+      score: ratio/TB.u[3]});
   });
   return out.sort((x,y)=>y.score-x.score);
 }
@@ -3391,7 +3395,7 @@ function exPesoReal(id, w, fecha){
    marcar si un peso es por lado. Se excluyeron a proposito flexiones, remo invertido y
    muscle up: se registran sin kilos y el ratio no se podria calcular.
    Se llega a ellos por PATRON de movimiento, asi cubren tambien los importados. */
-const FZA_STD2={"press_inclinado":{"n":"Press inclinado","a":[0.55,0.9,1.25,1.65],"c":[0.25,0.55,0.8,1.1]},"press_banca_db":{"n":"Press banca con mancuerna","a":[0.4,1.0,1.4,1.85],"c":[0.2,0.6,0.95,1.35]},"press_militar_db":{"n":"Press de hombro con mancuerna","a":[0.3,0.8,1.1,1.4],"c":[0.15,0.45,0.65,0.9]},"elevacion_lateral":{"n":"Elevaci\u00f3n lateral","a":[0.12,0.4,0.6,0.85],"c":[0.1,0.28,0.42,0.6]},"pajaro_posterior":{"n":"P\u00e1jaro posterior","a":[0.05,0.45,0.7,0.95],"c":[0.08,0.3,0.5,0.7]},"remo_mancuerna":{"n":"Remo con mancuerna","a":[0.35,1.0,1.4,1.8],"c":[0.25,0.65,0.9,1.25]},"remo_polea":{"n":"Remo sentado en polea","a":[0.4,1.05,1.5,1.95],"c":[0.3,0.75,1.0,1.35]},"encogimiento":{"n":"Encogimiento","a":[0.65,1.6,2.25,3.0],"c":[0.25,1.0,1.6,2.25]},"curl_martillo":{"n":"Curl martillo","a":[0.18,0.58,0.88,1.28],"c":[0.12,0.4,0.62,0.9]},"triceps_polea":{"n":"Tr\u00edceps en polea","a":[0.4,0.7,1.05,1.45],"c":[0.3,0.48,0.72,1.0]},"press_frances":{"n":"Press franc\u00e9s","a":[0.28,0.68,0.95,1.3],"c":[0.18,0.42,0.6,0.85]},"sentadilla_frontal":{"n":"Sentadilla frontal","a":[0.75,1.3,1.65,2.0],"c":[0.5,0.9,1.2,1.5]},"hack":{"n":"Hack squat","a":[1.0,1.94,2.78,3.72],"c":[0.7,1.44,2.27,3.24]},"ext_cuadriceps":{"n":"Extensi\u00f3n de cu\u00e1driceps","a":[0.5,1.2,1.7,2.3],"c":[0.35,0.9,1.28,1.7]},"curl_femoral":{"n":"Curl femoral","a":[0.4,1.0,1.43,1.9],"c":[0.3,0.73,1.05,1.47]},"rdl":{"n":"Peso muerto rumano","a":[0.95,1.52,1.97,2.4],"c":[0.65,1.04,1.42,1.85]},"zancada":{"n":"Zancada","a":[0.28,0.6,0.88,1.2],"c":[0.18,0.4,0.6,0.8]},"bulgara":{"n":"Sentadilla b\u00falgara","a":[0.5,0.81,1.25,1.65],"c":[0.32,0.55,0.85,1.15]},"gemelo":{"n":"Gemelo de pie","a":[0.4,0.75,1.2,1.65],"c":[0.25,0.5,0.8,1.1]},"abductor":{"n":"Abductor en m\u00e1quina","a":[0.7,1.3,1.92,2.5],"c":[0.6,1.15,1.7,2.25]},"aductor":{"n":"Aductor en m\u00e1quina","a":[0.75,1.39,2.07,2.75],"c":[0.65,1.1,1.65,2.3]},"face_pull":{"n":"Face pull","a":[0.1,0.2,0.31,0.45],"c":[0.06,0.12,0.2,0.3]}};
+const FZA_STD2={"press_inclinado":{"n":"Press inclinado","a":[0.55,0.9,1.25,1.65],"c":[0.25,0.55,0.8,1.1]},"press_banca_db":{"n":"Press banca con mancuerna","a":[0.4,1.0,1.4,1.85],"c":[0.2,0.6,0.95,1.35]},"press_militar_db":{"n":"Press de hombro con mancuerna","a":[0.3,0.8,1.1,1.4],"c":[0.15,0.45,0.65,0.9]},"elevacion_lateral":{"n":"Elevaci\u00f3n lateral","a":[0.12,0.4,0.6,0.85],"c":[0.1,0.28,0.42,0.6]},"pajaro_posterior":{"n":"P\u00e1jaro posterior","a":[0.05,0.45,0.7,0.95],"c":[0.08,0.3,0.5,0.7]},"remo_mancuerna":{"n":"Remo con mancuerna","a":[0.35,1.0,1.4,1.8],"c":[0.25,0.65,0.9,1.25]},"remo_polea":{"n":"Remo sentado en polea","a":[0.4,1.05,1.5,1.95],"c":[0.3,0.75,1.0,1.35]},"encogimiento":{"n":"Encogimiento","a":[0.65,1.6,2.25,3.0],"c":[0.25,1.0,1.6,2.25]},"curl_martillo":{"n":"Curl martillo","a":[0.18,0.58,0.88,1.28],"c":[0.12,0.4,0.62,0.9]},"triceps_polea":{"n":"Tr\u00edceps en polea","a":[0.4,0.7,1.05,1.45],"c":[0.3,0.48,0.72,1.0]},"press_frances":{"n":"Press franc\u00e9s","a":[0.28,0.68,0.95,1.3],"c":[0.18,0.42,0.6,0.85]},"sentadilla_frontal":{"n":"Sentadilla frontal","a":[0.75,1.3,1.65,2.0],"c":[0.5,0.9,1.2,1.5]},"hack":{"n":"Hack squat","a":[1.0,1.94,2.78,3.72],"c":[0.7,1.44,2.27,3.24]},"ext_cuadriceps":{"n":"Extensi\u00f3n de cu\u00e1driceps","a":[0.5,1.2,1.7,2.3],"c":[0.35,0.9,1.28,1.7]},"curl_femoral":{"n":"Curl femoral","a":[0.4,1.0,1.43,1.9],"c":[0.3,0.73,1.05,1.47]},"rdl":{"n":"Peso muerto rumano","a":[0.95,1.52,1.97,2.4],"c":[0.65,1.04,1.42,1.85]},"zancada":{"n":"Zancada","a":[0.28,0.6,0.88,1.2],"c":[0.18,0.4,0.6,0.8]},"bulgara":{"n":"Sentadilla b\u00falgara","a":[0.5,0.81,1.25,1.65],"c":[0.32,0.55,0.85,1.15]},"gemelo":{"n":"Gemelo de pie","a":[0.4,0.75,1.2,1.65],"c":[0.25,0.5,0.8,1.1]},"abductor":{"n":"Abductor en m\u00e1quina","a":[0.7,1.3,1.92,2.5],"c":[0.6,1.15,1.7,2.25]},"aductor":{"n":"Aductor en m\u00e1quina","a":[0.75,1.39,2.07,2.75],"c":[0.65,1.1,1.65,2.3]},"dominada_lastrada":{"n":"Dominada lastrada","a":[1.05,1.25,1.55,1.90],"c":[0.95,1.10,1.35,1.65]},"peso_muerto_sumo":{"n":"Peso muerto sumo","a":[1.25,1.80,2.55,3.05],"c":[0.75,1.20,1.70,2.20]},"trap_bar":{"n":"Peso muerto trap bar","a":[1.30,1.85,2.60,3.15],"c":[0.80,1.25,1.75,2.25]},"face_pull":{"n":"Face pull","a":[0.1,0.2,0.31,0.45],"c":[0.06,0.12,0.2,0.3]}};
 const FZA_PAT2={"press_inclinado":"press_inclinado","press_vertical":"press_militar_db","elevacion_lateral":"elevacion_lateral","pajaro_posterior":"pajaro_posterior","remo_unilateral":"remo_mancuerna","remo_horizontal":"remo_polea","encogimiento_trapecio":"encogimiento","curl_martillo":"curl_martillo","extension_triceps":"triceps_polea","extension_cuadriceps":"ext_cuadriceps","curl_femoral":"curl_femoral","peso_muerto_rumano":"rdl","zancada":"zancada","gemelo_de_pie":"gemelo","gemelo_sentado":"gemelo","abduccion_cadera":"abductor","aduccion_cadera":"aductor","apertura_pecho":"press_banca_db","press_horizontal":"press_banca_db","extension_lumbar":"rdl"};
 /* nivel de un ejercicio que no esta entre los basicos, si tenemos baremo de su patron */
 /* algunos ejercicios comparten patron pero tienen tabla propia y muy distinta: el face
@@ -3399,6 +3403,30 @@ const FZA_PAT2={"press_inclinado":"press_inclinado","press_vertical":"press_mili
 const FZA_NOM2=[[/face.?pull/i,'face_pull'],[/b[uú]lgar|bulgarian/i,'bulgara'],
   [/frontal|front squat/i,'sentadilla_frontal'],[/hack/i,'hack'],
   [/skull|franc[eé]s|lying triceps/i,'press_frances']];
+/* Variantes de cada basico que NO comparten liston. Un peso muerto rumano no se juzga
+   con la tabla del convencional, ni una dominada lastrada con la del jalon: el mismo
+   numero significa cosas distintas. El dueño elige cual aplica; si no elige, se usa la
+   del basico. Se guarda en S.cfg.fzaTabla. */
+const FZA_VARIANTES={
+  bench:   [['bench','Banca con barra'],['press_inclinado','Inclinado'],['press_banca_db','Banca con mancuerna']],
+  squat:   [['squat','Sentadilla con barra'],['sentadilla_frontal','Frontal'],['hack','Hack'],['bulgara','Búlgara']],
+  dead:    [['dead','Convencional'],['rdl','Rumano'],['peso_muerto_sumo','Sumo'],['trap_bar','Trap bar']],
+  ohp:     [['ohp','Militar con barra'],['press_militar_db','Con mancuerna']],
+  row:     [['row','Remo con barra'],['remo_mancuerna','Con mancuerna'],['remo_polea','En polea']],
+  pulldown:[['pulldown','Jalón o dominada'],['dominada_lastrada','Dominada lastrada']],
+  legpress:[['legpress','Prensa'],['hack','Hack']],
+  curl:    [['curl','Curl de bíceps'],['curl_martillo','Martillo']],
+};
+/* la tabla de umbrales que aplica hoy a un basico: la elegida a mano o la suya */
+function fzaTablaDe(k){
+  const key = UID==='cami' ? 'c' : 'a';
+  const el=((S.cfg&&S.cfg.fzaTabla)||{})[k];
+  if(el && el!==k){
+    if(FZA_STD2[el]) return {u:FZA_STD2[el][key], n:FZA_STD2[el].n, id:el, manual:true};
+    if(FZA_STD[el]) return {u:FZA_STD[el][key], n:FZA_STD[el].n, id:el, manual:true};
+  }
+  return {u:FZA_STD[k][key], n:FZA_STD[k].n, id:k, manual:false};
+}
 function fzaNivelOtro(id, rm, pc){
   if(!pc||!rm) return null;
   const nom=exNombre(id)||'';
@@ -3413,16 +3441,14 @@ function fzaNivelOtro(id, rm, pc){
     proxKg: nv.nivel<4 ? Math.round(u[nv.nivel]*pc*10)/10 : 0};
 }
 function fzaPesoNivel(k, nivel, pc){
-  const key = UID==='cami' ? 'c' : 'a';
-  const u=FZA_STD[k][key];
+  const u=fzaTablaDe(k).u;
   if(nivel<=0) return 0;
   return Math.round(u[nivel-1]*pc*10)/10;
 }
 /* la escalera completa: que hay que levantar para cada categoria. En 1RM y, mas util,
    en una serie de 5, que es lo que uno hace de verdad en el gimnasio. */
 function fzaEscalera(x, pc){
-  const key = UID==='cami' ? 'c' : 'a';
-  const u=FZA_STD[x.k][key];
+  const u=(x.tabla&&x.tabla.u)||fzaTablaDe(x.k).u;
   const col=n=>['#8B97A1','#8FA0FF','#58DFA3','var(--gold)','#FF7AB6'][n]||'var(--ink2)';
   /* Epley al reves: con que peso × 5 repeticiones se llega a ese 1RM */
   const por5=rm=>Math.round(rm/(1+5/30)/2.5)*2.5;
@@ -3441,6 +3467,12 @@ function fzaEscalera(x, pc){
           return `<button class="chip ${id===x.ex?'fill':''}" data-a="fzaFuente" data-k="${x.k}" data-id="${id}">
             ${esc(shortEx(exNombre(id)))} <b>${fmt1(m.rm)}</b></button>`;}).join('')}</div>
         ${x.manual?`<button class="chip mt8" data-a="fzaFuente" data-k="${x.k}" data-id="">Volver al automático</button>`:''}
+      </div>`:''}
+      ${(FZA_VARIANTES[x.k]&&FZA_VARIANTES[x.k].length>1)?`<div class="mt8" style="padding-top:8px;border-top:1px solid var(--line2)">
+        <span class="small dim">¿Con qué tabla lo comparo?</span>
+        <div class="flex wrapf mt4" style="gap:6px">${FZA_VARIANTES[x.k].map(([id,lb])=>
+          `<button class="chip ${((x.tabla||{}).id===id)?'fill':''}" data-a="fzaTablaSet" data-k="${x.k}" data-id="${id}">${lb}</button>`).join('')}</div>
+        <div class="small dim mt4" style="line-height:1.5">Un rumano no se juzga con la tabla del convencional, ni una dominada lastrada con la del jalón: el mismo número significa cosas distintas.</div>
       </div>`:''}
     </div>`:''}
     <div class="small dim" style="line-height:1.5;margin:10px 0 8px">Lo que hay que levantar en <b>${esc(x.n).toLowerCase()}</b> para cada nivel, con tus ${fmt1(Math.round(pc*10)/10)} kg de peso corporal:</div>
@@ -12986,16 +13018,49 @@ function goalSteps(startW, targetW){
   const out=[]; for(let k=1;k<=4;k++){ const v=Math.round((startW+(targetW-startW)*k/5)/2.5)*2.5; if(v>startW && v<targetW && !out.includes(v)) out.push(v); }
   return out;
 }
+/* Que hacer la proxima vez para acercarse a la meta. Una grafica sin esto no sirve de
+   nada: te dice donde estas, no que hacer manana. La regla es la de siempre en fuerza:
+   si completaste el tope de repeticiones, sube peso; si no, suma una repeticion. */
+function goalProxima(g){
+  const reps=g.reps||1, B=g.base||null;
+  const h=(S.logs[g.ex]||[]).filter(x=>!x.alt && (!B||!B.d||x.d>=B.d));
+  const ult=h[h.length-1];
+  const corp=exPesoCorporal(g.ex);
+  const objRM=e1rm(exPesoReal(g.ex, g.target, TODAY()), reps);
+  if(!ult||!ult.sets.length){
+    return {txt:`Aún no has registrado este ejercicio${B?' desde que ajustaste el punto de partida':''}. La primera vez busca un peso con el que ${reps} repeticiones te dejen una o dos en el tanque.`};
+  }
+  const sets=ult.sets.filter(s=>+s.r>0);
+  if(!sets.length) return {txt:'La última vez no quedaron repeticiones registradas.'};
+  const top=sets.reduce((a,s)=>(+s.w>+a.w?s:a), sets[0]);
+  const w=+top.w||0, r=+top.r||0;
+  const inc=(EXMAP[g.ex]&&EXMAP[g.ex].inc)||2.5;
+  const rangoAlto=(EXMAP[g.ex]&&EXMAP[g.ex].reps)?EXMAP[g.ex].reps[1]:Math.max(reps, r);
+  const yaRM=e1rm(exPesoReal(g.ex, w, ult.d), r);
+  if(yaRM>=objRM-0.01) return {txt:`Con <b>${fmt1(w)}${corp?' de lastre':' kg'} × ${r}</b> del ${fmtD(ult.d)} ya estás en el nivel de la meta. Confírmalo haciendo <b>${fmt1(g.target)}${corp?' de lastre':' kg'} × ${reps}</b> y la damos por cumplida.`, hecho:true};
+  let nw=w, nr=r+1, motivo='una repetición más';
+  if(r>=rangoAlto){ nw=Math.round((w+inc)*10)/10; nr=Math.max(1, (EXMAP[g.ex]&&EXMAP[g.ex].reps)?EXMAP[g.ex].reps[0]:reps); motivo=`+${fmt1(inc)} kg y vuelves abajo del rango`; }
+  const nuevoRM=e1rm(exPesoReal(g.ex, nw, TODAY()), nr);
+  const faltan=Math.max(0, objRM-nuevoRM);
+  /* cuantas sesiones a este ritmo: cada salto suma mas o menos lo mismo */
+  const salto=Math.max(0.5, nuevoRM-yaRM);
+  const sesiones=faltan>0?Math.ceil(faltan/salto):0;
+  return {w:nw, r:nr, sesiones,
+    txt:`La última fue <b>${fmt1(w)}${corp?' de lastre':' kg'} × ${r}</b> el ${fmtD(ult.d)}. La próxima ve por <b style="color:var(--ink)">${fmt1(nw)}${corp?' de lastre':' kg'} × ${nr}</b> (${motivo}).${sesiones?` Manteniendo ese paso, la meta cae en unas <b>${sesiones} sesiones</b> de este ejercicio.`:''}`};
+}
 function goalCardHTML(g){
   const B=g.base||null;
   const reps=g.reps||1;
-  const targetRM=e1rm(g.target, reps);
+  /* en peso corporal la meta es lastre: hay que sumarle el cuerpo igual que al actual,
+     si no se comparan cosas distintas y la meta sale cumplida de entrada */
+  const targetRM=e1rm(exPesoReal(g.ex, g.target, TODAY()), reps);
   const startRM=(B&&B.rm>0)?B.rm:(g.startRM!==undefined?g.startRM:e1rm(g.start||0, 1));
   const bestRM=goalBestRM(g.ex, B);
   const done=bestRM>=targetRM-0.01;
   const baseRM=Math.min(startRM, bestRM), span=Math.max(1, targetRM-baseRM);
   const pct=clamp(Math.round((bestRM-baseRM)/span*100), 0, 100);
-  const hoyW=bestRM?rmAReps(bestRM, reps):0;      /* lo de hoy, traducido a las reps de la meta */
+  let hoyW=bestRM?rmAReps(bestRM, reps):0;        /* lo de hoy, traducido a las reps de la meta */
+  if(hoyW && exPesoCorporal(g.ex)) hoyW=Math.max(0, Math.round((hoyW-pesoDeDia(TODAY()))*10)/10);  /* mostrar el lastre, no el total */
   const steps=goalSteps(rmAReps(baseRM,reps), g.target);
   const py=done?null:goalProy(g.ex, targetRM, B);
   let proyTxt;
@@ -13042,6 +13107,9 @@ function goalCardHTML(g){
       <span class="small dim" style="margin-left:auto">${pct}%</span>
     </div>
     <div class="goalbar mt4"><i style="width:${pct}%"></i></div>
+    ${(()=>{const px=goalProxima(g); if(!px) return '';
+      return `<div class="goalprox ${px.hecho?'ok':''}">${ic(px.hecho?'check':'zap',14)}
+        <div class="small" style="line-height:1.55">${px.txt}</div></div>`;})()}
     ${steps.length?`<div class="flex wrapf mt8" style="gap:6px">
       ${steps.map(v=>`<span class="chip ${hoyW>=v?'fill':'dim'}" style="pointer-events:none">${hoyW>=v?'✓ ':''}${fmt1(v)}</span>`).join('')}
       <span class="chip ${done?'fill':'dim'}" style="pointer-events:none">${done?'✓ ':''}${fmt1(g.target)} kg</span>
@@ -15150,6 +15218,11 @@ const ACTIONS = {
     if(d.id) S.cfg.fzaFuente[d.k]=d.id; else delete S.cfg.fzaFuente[d.k];
     save('cfg'); render();
     toast(d.id?'Listo, lo saco de ahí':'Vuelve a elegirlo solo');
+  },
+  fzaTablaSet(d){
+    S.cfg.fzaTabla=S.cfg.fzaTabla||{};
+    if(d.id && d.id!==d.k) S.cfg.fzaTabla[d.k]=d.id; else delete S.cfg.fzaTabla[d.k];
+    save('cfg'); render();
   },
   fzaOtrosTgl(){ UI.fzaOtros=!UI.fzaOtros; render(); },
   fzaSigue(d){

@@ -1771,7 +1771,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 175';
+const APPREV='REV 176';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -4295,6 +4295,7 @@ function medCapaBar(){
 function medMapa(sel, o){
   o=o||{};
   const accion=o.accion||'medZona', conCotas=o.cotas!==false, calor=o.calor||null;
+  const calorPaths=o.paths||null;   /* pintar por musculo en vez de por zona */
   /* zoom a la zona elegida: se recorta el viewBox alrededor de ella con margen, guardando
      la proporcion del lienzo para que el cuerpo no se deforme */
 
@@ -4378,9 +4379,9 @@ function medMapa(sel, o){
     </defs>
     <g class="mzarte" id="mzarte" transform="translate(${OFF},0)">${MED_ARTE[vista].join("")}</g>
 
-    ${calor?Object.keys(zs).map(z=>{
+    ${calor?Object.keys(calor).map(z=>{
       const c=calor[z]; if(!c||!c.col) return '';
-      const ps=(MED_MUSC[vista][z]||[]); if(!ps.length) return '';
+      const ps=(calorPaths ? (calorPaths[z]||[]) : (MED_MUSC[vista][z]||[])); if(!ps.length) return '';
       return `<mask id="mk_${z}"><g class="mzmk" transform="translate(${OFF},0)">${ps.map(i=>MED_ARTE[vista][i]).join('')}</g></mask>
         <linearGradient id="gr_${z}" x1="0" y1="0" x2="0.28" y2="1">
           <stop offset="0" stop-color="${c.col}" stop-opacity="1"/>
@@ -4616,6 +4617,61 @@ function medSugerenciaZona(zona, k, obj, act){
   return `Te faltan <b>${fmt1(falta)} cm</b> para el objetivo${como?`. Lo que los pone: <b>${como}</b>`:''}. Con superávit limpio esto toma meses, no semanas: 1 cm de brazo real es medio año de trabajo.`;
 }
 /* ---- la vista de carga: el mismo cuerpo, pintado por volumen de la semana ---- */
+/* Que path del SVG es cada musculo. MED_MUSC agrupa por ZONA (para tocar y para las
+   cotas); esto agrupa por MUSCULO, que es lo que se pinta en Carga, Fuerza y Cruce.
+   Se sacó mirando el dibujo path por path, no adivinando: antes "lumbar" pintaba el
+   dorsal, los oblicuos y el glúteo medio porque compartían la zona "cintura".
+   Lo que el dibujo no tiene como forma propia (trapecio y romboides por detrás) queda
+   vacío a proposito: mejor no pintar nada que pintar el musculo de al lado. */
+const MED_MUSC2={
+  frente:{
+    pectoral:[57,58,59,135,136,164],
+    deltoide_anterior:[69,70,96,97],
+    deltoide_lateral:[90,92],
+    biceps:[65,66],
+    triceps:[113,114,134],
+    antebrazo:[77,78,101,102,103,104,108,109,111,112,128,129,137,138,139,140,141,142,152,153,154,158,166,167],
+    abdomen:[30,31,32,33,34,35,36,37,38,39,40,41,42,47,48],
+    oblicuos:[84,85,86,87,107,110,120,133,150,156,160,165],
+    aductor:[105,106,121,122,130,131,144,147,163],
+    gluteo:[91,94],
+    cuadriceps:[50,51,54,55,60,61,67,68,74,75,76,82,83,123,159],
+    pantorrilla:[49,53,79,80,81,93,95,98,99,115,116,157,161],
+  },
+  espalda:{
+    dorsal:[5,7],
+    deltoide_posterior:[20,21,69,96,99],
+    lumbar:[6,14,52,88,89,115],
+    oblicuos:[70,71],
+    gluteo:[8,9,10,27,35,49,51,110],
+    triceps:[36,39,40,41,53,55,81,82],
+    antebrazo:[37,38,44,46,54,56,72,73,83,84,85,94,95,105,108,109,119],
+    isquiotibial:[24,25,26,30,31,32,33,34,59,60,61,62,63,64,74,77,78,79,80,86,87,103,104,106,107,112,116,117],
+    pantorrilla:[11,12,13,22,23,28,29,65,66,68,90,91,111,114,118],
+  },
+  lado:{
+    deltoide_lateral:[23,24,52,53,54,59,65,72], deltoide_anterior:[23,24,52,53,54,59,65,72],
+    pectoral:[48,49,60,78,96], dorsal:[48,49,60,78,96],
+    abdomen:[26,40,42,47,57,58,62,73,76,87,91], oblicuos:[26,40,42,47,57,58,62,73,76,87,91],
+    gluteo:[22,27,63,85,90,98,99,100],
+    biceps:[61,70,74,75,89,102], triceps:[61,70,74,75,89,102],
+    antebrazo:[28,29],
+    cuadriceps:[30,46,50,55,79,80,83,88,103], isquiotibial:[30,46,50,55,79,80,83,88,103],
+    pantorrilla:[31,39,56,66,68,84],
+  },
+};
+/* el estado de cada musculo con forma propia en esta vista */
+function cargaMusculos(vista, carga){
+  const out={}, mapa=MED_MUSC2[vista]||{};
+  Object.keys(mapa).forEach(m=>{
+    if(!mapa[m].length) return;
+    const s=(carga.musc[m]||{}).series||0;
+    const nv=cargaNivel(m,s);
+    if(nv.k==='na') return;
+    out[m]={col:nv.c, op: nv.k==='cero'?0.34:clamp(0.6+nv.pc*0.35,0.6,0.95), nivel:nv, musculo:m, series:s};
+  });
+  return out;
+}
 function cargaZonas(vista, carga){
   const out={};
   Object.keys(MED_ZONAS[vista]).forEach(z=>{
@@ -4897,6 +4953,34 @@ function cruceDatos(){
 /* El cruce, sobre el mapa: cada zona toma el estado de su musculo mas urgente. Es la misma
    lectura que las otras tres pestañas, con el mismo gesto: tocas y te habla de esa zona. */
 const CRUCE_COL={ojo:'#FF6B6B', foco:'#FF9F45', ok:'#58DFA3'};
+/* El cruce pintado por musculo: cada forma toma el estado de SU musculo. */
+function crucePorMusculo(vista, datos){
+  const porM={}; datos.forEach(o=>{ porM[o.m]=o; });
+  const out={}, mapa=MED_MUSC2[vista]||{};
+  Object.keys(mapa).forEach(m=>{
+    const o=porM[m]; if(!o || !mapa[m].length) return;
+    out[m]={col:CRUCE_COL[o.d.t], op: o.d.t==='ok'?0.5:0.82, lista:[o], estado:o.d.t, peor:o};
+  });
+  return out;
+}
+/* La fuerza pintada por musculo: el nivel del grupo al que pertenece ese musculo. */
+const MUSC_GRUPO_FZA={pectoral:'pecho', dorsal:'espalda', trapecio:'espalda', romboides:'espalda',
+  deltoide_anterior:'hombro', deltoide_lateral:'hombro', deltoide_posterior:'hombro',
+  biceps:'biceps', triceps:'triceps', antebrazo:'biceps',
+  cuadriceps:'pierna', isquiotibial:'pierna', gluteo:'pierna', aductor:'pierna', pantorrilla:'pierna'};
+function fzaPorMusculo(vista){
+  const pc=fzaPesoCorporal();
+  const COL=['#8B97A1','#8FA0FF','#58DFA3','#FFC94D','#FF7AB6'];
+  const cache={}, out={}, mapa=MED_MUSC2[vista]||{};
+  Object.keys(mapa).forEach(m=>{
+    const gk=MUSC_GRUPO_FZA[m]; if(!gk || !mapa[m].length) return;
+    if(!(gk in cache)) cache[gk]=fzaGrupo(gk, pc);
+    const g=cache[gk]; if(!g || !g.con.length || g.nivel==null) return;
+    out[m]={col:COL[g.nivel]||'#8B97A1', op:clamp(0.45+g.nivel*0.12,0.45,0.9),
+      grupos:[g], nivel:g.nivel, nombre:g.nombre, grupo:g.n};
+  });
+  return out;
+}
 function crucePorZona(vista, datos){
   const porM={}; datos.forEach(o=>{ porM[o.m]=o; });
   const orden={ojo:0, foco:1, ok:2};
@@ -4927,7 +5011,7 @@ function vCruce(){
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('target',16)} El cruce</span><span class="chip dim">28 días</span></div>
     <p class="small dim" style="margin:0 0 8px;line-height:1.55">Las otras tres pestañas te dicen dónde estás. Esta busca <b>dónde se contradicen</b>: un músculo fuerte que ya casi no entrenas, uno que recibe mucho y no cambia, uno flojo y encima abandonado. Eso no lo dice ninguna de las tres por separado.</p>
-    <div class="medwrap">${medMapa(sel, {calor:zonas, cotas:false})}
+    <div class="medwrap">${medMapa(sel, {calor:crucePorMusculo(vista, datos), paths:MED_MUSC2[vista], cotas:false})}
       ${zs?`<div class="zpop ${((MED_ZONAS[vista][sel][0]+MED_ZONAS[vista][sel][2]/2+200)/1100)<0.5?'d':'i'}"
         style="${((MED_ZONAS[vista][sel][0]+MED_ZONAS[vista][sel][2]/2+200)/1100)<0.5?'left':'right'}:2.5%; ${
           ((MED_ZONAS[vista][sel][1]+MED_ZONAS[vista][sel][3]/2)/1500)>0.58
@@ -5091,7 +5175,7 @@ function vFuerzaCuerpo(){
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('trend',16)} Fuerza por zona</span><span class="chip dim">vs ${fmt1(Math.round(pc*10)/10)} kg</span></div>
     <p class="small dim" style="margin:0 0 4px;line-height:1.5">El cuerpo pintado por el nivel que tienes en cada parte. Toca una zona para ver sus ejercicios y elegir con cuál se calcula.</p>
-    <div class="medwrap">${medMapa(sel, {calor:zonas, cotas:false, zoom:!!sel})}
+    <div class="medwrap">${medMapa(sel, {calor:fzaPorMusculo(vista), paths:MED_MUSC2[vista], cotas:false, zoom:!!sel})}
       ${zs?`<div class="zpop i" style="right:2.5%; bottom:4%">
         <button class="zpx" data-a="medZona" data-z="" aria-label="Ver el cuerpo entero">${ic('x',10)}</button>
         <span class="zpn">${esc(medNomZona(sel).toUpperCase())}</span>
@@ -5156,7 +5240,7 @@ function vCarga(){
       <div class="flex" style="gap:5px">${[[7,'7 d'],[14,'14 d'],[28,'28 d']].map(([d,l])=>
         `<button class="chip ${dias===d?'fill':''}" data-a="cargaDias" data-d="${d}">${l}</button>`).join('')}</div></div>
     <p class="small dim" style="margin:0 0 4px;line-height:1.5">Cada serie se reparte entre los músculos que de verdad trabajan: un press de banca no es solo pecho, también suma tríceps y deltoide. Eso son <b>series efectivas</b>.</p>
-    <div class="medwrap">${medMapa(sel, {calor:zonas, cotas:false})}${cargaPop(sel, vista, carga, dias)}</div>
+    <div class="medwrap">${medMapa(sel, {calor:cargaMusculos(vista, carga), paths:MED_MUSC2[vista], cotas:false})}${cargaPop(sel, vista, carga, dias)}</div>
     <div class="cargaleg">${[['#FF6B6B','sin trabajo'],['#FF9F45','por debajo'],['#58DFA3','creciendo'],['#FFC94D','alto'],['#FF6B6B','pasado']].map(([c,l],i)=>
       `<span><i style="background:${c}"></i>${l}</span>`).join('')}</div>
     ${selF?`<div class="medpanel">

@@ -830,3 +830,30 @@ que es azul con Andrés y dorado con Cami sin una línea de condicional. Se prob
 el texto quedaba corto de contraste en el extremo oscuro; el par de botón resuelve los dos temas.
 Va en **Carga** y en ningún otro lado: una tarjeta así solo funciona si es la única de la
 pantalla. En Inicio se probó y sobraba, porque ahí ya están la racha, el peso y las metas.
+
+### El mapa se pinta por músculo, no por zona (REV 176)
+
+Hasta aquí el color lo ponía `MED_MUSC`, que agrupa los paths del SVG **por zona** (cuello,
+hombros, pecho, cintura, cadera, brazo, antebrazo, muslo, pantorrilla). Cada zona se pintaba
+con el estado de su primer músculo. Efecto: en la espalda, `cintura` contiene el dorsal, los
+oblicuos, el glúteo medio y el rombo lumbar, y como su músculo es `lumbar`, elegir lumbar
+pintaba el dorsal y el glúteo. Eso es lo que se veía como "marca unos que no son".
+
+Ahora existe **`MED_MUSC2[vista][musculo]`**, sacado mirando el dibujo path por path (se
+generaron hojas de contacto con cada forma resaltada y numerada). `medMapa` acepta
+`{paths: MED_MUSC2[vista]}` y entonces las claves de `calor` son músculos, no zonas.
+Lo usan las tres capas: `cargaMusculos`, `crucePorMusculo` y `fzaPorMusculo`.
+
+Lo que se aprendió del SVG y conviene no volver a averiguar:
+
+- El índice **0 es la silueta entera**. La mayor parte del relieve es línea sobre esa
+  silueta, no formas rellenables. Por eso no todo músculo se puede pintar.
+- **Frente**: pectoral 57/59, deltoide anterior 69/70/96/97, deltoide lateral 90/92, bíceps
+  65/66, tríceps 113/114/134, recto abdominal 30-42 y 47/48, oblicuos 84/86/107/110/120,
+  aductores 105/106/121/122, cuádriceps 60/61/67/68/74/75/82/83, gemelos 49/53/79/81/93/95.
+- **Espalda**: dorsal **5 y 7** (el 7 no estaba mapeado en ninguna zona), deltoide posterior
+  20/21/69/96/99, rombo lumbar 14, oblicuos 70/71, glúteo 8/9/49/**51** (el 51 tampoco
+  estaba), sacro 27, TFL 35.
+- **Trapecio y romboides no tienen forma propia** en el dibujo: quedan vacíos a propósito.
+  Mejor no pintar nada que pintar el músculo de al lado. Si algún día se quieren pintar, hay
+  que dibujarles un path nuevo en `MED_ARTE.espalda`.

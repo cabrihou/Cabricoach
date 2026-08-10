@@ -680,10 +680,18 @@ El nivel de fuerza salió de la sub-vista de un ejercicio en Progreso y pasó a 
 pestaña de Medidas, al lado de Medidas y Carga. Son las tres lecturas del mismo cuerpo:
 **cuánto mides, cuánto trabajas y cuánto levantas**.
 
-El cuerpo se pinta por el nivel que tienes en cada zona (`fzaPorZona`): un ejercicio cuenta
-para una zona si su patrón carga **25% o más** de los músculos de esa zona. Al tocar, la isla
-flotante da el mejor 1RM de ahí y su nivel, y debajo salen los ejercicios que la cargan
-ordenados de más fuerte a más flojo, cada uno con su escalera y su selector de fuente.
+Al tocar una zona salen **todos sus músculos con su nivel**, del más flojo al más fuerte, y
+cada uno se amplía para ver los ejercicios que lo cargan con su porcentaje, la escalera y el
+selector de fuente. Tocar el brazo da bíceps, tríceps y antebrazo por separado; el muslo da
+cuádriceps, isquios y glúteo. Antes devolvía ejercicios sueltos y no se sabía si el brazo iba
+flojo de bíceps o de tríceps.
+
+Para fuerza la zona agrupa **la región entera**, no la cara que se ve (`ZONA_MUSC_FZA`): al
+tocar el muslo uno quiere los isquios aunque estén detrás. En el mapa de carga la distinción
+frente/espalda sí tiene sentido, por eso el mapeo es aparte.
+
+El cuerpo se pinta por el **músculo más flojo** de cada zona, que es el que limita. La isla
+flotante dice cuál es y su nivel.
 
 **El selector de fuente ya ofrece todos los candidatos**, no solo los que tienen registros:
 los que no tienen salen en gris con un guion, y al elegirlos el nivel se calcula en cuanto

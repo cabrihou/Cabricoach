@@ -953,6 +953,14 @@ img{-webkit-user-drag:none;user-select:none}
 .mrlist span{display:flex;align-items:center;gap:5px}
 .mrlist i{width:8px;height:8px;border-radius:2px;display:block}
 .mrlist b{color:var(--ink)}
+.fzamus{border-bottom:1px solid var(--line2)}
+.fzamus:last-of-type{border-bottom:0}
+.fzamush{display:flex;align-items:center;gap:9px;width:100%;padding:10px 0;background:transparent;border:0;color:var(--ink);cursor:pointer;text-align:left}
+.fzamusn{flex:none;font:700 11px var(--ui)}
+.fzamus.open .nfchev{transform:rotate(90deg)}
+.fzamusb{padding:2px 0 10px}
+.fzamusap{display:flex;justify-content:space-between;font:600 11px var(--ui);color:var(--smoke);padding:3px 0}
+.fzamusap b{color:var(--ink2);font:700 11px var(--num)}
 .crucecard{padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--line2);margin-bottom:8px}
 .crucemini{display:flex;flex-wrap:wrap;gap:5px}
 .crucemini span{display:flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;
@@ -1591,7 +1599,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 161';
+const APPREV='REV 162';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3329,7 +3337,10 @@ const FZA_STD={
 const FZA_MAP={
   bench:['bench','bench_bb','bench_smith','c_bench','bench_wide','c_chest','bench_db'],
   squat:['squat_bb','c_smith','squat_smith','squat_mach','hack'],
-  dead:['dead_bb','sumo_dead','trapbar_dead','c_dead'],
+  /* el rumano va al final: si no hay convencional registrado, mejor medir con el rumano
+     que dejar el peso muerto (y con el los isquios y el lumbar) sin nivel. Con el selector
+     de variantes se puede juzgar con la tabla que corresponda. */
+  dead:['dead_bb','sumo_dead','trapbar_dead','c_dead','rdl','rdl_bb','stiffdead_bb'],
   ohp:['shpress','ohp_bb','shpress_mach','c_ohp','ohpdb'],
   row:['row','bentrow_bb','tbar_row','c_rowm','rowuni','c_rowp'],
   pulldown:['pullup','pullup2','latcl','latop','c_jalon','latpull_bb','latcab'],
@@ -4302,34 +4313,67 @@ function cargaPop(zona, vista, carga, dias){
 /* El cuerpo pintado por NIVEL DE FUERZA. Es la tercera lectura del mismo mapa: cuanto
    mides, cuanto trabajas y cuanto levantas. Al tocar una zona salen los ejercicios de ese
    grupo con su 1RM y su nivel, ordenados de mas fuerte a mas flojo. */
+/* Nivel de fuerza de UN musculo: el mejor basico que lo carga al 25% o mas manda, y se
+   listan todos los que lo tocan con cuanto le aportan. Antes la zona devolvia ejercicios
+   sueltos y no se sabia si el brazo iba flojo de biceps o de triceps. */
+function fzaDeMusculo(m){
+  const tb=fzaTabla();
+  const lista=[];
+  tb.forEach(x=>{
+    const pat=ejPatron(x.ex, exNombre(x.ex)); if(!pat) return;
+    const pc=(EJ_PATRONES[pat]||{})[m]||0;
+    if(pc>=15) lista.push({...x, aporte:pc});
+  });
+  if(!lista.length) return null;
+  lista.sort((a,b)=> b.aporte-a.aporte || b.score-a.score);
+  /* el nivel del musculo lo marca el ejercicio que mas lo carga, no el que mas peso mueve */
+  const principal=lista.slice().sort((a,b)=> (b.aporte>=25?1:0)-(a.aporte>=25?1:0) || b.score-a.score)[0];
+  return {m, lista, principal, nivel:principal.nivel, nombre:principal.nombre};
+}
+/* Para FUERZA la zona agrupa la region entera, no la cara que se ve: al tocar el muslo uno
+   quiere cuadriceps, isquios y gluteo juntos, no solo lo de delante. En el mapa de carga la
+   distincion frente/espalda si tiene sentido (son musculos distintos ahi), por eso este
+   mapeo es aparte. */
+const ZONA_MUSC_FZA={
+  cuello:['cuello','trapecio'],
+  hombros:['deltoide_lateral','deltoide_anterior','deltoide_posterior','trapecio'],
+  pecho:['pectoral','dorsal','romboides'],
+  cintura:['abdomen','oblicuos','lumbar'],
+  cadera:['gluteo','aductor'],
+  'brazo-der':['biceps','triceps','antebrazo'], 'brazo-izq':['biceps','triceps','antebrazo'],
+  'antebrazo-der':['antebrazo'], 'antebrazo-izq':['antebrazo'],
+  'muslo-der':['cuadriceps','isquiotibial','gluteo'], 'muslo-izq':['cuadriceps','isquiotibial','gluteo'],
+  'pantorrilla-der':['pantorrilla'], 'pantorrilla-izq':['pantorrilla'],
+};
+/* todos los musculos de una zona con su nivel, ordenados de mas flojo a mas fuerte:
+   lo primero que uno quiere ver es donde esta el eslabon debil */
+function fzaMusculosDe(vista, zona){
+  const ms=ZONA_MUSC_FZA[zona]||((ZONA_MUSC[vista]||{})[zona]||[]);
+  return ms.map(m=>({m, d:fzaDeMusculo(m)})).filter(x=>x.d)
+    .sort((a,b)=> a.d.nivel-b.d.nivel || a.d.principal.score-b.d.principal.score);
+}
 function fzaPorZona(vista){
   const tb=fzaTabla(), pc=fzaPesoCorporal();
   const out={};
   Object.keys(MED_ZONAS[vista]||{}).forEach(z=>{
-    const ms=(ZONA_MUSC[vista]||{})[z]||[];
-    /* un ejercicio cuenta para la zona si su patron carga alguno de sus musculos */
-    const lista=[];
-    tb.forEach(x=>{
-      const pat=ejPatron(x.ex, exNombre(x.ex)); if(!pat) return;
-      const rep=EJ_PATRONES[pat]||{};
-      const pc2=ms.reduce((a,m)=>a+(rep[m]||0),0);
-      if(pc2>=25) lista.push({...x, aporte:pc2});
-    });
-    if(!lista.length) return;
-    lista.sort((a,b)=>b.nivel-a.nivel || b.score-a.score);
-    const mejor=lista[0];
+    const mus=fzaMusculosDe(vista, z);
+    if(!mus.length) return;
+    /* la zona se pinta por su musculo MAS FLOJO: es el que limita, y es lo que uno
+       necesita ver de un vistazo */
+    const flojo=mus[0];
     const COL=['#8B97A1','#8FA0FF','#58DFA3','#FFC94D','#FF7AB6'];
-    out[z]={col:COL[mejor.nivel]||'#8B97A1', op:clamp(0.45+mejor.nivel*0.12,0.45,0.9),
-      lista, nivel:mejor.nivel, nombre:mejor.nombre};
+    out[z]={col:COL[flojo.d.nivel]||'#8B97A1', op:clamp(0.45+flojo.d.nivel*0.12,0.45,0.9),
+      mus, nivel:flojo.d.nivel, nombre:flojo.d.nombre, musculo:flojo.m};
   });
   return out;
 }
 /* Que meter para subir de nivel en esa zona: los ejercicios que mas la cargan, sacados
    del mismo reparto EMG que usa el mapa de carga. Cierra el circulo entre "estoy flojo
    aqui" y "haz esto". */
-function fzaQueMeter(vista, zona, yaTiene){
-  const ms=(ZONA_MUSC[vista]||{})[zona]||[];
-  const m=ms.find(x=>ejerciciosDe(x).length); if(!m) return '';
+function fzaQueMeter(vista, zona, yaTiene, musculo){
+  const ms=ZONA_MUSC_FZA[zona]||((ZONA_MUSC[vista]||{})[zona]||[]);
+  const m=(musculo && ejerciciosDe(musculo).length) ? musculo : ms.find(x=>ejerciciosDe(x).length);
+  if(!m) return '';
   const tengo=new Set(yaTiene||[]);
   const top=ejerciciosDe(m).filter(e=>!tengo.has(e.x.id)).slice(0,3);
   if(!top.length) return '';
@@ -4474,17 +4518,31 @@ function vFuerzaCuerpo(){
             : 'top:'+clamp(((MED_ZONAS[vista][sel][1]+MED_ZONAS[vista][sel][3]/2)/1500)*100-13,3,42)+'%'}">
         <button class="zpx" data-a="medZona" data-z="" aria-label="Cerrar">${ic('x',10)}</button>
         <span class="zpn">${esc(medNomZona(sel).toUpperCase())}</span>
-        <div class="zpv">${fmt1(zs.lista[0].rm)}<em>kg 1RM</em></div>
-        <div class="zpd" style="color:${COL(zs.nivel)}">${zs.nombre}</div>
-        <p class="zps">${esc(zs.lista[0].n)} · ${zs.lista[0].ratio}× tu peso</p>
+        <div class="zpv">${fmt1(zs.mus[0].d.principal.rm)}<em>kg 1RM</em></div>
+        <div class="zpd" style="color:${COL(zs.nivel)}">${esc(MUSC_NOM[zs.musculo]||zs.musculo)}: ${zs.nombre}</div>
+        <p class="zps">${zs.mus.length>1?'El más flojo de '+zs.mus.length+' en esta zona.':esc(zs.mus[0].d.principal.n)}</p>
       </div>`:''}
     </div>
     <div class="cargaleg">${FZA_NIVELES.map((nm,i)=>`<span><i style="background:${COL(i)}"></i>${nm}</span>`).join('')}</div>
-    ${zs?`<div class="medpanel">
-      <div class="medph">${ic('barbell',13)} <b>${esc(medNomZona(sel))}</b><span class="small dim">${zs.lista.length} ejercicio${zs.lista.length===1?'':'s'} que la cargan</span></div>
-      ${zs.lista.map(x=>fzaFilaHTML(x, pc, COL)).join('')}
-      ${fzaQueMeter(vista, sel, zs.lista.map(x=>x.ex))}
-    </div>`:`<div class="small dim tc mt8">Toca una zona para ver sus ejercicios y su nivel.</div>`}
+    ${zs?(()=>{
+      const abierto = zs.mus.some(x=>x.m===UI.fzaMusc) ? UI.fzaMusc : null;
+      return `<div class="medpanel">
+      <div class="medph">${ic('barbell',13)} <b>${esc(medNomZona(sel))}</b><span class="small dim">${zs.mus.length} músculo${zs.mus.length===1?'':'s'}, del más flojo al más fuerte</span></div>
+      ${zs.mus.map(({m,d})=>`
+        <div class="fzamus ${abierto===m?'open':''}">
+          <button class="fzamush" data-a="fzaMusc" data-m="${m}" aria-expanded="${abierto===m?'true':'false'}">
+            <span class="grow tl" style="min-width:0"><b class="small" style="display:block">${esc(MUSC_NOM[m]||m)}</b>
+              <i class="small dim">${d.lista.length} ejercicio${d.lista.length===1?'':'s'} lo cargan</i></span>
+            <span class="fzamusn" style="color:${COL(d.nivel)}">${d.nombre}</span>
+            <span class="nfchev">${ic('chevR',14)}</span>
+          </button>
+          ${abierto===m?`<div class="fzamusb">
+            ${d.lista.map(x=>`<div class="fzamusap">${esc(x.n)} <b>${x.aporte}%</b></div>`).join('')}
+            ${d.lista.map(x=>fzaFilaHTML(x, pc, COL)).join('')}
+            ${fzaQueMeter(vista, sel, d.lista.map(x=>x.ex), m)}
+          </div>`:''}
+        </div>`).join('')}
+    </div>`;})():`<div class="small dim tc mt8">Toca una zona para ver el nivel de cada uno de sus músculos.</div>`}
   </section>
   ${fzaAsimetria()}
   ${fzaCard()}`;
@@ -15583,6 +15641,7 @@ const ACTIONS = {
     if(d.id && d.id!==d.k) S.cfg.fzaTabla[d.k]=d.id; else delete S.cfg.fzaTabla[d.k];
     save('cfg'); render();
   },
+  fzaMusc(d, el){ UI.fzaMusc = UI.fzaMusc===d.m ? null : d.m; renderAnclado(el); },
   fzaOtrosTgl(){ UI.fzaOtros=!UI.fzaOtros; render(); },
   fzaSigue(d){
     const s=new Set(S.cfg.fzaSigue||[]);

@@ -861,10 +861,17 @@ img{-webkit-user-drag:none;user-select:none}
 .proprow{padding:9px 0;border-bottom:1px dashed var(--line)}
 .proprow:last-of-type{border-bottom:none}
 .fzadestacado{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.fzabox{padding:11px 12px;border-radius:14px;background:var(--card2);border:1px solid var(--line)}
-.fzabox.debil{border-color:rgba(255,201,77,.35)}
-.fzabox b{display:block;font:600 15px var(--ui);margin-top:3px}
-.fzabox i{display:block;font:700 13px var(--ui);font-style:normal;margin:2px 0 3px}
+.fzabox{position:relative;overflow:hidden;padding:12px 13px;border-radius:16px;border:1px solid var(--line2);
+  background:linear-gradient(150deg, color-mix(in srgb, var(--nc) 15%, transparent) 0%, transparent 60%), var(--paper2)}
+.fzabox::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(110% 80% at 8% 0%, color-mix(in srgb, var(--nc) 20%, transparent) 0%, transparent 62%)}
+.fzabox.debil{border-color:color-mix(in srgb, var(--nc) 35%, var(--line2))}
+.fzabox b{position:relative;z-index:1;display:block;font:700 15px var(--ui);letter-spacing:-.01em;margin-top:5px}
+.fzaboxkg{position:relative;z-index:1;display:flex;align-items:baseline;gap:3px;margin:4px 0 8px;
+  font:800 22px/1 var(--num);color:var(--ink)}
+.fzaboxkg em{font:700 12px var(--num);font-style:normal;color:var(--smoke)}
+.fzaboxkg i{font:700 11px var(--num);font-style:normal;color:var(--smoke);margin-left:3px}
+.fzabox .fzaniv{position:relative;z-index:1;display:inline-block}
 .fzarow{padding:9px 0;border-bottom:1px dashed var(--line)}
 .fzarow:last-child{border-bottom:none}
 .fzabar{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
@@ -962,45 +969,49 @@ img{-webkit-user-drag:none;user-select:none}
 /* Pestañas expandibles: en reposo solo el icono; la activa se abre y saca su nombre.
    Se usa en el mapa del cuerpo y en cualquier fila de pestañas con icono. */
 .mcapas,.xtabs{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;align-items:center;
-  padding:4px;border-radius:18px;background:var(--paper2);border:1px solid var(--line2);
+  width:fit-content;max-width:100%;margin-inline:auto;
+  padding:4px;border-radius:16px;background:var(--paper2);border:1px solid var(--line2);
   box-shadow:0 1px 2px rgba(0,0,0,.18)}
 .xtabs.izq{justify-content:flex-start}
 .mcapa,.xtab{position:relative;display:flex;align-items:center;justify-content:center;gap:0;
-  padding:9px 11px;border:0;border-radius:14px;background:transparent;color:var(--smoke);
-  font:600 11px var(--ui);cursor:pointer;white-space:nowrap;
+  padding:8px 10px;border:0;border-radius:12px;background:transparent;color:var(--smoke);
+  font:600 12px var(--ui);cursor:pointer;white-space:nowrap;
   transition:background .3s cubic-bezier(.32,.72,0,1),color .2s,gap .4s cubic-bezier(.32,.72,0,1),padding .4s cubic-bezier(.32,.72,0,1)}
 .mcapa svg,.xtab svg{flex:none}
 .mcapa>span,.xtab>span{display:inline-block;max-width:0;opacity:0;overflow:hidden;white-space:nowrap;
   transition:max-width .42s cubic-bezier(.32,.72,0,1),opacity .26s ease .06s}
-.mcapa.on,.xtab.on{gap:6px;padding:9px 14px;background:var(--grad);color:var(--onmint);
+.mcapa.on,.xtab.on{gap:6px;padding:8px 13px;background:var(--grad);color:var(--onmint);
   box-shadow:0 2px 10px rgba(0,0,0,.22)}
 .mcapa.on>span,.xtab.on>span{max-width:120px;opacity:1}
 .xtab.on.plano{background:var(--card2);color:var(--ink);box-shadow:none}
 .mcapa:active,.xtab:active{transform:scale(.94)}
 .xtsep{width:1.2px;height:20px;margin:0 3px;background:var(--line2);flex:none;border-radius:1px}
 @media (prefers-reduced-motion:reduce){.mcapa,.xtab,.mcapa>span,.xtab>span{transition:none}}
-/* Tarjeta destacada: degradado con trama de puntos y el marcador con el icono arriba */
-.hlc{position:relative;overflow:hidden;border-radius:20px;padding:16px 16px 15px;color:#fff;
-  background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.16) 1px, transparent 0),
-    linear-gradient(140deg, var(--hlA), var(--hlB));
-  background-size:8px 8px, 100% 100%;box-shadow:0 8px 24px rgba(0,0,0,.28)}
-.hlc .hlmk{position:absolute;top:0;right:18px;width:42px;height:54px;display:flex;align-items:center;
-  justify-content:center;padding-bottom:9px;background:rgba(255,255,255,.94);color:var(--hlA);
+/* Tarjeta destacada: el degradado del usuario con trama de puntos y el marcador arriba.
+   No trae paleta propia: hereda --grad y --onmint, asi cambia con Andres o Cami. */
+.hlc{position:relative;overflow:hidden;border-radius:var(--r-lg);padding:16px 16px 15px;
+  color:var(--onmint);background-image:radial-gradient(circle at 1px 1px,
+    color-mix(in srgb, var(--onmint) 13%, transparent) 1px, transparent 0),
+    linear-gradient(135deg, var(--bn1) 0%, var(--bn2) 100%);
+  background-size:8px 8px, 100% 100%;box-shadow:var(--glow)}
+.hlc .hlmk{position:absolute;top:0;right:18px;width:40px;height:52px;display:flex;align-items:center;
+  justify-content:center;padding-bottom:9px;background:var(--paper2);color:var(--mint);
   clip-path:polygon(0 0,100% 0,100% 100%,50% 74%,0 100%)}
-.hlc h3{font:700 19px/1.15 var(--ui);letter-spacing:-.01em;margin:0;max-width:74%}
+.hlc h3{font:600 19px/1.15 var(--ttl);letter-spacing:-.01em;margin:0;max-width:74%}
 .hlc .hldesc{font:500 12.5px/1.45 var(--ui);opacity:.9;margin-top:4px;max-width:80%}
-.hlc .hlsep{height:1px;background:rgba(255,255,255,.24);margin:13px 0 12px}
+.hlc .hlsep{height:1px;background:color-mix(in srgb, var(--onmint) 22%, transparent);margin:13px 0 12px}
 .hlc .hlpie{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
 .hlc .hlnum{font:800 30px/1 var(--num);letter-spacing:-.02em;display:flex;align-items:baseline;gap:4px}
 .hlc .hlnum em{font:700 14px var(--num);font-style:normal;opacity:.85}
 .hlc .hllbl{font:500 11.5px/1.35 var(--ui);opacity:.88;margin-top:5px;max-width:26ch}
-.hlc .hlbtn{flex:none;border:0;border-radius:999px;padding:9px 15px;cursor:pointer;color:#fff;
-  background:rgba(255,255,255,.28);backdrop-filter:blur(6px);font:700 12px var(--ui);
+.hlc .hlbtn{flex:none;border:0;border-radius:999px;padding:9px 15px;cursor:pointer;color:var(--onmint);
+  background:color-mix(in srgb, var(--onmint) 15%, transparent);font:700 12px var(--ui);
   display:flex;align-items:center;gap:5px;transition:background .2s,transform .12s}
 .hlc .hlbtn:active{transform:scale(.95)}
 .hlc .hlchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
 .hlc .hlchip{font:700 9.5px var(--ui);letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;
-  border-radius:999px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.24)}
+  border-radius:999px;background:color-mix(in srgb, var(--onmint) 12%, transparent);
+  border:1px solid color-mix(in srgb, var(--onmint) 22%, transparent)}
 /* el arte y las zonas entran con un fundido corto en vez de aparecer de golpe */
 .medbp .mzarte{transition:opacity .3s cubic-bezier(.32,.72,0,1)}
 .medbp rect[mask]{animation:zonaIn .32s cubic-bezier(.32,.72,0,1)}
@@ -1065,6 +1076,8 @@ img{-webkit-user-drag:none;user-select:none}
 .fzamush{position:relative;display:flex;align-items:center;gap:10px;width:100%;padding:12px 13px;border:0;
   color:var(--ink);cursor:pointer;text-align:left;
   background:linear-gradient(100deg, color-mix(in srgb, var(--gc) 16%, transparent) 0%, transparent 52%)}
+.fzamush>.grow{flex:1 1 auto;min-width:0}
+.fzamusn{margin-left:auto}
 .fzamusd{flex:none;width:9px;height:9px;border-radius:50%;background:var(--gc);
   box-shadow:0 0 0 4px color-mix(in srgb, var(--gc) 18%, transparent)}
 .fzamusn{flex:none;font:700 10.5px var(--ui);padding:4px 10px;border-radius:999px;border:1px solid;
@@ -1079,7 +1092,20 @@ img{-webkit-user-drag:none;user-select:none}
 .fzamusb{padding:2px 11px 11px}
 .fzamusap{display:flex;justify-content:space-between;font:600 11px var(--ui);color:var(--smoke);padding:3px 0}
 .fzamusap b{color:var(--ink2);font:700 11px var(--num)}
-.crucecard{padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--line2);margin-bottom:8px}
+.crucecard{position:relative;overflow:hidden;padding:13px;border-radius:16px;margin-bottom:9px;
+  border:1px solid color-mix(in srgb, var(--cc) 30%, var(--line2));
+  background:linear-gradient(150deg, color-mix(in srgb, var(--cc) 13%, transparent) 0%, transparent 58%), var(--paper2)}
+.crucecard::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(110% 80% at 6% 0%, color-mix(in srgb, var(--cc) 16%, transparent) 0%, transparent 60%)}
+.crucecard>*{position:relative;z-index:1}
+.cruceic{flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;
+  border-radius:10px;color:var(--cc);background:color-mix(in srgb, var(--cc) 14%, transparent);
+  border:1px solid color-mix(in srgb, var(--cc) 28%, transparent)}
+.crucen{font:700 15px var(--ui);letter-spacing:-.01em}
+.crucetag{flex:none;font:700 9.5px var(--ui);font-style:normal;letter-spacing:.04em;text-transform:uppercase;
+  padding:3px 9px;border-radius:999px;color:var(--cc);
+  background:color-mix(in srgb, var(--cc) 13%, transparent);
+  border:1px solid color-mix(in srgb, var(--cc) 34%, transparent)}
 .crucemini{display:flex;flex-wrap:wrap;gap:5px}
 .crucemini span{display:flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;
   background:rgba(255,255,255,.05);font:700 10.5px var(--num);color:var(--ink2)}
@@ -1717,7 +1743,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 172';
+const APPREV='REV 173';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3796,12 +3822,12 @@ function fzaCard(){
   return `<section class="mod">
     <div class="mod-head"><span class="ttl">${ic('trend',16)} Tu nivel de fuerza</span><span class="chip dim">vs ${fmt1(Math.round(pc*10)/10)} kg</span></div>
     ${solo?'':`<div class="fzadestacado">
-      <div class="fzabox"><span class="lbl">MÁS FUERTE</span><b>${esc(fuerte.n)}</b>
-        <i style="color:${col(fuerte.nivel)}">${fuerte.nombre}</i>
-        <span class="small dim">${fmt1(fuerte.rm)} kg · ${fuerte.ratio}× tu peso</span></div>
-      <div class="fzabox debil"><span class="lbl">MÁS FLOJO</span><b>${esc(debil.n)}</b>
-        <i style="color:${col(debil.nivel)}">${debil.nombre}</i>
-        <span class="small dim">${fmt1(debil.rm)} kg · ${debil.ratio}× tu peso</span></div>
+      <div class="fzabox" style="--nc:${col(fuerte.nivel)}"><span class="lbl">MÁS FUERTE</span><b>${esc(fuerte.n)}</b>
+        <span class="fzaboxkg">${fmt1(fuerte.rm)}<em>kg</em><i>${fuerte.ratio}×</i></span>
+        <em class="fzaniv" style="color:${col(fuerte.nivel)};border-color:color-mix(in srgb, ${col(fuerte.nivel)} 40%, transparent);background:color-mix(in srgb, ${col(fuerte.nivel)} 13%, transparent)">${fuerte.nombre}</em></div>
+      <div class="fzabox debil" style="--nc:${col(debil.nivel)}"><span class="lbl">MÁS FLOJO</span><b>${esc(debil.n)}</b>
+        <span class="fzaboxkg">${fmt1(debil.rm)}<em>kg</em><i>${debil.ratio}×</i></span>
+        <em class="fzaniv" style="color:${col(debil.nivel)};border-color:color-mix(in srgb, ${col(debil.nivel)} 40%, transparent);background:color-mix(in srgb, ${col(debil.nivel)} 13%, transparent)">${debil.nombre}</em></div>
     </div>
     <div class="small mt12" style="line-height:1.5">Tu eslabón débil es <b>${esc(debil.n).toLowerCase()}</b>. Ponlo de primero en la sesión un mes: ahí está la ganancia fácil.</div>`}
     ${solo?`<div class="small dim" style="line-height:1.5">Con más básicos registrados te puedo decir cuál es tu punto fuerte y cuál el débil. Por ahora, esto es lo que hay:</div>`:''}
@@ -4192,14 +4218,11 @@ const MED_CAPAS=[['medidas','Medidas','ruler'],['carga','Carga','flame'],['fuerz
 function xtabs(items, act, accion, cls){
   return `<div class="xtabs ${cls||''}" role="tablist">${items.map(x=> x==='|' ? '<i class="xtsep" aria-hidden="true"></i>' :
     `<button class="xtab ${x.k===act?'on':''}" data-a="${accion}" data-s="${esc(x.k)}" role="tab"
-      aria-selected="${x.k===act?'true':'false'}" aria-label="${esc(x.n)}" title="${esc(x.n)}">${ic(x.i,14)}<span>${esc(x.n)}</span></button>`).join('')}</div>`;
+      aria-selected="${x.k===act?'true':'false'}" aria-label="${esc(x.n)}" title="${esc(x.n)}">${ic(x.i,17)}<span>${esc(x.n)}</span></button>`).join('')}</div>`;
 }
 /* Tarjeta destacada: degradado con trama, marcador con icono, una cifra grande y su accion. */
-const HL_COL={verde:['#1FB47A','#0E8F63'], azul:['#4C7BFF','#2E55D6'], violeta:['#8A6BFF','#6544D9'],
-  naranja:['#F0873A','#E0A83C'], rojo:['#E8574C','#C4362F'], oro:['#E9B23C','#CE8B2A']};
 function hlCard(o){
-  const c=HL_COL[o.color]||HL_COL.verde;
-  return `<div class="hlc ${o.cls||''}" style="--hlA:${c[0]};--hlB:${c[1]}">
+  return `<div class="hlc ${o.cls||''}">
     <div class="hlmk">${ic(o.icono||'star',18)}</div>
     <h3>${esc(o.ttl)}</h3>
     ${o.desc?`<div class="hldesc">${o.desc}</div>`:''}
@@ -4218,7 +4241,7 @@ function medCapaBar(){
   const act=['carga','fuerza','cruce'].includes(UI.cuerpoSub)?UI.cuerpoSub:'medidas';
   return `<div class="mcapas" role="tablist" aria-label="Qué mirar del cuerpo">
     ${MED_CAPAS.map(([k,lb,icn])=>`<button class="mcapa ${k===act?'on':''}" data-a="cuerpoSub" data-s="${k}"
-      role="tab" aria-selected="${k===act?'true':'false'}" aria-label="${lb}" title="${lb}">${ic(icn,14)}<span>${lb}</span></button>`).join('')}
+      role="tab" aria-selected="${k===act?'true':'false'}" aria-label="${lb}" title="${lb}">${ic(icn,17)}<span>${lb}</span></button>`).join('')}
   </div>`;
 }
 function medMapa(sel, o){
@@ -4861,13 +4884,13 @@ function vCruce(){
       <b class="small">${esc(medNomZona(sel))}</b>
       <button class="chip" data-a="medZona" data-z="">${ic('x',9)} ver todo</button></div>`:''}
     ${cards.length?cards.map(o=>`
-      <div class="crucecard" style="border-color:${COL[o.d.t]}40">
-        <div class="flex" style="gap:9px;align-items:flex-start">
-          <span style="color:${COL[o.d.t]};flex:none;margin-top:1px">${ic(ICO[o.d.t],15)}</span>
+      <div class="crucecard" style="--cc:${COL[o.d.t]}">
+        <div class="flex" style="gap:10px;align-items:flex-start">
+          <span class="cruceic">${ic(ICO[o.d.t],16)}</span>
           <div class="grow" style="min-width:0">
-            <div class="flex between" style="align-items:baseline;gap:8px">
-              <b style="font:600 14px var(--ui)">${esc(MUSC_NOM[o.m]||o.m)}</b>
-              <span class="small" style="color:${COL[o.d.t]}">${esc(o.d.ttl)}</span></div>
+            <div class="flex between" style="align-items:center;gap:8px">
+              <b class="crucen">${esc(MUSC_NOM[o.m]||o.m)}</b>
+              <em class="crucetag">${esc(o.d.ttl)}</em></div>
             <div class="small dim mt4" style="line-height:1.55">${o.d.x}</div>
             <div class="crucemini mt8">
               <span>${ic('flame',10)} ${fmt1(o.porSem)}<i>ser/sem</i></span>
@@ -5053,7 +5076,6 @@ function vCarga(){
   const totalSeries=Math.round(filas.reduce((a,f)=>a+f.s,0));
   return `
   ${hlCard({
-    color: flojos.length? 'naranja' : (pasados.length?'oro':'verde'),
     icono:'flame', ttl:'Carga de la semana',
     desc: flojos.length ? 'Hay músculos por debajo del mínimo para crecer. Súmales una serie por sesión.'
       : pasados.length ? 'Vas pasado en algún músculo. Bajar una serie ahí no te quita nada.'
@@ -10273,28 +10295,6 @@ function vInicio(){
   return `
   ${(()=>{const al=partnerAlerts(); if(!al.length) return '';
     return `<section class="mod tight alertcard" data-a="retosGo" role="button"><div class="flex"><span class="alertic">${ic('bell',16)}</span><div class="small grow"><b>Para revisar (${al.length})</b><div style="margin-top:3px;line-height:1.45">${al.slice(0,2).join('<br>')}</div></div>${ic('chevR',15)}</div></section>`;})()}
-  ${(()=>{
-    /* Lo destacado: una sola cifra con contexto, para no tener que leer todo Inicio */
-    const baja=PLAN.wStart>PLAN.wGoal, avance=baja?lost:-lost;
-    const sem=slope==null?null:Math.round(Math.abs(slope)*100)/100;
-    const bien = slope==null ? null : (baja ? slope<-0.02 : slope>0.02);
-    const semanas = (sem&&sem>0.05&&bien) ? Math.ceil(Math.abs(togo)/sem) : null;
-    const chips=[];
-    if(sem!=null&&sem>0.02) chips.push((slope<0?'−':'+')+fmt1(sem)+' kg por semana');
-    if(semanas!=null&&semanas<80) chips.push('meta en ~'+semanas+' semana'+(semanas===1?'':'s'));
-    if(stk>2) chips.push(stk+' días de racha');
-    chips.unshift('faltan '+fmt1(Math.abs(togo))+' kg');
-    return hlCard({
-      color: bien===false?'naranja':(bien?'verde':'azul'),
-      icono: bien===false?'trendD':'trend',
-      ttl:'Lo destacado',
-      desc: slope==null ? 'Pésate unos días seguidos y aquí te digo hacia dónde va la aguja.'
-        : bien ? 'Vas en la dirección correcta. Con este ritmo la meta llega sola.'
-        : 'El peso lleva días quieto o subiendo. Revisa comidas y pasos antes de tocar el entreno.',
-      num: fmt1(Math.abs(avance)), uni:'kg',
-      lbl: avance>=0 ? 'que ya te '+(baja?'bajaste':'subiste')+' desde que arrancó el plan' : 'que se te devolvieron desde que arrancó el plan',
-      chips, btn:'Ver progreso', a:'progGo'});
-  })()}
   ${BACKEND!=='ls'?`<section class="mod tight inv"><div class="flex">${ic('alert',18)}<div class="small"><b>Esta vista no guarda datos.</b> El navegador bloquea el almacenamiento aquí: lo que registres se pierde al cerrar. Usa la versión instalada/local, o exporta un respaldo desde MÁS → DATOS antes de salir.</div></div></section>`:''}
   ${(BACKEND==='ls'&&!DEMO&&(!S.cfg.lastBackup||addDays(S.cfg.lastBackup,7)<=TODAY()))?`<section class="mod tight"><div class="flex between"><div class="flex">${ic('down',18)}<div class="small"><b>Respaldo semanal.</b> ${S.cfg.lastBackup?'Último: '+fmtD(S.cfg.lastBackup)+'.':'Aún no tienes el primero.'} ${SB?'La nube ayuda; el archivo es el seguro.':'Sin nube, este archivo es tu único seguro.'}</div></div><button class="btn sm primary" data-a="backupNow" style="flex:none">Descargar</button></div></section>`:''}
   ${!S.cfg.tour?`<section class="mod glowtop">

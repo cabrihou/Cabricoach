@@ -802,7 +802,12 @@ La tarjeta de ejercicio se volvió el patrón visual de toda la capa de Fuerza:
 - La **cabecera de grupo** (`.fzamush`) usa el mismo idioma: punto de color con halo, nombre a
   15 px, cápsula `3/4 con registro` y píldora de nivel. El grupo abierto tiñe su borde.
 - La fila de "Tu nivel de fuerza" (`fzaFilaHTML`) quedó igual de tarjeta, para que sea la misma
-  cosa mirada desde otro lado.
+  cosa mirada desde otro lado, y las cajas de **más fuerte / más flojo** (`.fzabox`) también:
+  degradado del nivel, el kilaje en grande y el nivel como píldora.
+- Las tarjetas de **Cruce** (`.crucecard`) usan el mismo patrón: el icono en un cuadrado tintado,
+  el estado como píldora a la derecha y el degradado del color del estado.
+- La píldora de nivel va pegada a la derecha (`margin-left:auto`): hay tres reglas `.grow` en la
+  hoja y la que gana es `flex:0 1 auto`, así que confiar en `.grow` para empujar no funciona.
 
 ### Pestañas expandibles (`xtabs`)
 
@@ -812,10 +817,16 @@ Se usa en las cuatro capas del mapa (`medCapaBar`) y en las sub-pestañas de Pro
 (`PROG_ACT`). Helper: `xtabs(items, activa, accion)` donde cada item es `{k,n,i}` y el string
 `"|"` mete un separador. Respeta `prefers-reduced-motion`.
 
+La barra es `width:fit-content` centrada: se ajusta a lo que ocupa en vez de estirarse de lado
+a lado, que era lo que la hacía ver vacía. Iconos a 17 px.
+
 ### Tarjeta destacada (`hlCard`)
 
 Degradado con trama de puntos, marcador con icono arriba a la derecha, una cifra grande con su
 unidad, cápsulas de contexto y un botón de píldora. Es para una sola cosa por pantalla: en
 **Inicio** el avance del peso hacia la meta, en **Carga** las series efectivas de la ventana.
-Paletas en `HL_COL` (verde, azul, violeta, naranja, rojo, oro); el color lo elige el dato, no
-el gusto: naranja cuando algo va mal, verde cuando va bien.
+**No trae paleta propia**: el degradado sale de `--bn1` → `--bn2` y el texto de `--onmint`, así
+que es azul con Andrés y dorado con Cami sin una línea de condicional. Se probó con `--grad` y
+el texto quedaba corto de contraste en el extremo oscuro; el par de botón resuelve los dos temas.
+Va en **Carga** y en ningún otro lado: una tarjeta así solo funciona si es la única de la
+pantalla. En Inicio se probó y sobraba, porque ahí ya están la racha, el peso y las metas.

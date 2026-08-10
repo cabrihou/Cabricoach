@@ -277,12 +277,16 @@ Lo que se agregó ahora:
   **cuánto subiste desde la primera vez**. Decir que 16 kg de curl predicador es "avanzado" es
   inventarse un dato que no existe a nivel poblacional. El nivel de un grupo tampoco lo puede
   marcar un accesorio: `fzaGrupo` solo mira los calibrados.
-- **Segundo eje: carga absoluta.** `fzaScoreMixto` da `rel` (ratio contra tu peso), `abs`
+- **Los dos ejes, a la vista.** `fzaScoreMixto` da `rel` (ratio contra tu peso), `abs`
   (el mismo peso evaluado contra un cuerpo mediano, `FZA_PESO_REF` 80 kg / 62 kg) y `mix`
-  = 0.7·rel + 0.3·abs, con los pesos en `FZA_MEZCLA`. No se promedian en la etiqueta
-  principal, que sigue siendo la relativa: el absoluto sale como cápsula **solo cuando difiere**
-  del relativo, que es cuando informa. Un tipo de 60 kg con banca de 90 y uno de 120 con banca
-  de 150 no son comparables con un solo número.
+  = 0.7·rel + 0.3·abs, con los pesos en `FZA_MEZCLA`. `fzaGlobal` promedia los calibrados y
+  `fzaGlobalHTML` pinta el bloque que abre la sección: **nivel global** con su porcentaje al
+  siguiente y, debajo, **fuerza relativa** y **fuerza total** en dos cajas separadas con su
+  propio nivel y su propia barra. No se fusionan en la etiqueta de cada ejercicio: ahí manda
+  la relativa y el absoluto sale como cápsula solo cuando difiere. Un tipo de 60 kg con banca
+  de 90 y uno de 120 con banca de 150 no son comparables con un solo número.
+  A 90 kg contra una referencia de 80, la total sale por encima de la relativa; a 59,5 kg
+  contra 62 las dos coinciden, que es lo correcto.
 - **Sin datos recientes.** Si el mejor 1RM tiene más de 60 días (`FZA_VIEJO`), sale una cápsula
   que lo dice. Se marca, no se degrada.
 - **Guardia de déficit.** `fzaDeficitGanancia` cruza el peso con las cargas: si bajaste 1 kg o

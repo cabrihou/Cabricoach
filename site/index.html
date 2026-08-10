@@ -1050,6 +1050,21 @@ img{-webkit-user-drag:none;user-select:none}
 .fzacap.verde{color:#58DFA3;background:rgba(88,223,163,.13);border-color:rgba(88,223,163,.3)}
 .fzacap.gris{color:var(--smoke);background:rgba(255,255,255,.06);border-color:var(--line2)}
 .fzaejx{font:700 12px var(--num);color:var(--smoke);margin-left:2px}
+/* Los dos ejes del nivel: relativa y total, cada uno con su nivel, mas la mezcla arriba */
+.fzaglob{position:relative;overflow:hidden;padding:14px;border-radius:18px;margin-bottom:12px;
+  border:1px solid color-mix(in srgb, var(--nc) 30%, var(--line2));
+  background:linear-gradient(150deg, color-mix(in srgb, var(--nc) 14%, transparent) 0%, transparent 58%), var(--paper2)}
+.fzaglobn{font:800 26px/1 var(--ttl);letter-spacing:-.02em}
+.fzaejeb{display:block;height:7px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden}
+.fzaejeb.grande{height:9px;border-radius:6px}
+.fzaejeb em{display:block;height:100%;border-radius:6px;background:var(--nc);
+  transition:width .45s cubic-bezier(.32,.72,0,1)}
+.fzaejes2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}
+.fzaeje{padding:10px;border-radius:14px;border:1px solid color-mix(in srgb, var(--nc) 24%, var(--line2));
+  background:color-mix(in srgb, var(--nc) 8%, transparent)}
+.fzaeje .lbl{display:block;margin-bottom:3px}
+.fzaejen{display:block;font:700 14px var(--ui);color:var(--nc);letter-spacing:-.01em}
+.fzaejes{display:block;font:500 10.5px/1.35 var(--ui);font-style:normal;color:var(--smoke);margin:2px 0 7px}
 .fzaejprog{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .fzaejlbl{font:600 9.5px var(--ui);letter-spacing:.07em;text-transform:uppercase;color:var(--smoke)}
 .fzaejpct{font:800 15px var(--num)}
@@ -1793,7 +1808,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 179';
+const APPREV='REV 180';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3873,6 +3888,51 @@ function fzaFilaHTML(x, pc, col){
 }
 /* Guardia de deficit: si el peso baja y las cargas se sostienen, el ratio sube solo. Es
    progreso real que nadie nota, asi que se dice en voz alta en vez de dejarlo en la tabla. */
+/* ============ LOS DOS EJES ============
+   Fuerza RELATIVA (1RM / tu peso) y fuerza TOTAL (los mismos kilos evaluados contra un
+   cuerpo mediano). No se pueden promediar en un solo numero sin destruirse: uno de 60 kg
+   con banca de 90 tiene ratio 1.5 y uno de 120 con banca de 150 tiene 1.25, pero el segundo
+   mueve 60 kg mas. Ninguno es "mas fuerte" a secas. Se muestran por separado, y el nivel
+   global sale de la mezcla con pesos configurables (FZA_MEZCLA). Solo cuentan calibrados. */
+function fzaGlobal(tb, pc){
+  const cal=tb.filter(x=>fzaEsCalibrado(x.k) && x.rm>0);
+  if(!cal.length) return null;
+  const sc=cal.map(x=>{
+    const u=(x.tabla&&x.tabla.u)||fzaTablaDe(x.k).u;
+    return fzaScoreMixto(x.rm, pc, u);
+  });
+  const prom=k=>sc.reduce((a,s)=>a+s[k],0)/sc.length;
+  const et=v=>{ const i=clamp(Math.floor(v),0,4);
+    return {v, i, n:FZA_NIVELES[i], pct: v>=4?100:Math.round((v-i)*100), sig:FZA_NIVELES[Math.min(4,i+1)]}; };
+  return {rel:et(prom('rel')), abs:et(prom('abs')), mix:et(prom('mix')), n:cal.length, ref:fzaPesoRef()};
+}
+function fzaGlobalHTML(g, pc){
+  if(!g) return '';
+  const COL=['#8B97A1','#8FA0FF','#58DFA3','var(--gold)','#FF7AB6'];
+  const c=COL[g.mix.i]||'#8B97A1';
+  const eje=(t, e, sub)=>`<div class="fzaeje" style="--nc:${COL[e.i]||'#8B97A1'}">
+    <span class="lbl">${t}</span>
+    <b class="fzaejen">${e.n}</b>
+    <i class="fzaejes">${sub}</i>
+    <span class="fzaejeb"><em style="width:${clamp(e.i>=4?100:e.pct,4,100)}%"></em></span>
+  </div>`;
+  return `<div class="fzaglob" style="--nc:${c}">
+    <div class="flex between" style="align-items:baseline;gap:8px">
+      <span class="lbl">TU NIVEL GLOBAL</span>
+      <i class="small dim">${g.n} básico${g.n===1?'':'s'} calibrado${g.n===1?'':'s'}</i>
+    </div>
+    <div class="flex" style="align-items:baseline;gap:8px;margin:4px 0 8px">
+      <b class="fzaglobn" style="color:${c}">${g.mix.n}</b>
+      ${g.mix.i<4?`<span class="small dim">${g.mix.pct}% hacia ${g.mix.sig}</span>`:'<span class="small dim">tope de la tabla</span>'}
+    </div>
+    <span class="fzaejeb grande"><em style="width:${clamp(g.mix.i>=4?100:(g.mix.i*25+g.mix.pct*0.25),4,100)}%;background:linear-gradient(90deg, color-mix(in srgb, ${c} 55%, transparent), ${c})"></em></span>
+    <div class="fzaejes2">
+      ${eje('FUERZA RELATIVA', g.rel, 'contra tus '+fmt1(Math.round(pc*10)/10)+' kg')}
+      ${eje('FUERZA TOTAL', g.abs, 'los mismos kilos en un cuerpo de '+g.ref+' kg')}
+    </div>
+    <div class="small dim mt8" style="line-height:1.5">El global mezcla los dos ejes (${Math.round(FZA_MEZCLA.rel*100)}% relativa y ${Math.round(FZA_MEZCLA.abs*100)}% total). Se muestran por separado porque no significan lo mismo: pesar menos sube la relativa sin mover una placa, y pesar más sube la total sin ser más eficiente.</div>
+  </div>`;
+}
 function fzaDeficitGanancia(tb, pc){
   const W=S.weights||[]; if(W.length<4 || !tb.length) return null;
   const corte=addDays(TODAY(),-56);
@@ -3903,10 +3963,14 @@ function fzaCard(){
       : 'Tu eslabón débil es '+esc(debil.n).toLowerCase()+'. Ponlo de primero un mes: ahí está la ganancia fácil.',
     num: fmt1(fuerte.rm), uni:'kg',
     lbl:'tu mejor levantamiento: '+esc(fuerte.n).toLowerCase(),
-    chips: solo ? [fuerte.nombre] : ['más fuerte: '+fuerte.n, 'más flojo: '+debil.n, tb.length+' básicos'],
+    chips: (()=>{ const g=fzaGlobal(tb, pc); const c=[];
+      if(g) c.push('global: '+g.mix.n, 'relativa: '+g.rel.n, 'total: '+g.abs.n);
+      if(!solo) c.push('más flojo: '+debil.n);
+      return c; })(),
   }, `<section class="mod">
     <div class="mod-head hero"><span class="ttl"><span class="heroic">${ic('trend',18)}</span>Tu nivel de fuerza</span>
       <div class="flex" style="gap:6px"><span class="chip dim">vs ${fmt1(Math.round(pc*10)/10)} kg</span>${secCerrar('fza')}</div></div>
+    ${fzaGlobalHTML(fzaGlobal(tb, pc), pc)}
     ${(()=>{const dg=fzaDeficitGanancia(tb, pc); if(!dg) return '';
       return `<div class="propfoco ok mb12">${ic('check',15)}<div>
         <b>Mantuviste fuerza perdiendo ${fmt1(dg.baja)} kg.</b>

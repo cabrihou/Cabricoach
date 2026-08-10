@@ -254,3 +254,40 @@ adivinar: lo pone el dueño desde la ficha del ejercicio, con chips de los valor
 Por defecto es **cero**, porque quedarse corto es mejor que inventar un número. El detalle de
 "de dónde sale tu número" lo dice cuando está puesto: *"Más los 40 kg del carro: 180 kg"*.
 
+
+## Nivel de fuerza: qué se aplicó del pliego (REV 179)
+
+Ya estaba antes de esto:
+
+- **Ratio contra peso corporal con umbrales por ejercicio y por sexo.** `FZA_STD` y `FZA_STD2`
+  llevan dos arrays: `a` (Andrés) y `c` (Cami). No es un multiplicador plano: son las tablas
+  femeninas de Strength Level. Salen entre 60 y 75% del hombre en tren superior y entre 75 y
+  100% en dominantes de cadera, que es lo que pasa de verdad (en hip thrust la mujer está
+  a la par). Los umbrales viven como datos, no repartidos por el código.
+- **Progreso dentro del nivel.** "Camino a Avanzado, 68%", interpolación lineal entre el
+  umbral actual y el siguiente.
+- **El nivel nunca baja.** `fzaMejor1RM` recorre todo el historial y se queda con el mejor,
+  así que dejar de entrenar no degrada a nadie.
+
+Lo que se agregó ahora:
+
+- **Categorías de ejercicio.** `FZA_SECUNDARIO` marca los aislados (curl, elevación lateral,
+  pájaro, tríceps en polea, encogimiento, extensión, curl femoral, gemelo, abductor, aductor,
+  zancada, búlgara). Esos ya no reciben etiqueta de nivel: la tarjeta dice **tu récord** y
+  **cuánto subiste desde la primera vez**. Decir que 16 kg de curl predicador es "avanzado" es
+  inventarse un dato que no existe a nivel poblacional. El nivel de un grupo tampoco lo puede
+  marcar un accesorio: `fzaGrupo` solo mira los calibrados.
+- **Segundo eje: carga absoluta.** `fzaScoreMixto` da `rel` (ratio contra tu peso), `abs`
+  (el mismo peso evaluado contra un cuerpo mediano, `FZA_PESO_REF` 80 kg / 62 kg) y `mix`
+  = 0.7·rel + 0.3·abs, con los pesos en `FZA_MEZCLA`. No se promedian en la etiqueta
+  principal, que sigue siendo la relativa: el absoluto sale como cápsula **solo cuando difiere**
+  del relativo, que es cuando informa. Un tipo de 60 kg con banca de 90 y uno de 120 con banca
+  de 150 no son comparables con un solo número.
+- **Sin datos recientes.** Si el mejor 1RM tiene más de 60 días (`FZA_VIEJO`), sale una cápsula
+  que lo dice. Se marca, no se degrada.
+- **Guardia de déficit.** `fzaDeficitGanancia` cruza el peso con las cargas: si bajaste 1 kg o
+  más en 8 semanas y el mejor 1RM se sostuvo, la sección lo celebra en voz alta con el ratio
+  antes y después. Es progreso que no se ve en la barra.
+
+Pendiente y a propósito: el cabrito no cambia de forma según el nivel. Generar variantes en
+Magnific cuesta créditos y solo se hace cuando Andy lo pide.

@@ -1793,7 +1793,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 178';
+const APPREV='REV 179';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3871,6 +3871,24 @@ function fzaFilaHTML(x, pc, col){
     ${UI.fzaOpen===x.k?fzaEscalera(x, pc):''}
   </div>`;
 }
+/* Guardia de deficit: si el peso baja y las cargas se sostienen, el ratio sube solo. Es
+   progreso real que nadie nota, asi que se dice en voz alta en vez de dejarlo en la tabla. */
+function fzaDeficitGanancia(tb, pc){
+  const W=S.weights||[]; if(W.length<4 || !tb.length) return null;
+  const corte=addDays(TODAY(),-56);
+  const antes=W.filter(w=>w.d<corte); if(!antes.length) return null;
+  const pAntes=antes[antes.length-1].kg, pAhora=currentWeight();
+  const baja=Math.round((pAntes-pAhora)*10)/10;
+  if(baja<1) return null;
+  let rmAntes=0, rmAhora=0;
+  tb.forEach(x=>{ (goalHistRM(x.ex)||[]).forEach(pt=>{
+    if(pt.d<corte) rmAntes=Math.max(rmAntes,pt.v); else rmAhora=Math.max(rmAhora,pt.v); }); });
+  if(!rmAntes || !rmAhora || rmAhora < rmAntes*0.97) return null;
+  const rAntes=rmAntes/pAntes, rAhora=rmAhora/pAhora;
+  if(rAhora<=rAntes) return null;
+  return {baja, rAntes:Math.round(rAntes*100)/100, rAhora:Math.round(rAhora*100)/100,
+    sube:Math.round((rAhora-rAntes)*100)/100};
+}
 function fzaCard(){
   const tb=fzaTabla();
   const pc=fzaPesoCorporal();
@@ -3889,6 +3907,11 @@ function fzaCard(){
   }, `<section class="mod">
     <div class="mod-head hero"><span class="ttl"><span class="heroic">${ic('trend',18)}</span>Tu nivel de fuerza</span>
       <div class="flex" style="gap:6px"><span class="chip dim">vs ${fmt1(Math.round(pc*10)/10)} kg</span>${secCerrar('fza')}</div></div>
+    ${(()=>{const dg=fzaDeficitGanancia(tb, pc); if(!dg) return '';
+      return `<div class="propfoco ok mb12">${ic('check',15)}<div>
+        <b>Mantuviste fuerza perdiendo ${fmt1(dg.baja)} kg.</b>
+        <div class="small dim mt4" style="line-height:1.55">Tu fuerza relativa pasó de ${fmt1(dg.rAntes)}× a ${fmt1(dg.rAhora)}× tu peso en las últimas 8 semanas sin subir una sola placa. Es progreso real, aunque la barra pese lo mismo.</div>
+      </div></div>`;})()}
     ${solo?'':`<div class="fzadestacado">
       <div class="fzabox" style="--nc:${col(fuerte.nivel)}"><span class="lbl">MÁS FUERTE</span><b>${esc(fuerte.n)}</b>
         <span class="fzaboxkg">${fmt1(fuerte.rm)}<em>kg</em><i>${fuerte.ratio}×</i></span>
@@ -4792,6 +4815,37 @@ const FZA_GRUPOS={
     {n:'Hip thrust', ids:['hip','c_hip','hipthrust_bb'], tabla:'hip'},
   ]},
 };
+/* ============ CATEGORIA DE EJERCICIO ============
+   No todo ejercicio merece una etiqueta de nivel. Los compuestos grandes tienen baremos de
+   poblacion de verdad detras; un curl predicador no. Decir que 16 kg de curl es "avanzado"
+   es inventarse un dato que no existe. En los secundarios el modulo no clasifica: dice tu
+   record y cuanto has subido desde la primera vez, que es mas honesto y mas util. */
+const FZA_SECUNDARIO=new Set(['curl','curl_martillo','elevacion_lateral','pajaro_posterior',
+  'triceps_polea','press_frances','encogimiento','ext_cuadriceps','curl_femoral','gemelo',
+  'abductor','aductor','zancada','bulgara']);
+function fzaEsCalibrado(k){ return !FZA_SECUNDARIO.has(k); }
+/* El segundo eje: la carga absoluta. Un ratio de 1.5 a 60 kg y uno de 1.25 a 120 kg no se
+   pueden promediar, se destruyen entre si. El nivel principal sigue siendo el relativo; esto
+   es "que nivel tendria ese mismo peso en alguien de talla mediana", como dato de al lado.
+   Referencia: peso corporal mediano de la poblacion de la tabla. */
+const FZA_PESO_REF={a:80, c:62};
+function fzaPesoRef(){ return FZA_PESO_REF[UID==='cami'?'c':'a']; }
+/* nivel continuo 0..4: entero + fraccion hasta el siguiente umbral */
+function fzaNivelCont(ratio, u){
+  if(ratio<u[0]) return clamp(ratio/u[0],0,1)*1;
+  for(let i=0;i<u.length-1;i++) if(ratio<u[i+1]) return 1+i+(ratio-u[i])/(u[i+1]-u[i]);
+  return 4;
+}
+/* score compuesto: 70% fuerza relativa, 30% carga absoluta. Los pesos son parametro. */
+const FZA_MEZCLA={rel:0.7, abs:0.3};
+function fzaScoreMixto(rm, pc, u){
+  const rel=fzaNivelCont(rm/pc, u), abs=fzaNivelCont(rm/fzaPesoRef(), u);
+  return {rel, abs, mix: rel*FZA_MEZCLA.rel + abs*FZA_MEZCLA.abs};
+}
+/* Cuando fue el mejor registro. El nivel NUNCA baja por no entrenar: si el mejor 1RM es
+   viejo se marca "sin datos recientes" en vez de degradarte, porque que te bajen de
+   division por unas vacaciones es la forma mas rapida de que alguien cierre la app. */
+const FZA_VIEJO=60;
 /* nivel de UN ejercicio de la lista: coge el mejor 1RM de cualquiera de sus ids */
 function fzaEjNivel(e, pc){
   let mejor=null, usado=null;
@@ -4803,8 +4857,17 @@ function fzaEjNivel(e, pc){
   if(!T) return {...e, sin:true};
   const ratio=mejor.rm/pc;
   const nv=fzaNivelDe(ratio, T.u);
+  const cal=fzaEsCalibrado(e.tabla);
+  const sc=fzaScoreMixto(mejor.rm, pc, T.u);
+  /* progreso propio: sirve para todos, pero es LO UNICO que se muestra en los secundarios */
+  const hist=goalHistRM(usado)||[];
+  const prim=hist.length>1?hist[0]:null;
+  const dias=mejor.d ? Math.round((fromISO(TODAY())-fromISO(mejor.d))/864e5) : null;
   return {...e, ex:usado, rm:Math.round(mejor.rm*10)/10, d:mejor.d, sw:mejor.w, sr:mejor.r,
     ratio:Math.round(ratio*100)/100, tablaN:T.n, tablaF:T.f, umbrales:T.u, ...nv,
+    cal, sec:!cal, sc, ses:hist.length,
+    subida: prim ? Math.round((mejor.rm-prim.v)*10)/10 : null, desde: prim?prim.d:null,
+    diasUlt: dias, viejo: dias!=null && dias>FZA_VIEJO,
     proxKg: nv.nivel<4 ? Math.round(T.u[nv.nivel]*pc*10)/10 : 0};
 }
 /* el grupo entero: sus ejercicios con nivel y el nivel del grupo (el mejor de ellos) */
@@ -4812,8 +4875,11 @@ function fzaGrupo(k, pc){
   const g=FZA_GRUPOS[k]; if(!g) return null;
   const ej=g.ej.map(e=>fzaEjNivel(e, pc));
   const con=ej.filter(x=>!x.sin);
-  return {k, n:g.n, ej, con, nivel: con.length?Math.max(...con.map(x=>x.nivel)):null,
-    nombre: con.length?FZA_NIVELES[Math.max(...con.map(x=>x.nivel))]:null};
+  /* el nivel del grupo lo marcan los ejercicios calibrados: un curl no asciende a nadie */
+  const cal=con.filter(x=>x.cal);
+  const base=cal.length?cal:[];
+  return {k, n:g.n, ej, con, cal, nivel: base.length?Math.max(...base.map(x=>x.nivel)):null,
+    nombre: base.length?FZA_NIVELES[Math.max(...base.map(x=>x.nivel))]:null};
 }
 /* que grupos toca cada zona del mapa */
 function fzaGruposDeZona(vista, zona){
@@ -5161,6 +5227,12 @@ function fzaEjHTML(e, pc, COL, gk, destacado){
   if(e.ex&&exPorLado(e.ex)) caps.push({t:'por lado', c:'oro'});
   if(e.ex&&exTara(e.ex)) caps.push({t:'carro '+fmt1(exTara(e.ex))+' kg', c:'gris'});
   if(destacado) caps.push({t:'tu más fuerte', c:'verde'});
+  if(e.viejo) caps.push({t:'sin datos hace '+e.diasUlt+' d', c:'gris'});
+  /* el eje absoluto solo se dice cuando NO coincide con el relativo: ahi es donde informa */
+  if(!e.sin && e.cal && e.sc){
+    const nAbs=Math.min(4,Math.floor(e.sc.abs));
+    if(nAbs!==e.nivel) caps.push({t:'en absoluto '+FZA_NIVELES[nAbs].toLowerCase(), c:'azul'});
+  }
   return `<div class="fzaej ${ab?'open':''} ${e.sin?'sin':''}">
     <button class="fzaejh" data-a="fzaEjTgl" data-k="${esc(key)}" aria-expanded="${ab?'true':'false'}"
       style="--nc:${col}">
@@ -5178,7 +5250,15 @@ function fzaEjHTML(e, pc, COL, gk, destacado){
         </span>
         <span class="nfchev">${ic('chevR',14)}</span>
       </span>
-      ${e.sin?'':`
+      ${e.sin?'':(e.sec?`
+      <span class="fzaejprog">
+        <span class="fzaejlbl">Tu récord</span>
+        ${e.subida!=null&&e.subida>0?`<b class="fzaejpct" style="color:#58DFA3">+${fmt1(e.subida)} kg</b>`:''}
+      </span>
+      <span class="fzaejpie">
+        <em class="fzaniv" style="color:var(--smoke);border-color:var(--line2);background:rgba(255,255,255,.05)">accesorio</em>
+        <span>${e.subida!=null&&e.desde?'desde '+fmtD(e.desde):e.ses+' sesión'+(e.ses===1?'':'es')+' registrada'+(e.ses===1?'':'s')}</span>
+      </span>`:`
       <span class="fzaejprog">
         <span class="fzaejlbl">${e.nivel>=4?'Tope de la tabla':'Camino a '+FZA_NIVELES[e.nivel+1]}</span>
         <b class="fzaejpct" style="color:${col}">${e.nivel>=4?'100':pct}%</b>
@@ -5187,7 +5267,7 @@ function fzaEjHTML(e, pc, COL, gk, destacado){
       <span class="fzaejpie">
         <em class="fzaniv" style="color:${col};border-color:color-mix(in srgb, ${col} 40%, transparent);background:color-mix(in srgb, ${col} 13%, transparent)">${e.nombre}</em>
         <span>${e.nivel>=4?'compites contra ti mismo':'faltan '+fmt1(falta)+' kg'}</span>
-      </span>`}
+      </span>`)}
     </button>
     ${ab?`<div class="fzaejb" data-a="nada">
       ${e.sin?`<div class="small dim" style="line-height:1.5">Todavía no has registrado este ejercicio. En cuanto lo hagas, aquí sale tu nivel.</div>`

@@ -1771,7 +1771,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 176';
+const APPREV='REV 177';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -15117,19 +15117,37 @@ function anclaVisualTomar(preferirCampo){
    px. El ancla general del render mira la primera seccion visible, que en este caso es
    justo la que cambia de alto. Esto ancla al elemento que el dedo toco, que es lo que el
    usuario espera que no se mueva. */
+/* Vuelve a pintar dejando el elemento tocado donde estaba en la pantalla. El selector usa
+   todos los data-* que lleve el boton, y si aun asi hay varios iguales (el nav de capas vive
+   arriba y abajo de la pagina) se queda con el de la misma posicion en la lista. */
 function renderAnclado(el){
   if(!el || !el.isConnected){ render(); return; }
-  const sel = el.dataset && el.dataset.a
-    ? '#view [data-a="'+el.dataset.a+'"]'+(el.dataset.ex?'[data-ex="'+el.dataset.ex+'"]':'')+(el.dataset.id?'[data-id="'+el.dataset.id+'"]':'')
-    : null;
+  const a = el.dataset && el.dataset.a;
+  let sel=null, idx=0;
+  if(a){
+    sel='#view [data-a="'+a+'"]';
+    ['ex','id','s','v','d','eq','m','k','z','n','g','c','t','rid'].forEach(k=>{
+      const val=el.dataset[k];
+      if(val!=null && val!=='') sel+='[data-'+k+'="'+CSS.escape(val)+'"]';
+    });
+    const todos=[...document.querySelectorAll(sel)];
+    idx=Math.max(0, todos.indexOf(el));
+  }
   const top0 = el.getBoundingClientRect().top;
   render();
   if(!sel) return;
-  requestAnimationFrame(()=>{
-    const n=document.querySelector(sel); if(!n) return;
-    const d=n.getBoundingClientRect().top-top0;
-    if(Math.abs(d)>1) window.scrollBy(0, d);
-  });
+  /* posicion ABSOLUTA en el documento, no un scrollBy relativo: durante el morph el
+     navegador recorta el scroll un instante y un desplazamiento relativo arrastra ese
+     recorte, que es lo que mandaba la pagina arriba del todo. Se corrige dos veces porque
+     el alto definitivo no esta listo en el primer frame (imagenes lazy, SVG del mapa). */
+  const colocar=()=>{
+    const todos=document.querySelectorAll(sel);
+    const n=todos[Math.min(idx, todos.length-1)]; if(!n) return;
+    const abs=n.getBoundingClientRect().top+window.scrollY;
+    const max=Math.max(0, document.documentElement.scrollHeight-window.innerHeight);
+    window.scrollTo(0, Math.min(max, Math.max(0, Math.round(abs-top0))));
+  };
+  requestAnimationFrame(()=>{ colocar(); setTimeout(colocar, 90); setTimeout(colocar, 260); });
 }
 function anclaVisualAplicar(av){
   if(!av) return;
@@ -16055,8 +16073,8 @@ const ACTIONS = {
   },
   /* pestana Ejercicios (catalogo EXCAT) dentro de Entrenar */
   excatCatTgl(d){ UI.excatCat = UI.excatCat===d.cat ? null : d.cat; render(); },
-  excatEquip(d){ UI.excatEquip = UI.excatEquip===d.eq ? null : d.eq; render(); },
-  excatEquipClear(){ UI.excatEquip=null; render(); },
+  excatEquip(d, el){ UI.excatEquip = UI.excatEquip===d.eq ? null : d.eq; renderAnclado(el); },
+  excatEquipClear(d, el){ UI.excatEquip=null; renderAnclado(el); },
   excatOpen(d){ excatDetailBox(d.id); },
   excatAdd(d){
     if(!S.draft){ toast('No hay una sesión activa hoy'); return; }
@@ -16205,14 +16223,14 @@ const ACTIONS = {
   inject(){ const t=TODAY(); if(!S.inject.includes(t)){ S.inject.push(t); save('inject'); toast('Inyección registrada'); } render(); },
   foodSub(d){ UI.sub.food=d.s; UI.foodCat=null; render(); },
   foodCat(d){ UI.foodCat=d.c||null; UI.foodFilter=false; render(); window.scrollTo({top:0}); },
-  foodFilter(){ UI.foodFilter=!UI.foodFilter; render(); },
+  foodFilter(d, el){ UI.foodFilter=!UI.foodFilter; renderAnclado(el); },
   recDifSet(d){ const v=+d.v; UI.recDif=(UI.recDif===v)?null:v; render(); },
-  progSub(d){ UI.sub.prog=d.s; if(d.s!=='nutri') UI.progAct=d.s; render(); },
+  progSub(d, el){ UI.sub.prog=d.s; if(d.s!=='nutri') UI.progAct=d.s; renderAnclado(el); },
   /* cambio de grupo grande: actividad fisica recuerda la ultima sub-vista usada */
   progGrp(d){ UI.sub.prog = d.g==='nutri' ? 'nutri' : d.g==='cuerpo' ? 'medidas' : (UI.progAct||'general');
     UI.tab='progreso'; UI.session=null; render(); window.scrollTo({top:0}); },
   fotoRange(){ UI.fotoRange = UI.fotoRange==='todas' ? 'semana' : 'todas'; render(); setTimeout(()=>fotoFill(true),40); },
-  trainSub(d){ UI.sub.train=d.s; render(); },
+  trainSub(d, el){ UI.sub.train=d.s; renderAnclado(el); },
   calNav(d){
     if((UI.calView||'mes')==='mes') UI.calM+=Number(d.n);
     else UI.calSel=addDays(mondayOf(UI.calSel||TODAY()), Number(d.n)*7);
@@ -16265,12 +16283,12 @@ const ACTIONS = {
   mealAt(d){ const m=S.meals[UI.calSel]||{}; m[d.m]=!m[d.m]; S.meals[UI.calSel]=m; save('meals'); render(); },
   waterAt(d){ S.water[UI.calSel]=Math.max(0,(S.water[UI.calSel]||0)+Number(d.n)); save('water'); render(); },
   /* Check-in y Fotos son vistas propias (no estan en el nav): guardo de donde vine para el boton volver */
-  medVista(d){ UI.medVista=d.v; render(); },
+  medVista(d, el){ UI.medVista=d.v; renderAnclado(el); },
   medBox(d, el){ UI.medBox = UI.medBox===d.k ? null : d.k; renderAnclado(el); },
   excatMapa(){ UI.excatMapa=!UI.excatMapa; if(!UI.excatMapa) UI.excatZona=null; UI.excatQ=''; render(); window.scrollTo({top:0}); },
-  cuerpoSub(d){ UI.cuerpoSub=d.s; UI.medZona=null; render(); window.scrollTo({top:0}); },
-  cargaDias(d){ UI.cargaDias=+d.d||7; render(); },
-  cargaMusc(d){ UI.cargaMusc=d.m; render(); },
+  cuerpoSub(d, el){ UI.cuerpoSub=d.s; UI.medZona=null; renderAnclado(el); },
+  cargaDias(d, el){ UI.cargaDias=+d.d||7; renderAnclado(el); },
+  cargaMusc(d, el){ UI.cargaMusc=d.m; renderAnclado(el); },
   /* tocar una fila del resumen lleva a su musculo en el mapa: antes no hacia nada */
   cargaFila(d){
     UI.cargaMusc=d.m;
@@ -16983,9 +17001,9 @@ const ACTIONS = {
   checkitem(d){ const c=S.meal.checklist[d.n], cur=c&&c.v!==undefined?c.v:!!c;
     S.meal.checklist[d.n]={v:!cur, t:Date.now()}; save('meal'); render(); },
   favTgl(d){ S.meal.favs=S.meal.favs||{}; if(S.meal.favs[d.r]) delete S.meal.favs[d.r]; else S.meal.favs[d.r]=1; save('meal'); render(); },
-  wAvgTgl(d){ UI.wAvg=d.v==='1'; render(); },
+  wAvgTgl(d, el){ UI.wAvg=d.v==='1'; renderAnclado(el); },
   wQuick(){ const el=$('#wIn'); const v=parseFloat((el&&el.value||'').replace(',','.')); if(!(v>=40&&v<=200)){ toast('Peso entre 40 y 200 kg'); return; } const t=TODAY(); S.weights=S.weights.filter(w=>w.d!==t).concat([{d:t,kg:Math.round(v*10)/10}]).sort((a,b)=>a.d<b.d?-1:1); save('weights'); metasInvalidar(UID); render(); toast('Peso de hoy: '+fmt1(v)+' KG'); },
-  progRange(d){ UI.progRange=+d.n; render(); },
+  progRange(d, el){ UI.progRange=+d.n; renderAnclado(el); },
   backupNow(){ ACTIONS.export(); S.cfg.lastBackup=TODAY(); save('cfg'); render(); },
   resetchecks(){ S.meal.checklist={}; save('meal'); render(); },
   mkAdd(){

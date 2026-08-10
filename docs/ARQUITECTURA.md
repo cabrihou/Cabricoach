@@ -375,3 +375,29 @@ de 6 ejercicios, con `+10` y `+5` de lastre y una serie a peso limpio.
 También cambió el orden del emparejado: **el nombre exacto del catálogo va antes que los
 sinónimos**. "Bayesian Curl" existe tal cual y caía por sinónimo en el curl de cable.
 
+
+
+## El salto al tope (REV 177)
+
+Tocar una pestaña dentro de la misma pantalla mandaba la vista arriba del todo. Dos causas
+distintas, las dos arregladas:
+
+1. **Acciones que scrolleaban a mano.** `cuerpoSub` traía un `window.scrollTo({top:0})`
+   pensado para cuando el nav vivía solo arriba. Fuera.
+2. **El anclaje era relativo.** `renderAnclado` medía la posición del botón, re-pintaba y
+   corregía con `scrollBy(delta)`. Durante el morph el navegador recorta el scroll un
+   instante (el documento nuevo todavía no tiene su alto final), así que el delta se sumaba
+   a un scroll ya recortado y la página terminaba arriba.
+
+Ahora `renderAnclado` calcula la posición **absoluta** del botón en el documento nuevo y
+hace `scrollTo(abs - posiciónEnPantalla)`, acotado al scroll máximo. Y lo hace tres veces
+(rAF, 90 ms y 260 ms) porque el alto definitivo no está listo en el primer frame: las
+imágenes `loading="lazy"` y el SVG del mapa lo cambian después.
+
+El selector también mejoró: incluye todos los `data-*` del botón y, si aun así hay varios
+iguales, se queda con el de la misma posición en la lista. Hacía falta porque el nav de
+capas se pinta dos veces, arriba y al final de la página.
+
+Conmutadores que pasaron a `renderAnclado`: `progSub`, `progRange`, `cuerpoSub`,
+`cargaDias`, `cargaMusc`, `wAvgTgl`, `medVista`, `excatEquip`, `excatEquipClear`,
+`foodFilter`, `trainSub`.

@@ -138,3 +138,30 @@ Fuentes: [ACSM Compendium](https://pacompendium.com/running/),
 [Foster 2001 · sRPE](https://pmc.ncbi.nlm.nih.gov/articles/PMC5294946/),
 [EMG suspensión e inestabilidad](https://pubmed.ncbi.nlm.nih.gov/38288256/).
 
+## Revisión de repartos y volúmenes (10/08/2026)
+
+Dos problemas encontrados usándolo:
+
+**Faltaban sinergistas.** La sentadilla no contaba lumbar ni abdomen, el peso muerto no
+contaba trapecio ni antebrazo (el agarre), los jalones y remos no contaban antebrazo, y el
+press militar no contaba trapecio ni core. Se añadieron a 24 patrones, siempre sumando 100.
+Resultado: el press militar reparte ahora **deltoide anterior 42, tríceps 28, deltoide
+lateral 20, trapecio 6, abdomen 4**, y una semana normal mueve 14 músculos en el mapa en vez
+de 9.
+
+**Los mínimos estaban altos.** Con el volumen indirecto mal contado y un MEV alto, casi todo
+salía "por debajo del mínimo" siempre, que es ruido y no información. Ajustados a las guías:
+
+| Músculo | Antes (MEV) | Ahora | Por qué |
+|---|---|---|---|
+| Deltoide lateral | 10 | 6 | el MEV típico está en 6-8 |
+| Trapecio | 8 | 4 | se llena casi solo con remos y peso muerto |
+| Glúteo | 8 | 4 | idem con sentadilla y peso muerto |
+| Cuádriceps | 10 | 8 | |
+| Bíceps, tríceps, dorsal, deltoide posterior | 8 | 6 | reciben mucho volumen indirecto |
+| Isquiotibial | 8 | 6 | |
+| Antebrazo | 4 | 2 | ahora lo alimenta el agarre de todos los jalones |
+
+También subieron algunos techos (MRV) donde estaban cortos: pectoral y dorsal a 22, abdomen
+a 16, lumbar a 14, antebrazo a 16.
+

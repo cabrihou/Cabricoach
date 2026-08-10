@@ -891,6 +891,12 @@ img{-webkit-user-drag:none;user-select:none}
 .zpop .zpf{margin-left:auto;font:700 13px var(--num)}
 .zpop .zpf.down{color:#FF6B6B} .zpop .zpf.up{color:#58DFA3}
 .zpop .zpok{margin-left:auto;display:flex;align-items:center;gap:3px;font:700 10px var(--ui);color:#58DFA3}
+.zpop .zpm{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.zpop .zpm button{flex:none;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.16);
+  background:transparent;color:var(--ink2);font:600 9.5px var(--ui);cursor:pointer}
+.zpop .zpm button.on{background:rgb(var(--acc-rgb));border-color:transparent;color:#0B0D0F}
+.cargarow{cursor:pointer;border-radius:9px;padding:6px 6px;margin:0 -6px}
+.cargarow.on{background:rgba(var(--acc-rgb),.12)}
 .zpop .zps{margin:9px 0 0;font:400 10.5px/1.5 var(--ui);color:var(--ink2)}
 @media (max-width:360px){.zpop{width:min(56%,162px);padding:9px 10px 10px}.zpop .zpv{font-size:26px}.zpop .zps{font-size:10px}}
 .medsvg{width:min(230px,72vw);height:auto}
@@ -950,7 +956,7 @@ img{-webkit-user-drag:none;user-select:none}
 .cargaleg{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:8px 0 2px;font:600 10px var(--ui);color:var(--smoke)}
 .cargaleg span{display:flex;align-items:center;gap:4px}
 .cargaleg i{width:9px;height:9px;border-radius:3px;display:block}
-.cargarow{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--line2)}
+.cargarow{display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--line2)}
 .cargarow:last-of-type{border-bottom:0}
 .cargarow .cn{flex:0 0 92px;font:600 12px var(--ui);color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cargarow .cb{position:relative;flex:1;height:8px;border-radius:4px;background:var(--line2);overflow:visible}
@@ -1578,7 +1584,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 158';
+const APPREV='REV 159';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3661,13 +3667,13 @@ const MED_COTAS={"frente":[["cuello","cuello","i",330,300,400],["pecho","pecho",
    biceps de quien entrena espalda sale a la mitad de lo que realmente recibe.
    Los multiarticulares olimpicos son los mas discutibles: ahi el reparto depende mucho de
    la tecnica y de la carga relativa. */
-const EJ_PATRONES={"press_horizontal":{"pectoral":65,"deltoide_anterior":20,"triceps":15},"press_cerrado":{"triceps":45,"pectoral":40,"deltoide_anterior":15},"palanca_frontal":{"dorsal":45,"abdomen":30,"lumbar":15,"triceps":10},"parada_manos":{"deltoide_anterior":45,"triceps":30,"trapecio":15,"abdomen":10},"sosten_anillas":{"triceps":40,"pectoral":30,"deltoide_anterior":20,"abdomen":10},"agarre_antebrazo":{"antebrazo":85,"biceps":15},"abduccion_cadera":{"gluteo":90,"aductor":10},"aduccion_cadera":{"aductor":90,"gluteo":10},"extension_lumbar":{"lumbar":45,"gluteo":35,"isquiotibial":20},"press_inclinado":{"pectoral":55,"deltoide_anterior":30,"triceps":15},"press_declinado":{"pectoral":70,"deltoide_anterior":15,"triceps":15},"fondo_pecho":{"pectoral":50,"triceps":45,"deltoide_anterior":5},"apertura_pecho":{"pectoral":85,"deltoide_anterior":15},"flexion_pecho":{"pectoral":60,"triceps":25,"deltoide_anterior":15},"press_vertical":{"deltoide_anterior":45,"triceps":30,"deltoide_lateral":20,"deltoide_posterior":5},"elevacion_lateral":{"deltoide_lateral":60,"deltoide_anterior":20,"deltoide_posterior":20},"elevacion_frontal":{"deltoide_anterior":70,"pectoral":20,"deltoide_lateral":10},"pajaro_posterior":{"deltoide_posterior":70,"trapecio":20,"deltoide_lateral":10},"jalon_vertical":{"dorsal":55,"biceps":20,"trapecio":15,"romboides":10},"remo_horizontal":{"dorsal":55,"trapecio":20,"biceps":15,"romboides":10},"remo_unilateral":{"dorsal":55,"biceps":20,"trapecio":15,"romboides":10},"remo_invertido":{"dorsal":50,"trapecio":25,"biceps":15,"romboides":10},"remo_alto":{"deltoide_posterior":35,"trapecio":30,"romboides":20,"dorsal":15},"correr":{"pantorrilla":30,"cuadriceps":25,"isquiotibial":20,"gluteo":20,"abdomen":5},"muscle_up":{"dorsal":30,"pectoral":20,"triceps":20,"biceps":15,"trapecio":15},"pullover":{"pectoral":50,"dorsal":35,"triceps":15},"encogimiento_trapecio":{"trapecio":90,"romboides":10},"curl_biceps":{"biceps":85,"antebrazo":15},"curl_martillo":{"biceps":70,"antebrazo":30},"extension_triceps":{"triceps":95,"antebrazo":5},"fondo_triceps":{"triceps":90,"deltoide_anterior":10},"sentadilla":{"cuadriceps":55,"gluteo":30,"isquiotibial":15},"prensa":{"cuadriceps":70,"gluteo":20,"isquiotibial":10},"zancada":{"cuadriceps":45,"gluteo":40,"isquiotibial":15},"extension_cuadriceps":{"cuadriceps":100},"curl_femoral":{"isquiotibial":100},"peso_muerto_convencional":{"isquiotibial":35,"cuadriceps":30,"gluteo":20,"lumbar":15},"peso_muerto_rumano":{"isquiotibial":50,"gluteo":35,"lumbar":15},"hip_thrust":{"gluteo":85,"isquiotibial":10,"cuadriceps":5},"gemelo_de_pie":{"pantorrilla":100},"gemelo_sentado":{"pantorrilla":100},"plancha_core":{"abdomen":85,"isquiotibial":15},"crunch_abdominal":{"abdomen":100},"elevacion_piernas":{"abdomen":100},"rotacion_core":{"oblicuos":70,"abdomen":30},"cargada_olimpica":{"gluteo":25,"isquiotibial":20,"cuadriceps":20,"trapecio":20,"lumbar":15},"arrancada_olimpica":{"gluteo":25,"isquiotibial":20,"cuadriceps":20,"deltoide_anterior":20,"trapecio":15},"farmer_walk":{"trapecio":45,"antebrazo":35,"abdomen":20}};
+const EJ_PATRONES={"press_horizontal":{"pectoral":62,"deltoide_anterior":20,"triceps":15,"deltoide_lateral":3},"press_cerrado":{"triceps":45,"pectoral":40,"deltoide_anterior":15},"palanca_frontal":{"dorsal":42,"abdomen":28,"lumbar":14,"triceps":10,"antebrazo":6},"parada_manos":{"deltoide_anterior":45,"triceps":30,"trapecio":15,"abdomen":10},"sosten_anillas":{"triceps":38,"pectoral":28,"deltoide_anterior":18,"abdomen":10,"antebrazo":6},"agarre_antebrazo":{"antebrazo":85,"biceps":15},"abduccion_cadera":{"gluteo":90,"aductor":10},"aduccion_cadera":{"aductor":90,"gluteo":10},"extension_lumbar":{"lumbar":45,"gluteo":33,"isquiotibial":18,"abdomen":4},"press_inclinado":{"pectoral":52,"deltoide_anterior":30,"triceps":15,"deltoide_lateral":3},"press_declinado":{"pectoral":70,"deltoide_anterior":15,"triceps":15},"fondo_pecho":{"pectoral":48,"triceps":43,"deltoide_anterior":5,"abdomen":4},"apertura_pecho":{"pectoral":85,"deltoide_anterior":15},"flexion_pecho":{"pectoral":58,"triceps":24,"deltoide_anterior":14,"abdomen":4},"press_vertical":{"deltoide_anterior":42,"triceps":28,"deltoide_lateral":20,"trapecio":6,"abdomen":4},"elevacion_lateral":{"deltoide_lateral":60,"deltoide_anterior":20,"deltoide_posterior":20},"elevacion_frontal":{"deltoide_anterior":70,"pectoral":20,"deltoide_lateral":10},"pajaro_posterior":{"deltoide_posterior":70,"trapecio":20,"deltoide_lateral":10},"jalon_vertical":{"dorsal":52,"biceps":20,"trapecio":13,"romboides":10,"antebrazo":5},"remo_horizontal":{"dorsal":52,"trapecio":18,"biceps":14,"romboides":10,"lumbar":6},"remo_unilateral":{"dorsal":52,"biceps":18,"trapecio":14,"romboides":10,"antebrazo":6},"remo_invertido":{"dorsal":48,"trapecio":24,"biceps":14,"romboides":10,"abdomen":4},"remo_alto":{"deltoide_posterior":35,"trapecio":30,"romboides":20,"dorsal":15},"correr":{"pantorrilla":30,"cuadriceps":25,"isquiotibial":20,"gluteo":20,"abdomen":5},"muscle_up":{"dorsal":28,"pectoral":19,"triceps":19,"biceps":15,"trapecio":14,"antebrazo":5},"pullover":{"pectoral":50,"dorsal":35,"triceps":15},"encogimiento_trapecio":{"trapecio":90,"romboides":10},"curl_biceps":{"biceps":85,"antebrazo":15},"curl_martillo":{"biceps":70,"antebrazo":30},"extension_triceps":{"triceps":95,"antebrazo":5},"fondo_triceps":{"triceps":90,"deltoide_anterior":10},"sentadilla":{"cuadriceps":50,"gluteo":28,"isquiotibial":12,"lumbar":6,"abdomen":4},"prensa":{"cuadriceps":68,"gluteo":20,"isquiotibial":12},"zancada":{"cuadriceps":42,"gluteo":38,"isquiotibial":14,"abdomen":6},"extension_cuadriceps":{"cuadriceps":100},"curl_femoral":{"isquiotibial":88,"pantorrilla":12},"peso_muerto_convencional":{"isquiotibial":30,"cuadriceps":25,"gluteo":18,"lumbar":15,"trapecio":7,"antebrazo":5},"peso_muerto_rumano":{"isquiotibial":45,"gluteo":32,"lumbar":15,"antebrazo":5,"trapecio":3},"hip_thrust":{"gluteo":80,"isquiotibial":10,"cuadriceps":5,"abdomen":5},"gemelo_de_pie":{"pantorrilla":94,"abdomen":6},"gemelo_sentado":{"pantorrilla":100},"plancha_core":{"abdomen":70,"oblicuos":20,"lumbar":10},"crunch_abdominal":{"abdomen":90,"oblicuos":10},"elevacion_piernas":{"abdomen":78,"oblicuos":14,"antebrazo":8},"rotacion_core":{"oblicuos":70,"abdomen":30},"cargada_olimpica":{"gluteo":25,"isquiotibial":20,"cuadriceps":20,"trapecio":20,"lumbar":15},"arrancada_olimpica":{"gluteo":25,"isquiotibial":20,"cuadriceps":20,"deltoide_anterior":20,"trapecio":15},"farmer_walk":{"trapecio":45,"antebrazo":35,"abdomen":20}};
 /* Volumen semanal de referencia en SERIES EFECTIVAS por musculo (Renaissance Periodization
    y literatura reciente de hipertrofia):
    MEV = minimo para crecer · MAV = punto optimo · MRV = maximo que se recupera.
    Varia mucho por persona (años de entreno, sueño, comida): son referencias, no leyes.
    El deltoide anterior lleva MEV 0 a proposito: se llena solo con cualquier press. */
-const MUSC_VOL={"pectoral":{"mev":8,"mav":14,"mrv":20},"dorsal":{"mev":8,"mav":14,"mrv":20},"deltoide_lateral":{"mev":10,"mav":15,"mrv":22},"deltoide_posterior":{"mev":8,"mav":12,"mrv":18},"deltoide_anterior":{"mev":0,"mav":8,"mrv":16},"triceps":{"mev":8,"mav":14,"mrv":20},"biceps":{"mev":8,"mav":12,"mrv":18},"antebrazo":{"mev":4,"mav":8,"mrv":14},"cuadriceps":{"mev":10,"mav":14,"mrv":20},"isquiotibial":{"mev":8,"mav":12,"mrv":18},"gluteo":{"mev":8,"mav":14,"mrv":20},"pantorrilla":{"mev":6,"mav":10,"mrv":16},"abdomen":{"mev":6,"mav":10,"mrv":12},"trapecio":{"mev":8,"mav":12,"mrv":18},"romboides":{"mev":4,"mav":8,"mrv":14},"lumbar":{"mev":2,"mav":6,"mrv":10},"oblicuos":{"mev":4,"mav":8,"mrv":12},"aductor":{"mev":4,"mav":8,"mrv":14}};
+const MUSC_VOL={"pectoral":{"mev":8,"mav":14,"mrv":22},"dorsal":{"mev":6,"mav":16,"mrv":22},"deltoide_lateral":{"mev":6,"mav":16,"mrv":22},"deltoide_posterior":{"mev":6,"mav":14,"mrv":22},"deltoide_anterior":{"mev":0,"mav":8,"mrv":16},"triceps":{"mev":6,"mav":14,"mrv":20},"biceps":{"mev":6,"mav":14,"mrv":20},"antebrazo":{"mev":2,"mav":8,"mrv":16},"cuadriceps":{"mev":8,"mav":14,"mrv":20},"isquiotibial":{"mev":6,"mav":12,"mrv":20},"gluteo":{"mev":4,"mav":12,"mrv":20},"pantorrilla":{"mev":6,"mav":10,"mrv":16},"abdomen":{"mev":6,"mav":12,"mrv":16},"trapecio":{"mev":4,"mav":12,"mrv":20},"romboides":{"mev":4,"mav":8,"mrv":14},"lumbar":{"mev":2,"mav":8,"mrv":14},"oblicuos":{"mev":4,"mav":8,"mrv":12},"aductor":{"mev":4,"mav":8,"mrv":14}};
 /* ============ EXIGENCIA POR IMPLEMENTO ============
    Tres series de dominadas en anillas no cuestan lo mismo que tres en barra fija: las
    anillas se mueven en los tres ejes y el cuerpo tiene que estabilizarlas mientras tira.
@@ -4240,6 +4246,34 @@ function cargaZonas(vista, carga){
   });
   return out;
 }
+/* La misma isla flotante de Medidas, aqui con las series efectivas: al tocar un musculo
+   en el mapa de carga se ve sobre el cuerpo lo que recibio, sin bajar la vista. */
+function cargaPop(zona, vista, carga, dias){
+  if(!zona) return '';
+  const z=(MED_ZONAS[vista]||{})[zona]; if(!z) return '';
+  const ms=((ZONA_MUSC[vista]||{})[zona]||[]).slice()
+    .sort((a,b)=>(((carga.musc[b]||{}).series)||0)-(((carga.musc[a]||{}).series)||0));
+  const m = ms.includes(UI.cargaMusc) ? UI.cargaMusc : ms[0];
+  if(!m) return '';
+  const s=((carga.musc[m]||{}).series)||0, nv=cargaNivel(m,s), v=MUSC_VOL[m];
+  const ej=((carga.musc[m]||{}).ejercicios)||[];
+  const cx=(z[0]+z[2]/2+200)/1100, cy=(z[1]+z[3]/2)/1500;
+  const der = cx<0.5;
+  const vert = cy>0.58 ? `bottom:${clamp(100-cy*100-14,3,58)}%` : `top:${clamp(cy*100-13,3,42)}%`;
+  return `<div class="zpop ${der?'d':'i'}" style="${der?'left':'right'}:2.5%; ${vert}" role="dialog">
+    <button class="zpx" data-a="medZona" data-z="" aria-label="Cerrar">${ic('x',10)}</button>
+    <span class="zpn">${esc((MUSC_NOM[m]||m).toUpperCase())}</span>
+    <div class="zpv">${fmt1(s)}<em>series</em></div>
+    <div class="zpd" style="color:${nv.c}">${esc(nv.n)}</div>
+    ${v?`<div class="zpo">
+      <span class="zpol">Mínimo</span><span class="zpov">${v.mev}<em>sem</em></span>
+      <span class="${s>=v.mev?'zpok':'zpf down'}">${s>=v.mev?ic('check',10)+' ok':'▼ '+fmt1(Math.max(0,v.mev-s))}</span>
+    </div>`:''}
+    ${ej.length?`<p class="zps">${esc(ej.slice(0,2).join(' · '))}${ej.length>2?' +'+(ej.length-2):''}</p>`
+      :`<p class="zps">Nada en ${dias} días.</p>`}
+    ${ms.length>1?`<div class="zpm">${ms.map(mm=>`<button class="${mm===m?'on':''}" data-a="cargaMusc" data-m="${mm}">${esc(MUSC_NOM[mm]||mm)}</button>`).join('')}</div>`:''}
+  </div>`;
+}
 function vCarga(){
   const dias=UI.cargaDias||7;
   const carga=cargaMuscular(dias);
@@ -4266,7 +4300,7 @@ function vCarga(){
       <div class="flex" style="gap:5px">${[[7,'7 d'],[14,'14 d'],[28,'28 d']].map(([d,l])=>
         `<button class="chip ${dias===d?'fill':''}" data-a="cargaDias" data-d="${d}">${l}</button>`).join('')}</div></div>
     <p class="small dim" style="margin:0 0 4px;line-height:1.5">Cada serie se reparte entre los músculos que de verdad trabajan: un press de banca no es solo pecho, también suma tríceps y deltoide. Eso son <b>series efectivas</b>.</p>
-    ${medMapa(sel, {calor:zonas, cotas:false})}
+    <div class="medwrap">${medMapa(sel, {calor:zonas, cotas:false})}${cargaPop(sel, vista, carga, dias)}</div>
     <div class="cargaleg">${[['#FF6B6B','sin trabajo'],['#FF9F45','por debajo'],['#58DFA3','creciendo'],['#FFC94D','alto'],['#FF6B6B','pasado']].map(([c,l],i)=>
       `<span><i style="background:${c}"></i>${l}</span>`).join('')}</div>
     ${selF?`<div class="medpanel">
@@ -4305,7 +4339,8 @@ function vCarga(){
     <div class="mod-head"><span class="ttl">${ic('chart',16)} Todo el cuerpo · ${dias} días</span></div>
     <div class="small dim" style="margin-bottom:6px">${totalSeries} series efectivas repartidas.</div>
     ${filas.map(f=>{const v=MUSC_VOL[f.m];
-      return `<div class="cargarow"><span class="cn">${esc(MUSC_NOM[f.m]||f.m)}</span>
+      return `<div class="cargarow ${selM===f.m?'on':''}" data-a="cargaFila" data-m="${f.m}" role="button" tabindex="0"
+        aria-label="${esc(MUSC_NOM[f.m]||f.m)}, ${fmt1(f.s)} series"><span class="cn">${esc(MUSC_NOM[f.m]||f.m)}</span>
         <span class="cb"><i style="width:${clamp(f.s/v.mrv*100,0,100)}%;background:${f.nv.c}"></i>
           <b class="cmev" style="left:${clamp(v.mev/v.mrv*100,0,100)}%"></b></span>
         <span class="cv">${fmt1(f.s)}</span></div>`;}).join('')}
@@ -15292,6 +15327,15 @@ const ACTIONS = {
   cuerpoSub(d){ UI.cuerpoSub=d.s; UI.medZona=null; render(); window.scrollTo({top:0}); },
   cargaDias(d){ UI.cargaDias=+d.d||7; render(); },
   cargaMusc(d){ UI.cargaMusc=d.m; render(); },
+  /* tocar una fila del resumen lleva a su musculo en el mapa: antes no hacia nada */
+  cargaFila(d){
+    UI.cargaMusc=d.m;
+    const vista = MED_ZONAS[UI.medVista] ? UI.medVista : 'frente';
+    const zn=Object.keys(ZONA_MUSC[vista]||{}).find(z=>(ZONA_MUSC[vista][z]||[]).includes(d.m));
+    if(zn){ UI.medZona=zn; render();
+      const el=document.querySelector('.medwrap'); if(el) el.scrollIntoView({block:'center', behavior:'smooth'});
+    } else { UI.medZona=null; render(); toast((MUSC_NOM[d.m]||d.m)+': no está en esta vista, gira el cuerpo'); }
+  },
   cargaDetTgl(d, el){ UI.cargaDet=!UI.cargaDet; renderAnclado(el); },
   goalBaseBox(d){ UI.goalBase = d.id || null; UI.goalBaseW=''; UI.goalBaseR=''; UI.goalBaseM='tecnica'; render(); },
   goalBaseM(d){ UI.goalBaseM=d.m; render(); },

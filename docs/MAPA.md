@@ -663,3 +663,14 @@ patrón, fondo en banco como press, dragon flag como pecho, back lever como jal�
 sin patrón, remo al mentón como remo horizontal, curl de muñeca como bíceps, y las asistidas
 y los saltos comparándose con tablas que no les corresponden.
 
+### Isla flotante en el mapa de carga
+
+La misma tarjeta de Medidas, aquí con las **series efectivas** del músculo tocado: cuántas
+recibió, en qué nivel está, cuánto le falta para el mínimo y de qué ejercicios salieron. Si
+la zona tiene varios músculos (el hombro son tres deltoides) se cambian con chips dentro de
+la propia isla.
+
+Y las filas del resumen de abajo **ahora son tocables** (`cargaFila`): llevan a ese músculo en
+el mapa y hacen scroll hasta él. Antes no hacían nada, que era justo lo que se esperaba de
+ellas al verlas listadas.
+

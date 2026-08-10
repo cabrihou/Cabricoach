@@ -552,3 +552,17 @@ en una semana de 30 km. Se cuenta en series equivalentes: **10 minutos ≈ 1 ser
 conservadora a propósito: correr es resistencia, no hipertrofia, y no debe tapar la falta de
 trabajo con carga.
 
+## A5b · Registro libre de un día (Agenda → día → "Personalizado")
+
+Para cuando lo que hiciste no fue ninguna rutina. Una línea por ejercicio con **series,
+peso y reps** (`libreForm`, `UI.libre`), que es lo mínimo para que entre al historial sin
+abrir una sesión entera y marcar serie por serie. Al agregar un ejercicio **precarga lo de
+la última vez**, que casi siempre es lo mismo o muy parecido, y ofrece los cuatro que más
+usas para no tener que buscar.
+
+Guarda en `S.logs` con la fecha del día elegido y registra la sesión como `rid:'libre'`,
+así el resumen del día, el tonelaje y las gráficas de fuerza la cuentan igual.
+
+También aparece **en días que ya tienen sesión registrada** ("Agregar más ejercicios de ese
+día"): si entrenaste la rutina y además hiciste algo extra, antes no había forma de anotarlo.
+

@@ -883,6 +883,8 @@ img{-webkit-user-drag:none;user-select:none}
 .mrotb.on{background:var(--acc);border-color:var(--acc);color:#0B0D0F}
 .medbp{width:100%;height:auto;display:block;max-height:56vh;touch-action:pan-y;border-radius:16px;transition:max-height .25s}
 .medbp.hassel{max-height:42vh}
+.librow{padding:8px 0;border-bottom:1px solid var(--line2)}
+.librow:last-of-type{border-bottom:0}
 .ruteditor{padding:10px;border-radius:14px;background:rgba(255,255,255,.03);border:1px dashed var(--line2);margin-bottom:12px}
 .rutedrow{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--line2)}
 .rutedrow:last-of-type{border-bottom:0}
@@ -1541,7 +1543,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 151';
+const APPREV='REV 152';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -9694,6 +9696,50 @@ function rutEditorHTML(r){
     ${rutTieneMods(r.id)?`<button class="btn ghost full mt12" data-a="rutReset" data-rid="${r.id}">${ic('repeat',13)} Volver al plan original</button>`:''}
   </div>`;
 }
+/* Registro libre de un dia: para cuando lo que hiciste no fue ninguna rutina. Una linea
+   por ejercicio con series, peso y reps, que es lo minimo para que entre al historial sin
+   tener que abrir una sesion entera y marcar serie por serie. */
+function libreForm(sel){
+  const L=UI.libre||{d:sel, items:[]};
+  const q=nrmTxt(UI.libreQ||'');
+  const yaHay=new Set(L.items.map(i=>i.id));
+  const pool=[];
+  const seen=new Set();
+  Object.keys(EXMAP).forEach(id=>{ if(!yaHay.has(id)){ pool.push({id, name:EXMAP[id].name}); seen.add(id); } });
+  EXCAT.forEach(x=>{ if(!seen.has(x.id) && !yaHay.has(x.id) && x.cat!=='movilidad') pool.push({id:x.id, name:x.name}); });
+  const found=q?pool.filter(x=>nrmTxt(x.name).includes(q)).slice(0,7):[];
+  /* los que mas usa, para no tener que buscar siempre */
+  const frec=Object.entries(S.logs||{}).map(([id,h])=>({id, n:h.length}))
+    .filter(x=>!yaHay.has(x.id)).sort((a,b)=>b.n-a.n).slice(0,4);
+  return `<div class="ruteditor mt8">
+    <b class="small">Lo que hiciste el ${fmtD(sel)}</b>
+    <div class="small dim mt4" style="line-height:1.5">Agrega los ejercicios y pon cuántas series, con cuánto peso y cuántas repeticiones. Con eso basta: entra al historial igual que una sesión normal.</div>
+    ${L.items.length?`<div class="mt12">${L.items.map((it,i)=>`
+      <div class="librow">
+        <div class="flex between" style="align-items:baseline">
+          <b class="small grow" style="min-width:0">${esc(shortEx(it.name))}${exPesoCorporal(it.id)?' <i class="porlado">lastre</i>':''}${exPorLado(it.id)?' <i class="porlado">por lado</i>':''}</b>
+          <button class="rutbtn red" data-a="libreDel" data-i="${i}" aria-label="Quitar ${esc(it.name)}">${ic('x',12)}</button>
+        </div>
+        <div class="flex mt4" style="gap:7px;align-items:center">
+          <input class="in ctr" inputmode="numeric" placeholder="series" value="${it.s||''}" data-ch="libreV" data-i="${i}" data-f="s" aria-label="series" style="width:64px;flex:none">
+          <span class="t-unit" style="flex:none">×</span>
+          <input class="in ctr grow" inputmode="decimal" placeholder="${exPesoCorporal(it.id)?'lastre kg':'kg'}" value="${it.w!=null?it.w:''}" data-ch="libreV" data-i="${i}" data-f="w" aria-label="peso" style="min-width:0">
+          <span class="t-unit" style="flex:none">×</span>
+          <input class="in ctr" inputmode="numeric" placeholder="reps" value="${it.r||''}" data-ch="libreV" data-i="${i}" data-f="r" aria-label="repeticiones" style="width:64px;flex:none">
+        </div>
+      </div>`).join('')}</div>`:''}
+    ${frec.length&&!q?`<div class="flex wrapf mt8" style="gap:6px">${frec.map(f=>
+      `<button class="chip" data-a="libreAdd" data-id="${f.id}">${ic('plus',9)} ${esc(shortEx(exNombre(f.id)))}</button>`).join('')}</div>`:''}
+    <div class="inwrap mt8">${ic('search',15)}<input class="in has-ic" placeholder="Busca un ejercicio…" value="${esc(UI.libreQ||'')}" data-ch="libreq"></div>
+    ${found.length?`<div class="mt8">${found.map(x=>
+      `<button class="actrow" data-a="libreAdd" data-id="${x.id}"><span class="grow tl" style="min-width:0"><b class="small">${esc(x.name)}</b></span>${ic('plus',14)}</button>`).join('')}</div>`
+      :(q?'<div class="small dim mt8">Nada con esa búsqueda.</div>':'')}
+    <div class="flex mt12" style="gap:8px">
+      <button class="btn primary grow" data-a="libreSave" data-d="${sel}">${ic('check',14)} Guardar el ${fmtD(sel)}</button>
+      <button class="btn" data-a="libreAbrir" data-d="">Cancelar</button>
+    </div>
+  </div>`;
+}
 function vRutinaDetalle(){
   const r=ROUTINES.find(x=>x.id===UI.routineView); if(!r) return '';
   const dates=r.ex.map(e=>(S.logs[e.id]||[]).map(h=>h.d)).flat().sort();
@@ -10352,8 +10398,12 @@ function calEditor(){
       ${splan?`<span class="chip dim">${splan.name}</span>`:'<span class="chip dim">Libre</span>'}</div>
     ${sessionLogged?`<span class="lbl" style="display:block;margin-bottom:8px">${ic('check',12)} Lo que hiciste este día</span>${daySummary(sel)}`:''}
     ${!sessionLogged && sel<=TODAY() ? `<div class="mb12"><span class="lbl">¿Entrenaste? regístralo con series</span>
-      <div class="flex wrapf mt8">${ROUTINES.map(r=>`<button class="chip ${splan&&r.id===splan.id?'fill':''}" data-a="pastSession" data-rid="${r.id}">${ic('barbell',11)} ${r.name}</button>`).join('')}</div>
-      <div class="small dim mt8">Se abre la sesión apuntando al ${fmtD(sel)}: los kg y reps entran al historial y a las gráficas de fuerza de cada ejercicio.</div></div>`:''}
+      <div class="flex wrapf mt8">${ROUTINES.map(r=>`<button class="chip ${splan&&r.id===splan.id?'fill':''}" data-a="pastSession" data-rid="${r.id}">${ic('barbell',11)} ${r.name}</button>`).join('')}
+        <button class="chip ${UI.libre&&UI.libre.d===sel?'fill':''}" data-a="libreAbrir" data-d="${sel}">${ic('plus',11)} Personalizado</button></div>
+      ${UI.libre&&UI.libre.d===sel?libreForm(sel):`<div class="small dim mt8">Se abre la sesión apuntando al ${fmtD(sel)}: los kg y reps entran al historial y a las gráficas de fuerza de cada ejercicio. Si ese día hiciste algo que no es ninguna rutina, usa <b>Personalizado</b>.</div>`}</div>`
+    : (sessionLogged && sel<=TODAY() ? `<div class="mb12">
+      ${UI.libre&&UI.libre.d===sel?libreForm(sel)
+        :`<button class="btn ghost full" data-a="libreAbrir" data-d="${sel}">${ic('plus',13)} Agregar más ejercicios de ese día</button>`}</div>` : '')}
     <span class="lbl">¿Qué hiciste este día?</span>
     <div class="flex wrapf mt8 mb12">
       ${ACTDEF.map(a=>`<button class="chip ${S.acts[sel]?.t===a.t?'fill':''}" data-a="calAct" data-t="${a.t}">${ic(a.icon,12)} ${a.label}</button>`).join('')}
@@ -15250,6 +15300,44 @@ const ACTIONS = {
     render(); toast('Registrado · +'+items.reduce((a,i)=>a+i.pg,0)+' g de proteína');
   },
   freeDel(d){ const t=nutriT(); (S.free[t]||[]).splice(+d.i,1); if(!(S.free[t]||[]).length) delete S.free[t]; save('free'); render(); },
+  libreAbrir(d){ UI.libre = d.d ? {d:d.d, items:[]} : null; UI.libreQ=''; render(); },
+  libreAdd(d){
+    if(!UI.libre) return;
+    const nom=exNombre(d.id)||d.id;
+    if(UI.libre.items.some(i=>i.id===d.id)){ toast('Ya está en la lista'); return; }
+    /* precarga lo de la ultima vez: casi siempre es lo mismo o muy parecido */
+    const h=(S.logs||{})[d.id]||[], ult=h[h.length-1];
+    const s=ult?ult.sets.length:3;
+    const w=ult&&ult.sets.length?ult.sets[ult.sets.length-1].w:'';
+    const r=ult&&ult.sets.length?ult.sets[ult.sets.length-1].r:'';
+    UI.libre.items.push({id:d.id, name:nom, s, w, r});
+    UI.libreQ=''; render();
+  },
+  libreDel(d){ if(UI.libre) UI.libre.items.splice(+d.i,1); render(); },
+  libreSave(d){
+    const L=UI.libre; if(!L || !L.items.length){ toast('Agrega al menos un ejercicio'); return; }
+    const dd=d.d||L.d;
+    let nEj=0, nSer=0;
+    L.items.forEach(it=>{
+      const s=clamp(parseInt(it.s,10)||0,0,20);
+      const w=parseFloat(String(it.w).replace(',','.'));
+      const r=clamp(parseInt(it.r,10)||0,0,100);
+      if(!s || !r || !isFinite(w)) return;
+      const sets=Array.from({length:s},()=>({w, r}));
+      S.logs[it.id]=S.logs[it.id]||[];
+      const ix=S.logs[it.id].findIndex(h=>h.d===dd && !h.alt);
+      if(ix>=0) S.logs[it.id][ix]={d:dd, sets}; else S.logs[it.id].push({d:dd, sets});
+      S.logs[it.id].sort((a,b)=>a.d<b.d?-1:1);
+      nEj++; nSer+=s;
+    });
+    if(!nEj){ toast('Faltan series, peso o reps'); return; }
+    save('logs');
+    if(!S.sessions.some(x=>x.d===dd && x.rid==='libre')){
+      S.sessions.push({d:dd, rid:'libre'}); S.sessions.sort((a,b)=>a.d<b.d?-1:1); save('sessions');
+    }
+    UI.libre=null; UI.libreQ=''; render();
+    toast(nEj+' ejercicio'+(nEj>1?'s':'')+' · '+nSer+' series guardadas');
+  },
   pastSession(d){
     const r=ROUTINES.find(x=>x.id===d.rid); if(!r) return;
     if(S.draft && Object.values(S.draft.data).some(sets=>sets.some(s=>s.done)) &&
@@ -15869,6 +15957,11 @@ const CHANGES = {
     save('cfg'); render();
   },
   /* sin render: no necesitan recalcular nada mientras se escribe, y asi no se pierde el foco */
+  libreV(el){ const it=UI.libre&&UI.libre.items[+el.dataset.i]; if(it) it[el.dataset.f]=el.value; },
+  libreq(el){ UI.libreQ=el.value; render();
+    const inp=document.querySelector('#view input[data-ch=libreq]');
+    if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false;
+      try{ inp.setSelectionRange(inp.value.length, inp.value.length); }catch(e){} } },
   goalbasew(el){ UI.goalBaseW=el.value; },
   goalbaser(el){ UI.goalBaseR=el.value; },
   rutq(el){ UI.rutQ=el.value; render();
@@ -16098,7 +16191,7 @@ document.addEventListener('click', e=>{
 /* los buscadores en vivo ya se repintan desde el listener de 'input': si ademas
    atendieran el 'change' que dispara el navegador al destruirse el campo, se repintaria
    dos veces por tecla (ver el guardia de render) */
-const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq','goalq','goalw','goalr','nlogQtyIn','pegarin','rutq']);
+const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq','goalq','goalw','goalr','nlogQtyIn','pegarin','rutq','libreq']);
 /* los dias de la semana son <details>: si no se recuerda cual quedo abierto, cada
    render los cierra, la pagina se encoge de golpe y el scroll cae al inicio (era el
    salto al tocar "ver ingredientes"). 'toggle' no burbujea: se escucha en captura. */
@@ -16155,7 +16248,7 @@ document.addEventListener('input', e=>{
   const el=e.target.closest('[data-ch]'); if(!el) return;
   const ch=el.dataset.ch;
   if(ch==='recq'){ UI.recQ=el.value; }
-  else if((ch==='nlogq'||ch==='exq'||ch==='excatq'||ch==='addexq'||ch==='nlogGrams'||ch==='nlogQtyIn'||ch==='pegarin'||ch==='goalq'||ch==='goalw'||ch==='goalr'||ch==='rutq') && CHANGES[ch]){ CHANGES[ch](el); }  /* la estabilidad la pone el ancla de renderReal; devolver el scroll aqui la peleaba */
+  else if((ch==='nlogq'||ch==='exq'||ch==='excatq'||ch==='addexq'||ch==='nlogGrams'||ch==='nlogQtyIn'||ch==='pegarin'||ch==='goalq'||ch==='goalw'||ch==='goalr'||ch==='rutq'||ch==='libreq') && CHANGES[ch]){ CHANGES[ch](el); }  /* la estabilidad la pone el ancla de renderReal; devolver el scroll aqui la peleaba */
   /* la calculadora solo escuchaba 'change', que en un campo de texto salta al salir del
      campo: el numero se quedaba congelado mientras se escribia. Ahora recalcula por tecla. */
   else if(ch==='pcal' && CHANGES.pcal){ CHANGES.pcal(el); }

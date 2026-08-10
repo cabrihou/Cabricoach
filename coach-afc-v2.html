@@ -1633,7 +1633,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 169';
+const APPREV='REV 170';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -4504,10 +4504,10 @@ const FZA_GRUPOS={
     {n:'Curl preacher',      ids:['preach','preach_bb','preach_db','preach_mach'], tabla:'curl'},
   ]},
   hombro:{n:'Hombro', zonas:['hombros'], ej:[
-    {n:'Press militar con barra',     ids:['ohp_bb','military_press','ohp_seat_bb','pushpress'], tabla:'ohp'},
-    {n:'Press militar con mancuerna', ids:['ohpdb','ohp_db','ohp_seat_db','arnold_db'], tabla:'press_militar_db', lado:true},
-    /* shpress es el "Shoulder Press (plate loaded)" de la rutina: es maquina, no barra */
-    {n:'Press militar en máquina',    ids:['shpress','shpress_mach','shpress_plate','c_ohp'], tabla:'ohp'},
+    /* los nombres son los que aparecen en la app, para reconocerlos de un vistazo */
+    {n:'Overhead Press · barra',      ids:['ohp_bb','military_press','ohp_seat_bb','pushpress'], tabla:'ohp'},
+    {n:'Overhead Press · mancuerna',  ids:['ohpdb','ohp_db','ohp_seat_db','arnold_db'], tabla:'press_militar_db', lado:true},
+    {n:'Shoulder Press · plate loaded', ids:['shpress','shpress_mach','shpress_plate','c_ohp'], tabla:'ohp'},
   ]},
   pierna:{n:'Pierna', zonas:['muslo-der','muslo-izq','cadera'], ej:[
     {n:'Sentadilla', ids:['squat_bb','c_smith','squat_smith','squat_mach','squat_box'], tabla:'squat'},

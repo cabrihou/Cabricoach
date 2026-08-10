@@ -1584,7 +1584,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 159';
+const APPREV='REV 160';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3358,7 +3358,7 @@ function fzaTabla(){
     const cands=(FZA_MAP[k]||[]).filter(id=>fzaMejor1RM(id));
     if(!cands.length) return;
     /* el elegido a mano manda; si no, el primero de la lista que tenga registros */
-    const exId = (elegido[k] && cands.includes(elegido[k])) ? elegido[k] : cands[0];
+    const exId = (elegido[k] && fzaMejor1RM(elegido[k])) ? elegido[k] : cands[0];
     const mejor=fzaMejor1RM(exId);
     if(!mejor) return;
     const ratio=mejor.rm/pc;
@@ -3495,14 +3495,18 @@ function fzaEscalera(x, pc){
       ${x.ex&&exUnilateral(x.ex)?`<div class="mt8 flex between" style="align-items:center;gap:8px">
         <span class="small dim grow">¿Ese peso es por brazo o pierna, o el total?</span>
         <button class="chip ${exPorLado(x.ex)?'fill':''}" data-a="exLado" data-id="${x.ex}">${exPorLado(x.ex)?'Por lado':'Total'}</button></div>`:''}
-      ${(x.cands&&x.cands.length>1)?`<div class="mt8" style="padding-top:8px;border-top:1px solid var(--line2)">
+      ${(()=>{const todos=(FZA_MAP[x.k]||[]).filter(id=>excatById(id)||EXMAP[id]);
+        if(todos.length<2) return '';
+        return `<div class="mt8" style="padding-top:8px;border-top:1px solid var(--line2)">
         <span class="small dim">¿De cuál quieres que lo saque?</span>
-        <div class="flex wrapf mt4" style="gap:6px">${x.cands.map(id=>{
+        <div class="flex wrapf mt4" style="gap:6px">${todos.map(id=>{
           const m=fzaMejor1RM(id);
-          return `<button class="chip ${id===x.ex?'fill':''}" data-a="fzaFuente" data-k="${x.k}" data-id="${id}">
-            ${esc(shortEx(exNombre(id)))} <b>${fmt1(m.rm)}</b></button>`;}).join('')}</div>
+          return `<button class="chip ${id===x.ex?'fill':''} ${m?'':'dim'}" data-a="fzaFuente" data-k="${x.k}" data-id="${id}"
+            ${m?'':'title="sin registros todavía"'}>
+            ${esc(exVariante(id))} ${m?`<b>${fmt1(m.rm)}</b>`:'<i class="small">–</i>'}</button>`;}).join('')}</div>
         ${x.manual?`<button class="chip mt8" data-a="fzaFuente" data-k="${x.k}" data-id="">Volver al automático</button>`:''}
-      </div>`:''}
+        <div class="small dim mt4">Los que salen en gris no tienen registros todavía; al elegirlos, el nivel se calcula en cuanto entrenes uno.</div>
+      </div>`;})()}
       ${(FZA_VARIANTES[x.k]&&FZA_VARIANTES[x.k].length>1)?`<div class="mt8" style="padding-top:8px;border-top:1px solid var(--line2)">
         <span class="small dim">¿Con qué tabla lo comparo?</span>
         <div class="flex wrapf mt4" style="gap:6px">${FZA_VARIANTES[x.k].map(([id,lb])=>
@@ -3522,6 +3526,31 @@ function fzaEscalera(x, pc){
     ${x.nivel<4?`<div class="small mt8" style="line-height:1.5;color:var(--ink2)">Para pasar a <b>${FZA_NIVELES[x.nivel+1]}</b> necesitas un 1RM de <b style="color:var(--ink)">${fmt1(fzaPesoNivel(x.k,x.nivel+1,pc))} kg</b>, o sea unas <b style="color:var(--ink)">${fmt1(por5(fzaPesoNivel(x.k,x.nivel+1,pc)))} kg × 5</b>. Hoy vas por ${fmt1(x.rm)}.</div>`
       :`<div class="small mt8" style="color:var(--gold)">Ya estás en el tope de la tabla. De aquí en adelante compites contra ti mismo.</div>`}
     <div class="small dim mt8">El 1RM no hay que probarlo nunca: sale estimado de tus series con la fórmula de Epley.</div>
+  </div>`;
+}
+/* una fila de nivel de fuerza, compartida por la tarjeta y por el mapa de fuerza */
+/* nombre util para distinguir variantes: shortEx corta en el parentesis y dejaba siete
+   candidatos llamados todos "Bench Press", que es justo lo que hay que diferenciar */
+function exVariante(id){
+  const n=exNombre(id)||id;
+  const m=n.match(/\(([^)]+)\)/);
+  const base=n.split('(')[0].trim();
+  const suf=m?m[1]:((excatById(id)||{}).equip||'');
+  const full=(base+(suf?' · '+suf:'')).replace(/_/g,' ');
+  return full.length>26 ? full.slice(0,25)+'…' : full;
+}
+function fzaFilaHTML(x, pc, col){
+  col = col || (n=>['#8B97A1','#8FA0FF','#58DFA3','var(--gold)','#FF7AB6'][n]||'var(--ink2)');
+  return `<div class="fzarow ${UI.fzaOpen===x.k?'open':''}" data-a="fzaOpen" data-k="${x.k}" role="button" tabindex="0"
+    aria-expanded="${UI.fzaOpen===x.k?'true':'false'}" aria-label="${esc(x.n)}, ${x.nombre}, toca para ver los pesos de cada nivel">
+    <div class="flex between" style="align-items:baseline">
+      <b class="small">${esc(x.n)}${x.ex&&exPorLado(x.ex)?' <i class="porlado">por lado</i>':''}</b>
+      <span class="medval"><b>${fmt1(x.rm)}</b><em>kg · ${x.ratio}×</em></span>
+    </div>
+    <div class="fzabar mt4"><i style="width:${Math.round(x.pct)}%;background:${col(x.nivel)}"></i></div>
+    <div class="flex between mt4"><span class="small" style="color:${col(x.nivel)}">${x.nombre}</span>
+      <span class="small dim">${x.nivel>=4?'tope de la tabla':'te falta llegar a '+fmt1(fzaPesoNivel(x.k,x.nivel+1,pc))+' kg'} ${ic('chevR',11)}</span></div>
+    ${UI.fzaOpen===x.k?fzaEscalera(x, pc):''}
   </div>`;
 }
 function fzaCard(){
@@ -3544,18 +3573,7 @@ function fzaCard(){
     </div>
     <div class="small mt12" style="line-height:1.5">Tu eslabón débil es <b>${esc(debil.n).toLowerCase()}</b>. Ponlo de primero en la sesión un mes: ahí está la ganancia fácil.</div>`}
     ${solo?`<div class="small dim" style="line-height:1.5">Con más básicos registrados te puedo decir cuál es tu punto fuerte y cuál el débil. Por ahora, esto es lo que hay:</div>`:''}
-    <div class="mt12">${tb.map(x=>`
-      <div class="fzarow ${UI.fzaOpen===x.k?'open':''}" data-a="fzaOpen" data-k="${x.k}" role="button" tabindex="0"
-        aria-expanded="${UI.fzaOpen===x.k?'true':'false'}" aria-label="${esc(x.n)}, ${x.nombre}, toca para ver los pesos de cada nivel">
-        <div class="flex between" style="align-items:baseline">
-          <b class="small">${esc(x.n)}${x.ex&&exPorLado(x.ex)?' <i class="porlado">por lado</i>':''}</b>
-          <span class="medval"><b>${fmt1(x.rm)}</b><em>kg · ${x.ratio}×</em></span>
-        </div>
-        <div class="fzabar mt4"><i style="width:${Math.round(x.pct)}%;background:${col(x.nivel)}"></i></div>
-        <div class="flex between mt4"><span class="small" style="color:${col(x.nivel)}">${x.nombre}</span>
-          <span class="small dim">${x.nivel>=4?'tope de la tabla':'te falta llegar a '+fmt1(fzaPesoNivel(x.k,x.nivel+1,pc))+' kg'} ${ic('chevR',11)}</span></div>
-        ${UI.fzaOpen===x.k?fzaEscalera(x, pc):''}
-      </div>`).join('')}</div>
+    <div class="mt12">${tb.map(x=>fzaFilaHTML(x, pc, col)).join('')}</div>
     <div class="small dim mt12" style="line-height:1.5">Los niveles comparan tu 1RM estimado contra tu peso corporal, con los baremos habituales de fuerza relativa (${UID==='cami'?'tabla femenina':'tabla masculina'}). Es una referencia, no un examen.</div>
     ${(()=>{ /* los que el dueño marco para seguir de cerca van con los principales */
       const sig=new Set(S.cfg.fzaSigue||[]);
@@ -4273,6 +4291,66 @@ function cargaPop(zona, vista, carga, dias){
       :`<p class="zps">Nada en ${dias} días.</p>`}
     ${ms.length>1?`<div class="zpm">${ms.map(mm=>`<button class="${mm===m?'on':''}" data-a="cargaMusc" data-m="${mm}">${esc(MUSC_NOM[mm]||mm)}</button>`).join('')}</div>`:''}
   </div>`;
+}
+/* El cuerpo pintado por NIVEL DE FUERZA. Es la tercera lectura del mismo mapa: cuanto
+   mides, cuanto trabajas y cuanto levantas. Al tocar una zona salen los ejercicios de ese
+   grupo con su 1RM y su nivel, ordenados de mas fuerte a mas flojo. */
+function fzaPorZona(vista){
+  const tb=fzaTabla(), pc=fzaPesoCorporal();
+  const out={};
+  Object.keys(MED_ZONAS[vista]||{}).forEach(z=>{
+    const ms=(ZONA_MUSC[vista]||{})[z]||[];
+    /* un ejercicio cuenta para la zona si su patron carga alguno de sus musculos */
+    const lista=[];
+    tb.forEach(x=>{
+      const pat=ejPatron(x.ex, exNombre(x.ex)); if(!pat) return;
+      const rep=EJ_PATRONES[pat]||{};
+      const pc2=ms.reduce((a,m)=>a+(rep[m]||0),0);
+      if(pc2>=25) lista.push({...x, aporte:pc2});
+    });
+    if(!lista.length) return;
+    lista.sort((a,b)=>b.nivel-a.nivel || b.score-a.score);
+    const mejor=lista[0];
+    const COL=['#8B97A1','#8FA0FF','#58DFA3','#FFC94D','#FF7AB6'];
+    out[z]={col:COL[mejor.nivel]||'#8B97A1', op:clamp(0.45+mejor.nivel*0.12,0.45,0.9),
+      lista, nivel:mejor.nivel, nombre:mejor.nombre};
+  });
+  return out;
+}
+function vFuerzaCuerpo(){
+  const vista = MED_ZONAS[UI.medVista] ? UI.medVista : 'frente';
+  const pc=fzaPesoCorporal();
+  const tb=fzaTabla();
+  const zonas=fzaPorZona(vista);
+  const sel=UI.medZona;
+  const zs=sel?zonas[sel]:null;
+  const COL=n=>['#8B97A1','#8FA0FF','#58DFA3','var(--gold)','#FF7AB6'][n]||'var(--ink2)';
+  if(!tb.length) return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('trend',16)} Tu nivel de fuerza</span></div>
+    <div class="small dim">Registra alguno de los básicos y te digo en qué nivel estás en cada parte del cuerpo.</div></section>`;
+  return `
+  <section class="mod">
+    <div class="mod-head"><span class="ttl">${ic('trend',16)} Fuerza por zona</span><span class="chip dim">vs ${fmt1(Math.round(pc*10)/10)} kg</span></div>
+    <p class="small dim" style="margin:0 0 4px;line-height:1.5">El cuerpo pintado por el nivel que tienes en cada parte. Toca una zona para ver sus ejercicios y elegir con cuál se calcula.</p>
+    <div class="medwrap">${medMapa(sel, {calor:zonas, cotas:false})}
+      ${zs?`<div class="zpop ${((MED_ZONAS[vista][sel][0]+MED_ZONAS[vista][sel][2]/2+200)/1100)<0.5?'d':'i'}"
+        style="${((MED_ZONAS[vista][sel][0]+MED_ZONAS[vista][sel][2]/2+200)/1100)<0.5?'left':'right'}:2.5%; ${
+          ((MED_ZONAS[vista][sel][1]+MED_ZONAS[vista][sel][3]/2)/1500)>0.58
+            ? 'bottom:'+clamp(100-((MED_ZONAS[vista][sel][1]+MED_ZONAS[vista][sel][3]/2)/1500)*100-14,3,58)+'%'
+            : 'top:'+clamp(((MED_ZONAS[vista][sel][1]+MED_ZONAS[vista][sel][3]/2)/1500)*100-13,3,42)+'%'}">
+        <button class="zpx" data-a="medZona" data-z="" aria-label="Cerrar">${ic('x',10)}</button>
+        <span class="zpn">${esc(medNomZona(sel).toUpperCase())}</span>
+        <div class="zpv">${fmt1(zs.lista[0].rm)}<em>kg 1RM</em></div>
+        <div class="zpd" style="color:${COL(zs.nivel)}">${zs.nombre}</div>
+        <p class="zps">${esc(zs.lista[0].n)} · ${zs.lista[0].ratio}× tu peso</p>
+      </div>`:''}
+    </div>
+    <div class="cargaleg">${FZA_NIVELES.map((nm,i)=>`<span><i style="background:${COL(i)}"></i>${nm}</span>`).join('')}</div>
+    ${zs?`<div class="medpanel">
+      <div class="medph">${ic('barbell',13)} <b>${esc(medNomZona(sel))}</b><span class="small dim">${zs.lista.length} ejercicio${zs.lista.length===1?'':'s'} que la cargan</span></div>
+      ${zs.lista.map(x=>fzaFilaHTML(x, pc, COL)).join('')}
+    </div>`:`<div class="small dim tc mt8">Toca una zona para ver sus ejercicios y su nivel.</div>`}
+  </section>
+  ${fzaCard()}`;
 }
 function vCarga(){
   const dias=UI.cargaDias||7;
@@ -13369,11 +13447,12 @@ function vProgreso(){
   return `
   ${progGrpSelector(grp)}
   ${grp==='cuerpo'? `<section class="mod tight">
-      <div class="seg cols2 segduo">
-        <button class="${UI.cuerpoSub!=='carga'?'on':''}" data-a="cuerpoSub" data-s="medidas">${ic('ruler',15)} Medidas</button>
+      <div class="seg cols3">
+        <button class="${(UI.cuerpoSub!=='carga'&&UI.cuerpoSub!=='fuerza')?'on':''}" data-a="cuerpoSub" data-s="medidas">${ic('ruler',15)} Medidas</button>
         <button class="${UI.cuerpoSub==='carga'?'on':''}" data-a="cuerpoSub" data-s="carga">${ic('flame',15)} Carga</button>
+        <button class="${UI.cuerpoSub==='fuerza'?'on':''}" data-a="cuerpoSub" data-s="fuerza">${ic('trend',15)} Fuerza</button>
       </div></section>
-    ${UI.cuerpoSub==='carga' ? vCarga() : vMedidasCuerpo()}` : grp==='act'?`
+    ${UI.cuerpoSub==='carga' ? vCarga() : UI.cuerpoSub==='fuerza' ? vFuerzaCuerpo() : vMedidasCuerpo()}` : grp==='act'?`
   ${metasCard()}
   ${rendimientoCard(sub)}
   <section class="mod tight">
@@ -13588,7 +13667,6 @@ function vEjercicios(){
     </table></div>`
     :`<div class="tc" style="padding:14px 0"><img loading="lazy" class="cabimg" src="${CAB.vacio}" width="110" height="110" decoding="async" alt=""><div class="small dim mt8">Sin sesiones registradas de ${ex.name}. El punto rojo marcará tu récord.</div></div>`}
   </section>
-  ${fzaCard()}
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('star',16)} Records personales</span><span class="chip dim">${ex.name}</span></div>
     <div class="prlist">

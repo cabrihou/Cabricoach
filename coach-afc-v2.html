@@ -1623,7 +1623,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 163';
+const APPREV='REV 164';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3551,12 +3551,12 @@ function fzaEscalera(x, pc){
   const col=n=>['#8B97A1','#8FA0FF','#58DFA3','var(--gold)','#FF7AB6'][n]||'var(--ink2)';
   /* Epley al reves: con que peso × 5 repeticiones se llega a ese 1RM */
   const por5=rm=>Math.round(rm/(1+5/30)/2.5)*2.5;
-  return `<div class="fzaesc" onclick="event.stopPropagation()">
+  return `<div class="fzaesc" data-a="nada">
     ${x.sw?`<div class="fzafuente">
       <span class="lbl">DE DÓNDE SALE TU NÚMERO</span>
       <div class="small mt4" style="line-height:1.55">El <b>${fmtD(x.d)}</b> hiciste <b style="color:var(--ink)">${fmt1(x.sw)} kg × ${x.sr} ${x.sr===1?'repetición':'repeticiones'}</b>${x.ex&&exPorLado(x.ex)?' <b style="color:var(--gold)">por lado</b>':''}${x.ex?` en ${esc(shortEx(exNombre(x.ex)))}`:''}. De ahí sale tu 1RM estimado de <b style="color:var(--ink)">${fmt1(x.rm)} kg</b>.</div>
       <div class="small dim mt4">${x.ex&&exPorLado(x.ex)?`${fmt1(x.sw)} × 2 lados = ${fmt1(x.sw*2)} kg · `:''}${fmt1(x.ex&&exPorLado(x.ex)?x.sw*2:x.sw)} × (1 + ${x.sr} ÷ 30) = ${fmt1(x.rm)} kg. Es tu mejor serie de todo el historial, no la última.</div>
-      ${x.ex&&exUnilateral(x.ex)?`<div class="mt8 flex between" style="align-items:center;gap:8px">
+      ${x.ex?`<div class="mt8 flex between" style="align-items:center;gap:8px">
         <span class="small dim grow">¿Ese peso es por brazo o pierna, o el total?</span>
         <button class="chip ${exPorLado(x.ex)?'fill':''}" data-a="exLado" data-id="${x.ex}">${exPorLado(x.ex)?'Por lado':'Total'}</button></div>`:''}
       ${(()=>{const todos=fzaCandidatos(x.k).slice(0,14);
@@ -3685,7 +3685,7 @@ function fzaCard(){
             <span class="small" style="color:${o.nv?col(o.nv.nivel):'var(--smoke)'}">${o.nv?o.nv.nombre:o.ses+' sesión'+(o.ses===1?'':'es')}</span>
             <span class="small" style="color:${o.delta==null?'var(--smoke)':o.delta>0.5?'var(--mint)':o.delta<-0.5?'#FF6B6B':'var(--smoke)'}">${
               o.delta==null?'sin comparación':(o.delta>0?'+':'')+fmt1(o.delta)+' kg desde '+fmtD(o.desde)}</span></div>
-          ${UI.fzaOpen==='x_'+o.id?`<div class="fzaesc" onclick="event.stopPropagation()">
+          ${UI.fzaOpen==='x_'+o.id?`<div class="fzaesc" data-a="nada">
             <div class="fzafuente"><span class="lbl">DE DÓNDE SALE</span>
               <div class="small mt4" style="line-height:1.55">El <b>${fmtD(o.d)}</b> hiciste <b style="color:var(--ink)">${fmt1(o.w)} kg × ${o.r} ${o.r===1?'repetición':'repeticiones'}</b>. De ahí sale tu 1RM estimado de <b style="color:var(--ink)">${fmt1(o.rm)} kg</b>.</div>
               <div class="small dim mt4">${exPorLado(o.id)?`${fmt1(o.w)} × 2 lados = ${fmt1(o.w*2)} kg · `:''}${fmt1(exPorLado(o.id)?o.w*2:o.w)} × (1 + ${o.r} ÷ 30) = ${fmt1(o.rm)} kg</div>
@@ -3699,9 +3699,9 @@ function fzaCard(){
                     <span class="fe5">${fmt1(Math.round(rm/(1+5/30)/2.5)*2.5)} × 5</span></div>`;}).join('')}
                 ${o.nv.nivel<4?`<div class="small mt8" style="line-height:1.5;color:var(--ink2)">Para <b>${FZA_NIVELES[o.nv.nivel+1]}</b> necesitas <b style="color:var(--ink)">${fmt1(o.nv.proxKg)} kg</b> de 1RM${exPorLado(o.id)?` (o sea ${fmt1(o.nv.proxKg/2)} kg por lado)`:''}: te faltan ${fmt1(o.nv.faltaKg)}.</div>`:''}
               </div>`:''}
-              ${exUnilateral(o.id)?`<div class="mt8 flex between" style="align-items:center;gap:8px">
+              <div class="mt8 flex between" style="align-items:center;gap:8px">
                 <span class="small dim grow">¿Ese peso es por brazo o pierna, o el total?</span>
-                <button class="chip ${exPorLado(o.id)?'fill':''}" data-a="exLado" data-id="${o.id}">${exPorLado(o.id)?'Por lado':'Total'}</button></div>`:''}
+                <button class="chip ${exPorLado(o.id)?'fill':''}" data-a="exLado" data-id="${o.id}">${exPorLado(o.id)?'Por lado':'Total'}</button></div>
             </div>
           </div>`:''}
         </div>`;
@@ -10383,8 +10383,8 @@ function libreForm(sel){
       <div class="librow">
         <div class="flex between" style="align-items:baseline">
           <b class="small grow" style="min-width:0">${esc(shortEx(it.name))}${exPesoCorporal(it.id)?' <i class="porlado">lastre</i>':''}</b>
-          ${exUnilateral(it.id)?`<button class="chip ${exPorLado(it.id)?'fill':''}" data-a="exLado" data-id="${it.id}"
-            aria-label="El peso es ${exPorLado(it.id)?'por lado':'el total'}">${exPorLado(it.id)?'por lado':'total'}</button>`:''}
+          <button class="chip ${exPorLado(it.id)?'fill':''}" data-a="exLado" data-id="${it.id}"
+            aria-label="El peso es ${exPorLado(it.id)?'por lado':'el total'}">${exPorLado(it.id)?'por lado':'total'}</button>
           <button class="rutbtn red" data-a="libreDel" data-i="${i}" aria-label="Quitar ${esc(it.name)}">${ic('x',12)}</button>
         </div>
         <div class="flex mt4" style="gap:7px;align-items:center">
@@ -10616,7 +10616,7 @@ function excatDetailBox(id){
         ${last?`<div class="small dim">Última vez: <b style="color:var(--ink)">${fmt1(lastTop)} kg</b> · ${fmtD(last.d)}</div>`:`<div class="small dim">Sin historial todavía con este ejercicio.</div>`}
       </div>
     </div>
-    ${exUnilateral(id)?`<div class="mt12 flex between" style="align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.03)">
+    ${true?`<div class="mt12 flex between" style="align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.03)">
       <div class="grow" style="min-width:0"><b class="small">¿El peso es por lado o el total?</b>
         <div class="small dim mt4" style="line-height:1.45">Si apuntas 27 en un curl con mancuerna y son 27 <b>por brazo</b>, márcalo: son 54 kg de trabajo real y así cuadran el tonelaje y tu nivel.</div></div>
       <button class="chip ${exPorLado(id)?'fill':''}" data-a="exLado" data-id="${id}" style="flex:none">${exPorLado(id)?'Por lado':'Total'}</button>
@@ -15754,6 +15754,9 @@ const ACTIONS = {
     save('cfg'); render();
   },
   fzaMusc(d, el){ UI.fzaMusc = UI.fzaMusc===d.m ? null : d.m; renderAnclado(el); },
+  /* accion vacia: sirve para que closest('[data-a]') se detenga en un contenedor y no
+     dispare la accion del padre, sin romper el despachador con stopPropagation */
+  nada(){},
   fzaOtrosTgl(){ UI.fzaOtros=!UI.fzaOtros; render(); },
   fzaSigue(d){
     const s=new Set(S.cfg.fzaSigue||[]);

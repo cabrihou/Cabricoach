@@ -345,3 +345,16 @@ el usuario percibe.
 Aplicado a todo lo que abre o cierra un bloque en su sitio: `exToggle`, `exOptsTgl`,
 `addExTgl`, `exPickCat`, `rutEdit`, `fzaOpen`.
 
+## `stopPropagation` mata el despachador (REV 164)
+
+El bloque desplegable de nivel de fuerza llevaba `onclick="event.stopPropagation()"` para que
+tocar dentro no cerrara la fila. Efecto real: **el evento nunca llegaba al listener del
+documento**, que es donde vive el despachador de `data-a`. Ningún botón de dentro respondía
+(elegir el ejercicio fuente, la tabla de comparación, marcar por lado), y desde fuera parecía
+que la app ignoraba los toques.
+
+La forma correcta en esta app es dar al contenedor su propio `data-a="nada"` (acción vacía):
+`closest('[data-a]')` se detiene ahí y no dispara la acción del padre, pero los botones de
+dentro siguen llegando al despachador. **Nunca usar `stopPropagation` en el HTML que genera
+el render.**
+

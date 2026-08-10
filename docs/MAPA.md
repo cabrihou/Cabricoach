@@ -751,3 +751,11 @@ que ya usa el resto de la app.
 (rojo pide atención, naranja ganancia fácil, verde en orden) y al tocarla salen solo las
 tarjetas de esa zona.
 
+### El peso por lado se ofrece siempre
+
+`exUnilateral` adivinaba por el nombre si un ejercicio se hace a un lado, y con eso decidía si
+mostrar el toggle. Bloqueaba casos reales: un curl en polea se puede hacer a un brazo y solo
+el dueño lo sabe. Donde hay sitio (la escalera de fuerza, el registro libre, la ficha del
+ejercicio) el toggle se ofrece **siempre**; `exUnilateral` se queda solo para destacarlo donde
+es lo habitual.
+

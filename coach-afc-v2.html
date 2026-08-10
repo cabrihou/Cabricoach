@@ -977,6 +977,7 @@ img{-webkit-user-drag:none;user-select:none}
 .mzoomout{position:absolute;bottom:8px;left:8px;z-index:5;display:flex;align-items:center;gap:5px;
   padding:6px 11px;border-radius:999px;border:1px solid var(--line2);background:rgba(14,17,22,.9);
   backdrop-filter:blur(8px);color:var(--ink2);font:600 11px var(--ui);cursor:pointer}
+.chip.tach{text-decoration:line-through;opacity:.45}
 .fzafnt{margin-top:10px;padding-top:9px;border-top:1px solid var(--line2)}
 .fzaej{border-top:1px solid var(--line2)}
 .fzaejh{display:flex;align-items:center;gap:9px;width:100%;padding:8px 0;background:transparent;border:0;color:var(--ink);cursor:pointer;text-align:left}
@@ -1632,7 +1633,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 167';
+const APPREV='REV 168';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3418,7 +3419,8 @@ function fzaTabla(){
   const out=[];
   const elegido=(S.cfg&&S.cfg.fzaFuente)||{};
   Object.keys(FZA_STD).forEach(k=>{
-    const cands=fzaCandidatos(k).filter(id=>fzaMejor1RM(id));
+    const fuera=new Set((S.cfg&&S.cfg.fzaFuera)||[]);
+    const cands=fzaCandidatos(k).filter(id=>fzaMejor1RM(id) && !fuera.has(id));
     if(!cands.length) return;
     /* el elegido a mano manda; si no, el primero de la lista que tenga registros */
     const pedido = elegido[k] || null;
@@ -3475,6 +3477,28 @@ function exPesoCorporal(id){
   const n=(exNombre(id)||'').toLowerCase();
   return /anilla|ring|dominad|pull.?up|chin.?up|fondo|dip\b|flexi[oó]n|push.?up|muscle.?up|remo invertido|inverted row|l.?sit|plancha|lever/.test(n);
 }
+/* No todos los ejercicios de peso corporal mueven el 100% del cuerpo. En una dominada o un
+   fondo cuelgas entero, pero en un curl en anillas, un remo invertido o una flexion el
+   cuerpo va inclinado y solo mueves una parte, que ademas cambia con el angulo. Contarlos
+   al 100% daba disparates: un curl en anillas salia como levantar 114 kg y ponia el biceps
+   en elite. Fracciones de la literatura de calistenia; en los que dependen mucho del angulo
+   se usa el extremo conservador y se dice en pantalla. */
+const EX_FRAC={
+  flexion_pecho:0.64,        /* medido en plataforma de fuerza: ~64% en posicion estandar */
+  remo_invertido:0.55,       /* cuerpo inclinado, varia mucho con la altura de la barra */
+  curl_biceps:0.40,          /* curl en anillas: el cuerpo va muy inclinado */
+  extension_triceps:0.45,    /* triceps en anillas, misma logica */
+  apertura_pecho:0.50,       /* aperturas en anillas */
+  plancha_core:0.45,
+  palanca_frontal:0.60,
+  agarre_antebrazo:1.00,     /* colgarse: el cuerpo entero */
+};
+function exFraccion(id){
+  if(!exPesoCorporal(id)) return 1;
+  const pat=ejPatron(id, exNombre(id));
+  const f=pat?EX_FRAC[pat]:null;
+  return f!=null ? f : 1;    /* dominadas, fondos, muscle up: cuelgas entero */
+}
 /* peso corporal de una fecha: el registro mas cercano hacia atras, y si no hay, el actual */
 function pesoDeDia(d){
   const ws=(S.weights||[]).filter(w=>w.kg>0);
@@ -3486,7 +3510,7 @@ function pesoDeDia(d){
 }
 /* el peso real movido en una serie: cuerpo + lastre, o los dos lados si aplica */
 function exPesoReal(id, w, fecha){
-  if(exPesoCorporal(id)) return Math.round((pesoDeDia(fecha)+(+w||0))*10)/10;
+  if(exPesoCorporal(id)) return Math.round((pesoDeDia(fecha)*exFraccion(id)+(+w||0))*10)/10;
   return exPorLado(id) ? w*2 : w;
 }
 /* Baremos de fuerza relativa (1RM / peso corporal) para los ejercicios que NO son los
@@ -3590,11 +3614,17 @@ function fzaEscalera(x, pc){
         <span class="small dim">¿De cuál quieres que lo saque?</span>
         <div class="flex wrapf mt4" style="gap:6px">${todos.map(id=>{
           const m=fzaMejor1RM(id);
-          const elegidoAqui = x.pedido ? id===x.pedido : id===x.ex;
-          return `<button class="chip ${elegidoAqui?'fill':''} ${m?'':'dim'}" data-a="fzaFuente" data-k="${x.k}" data-id="${id}"
-            ${m?'':'title="sin registros todavía"'}>
+          const excl=((S.cfg&&S.cfg.fzaFuera)||[]).includes(id);
+          const elegidoAqui = !excl && (x.pedido ? id===x.pedido : id===x.ex);
+          return `<button class="chip ${elegidoAqui?'fill':''} ${m&&!excl?'':'dim'} ${excl?'tach':''}" data-a="fzaFuente" data-k="${x.k}" data-id="${id}"
+            ${excl?'title="descartado"':(m?'':'title="sin registros todavía"')}>
             ${esc(exVariante(id))} ${m?`<b>${fmt1(m.rm)}</b>`:'<i class="small">–</i>'}</button>`;}).join('')}</div>
-        ${x.manual?`<button class="chip mt8" data-a="fzaFuente" data-k="${x.k}" data-id="">Volver al automático</button>`:''}
+        <div class="flex wrapf mt8" style="gap:6px">
+          ${x.manual?`<button class="chip" data-a="fzaFuente" data-k="${x.k}" data-id="">Volver al automático</button>`:''}
+          <button class="chip red" data-a="fzaFuera" data-id="${x.ex}" data-k="${x.k}">${ic('x',9)} No cuentes ${esc(shortEx(exNombre(x.ex)))}</button>
+          ${((S.cfg&&S.cfg.fzaFuera)||[]).length?`<button class="chip" data-a="fzaFueraClear">Recuperar descartados</button>`:''}
+        </div>
+        <div class="small dim mt4" style="line-height:1.5">Si un registro está mal (un peso apuntado con otra unidad, o un ejercicio que no mueve tu peso entero) puedes descartarlo del cálculo sin borrar el historial.</div>
         ${x.pendiente?`<div class="small mt4" style="color:var(--gold);line-height:1.5">Elegiste <b>${esc(exVariante(x.pendiente))}</b>, pero todavía no tienes series suyas. Mientras tanto el nivel se calcula con <b>${esc(exVariante(x.ex))}</b>; en cuanto lo entrenes, cambia solo.</div>`
           :`<div class="small dim mt4">Los que salen en gris no tienen registros todavía; al elegirlos, el nivel se calcula en cuanto entrenes uno.</div>`}
       </div>`;})()}
@@ -3622,6 +3652,19 @@ function fzaEscalera(x, pc){
 /* una fila de nivel de fuerza, compartida por la tarjeta y por el mapa de fuerza */
 /* nombre util para distinguir variantes: shortEx corta en el parentesis y dejaba siete
    candidatos llamados todos "Bench Press", que es justo lo que hay que diferenciar */
+/* foto de un ejercicio venga de donde venga: del catalogo o de las rutinas propias (que no
+   estan en EXCAT y necesitan el alias de medios, como el resto de la app) */
+function exFotoSrc(id){
+  const x=excatById(id);
+  if(x && x.img) return 'assets/ej/'+x.img;
+  const k=(typeof EXMEDIA_ALIAS!=='undefined' && (id in EXMEDIA_ALIAS)) ? EXMEDIA_ALIAS[id] : id;
+  return k ? 'assets/ej/'+k+'.jpg' : null;
+}
+function exFotoHTML(id, px){
+  const src=exFotoSrc(id);
+  return src ? `<img loading="lazy" class="fzaejimg" src="${src}" alt="" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'fzaejimg ph'}))">`
+             : `<span class="fzaejimg ph">${ic('barbell',px||14)}</span>`;
+}
 function exVariante(id){
   const n=exNombre(id)||id;
   const m=n.match(/\(([^)]+)\)/);
@@ -3634,8 +3677,9 @@ function fzaFilaHTML(x, pc, col){
   col = col || (n=>['#8B97A1','#8FA0FF','#58DFA3','var(--gold)','#FF7AB6'][n]||'var(--ink2)');
   return `<div class="fzarow ${UI.fzaOpen===x.k?'open':''}" data-a="fzaOpen" data-k="${x.k}" role="button" tabindex="0"
     aria-expanded="${UI.fzaOpen===x.k?'true':'false'}" aria-label="${esc(x.n)}, ${x.nombre}, toca para ver los pesos de cada nivel">
-    <div class="flex between" style="align-items:baseline">
-      <b class="small">${esc(x.n)}${x.ex&&exPorLado(x.ex)?' <i class="porlado">por lado</i>':''}</b>
+    <div class="flex" style="align-items:center;gap:9px">
+      ${x.ex?exFotoHTML(x.ex):`<span class="fzaejimg ph">${ic('barbell',14)}</span>`}
+      <b class="small grow" style="min-width:0">${esc(x.n)}${x.ex&&exPorLado(x.ex)?' <i class="porlado">por lado</i>':''}</b>
       <span class="medval"><b>${fmt1(x.rm)}</b><em>kg · ${x.ratio}×</em></span>
     </div>
     <div class="fzabar mt4"><i style="width:${Math.round(x.pct)}%;background:${col(x.nivel)}"></i></div>
@@ -3702,7 +3746,8 @@ function fzaCard(){
   </section>`;
   function fzaOtroRow(o){
     return `<div class="fzarow ${UI.fzaOpen==='x_'+o.id?'open':''}" data-a="fzaOpen" data-k="x_${o.id}" role="button" tabindex="0">
-          <div class="flex between" style="align-items:baseline;gap:8px">
+          <div class="flex" style="align-items:center;gap:9px">
+            ${exFotoHTML(o.id)}
             <b class="small grow" style="min-width:0">${esc(shortEx(o.n))}${exPorLado(o.id)?' <i class="porlado">por lado</i>':''}</b>
             <button class="fzasig ${o.sigo?'on':''}" data-a="fzaSigue" data-id="${o.id}"
               aria-label="${o.sigo?'Dejar de seguir':'Seguir de cerca'} ${esc(o.n)}" aria-pressed="${o.sigo?'true':'false'}">${ic('star',13)}</button>
@@ -4449,9 +4494,10 @@ const FZA_GRUPOS={
     {n:'Curl preacher',      ids:['preach','preach_bb','preach_db','preach_mach'], tabla:'curl'},
   ]},
   hombro:{n:'Hombro', zonas:['hombros'], ej:[
-    {n:'Press militar con barra',     ids:['ohp_bb','military_press','ohp_seat_bb','shpress'], tabla:'ohp'},
+    {n:'Press militar con barra',     ids:['ohp_bb','military_press','ohp_seat_bb','pushpress'], tabla:'ohp'},
     {n:'Press militar con mancuerna', ids:['ohpdb','ohp_db','ohp_seat_db','arnold_db'], tabla:'press_militar_db', lado:true},
-    {n:'Press militar en máquina',    ids:['shpress_mach','shpress_plate','c_ohp'], tabla:'ohp'},
+    /* shpress es el "Shoulder Press (plate loaded)" de la rutina: es maquina, no barra */
+    {n:'Press militar en máquina',    ids:['shpress','shpress_mach','shpress_plate','c_ohp'], tabla:'ohp'},
   ]},
   pierna:{n:'Pierna', zonas:['muslo-der','muslo-izq','cadera'], ej:[
     {n:'Sentadilla', ids:['squat_bb','c_smith','squat_smith','squat_mach','squat_box'], tabla:'squat'},
@@ -4463,7 +4509,8 @@ const FZA_GRUPOS={
 /* nivel de UN ejercicio de la lista: coge el mejor 1RM de cualquiera de sus ids */
 function fzaEjNivel(e, pc){
   let mejor=null, usado=null;
-  e.ids.forEach(id=>{ const m=fzaMejor1RM(id); if(m && (!mejor || m.rm>mejor.rm)){ mejor=m; usado=id; } });
+  const fuera=new Set((S.cfg&&S.cfg.fzaFuera)||[]);
+  e.ids.forEach(id=>{ if(fuera.has(id)) return; const m=fzaMejor1RM(id); if(m && (!mejor || m.rm>mejor.rm)){ mejor=m; usado=id; } });
   if(!mejor) return {...e, sin:true};
   const TB=FZA_STD2[e.tabla]||FZA_STD[e.tabla]||null;
   const T=TB ? {u:TB[UID==='cami'?'c':'a'], n:TB.n, f:TB.f||'sl'} : null;
@@ -4734,7 +4781,9 @@ function fzaGrupoHTML(g, pc, COL){
 function fzaEjHTML(e, pc, COL, gk){
   const key=gk+'|'+e.n;
   const ab = UI.fzaEj===key;
-  const foto=(()=>{ for(const id of e.ids){ const x=excatById(id); if(x&&x.img) return 'assets/ej/'+x.img; } return null; })();
+  /* la foto sale del primero de sus ids que tenga una, sea del catalogo o de las rutinas */
+  const foto=(()=>{ for(const id of e.ids){ const x=excatById(id); if(x&&x.img) return 'assets/ej/'+x.img; }
+    for(const id of e.ids){ const s=exFotoSrc(id); if(s) return s; } return null; })();
   const notas=[e.corp?'cuerpo + lastre':'', e.anillas?'anillas':'', e.lado?'peso por lado':''].filter(Boolean).join(' · ');
   return `<div class="fzaej ${ab?'open':''} ${e.sin?'sin':''}">
     <button class="fzaejh" data-a="fzaEjTgl" data-k="${esc(key)}" aria-expanded="${ab?'true':'false'}">
@@ -15916,6 +15965,13 @@ const ACTIONS = {
     save('cfg'); render();
     toast(d.id?'Listo, lo saco de ahí':'Vuelve a elegirlo solo');
   },
+  fzaFuera(d){
+    S.cfg.fzaFuera=S.cfg.fzaFuera||[];
+    if(!S.cfg.fzaFuera.includes(d.id)) S.cfg.fzaFuera.push(d.id);
+    if(S.cfg.fzaFuente && S.cfg.fzaFuente[d.k]===d.id) delete S.cfg.fzaFuente[d.k];
+    save('cfg'); render(); toast('Descartado del cálculo, no del historial');
+  },
+  fzaFueraClear(){ S.cfg.fzaFuera=[]; save('cfg'); render(); toast('Vuelven a contar todos'); },
   fzaTablaSet(d){
     S.cfg.fzaTabla=S.cfg.fzaTabla||{};
     if(d.id && d.id!==d.k) S.cfg.fzaTabla[d.k]=d.id; else delete S.cfg.fzaTabla[d.k];

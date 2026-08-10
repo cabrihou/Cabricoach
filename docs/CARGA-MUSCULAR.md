@@ -215,3 +215,31 @@ Fuente verificada el 10/08/2026: [Strength Level](https://strengthlevel.com). No
 acceder a ExRx ni Symmetric Strength (403), así que los números descansan sobre una sola
 fuente y eso también está declarado.
 
+## No todo el peso corporal cuenta (`EX_FRAC`)
+
+En una dominada o un fondo cuelgas el cuerpo entero, pero en un **curl en anillas**, un remo
+invertido o una flexión el cuerpo va inclinado y solo mueves una parte, que además cambia con
+el ángulo. Contarlos al 100% daba disparates: un curl en anillas salía como levantar **114 kg**
+y ponía el bíceps en Élite.
+
+| Patrón | Fracción del peso corporal |
+|---|---|
+| Dominada, fondo, muscle up, colgarse | 1,00 |
+| Palanca frontal | 0,60 |
+| Flexión de pecho | 0,64 |
+| Remo invertido | 0,55 |
+| Apertura en anillas | 0,50 |
+| Tríceps en anillas | 0,45 |
+| Plancha | 0,45 |
+| **Curl en anillas** | **0,40** |
+
+Con eso el curl en anillas pasa de 114,5 a **49,3 kg** de 1RM, que es lo razonable. En los que
+dependen mucho del ángulo se usa el extremo conservador.
+
+## Descartar un registro del cálculo
+
+`S.cfg.fzaFuera` guarda ejercicios que no cuentan para el nivel, sin borrar el historial: un
+peso apuntado en otra unidad, un ejercicio que no mueve tu peso entero, una serie mal
+registrada. Se descarta desde la fila abierta y se recupera con un botón. Antes, un registro
+erróneo que te ponía en Élite se quedaba ahí sin forma de corregirlo.
+

@@ -1092,6 +1092,21 @@ img{-webkit-user-drag:none;user-select:none}
 .fzamusb{padding:2px 11px 11px}
 .fzamusap{display:flex;justify-content:space-between;font:600 11px var(--ui);color:var(--smoke);padding:3px 0}
 .fzamusap b{color:var(--ink2);font:700 11px var(--num)}
+/* Cruce en rejilla: cada musculo es una casilla y solo el que tocas muestra el detalle,
+   que se cuela a lo ancho justo debajo de su fila. */
+.crucegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:stretch}
+.crucet{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:10px 9px;cursor:pointer;
+  border-radius:14px;text-align:left;color:var(--ink);
+  border:1px solid color-mix(in srgb, var(--cc) 26%, var(--line2));
+  background:linear-gradient(150deg, color-mix(in srgb, var(--cc) 11%, transparent) 0%, transparent 62%), var(--paper2);
+  transition:border-color .2s,transform .12s,box-shadow .2s}
+.crucet:active{transform:scale(.97)}
+.crucet.on{border-color:color-mix(in srgb, var(--cc) 60%, transparent);
+  box-shadow:0 0 0 1px color-mix(in srgb, var(--cc) 30%, transparent)}
+.crucet .cruceic{width:26px;height:26px;border-radius:9px}
+.crucet b{font:700 11.5px/1.25 var(--ui);letter-spacing:-.01em}
+.crucet i{font:700 9px var(--num);font-style:normal;color:var(--smoke)}
+.crucecard.abierta{grid-column:1/-1;margin:0 0 2px}
 .crucecard{position:relative;overflow:hidden;padding:13px;border-radius:16px;margin-bottom:9px;
   border:1px solid color-mix(in srgb, var(--cc) 30%, var(--line2));
   background:linear-gradient(150deg, color-mix(in srgb, var(--cc) 13%, transparent) 0%, transparent 58%), var(--paper2)}
@@ -1102,6 +1117,19 @@ img{-webkit-user-drag:none;user-select:none}
   border-radius:10px;color:var(--cc);background:color-mix(in srgb, var(--cc) 14%, transparent);
   border:1px solid color-mix(in srgb, var(--cc) 28%, transparent)}
 .crucen{font:700 15px var(--ui);letter-spacing:-.01em}
+/* Fila de "pide atencion": misma tarjeta que Cruce, con la cifra alineada a la derecha */
+.atrow{display:flex;align-items:center;gap:10px;padding:11px 12px;margin:8px 0;cursor:pointer;
+  border-radius:16px;border:1px solid color-mix(in srgb, var(--cc) 26%, var(--line2));
+  background:linear-gradient(150deg, color-mix(in srgb, var(--cc) 12%, transparent) 0%, transparent 60%), var(--paper2);
+  transition:border-color .2s,transform .12s}
+.atrow:active{transform:scale(.985)}
+.atsub{display:block;font:500 11.5px/1.35 var(--ui);font-style:normal;color:var(--smoke);margin-top:2px}
+.atdif{flex:none;margin-left:auto;text-align:right;line-height:1}
+.atdif b{display:block;font:800 21px/1 var(--num);color:var(--cc)}
+.atdif em{display:block;font:600 9px var(--ui);font-style:normal;color:var(--smoke);
+  letter-spacing:.05em;text-transform:uppercase;margin-top:3px}
+.asidif{flex:none;display:flex;align-items:baseline;gap:2px;font:800 19px/1 var(--num);color:var(--cc)}
+.asidif em{font:700 10px var(--num);font-style:normal;opacity:.8}
 .crucetag{flex:none;font:700 9.5px var(--ui);font-style:normal;letter-spacing:.04em;text-transform:uppercase;
   padding:3px 9px;border-radius:999px;color:var(--cc);
   background:color-mix(in srgb, var(--cc) 13%, transparent);
@@ -1743,7 +1771,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 173';
+const APPREV='REV 174';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3831,7 +3859,15 @@ function fzaCard(){
     </div>
     <div class="small mt12" style="line-height:1.5">Tu eslabón débil es <b>${esc(debil.n).toLowerCase()}</b>. Ponlo de primero en la sesión un mes: ahí está la ganancia fácil.</div>`}
     ${solo?`<div class="small dim" style="line-height:1.5">Con más básicos registrados te puedo decir cuál es tu punto fuerte y cuál el débil. Por ahora, esto es lo que hay:</div>`:''}
-    <div class="mt12">${tb.map(x=>fzaFilaHTML(x, pc, col)).join('')}</div>
+    ${(()=>{ /* agrupado por grupo muscular: la lista suelta no dejaba comparar lo comparable */
+      const gDe=id=>{ for(const k of Object.keys(FZA_GRUPOS)) if(FZA_GRUPOS[k].ej.some(e=>e.ids.includes(id))) return k; return 'otros'; };
+      const cajas={};
+      tb.forEach(x=>{ const k=gDe(x.ex); (cajas[k]=cajas[k]||[]).push(x); });
+      const orden=[...Object.keys(FZA_GRUPOS),'otros'];
+      return orden.filter(k=>cajas[k]).map(k=>`<div class="mt12">
+        <span class="lbl" style="display:block;margin-bottom:5px">${k==='otros'?'OTROS':esc((FZA_GRUPOS[k].n||k).toUpperCase())}</span>
+        ${cajas[k].map(x=>fzaFilaHTML(x, pc, col)).join('')}</div>`).join('');
+    })()}
     <div class="small dim mt12" style="line-height:1.5">Los niveles comparan tu 1RM estimado contra tu peso corporal, con los baremos habituales de fuerza relativa (${UID==='cami'?'tabla femenina':'tabla masculina'}). Es una referencia, no un examen.</div>
     ${(()=>{ /* los que el dueño marco para seguir de cerca van con los principales */
       const sig=new Set(S.cfg.fzaSigue||[]);
@@ -4212,7 +4248,8 @@ function medGrupoEj(zona, vista){
    escoger ejercicios por musculo. Cambia la accion de cada zona y si lleva cotas. */
 /* Las cuatro lecturas del cuerpo viven en el mismo mapa, asi que el selector vive ahi
    tambien: botones pequeños encima, no una fila de pestañas aparte. */
-const MED_CAPAS=[['medidas','Medidas','ruler'],['carga','Carga','flame'],['fuerza','Fuerza','trend'],['cruce','Cruce','target']];
+const MED_CAPAS=[['medidas','Medidas','ruler'],['carga','Carga','flame'],['fuerza','Fuerza','trend'],
+  ['cruce','Cruce','target'],['grasa','Grasa','drop'],['meta','Meta','scale']];
 /* Fila de pestañas expandibles: en reposo solo el icono, la elegida saca su nombre.
    items: {k,n,i} o el string "|" para un separador. */
 function xtabs(items, act, accion, cls){
@@ -4238,7 +4275,7 @@ function hlCard(o){
   </div>`;
 }
 function medCapaBar(){
-  const act=['carga','fuerza','cruce'].includes(UI.cuerpoSub)?UI.cuerpoSub:'medidas';
+  const act=['carga','fuerza','cruce','grasa','meta'].includes(UI.cuerpoSub)?UI.cuerpoSub:'medidas';
   return `<div class="mcapas" role="tablist" aria-label="Qué mirar del cuerpo">
     ${MED_CAPAS.map(([k,lb,icn])=>`<button class="mcapa ${k===act?'on':''}" data-a="cuerpoSub" data-s="${k}"
       role="tab" aria-selected="${k===act?'true':'false'}" aria-label="${lb}" title="${lb}">${ic(icn,17)}<span>${lb}</span></button>`).join('')}
@@ -4764,9 +4801,21 @@ function fzaAsimetria(){
   if(!out.length) return '';
   return `<section class="mod">
     <div class="mod-head"><span class="ttl">${ic('alert',16)} Lado contra lado</span></div>
-    ${out.map(a=>`<div class="medrow"><span class="grow"><b>${esc(a.n)}</b>
-      <i class="small dim" style="display:block">derecho ${fmt1(a.der)} · izquierdo ${fmt1(a.izq)} cm</i></span>
-      <span class="medval"><b class="${a.fuerte?'red':''}">${fmt1(a.dif)}</b><em>cm</em></span></div>`).join('')}
+    ${out.map(a=>`<div class="crucecard" style="--cc:${a.fuerte?'var(--red)':'var(--mint)'}">
+      <div class="flex" style="gap:10px;align-items:flex-start">
+        <span class="cruceic">${ic('ruler',16)}</span>
+        <div class="grow" style="min-width:0">
+          <div class="flex between" style="align-items:center;gap:8px">
+            <b class="crucen">${esc(a.n)}</b>
+            <span class="asidif">${fmt1(a.dif)}<em>cm</em></span></div>
+          <div class="crucemini mt8">
+            <span>${fmt1(a.der)}<i>cm der</i></span>
+            <span>${fmt1(a.izq)}<i>cm izq</i></span>
+            <em class="crucetag">${a.fuerte?'para revisar':'dentro de lo normal'}</em>
+          </div>
+        </div>
+      </div>
+    </div>`).join('')}
     <div class="small dim mt8" style="line-height:1.5">Hasta 1 cm de diferencia es normal y no significa nada. Desde 1,5 conviene empezar la sesión por el lado flojo y hacer el mismo número de repeticiones con los dos, no el mismo peso.
     ${out.some(a=>a.fuerte)?'<b> Tienes alguna por encima de ese umbral.</b>':''}</div>
   </section>`;
@@ -4883,23 +4932,25 @@ function vCruce(){
     ${zs?`<div class="flex between mt8" style="align-items:baseline">
       <b class="small">${esc(medNomZona(sel))}</b>
       <button class="chip" data-a="medZona" data-z="">${ic('x',9)} ver todo</button></div>`:''}
-    ${cards.length?cards.map(o=>`
-      <div class="crucecard" style="--cc:${COL[o.d.t]}">
-        <div class="flex" style="gap:10px;align-items:flex-start">
-          <span class="cruceic">${ic(ICO[o.d.t],16)}</span>
-          <div class="grow" style="min-width:0">
-            <div class="flex between" style="align-items:center;gap:8px">
-              <b class="crucen">${esc(MUSC_NOM[o.m]||o.m)}</b>
-              <em class="crucetag">${esc(o.d.ttl)}</em></div>
-            <div class="small dim mt4" style="line-height:1.55">${o.d.x}</div>
-            <div class="crucemini mt8">
-              <span>${ic('flame',10)} ${fmt1(o.porSem)}<i>ser/sem</i></span>
-              ${o.fza?`<span>${ic('trend',10)} ${o.fza.nombre}</span>`:''}
-              ${o.med?`<span>${ic('ruler',10)} ${fmt1(o.med.act)}<i>cm</i> ${o.med.dif>0?'+':''}${fmt1(o.med.dif)}</span>`:''}
-            </div>
-          </div>
+    ${cards.length?`<div class="crucegrid mt8">${cards.map(o=>{
+      const ab = UI.cruceAbre===o.m;
+      return `<button class="crucet ${ab?'on':''}" data-a="cruceAbre" data-m="${esc(o.m)}"
+        style="--cc:${COL[o.d.t]}" aria-expanded="${ab?'true':'false'}">
+        <span class="cruceic">${ic(ICO[o.d.t],15)}</span>
+        <b>${esc(MUSC_NOM[o.m]||o.m)}</b>
+        <i>${fmt1(o.porSem)} ser/sem</i>
+      </button>
+      ${ab?`<div class="crucecard abierta" style="--cc:${COL[o.d.t]}" data-a="nada">
+        <div class="flex between" style="align-items:center;gap:8px">
+          <b class="crucen">${esc(MUSC_NOM[o.m]||o.m)}</b>
+          <em class="crucetag">${esc(o.d.ttl)}</em></div>
+        <div class="small dim mt4" style="line-height:1.55">${o.d.x}</div>
+        <div class="crucemini mt8">
+          <span>${ic('flame',10)} ${fmt1(o.porSem)}<i>ser/sem</i></span>
+          ${o.fza?`<span>${ic('trend',10)} ${o.fza.nombre}</span>`:''}
+          ${o.med?`<span>${ic('ruler',10)} ${fmt1(o.med.act)}<i>cm</i> ${o.med.dif>0?'+':''}${fmt1(o.med.dif)}</span>`:''}
         </div>
-      </div>`).join('')
+      </div>`:''}`;}).join('')}</div>`
       :`<div class="propfoco ok">${ic('check',15)}<div><b>${zs?'Esta zona va en orden.':'Nada que corregir.'}</b>
         <div class="small dim mt4">Las tres capas coinciden en todo lo que hay medido.</div></div></div>`}
     ${(!zs&&bien.length)?`<details class="medhist mt8"><summary>Los ${bien.length} que van en orden</summary>
@@ -5116,12 +5167,16 @@ function vCarga(){
   </section>
   ${(flojos.length||pasados.length)?`<section class="mod">
     <div class="mod-head"><span class="ttl">${ic('alert',16)} Lo que pide atención</span></div>
-    ${flojos.slice(0,4).map(f=>`<div class="medrow"><span class="grow"><b>${esc(MUSC_NOM[f.m]||f.m)}</b>
-      <i class="small dim" style="display:block">${f.s>0?fmt1(f.s)+' de las '+MUSC_VOL[f.m].mev+' series mínimas':'no lo trabajaste en '+dias+' días'}</i></span>
-      <span class="medval"><b style="color:${f.nv.c}">${f.s>0?'+'+Math.ceil(MUSC_VOL[f.m].mev-f.s):MUSC_VOL[f.m].mev}</b><em>series</em></span></div>`).join('')}
-    ${pasados.slice(0,2).map(f=>`<div class="medrow"><span class="grow"><b>${esc(MUSC_NOM[f.m]||f.m)}</b>
-      <i class="small dim" style="display:block">${fmt1(f.s)} series, por encima de las ${MUSC_VOL[f.m].mrv} que se recuperan</i></span>
-      <span class="medval"><b style="color:#FF6B6B">−${Math.ceil(f.s-MUSC_VOL[f.m].mrv)}</b><em>series</em></span></div>`).join('')}
+    ${flojos.slice(0,4).map(f=>`<div class="atrow" style="--cc:${f.nv.c}" data-a="cargaFila" data-m="${esc(f.m)}" role="button" tabindex="0">
+      <span class="cruceic">${ic('alert',15)}</span>
+      <span class="grow" style="min-width:0"><b class="crucen">${esc(MUSC_NOM[f.m]||f.m)}</b>
+        <i class="atsub">${f.s>0?fmt1(f.s)+' de las '+MUSC_VOL[f.m].mev+' series mínimas':'no lo trabajaste en '+dias+' días'}</i></span>
+      <span class="atdif"><b>${f.s>0?'+'+Math.ceil(MUSC_VOL[f.m].mev-f.s):MUSC_VOL[f.m].mev}</b><em>series</em></span></div>`).join('')}
+    ${pasados.slice(0,2).map(f=>`<div class="atrow" style="--cc:var(--red)" data-a="cargaFila" data-m="${esc(f.m)}" role="button" tabindex="0">
+      <span class="cruceic">${ic('flame',15)}</span>
+      <span class="grow" style="min-width:0"><b class="crucen">${esc(MUSC_NOM[f.m]||f.m)}</b>
+        <i class="atsub">${fmt1(f.s)} series, por encima de las ${MUSC_VOL[f.m].mrv} que se recuperan</i></span>
+      <span class="atdif"><b>−${Math.ceil(f.s-MUSC_VOL[f.m].mrv)}</b><em>series</em></span></div>`).join('')}
     <div class="small dim mt8" style="line-height:1.5">${flojos.length?`Los de arriba son los que <b>menos atención reciben</b>. ${dias===7?'Una semana suelta no dice mucho: mira también 14 y 28 días antes de rehacer la rutina.':''}`:''}</div>
   </section>`:''}
   <section class="mod">
@@ -5183,7 +5238,8 @@ function vMedidasCuerpo(){
      queda siempre arriba porque es lo unico accionable desde aqui.
      "Tu forma" (las proporciones) vive dentro de "Tu cuerpo": es lo mismo mirado de otra
      manera, y separarlo obligaba a saltar entre cajas para entender un solo numero. */
-  const box=UI.medBox||null;
+  /* el nav de arriba manda: grasa y meta son dos pestañas mas, no un triptico aparte */
+  const box=(UI.cuerpoSub==='grasa'||UI.cuerpoSub==='meta')?UI.cuerpoSub:'cuerpo';
   return `
   
   ${pend.length?`<section class="mod tight glowtop">
@@ -5205,19 +5261,7 @@ function vMedidasCuerpo(){
   </section>
   ${hoyForm?medForm(hoyForm):''}
   
-  <section class="mod tight">
-    <div class="medboxes">
-      ${(()=>{const A=UID==='andres';
-        /* se usan las cabritas que ya existen en assets/cab en vez de generar nuevas:
-           medidas (cinta metrica), la de plan para la meta y la de racha para la grasa */
-        const IMG={grasa:A?CAB.rachaA:CAB.rachaC, cuerpo:A?CAB.medidasA:CAB.medidasC, meta:A?CAB.planA:CAB.planC};
-        return [['grasa','Meta de grasa','target'],['cuerpo','Tu cuerpo','ruler'],['meta','Tu meta','scale']].map(([k,lb,icn])=>
-        `<button class="medbox ${box===k?'on':''}" data-a="medBox" data-k="${k}" aria-expanded="${box===k?'true':'false'}">
-          ${IMG[k]?`<img loading="lazy" class="mbimg" src="${IMG[k]}" alt="" decoding="async">`:`<span class="mbic">${ic(icn,20)}</span>`}
-          <span class="mblb">${ic(icn,11)} ${lb}</span></button>`).join('');})()}
-    </div>
-  </section>
-  ${box==='grasa'?`${metaGrasaCard()}`:''}
+  ${box==='grasa'?metaGrasaCard():''}
   ${box==='cuerpo'?`
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('ruler',16)} Tu cuerpo</span>${sel?`<button class="btn sm ghost" data-a="medZona" data-z="">Ver todo</button>`:''}</div>
@@ -5284,7 +5328,6 @@ function vMedidasCuerpo(){
     ${medPlan().map(p=>`<div class="flex mt8" style="gap:9px;align-items:flex-start">${ic(p.t==='ok'?'check':'alert',14)}<div class="small grow" style="line-height:1.5">${p.x}</div></div>`).join('')}
   </section>
   `:''}
-  ${!box?`<div class="small dim tc" style="padding:14px 6px;line-height:1.55">Toca una de las tres para abrirla. Así no tienes toda la pantalla encima cuando solo vienes a mirar una cosa.</div>`:''}
   `;
 }
 
@@ -14175,7 +14218,9 @@ function vProgreso(){
   ${progGrpSelector(grp)}
   ${grp==='cuerpo'? `<section class="mod tight">${medCapaBar()}</section>
     ${UI.cuerpoSub==='carga' ? vCarga() : UI.cuerpoSub==='fuerza' ? vFuerzaCuerpo()
-      : UI.cuerpoSub==='cruce' ? vCruce() : vMedidasCuerpo()}` : grp==='act'?`
+      : UI.cuerpoSub==='cruce' ? vCruce()
+      : vMedidasCuerpo()}
+    <section class="mod tight">${medCapaBar()}</section>` : grp==='act'?`
   ${metasCard()}
   ${rendimientoCard(sub)}
   <section class="mod tight">
@@ -16181,6 +16226,7 @@ const ACTIONS = {
   },
   fzaMusc(d, el){ UI.fzaMusc = UI.fzaMusc===d.m ? null : d.m; renderAnclado(el); },
   fzaGrupoTgl(d, el){ UI.fzaGrupo = UI.fzaGrupo===d.k ? null : d.k; renderAnclado(el); },
+  cruceAbre(d, el){ UI.cruceAbre = UI.cruceAbre===d.m ? null : d.m; renderAnclado(el); },
   fzaEjTgl(d, el){ UI.fzaEj = UI.fzaEj===d.k ? null : d.k; renderAnclado(el); },
   /* accion vacia: sirve para que closest('[data-a]') se detenga en un contenedor y no
      dispare la accion del padre, sin romper el despachador con stopPropagation */

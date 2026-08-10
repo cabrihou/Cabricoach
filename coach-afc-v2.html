@@ -1623,7 +1623,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 165';
+const APPREV='REV 166';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3400,13 +3400,17 @@ function fzaTabla(){
     const cands=fzaCandidatos(k).filter(id=>fzaMejor1RM(id));
     if(!cands.length) return;
     /* el elegido a mano manda; si no, el primero de la lista que tenga registros */
-    const exId = (elegido[k] && fzaMejor1RM(elegido[k])) ? elegido[k] : cands[0];
+    const pedido = elegido[k] || null;
+    const exId = (pedido && fzaMejor1RM(pedido)) ? pedido : cands[0];
     const mejor=fzaMejor1RM(exId);
     if(!mejor) return;
+    /* elegido pero todavia sin series: se respeta la eleccion en pantalla y se avisa con
+       que se esta midiendo mientras tanto */
+    const pendiente = (pedido && pedido!==exId) ? pedido : null;
     const ratio=mejor.rm/pc;
     const TB=fzaTablaDe(k);
     const nv=fzaNivelDe(ratio, TB.u);
-    out.push({k, n:FZA_STD[k].n, tabla:TB, ex:exId, cands, manual:!!elegido[k], rm:Math.round(mejor.rm*10)/10, d:mejor.d, sw:mejor.w, sr:mejor.r, ratio:Math.round(ratio*100)/100, ...nv,
+    out.push({k, n:FZA_STD[k].n, tabla:TB, ex:exId, cands, manual:!!elegido[k], pedido, pendiente, rm:Math.round(mejor.rm*10)/10, d:mejor.d, sw:mejor.w, sr:mejor.r, ratio:Math.round(ratio*100)/100, ...nv,
       /* puntaje comparable entre ejercicios: cuanto del camino a elite lleva */
       score: ratio/TB.u[3]});
   });
@@ -3565,11 +3569,13 @@ function fzaEscalera(x, pc){
         <span class="small dim">¿De cuál quieres que lo saque?</span>
         <div class="flex wrapf mt4" style="gap:6px">${todos.map(id=>{
           const m=fzaMejor1RM(id);
-          return `<button class="chip ${id===x.ex?'fill':''} ${m?'':'dim'}" data-a="fzaFuente" data-k="${x.k}" data-id="${id}"
+          const elegidoAqui = x.pedido ? id===x.pedido : id===x.ex;
+          return `<button class="chip ${elegidoAqui?'fill':''} ${m?'':'dim'}" data-a="fzaFuente" data-k="${x.k}" data-id="${id}"
             ${m?'':'title="sin registros todavía"'}>
             ${esc(exVariante(id))} ${m?`<b>${fmt1(m.rm)}</b>`:'<i class="small">–</i>'}</button>`;}).join('')}</div>
         ${x.manual?`<button class="chip mt8" data-a="fzaFuente" data-k="${x.k}" data-id="">Volver al automático</button>`:''}
-        <div class="small dim mt4">Los que salen en gris no tienen registros todavía; al elegirlos, el nivel se calcula en cuanto entrenes uno.</div>
+        ${x.pendiente?`<div class="small mt4" style="color:var(--gold);line-height:1.5">Elegiste <b>${esc(exVariante(x.pendiente))}</b>, pero todavía no tienes series suyas. Mientras tanto el nivel se calcula con <b>${esc(exVariante(x.ex))}</b>; en cuanto lo entrenes, cambia solo.</div>`
+          :`<div class="small dim mt4">Los que salen en gris no tienen registros todavía; al elegirlos, el nivel se calcula en cuanto entrenes uno.</div>`}
       </div>`;})()}
       ${(FZA_VARIANTES[x.k]&&FZA_VARIANTES[x.k].length>1)?`<div class="mt8" style="padding-top:8px;border-top:1px solid var(--line2)">
         <span class="small dim">¿Con qué tabla lo comparo?</span>

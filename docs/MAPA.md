@@ -759,3 +759,19 @@ el dueño lo sabe. Donde hay sitio (la escalera de fuerza, el registro libre, la
 ejercicio) el toggle se ofrece **siempre**; `exUnilateral` se queda solo para destacarlo donde
 es lo habitual.
 
+### Elegir un ejercicio que aún no has entrenado
+
+El selector guardaba la elección pero `fzaTabla` la ignoraba si ese ejercicio **no tenía
+registros**, y el chip se marcaba según el que se usaba, no según el elegido. Efecto: tocabas
+y no pasaba nada visible, ni siquiera un cambio de estado. Desde fuera, "no me deja cambiar el
+ejercicio".
+
+Ahora la elección se respeta siempre en pantalla y, si aún no hay series suyas, se dice con
+qué se está midiendo mientras tanto: *"Elegiste Bench Press · Barbell, pero todavía no tienes
+series suyas. Mientras tanto el nivel se calcula con Bench Press · barra; en cuanto lo
+entrenes, cambia solo."*
+
+Sobre qué registro se usa: `fzaMejor1RM` recorre **todo el historial** y se queda con el 1RM
+más alto, no con el último. Verificado con tres series del mismo ejercicio (100×5 → 116,7 ·
+180×5 → 210 · 150×3 → 165): toma los 210. La escalera lo dice en pantalla.
+

@@ -996,31 +996,36 @@ img{-webkit-user-drag:none;user-select:none}
 .mcapa:active,.xtab:active{transform:scale(.94)}
 .xtsep{width:1.2px;height:20px;margin:0 3px;background:var(--line2);flex:none;border-radius:1px}
 @media (prefers-reduced-motion:reduce){.mcapa,.xtab,.mcapa>span,.xtab>span{transition:none}}
-/* Tarjeta destacada: el degradado del usuario con trama de puntos y el marcador arriba.
-   No trae paleta propia: hereda --grad y --onmint, asi cambia con Andres o Cami. */
+/* Tarjeta destacada: fondo oscuro como el resto de la app y el acento solo como luz. Dos
+   de estas seguidas en color plano se comian la pantalla; el acento manda por contraste,
+   no por area. Sigue heredando --acc-rgb, asi que es azul con Andres y dorada con Cami. */
 .hlc{position:relative;overflow:hidden;border-radius:var(--r-lg);padding:16px 16px 15px;
-  color:var(--onmint);background-image:radial-gradient(circle at 1px 1px,
-    color-mix(in srgb, var(--onmint) 13%, transparent) 1px, transparent 0),
-    linear-gradient(135deg, var(--bn1) 0%, var(--bn2) 100%);
-  background-size:8px 8px, 100% 100%;box-shadow:var(--glow)}
+  color:var(--ink);border:1px solid rgba(var(--acc-rgb),.28);
+  background-image:radial-gradient(circle at 1px 1px, rgba(var(--acc-rgb),.10) 1px, transparent 0),
+    radial-gradient(120% 90% at 6% 0%, rgba(var(--acc-rgb),.22) 0%, transparent 60%),
+    linear-gradient(150deg, rgba(var(--acc-rgb),.10) 0%, transparent 62%),
+    linear-gradient(0deg, var(--paper2), var(--paper2));
+  background-size:8px 8px, 100% 100%, 100% 100%, 100% 100%;
+  box-shadow:0 10px 28px rgba(0,0,0,.34)}
 .hlc .hlmk{position:absolute;top:0;right:18px;width:40px;height:52px;display:flex;align-items:center;
-  justify-content:center;padding-bottom:9px;background:var(--paper2);color:var(--mint);
+  justify-content:center;padding-bottom:9px;background:rgb(var(--acc-rgb));color:var(--onmint);
   clip-path:polygon(0 0,100% 0,100% 100%,50% 74%,0 100%)}
-.hlc h3{font:600 19px/1.15 var(--ttl);letter-spacing:-.01em;margin:0;max-width:74%}
-.hlc .hldesc{font:500 12.5px/1.45 var(--ui);opacity:.9;margin-top:4px;max-width:80%}
-.hlc .hlsep{height:1px;background:color-mix(in srgb, var(--onmint) 22%, transparent);margin:13px 0 12px}
+.hlc h3{font:600 19px/1.15 var(--ttl);letter-spacing:-.01em;margin:0;max-width:74%;color:var(--ink)}
+.hlc .hldesc{font:500 12.5px/1.45 var(--ui);color:var(--ink2);margin-top:4px;max-width:80%}
+.hlc .hlsep{height:1px;background:var(--line);margin:13px 0 12px}
 .hlc .hlpie{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
-.hlc .hlnum{font:800 30px/1 var(--num);letter-spacing:-.02em;display:flex;align-items:baseline;gap:4px}
-.hlc .hlnum em{font:700 14px var(--num);font-style:normal;opacity:.85}
-.hlc .hllbl{font:500 11.5px/1.35 var(--ui);opacity:.88;margin-top:5px;max-width:26ch}
+.hlc .hlnum{font:800 30px/1 var(--num);letter-spacing:-.02em;display:flex;align-items:baseline;gap:4px;
+  color:var(--ink)}
+.hlc .hlnum em{font:700 14px var(--num);font-style:normal;color:var(--smoke)}
+.hlc .hllbl{font:500 11.5px/1.35 var(--ui);color:var(--smoke);margin-top:5px;max-width:26ch}
 .hlc .hlbtn{flex:none;border:0;border-radius:999px;padding:9px 15px;cursor:pointer;color:var(--onmint);
-  background:color-mix(in srgb, var(--onmint) 15%, transparent);font:700 12px var(--ui);
-  display:flex;align-items:center;gap:5px;transition:background .2s,transform .12s}
+  background:var(--grad);font:700 12px var(--ui);
+  display:flex;align-items:center;gap:5px;transition:filter .2s,transform .12s}
 .hlc .hlbtn:active{transform:scale(.95)}
 .hlc .hlchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
 .hlc .hlchip{font:700 9.5px var(--ui);letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;
-  border-radius:999px;background:color-mix(in srgb, var(--onmint) 12%, transparent);
-  border:1px solid color-mix(in srgb, var(--onmint) 22%, transparent)}
+  border-radius:999px;color:rgb(var(--accHi-rgb));background:rgba(var(--acc-rgb),.12);
+  border:1px solid rgba(var(--acc-rgb),.28)}
 /* el arte y las zonas entran con un fundido corto en vez de aparecer de golpe */
 .medbp .mzarte{transition:opacity .3s cubic-bezier(.32,.72,0,1)}
 .medbp rect[mask]{animation:zonaIn .32s cubic-bezier(.32,.72,0,1)}
@@ -1051,7 +1056,29 @@ img{-webkit-user-drag:none;user-select:none}
 .fzacap.gris{color:var(--smoke);background:rgba(255,255,255,.06);border-color:var(--line2)}
 .fzaejx{font:700 12px var(--num);color:var(--smoke);margin-left:2px}
 /* Los dos ejes del nivel: relativa y total, cada uno con su nivel, mas la mezcla arriba */
-.fzaglob{position:relative;overflow:hidden;padding:14px;border-radius:18px;margin-bottom:12px;
+.fzaisla{position:fixed;inset:0;z-index:200;background:rgba(11,13,15,.86);backdrop-filter:blur(10px);
+  display:flex;align-items:flex-end;justify-content:center;padding:0;animation:islaIn .22s ease}
+@keyframes islaIn{from{opacity:0}to{opacity:1}}
+.fzaislain{width:100%;max-width:520px;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:18px 16px calc(24px + env(safe-area-inset-bottom));border-radius:26px 26px 0 0;
+  background:var(--paper2);border:1px solid var(--line);border-bottom:0;
+  box-shadow:0 -12px 40px rgba(0,0,0,.5);animation:islaUp .28s cubic-bezier(.32,.72,0,1)}
+@keyframes islaUp{from{transform:translateY(40px)}to{transform:none}}
+.fzaislar{padding:11px 12px;border-radius:14px;margin-bottom:7px;
+  border:1px solid color-mix(in srgb, var(--nc) 26%, var(--line2));
+  background:linear-gradient(150deg, color-mix(in srgb, var(--nc) 11%, transparent) 0%, transparent 58%), var(--card)}
+.fzaislar>div>b{font:700 13.5px var(--ui);letter-spacing:-.01em}
+.fzaislakg{display:flex;align-items:baseline;gap:3px;font:800 17px/1 var(--num);color:var(--ink)}
+.fzaislakg em{font:700 10px var(--num);font-style:normal;color:var(--smoke)}
+.fzaislakg i{font:700 10px var(--num);font-style:normal;color:var(--smoke);margin-left:3px}
+.fzaislam{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.fzaislam span{display:block;padding:7px 9px;border-radius:11px;background:rgba(255,255,255,.04);
+  border:1px solid var(--line2)}
+.fzaislam i{display:block;font:600 8.5px var(--ui);font-style:normal;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--smoke)}
+.fzaislam b{display:block;font:700 12.5px var(--ui);margin-top:2px}
+.fzaislam u{display:block;font:600 10px var(--num);text-decoration:none;color:var(--smoke);margin-top:1px}
+.fzaglob{cursor:pointer;position:relative;overflow:hidden;padding:14px;border-radius:18px;margin-bottom:12px;
   border:1px solid color-mix(in srgb, var(--nc) 30%, var(--line2));
   background:linear-gradient(150deg, color-mix(in srgb, var(--nc) 14%, transparent) 0%, transparent 58%), var(--paper2)}
 .fzaglobn{font:800 26px/1 var(--ttl);letter-spacing:-.02em}
@@ -1064,6 +1091,15 @@ img{-webkit-user-drag:none;user-select:none}
   background:color-mix(in srgb, var(--nc) 8%, transparent)}
 .fzaeje .lbl{display:block;margin-bottom:3px}
 .fzaejen{display:block;font:700 14px var(--ui);color:var(--nc);letter-spacing:-.01em}
+/* Cada grupo muscular del listado con su propia caja: antes eran etiquetas sueltas y a
+   partir de la segunda ya no se veia donde empezaba una y terminaba la otra. */
+.fzalista{margin:12px 0;padding:2px 11px 8px;border-radius:16px;border:1px solid var(--line2);
+  background:linear-gradient(160deg, color-mix(in srgb, var(--gc) 9%, transparent) 0%, transparent 45%), var(--paper2)}
+.fzalh{display:flex;align-items:center;gap:9px;padding:12px 2px 4px}
+.fzalh b{flex:1;min-width:0;font:700 14.5px var(--ui);letter-spacing:-.01em}
+.fzalh .fzamusc{margin-top:0}
+.fzalh .fzamusn{margin-left:0}
+.fzalista .fzarow{background:linear-gradient(150deg, color-mix(in srgb, var(--nc) 12%, transparent) 0%, transparent 58%), var(--card)}
 .fzaejep{display:block;font:700 11px var(--num);color:var(--ink2);margin-top:2px}
 .fzaejes{display:block;font:500 10px/1.3 var(--ui);font-style:normal;color:var(--smoke);margin:3px 0 7px}
 .fzaejprog{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -1809,7 +1845,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 181';
+const APPREV='REV 182';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3920,10 +3956,11 @@ function fzaGlobalHTML(g, pc){
     <i class="fzaejes">${sub}</i>
     <span class="fzaejeb"><em style="width:${clamp(e.p!=null?Math.round(e.p*100):e.pct,4,100)}%"></em></span>
   </div>`;
-  return `<div class="fzaglob" style="--nc:${c}">
+  return `<div class="fzaglob" style="--nc:${c}" data-a="fzaIsla" role="button" tabindex="0"
+    aria-label="Ver el detalle de tu nivel global">
     <div class="flex between" style="align-items:baseline;gap:8px">
       <span class="lbl">TU NIVEL GLOBAL</span>
-      <i class="small dim">${g.n} básico${g.n===1?'':'s'} calibrado${g.n===1?'':'s'}</i>
+      <i class="small dim flex" style="gap:4px">${g.n} calibrado${g.n===1?'':'s'} ${ic('chevR',11)}</i>
     </div>
     <div class="flex" style="align-items:baseline;gap:8px;margin:4px 0 8px">
       <b class="fzaglobn" style="color:${c}">${g.mix.n}</b>
@@ -3935,6 +3972,62 @@ function fzaGlobalHTML(g, pc){
       ${eje('FUERZA TOTAL', g.abs, 'a esos kilos, pese lo que pese quien los mueva')}
     </div>
     <div class="small dim mt8" style="line-height:1.5">Los dos dicen <b>cuánta gente de la que entrena llega ahí</b>, pero no a la misma pregunta: la relativa te compara con quienes pesan como tú, la total con todo el mundo sin mirar la báscula. El global mezcla ${Math.round(FZA_MEZCLA.rel*100)}% y ${Math.round(FZA_MEZCLA.abs*100)}%. Van separados porque bajar de peso sube la relativa sin mover una placa, y subir de peso sube la total sin ser más eficiente.</div>
+  </div>`;
+}
+/* Isla del nivel global: el detalle completo, ejercicio por ejercicio, con los dos ejes.
+   Va como capa flotante para no alargar la seccion y para poder mirarlo con calma. */
+function fzaIslaHTML(){
+  if(!UI.fzaIsla) return '';
+  const pc=fzaPesoCorporal(), tb=fzaTabla(), g=fzaGlobal(tb, pc);
+  if(!g) return '';
+  const COL=['#8B97A1','#8FA0FF','#58DFA3','var(--gold)','#FF7AB6'];
+  const c=COL[g.mix.i]||'#8B97A1';
+  const cal=tb.filter(x=>fzaEsCalibrado(x.k) && x.rm>0).map(x=>{
+    const u=(x.tabla&&x.tabla.u)||fzaTablaDe(x.k).u;
+    return {...x, u, sc:fzaScoreMixto(x.rm, pc, u)};
+  }).sort((a,b)=>b.sc.mix-a.sc.mix);
+  const fuera=tb.filter(x=>!fzaEsCalibrado(x.k) && x.rm>0);
+  return `<div class="fzaisla" data-a="fzaIslaCerrar">
+    <div class="fzaislain" data-a="nada" role="dialog" aria-label="Detalle de tu nivel global">
+      <div class="flex between" style="align-items:flex-start;gap:10px">
+        <div style="min-width:0">
+          <span class="lbl">TU NIVEL GLOBAL</span>
+          <div class="flex" style="align-items:baseline;gap:8px;margin-top:3px">
+            <b class="fzaglobn" style="color:${c}">${g.mix.n}</b>
+            ${g.mix.i<4?`<span class="small dim">${g.mix.pct}% hacia ${g.mix.sig}</span>`:'<span class="small dim">tope de la tabla</span>'}
+          </div>
+        </div>
+        <button class="chip" data-a="fzaIslaCerrar" aria-label="Cerrar">${ic('x',10)}</button>
+      </div>
+      <div class="fzaejes2 mt10">
+        <div class="fzaeje" style="--nc:${COL[g.rel.i]}"><span class="lbl">FUERZA RELATIVA</span>
+          <b class="fzaejen">${g.rel.n}</b><span class="fzaejep">${g.rel.raro}</span>
+          <i class="fzaejes">percentil ${g.rel.pc} para tus ${fmt1(Math.round(pc*10)/10)} kg</i>
+          <span class="fzaejeb"><em style="width:${clamp(g.rel.pc,4,100)}%"></em></span></div>
+        <div class="fzaeje" style="--nc:${COL[g.abs.i]}"><span class="lbl">FUERZA TOTAL</span>
+          <b class="fzaejen">${g.abs.n}</b><span class="fzaejep">${g.abs.raro}</span>
+          <i class="fzaejes">percentil ${g.abs.pc} pese lo que pese quien lo mueva</i>
+          <span class="fzaejeb"><em style="width:${clamp(g.abs.pc,4,100)}%"></em></span></div>
+      </div>
+      <div class="lbl mt12" style="display:block">LOS ${cal.length} QUE CUENTAN</div>
+      <div class="small dim" style="line-height:1.5;margin:3px 0 8px">El global es el promedio de estos. Cada uno aporta lo mismo.</div>
+      ${cal.map(x=>{
+        const nr=Math.min(4,Math.floor(x.sc.rel)), na=Math.min(4,Math.floor(x.sc.abs));
+        return `<div class="fzaislar" style="--nc:${COL[nr]}">
+          <div class="flex between" style="align-items:baseline;gap:8px">
+            <b>${esc(x.n)}</b>
+            <span class="fzaislakg">${fmt1(x.rm)}<em>kg</em><i>${x.ratio}×</i></span>
+          </div>
+          <div class="fzaislam">
+            <span><i>relativa</i><b style="color:${COL[nr]}">${FZA_NIVELES[nr]}</b><u>p${Math.round(x.sc.pRel*100)}</u></span>
+            <span><i>en kilos</i><b style="color:${COL[na]}">${FZA_NIVELES[na]}</b><u>${fzaUnoDeCada(x.sc.pAbs)}</u></span>
+          </div>
+        </div>`;}).join('')}
+      ${fuera.length?`<div class="lbl mt12" style="display:block">FUERA DEL CÁLCULO</div>
+        <div class="small dim" style="line-height:1.5;margin:3px 0 6px">Aislados sin baremo de población. Se registran y se miden contra tu propio récord, pero no ascienden a nadie.</div>
+        <div class="flex wrapf" style="gap:5px">${fuera.map(x=>`<span class="chip xs">${esc(x.n)} ${fmt1(x.rm)} kg</span>`).join('')}</div>`:''}
+      <div class="small dim mt12" style="line-height:1.5">Los umbrales salen de Strength Level y son percentiles de la gente que entrena: Novato el 20%, Intermedio el 50%, Avanzado el 80%, Élite el 95%. La columna de kilos integra ese percentil sobre la distribución de pesos corporales, por eso responde "cuánta gente mueve esto" sin mirar la báscula.</div>
+    </div>
   </div>`;
 }
 function fzaDeficitGanancia(tb, pc){
@@ -3995,11 +4088,21 @@ function fzaCard(){
       const cajas={};
       tb.forEach(x=>{ const k=gDe(x.ex); (cajas[k]=cajas[k]||[]).push(x); });
       const orden=[...Object.keys(FZA_GRUPOS),'otros'];
-      return orden.filter(k=>cajas[k]).map(k=>`<div class="mt12">
-        <span class="lbl" style="display:block;margin-bottom:5px">${k==='otros'?'OTROS':esc((FZA_GRUPOS[k].n||k).toUpperCase())}</span>
-        ${cajas[k].map(x=>fzaFilaHTML(x, pc, col)).join('')}</div>`).join('');
+      return orden.filter(k=>cajas[k]).map(k=>{
+        const lista=cajas[k];
+        const mejor=lista.reduce((a,b)=>b.nivel>a.nivel?b:a);
+        const c=col(mejor.nivel);
+        return `<div class="fzalista" style="--gc:${c}">
+          <div class="fzalh">
+            <span class="fzamusd" aria-hidden="true"></span>
+            <b>${k==='otros'?'Otros':esc(FZA_GRUPOS[k].n||k)}</b>
+            <i class="fzamusc">${lista.length} ejercicio${lista.length===1?'':'s'}</i>
+            <em class="fzamusn" style="color:${c}">${FZA_NIVELES[mejor.nivel]}</em>
+          </div>
+          ${lista.map(x=>fzaFilaHTML(x, pc, col)).join('')}
+        </div>`;}).join('');
     })()}
-    <div class="small dim mt12" style="line-height:1.5">Los niveles comparan tu 1RM estimado contra tu peso corporal, con los baremos habituales de fuerza relativa (${UID==='cami'?'tabla femenina':'tabla masculina'}). Es una referencia, no un examen.</div>
+    <div class="small dim mt12" style="line-height:1.5">${UID==='cami'?'Tabla femenina':'Tabla masculina'}. Es una referencia, no un examen.</div>
     ${(()=>{ /* los que el dueño marco para seguir de cerca van con los principales */
       const sig=new Set(S.cfg.fzaSigue||[]);
       if(!sig.size) return '';
@@ -4012,7 +4115,9 @@ function fzaCard(){
           delta:prim?m.rm-prim.v:null, desde:prim?prim.d:null, ses:h.length};
       }).filter(Boolean).sort((a,b)=>b.rm-a.rm);
       if(!seg.length) return '';
-      return `<div class="mt12"><span class="lbl" style="display:block;margin-bottom:4px">LOS QUE SIGUES DE CERCA</span>
+      return `<div class="fzalista" style="--gc:var(--mint)">
+        <div class="fzalh"><span class="fzamusd" aria-hidden="true"></span>
+          <b>Los que sigues de cerca</b><i class="fzamusc">${seg.length}</i></div>
         ${seg.map(fzaOtroRow).join('')}</div>`;})()}
     ${(()=>{ /* el resto de ejercicios con historial: no tienen baremo de nivel, pero si
        progreso, que es lo que uno quiere mirar */
@@ -4888,9 +4993,12 @@ const FZA_GRUPOS={
    poblacion de verdad detras; un curl predicador no. Decir que 16 kg de curl es "avanzado"
    es inventarse un dato que no existe. En los secundarios el modulo no clasifica: dice tu
    record y cuanto has subido desde la primera vez, que es mas honesto y mas util. */
-const FZA_SECUNDARIO=new Set(['curl','curl_martillo','elevacion_lateral','pajaro_posterior',
+const FZA_SECUNDARIO=new Set(['elevacion_lateral','pajaro_posterior',
   'triceps_polea','press_frances','encogimiento','ext_cuadriceps','curl_femoral','gemelo',
   'abductor','aductor','zancada','bulgara']);
+/* El curl se queda dentro: Strength Level sí publica baremos de curl con barra y con
+   mancuerna, así que ahí el nivel no es inventado. Los que salen son los que no tienen
+   distribución de poblacion detras. */
 function fzaEsCalibrado(k){ return !FZA_SECUNDARIO.has(k); }
 /* ============ EL SEGUNDO EJE: QUE TAN RARO ES ESE PESO ============
    Un ratio de 1.5 a 60 kg y uno de 1.25 a 120 kg no se pueden promediar, se destruyen entre
@@ -15470,7 +15578,8 @@ function renderReal(){
   /* misma vista + morph disponible = se actualiza en sitio (no se destruye el foco
      ni el scroll). Al CAMBIAR de vista se reemplaza entero, que es lo correcto:
      empieza de cero arriba. Si el morph falla, cae al reemplazo de siempre. */
-  const htmlNuevo = VIEWS[UI.tab]();
+  /* la isla del nivel global es una capa flotante: viaja con el HTML de la vista */
+  const htmlNuevo = VIEWS[UI.tab]() + (UI.fzaIsla ? fzaIslaHTML() : '');
   const puedeMorph = keep && MORPH_VISTAS.has(UI.tab);
   /* De donde viene este render decide a que anclarse. Si el despachador de clicks
      dejo UI._ancla, viene de un TAP: hay que quedarse donde esta la pantalla, no
@@ -16606,6 +16715,8 @@ const ACTIONS = {
     renderAnclado(el);
   },
   cruceAbre(d, el){ UI.cruceAbre = UI.cruceAbre===d.m ? null : d.m; renderAnclado(el); },
+  fzaIsla(){ UI.fzaIsla=true; render(); },
+  fzaIslaCerrar(){ UI.fzaIsla=false; render(); },
   secPlegTgl(d, el){ UI.secAb=UI.secAb||{}; UI.secAb[d.s]=!UI.secAb[d.s]; renderAnclado(el); },
   cruceGrupo(d, el){ UI.cruceGrupo = (UI.cruceGrupo||'ojo')===d.s ? '' : d.s; renderAnclado(el); },
   fzaEjTgl(d, el){ UI.fzaEj = UI.fzaEj===d.k ? null : d.k; renderAnclado(el); },
@@ -17763,6 +17874,8 @@ setInterval(()=>{
 
 /* ============ EVENTOS ============ */
 document.addEventListener('click', e=>{
+  /* un swipe de capa termina en click sobre lo que hubiera debajo: se descarta */
+  if(Date.now()-SWSUP<450){ e.preventDefault(); e.stopPropagation(); return; }
   const el=e.target.closest('[data-a]');
   if(!el) return;
   if(el.closest('summary') && el.dataset.a) e.preventDefault();
@@ -17929,6 +18042,35 @@ document.addEventListener('touchend', e=>{
   if(!SWB) return; const t=e.changedTouches[0];
   const dx=t.clientX-SWB.x, dy=Math.abs(t.clientY-SWB.y); SWB=null;
   if(dx>60 && dy<45) goBack();
+}, {passive:true});
+/* Deslizar de lado cambia de capa dentro del cuerpo, en el mismo orden que el nav. No se
+   activa si el dedo arranca en el borde izquierdo (eso es "atras"), ni sobre algo que se
+   desplaza en horizontal por su cuenta, ni si el gesto es mas vertical que horizontal. */
+let SWC=null, SWSUP=0;
+document.addEventListener('touchstart', e=>{
+  SWC=null;
+  if(e.touches.length!==1) return;
+  const T=e.touches[0];
+  if(T.clientX<=36) return;                       /* se lo queda el gesto de atras */
+  if(UI.tab!=='progreso' || progGroup()!=='cuerpo') return;
+  if(e.target.closest('.scrollx,.tbwrap,input[type=range],.cmpwrap')) return;
+  SWC={x:T.clientX, y:T.clientY, t:Date.now()};
+}, {passive:true});
+document.addEventListener('touchend', e=>{
+  const s=SWC; SWC=null;
+  if(!s || UI.tab!=='progreso' || progGroup()!=='cuerpo') return;
+  const T=e.changedTouches[0]; if(!T) return;
+  const dx=T.clientX-s.x, dy=T.clientY-s.y;
+  if(Math.abs(dx)<70 || Math.abs(dy)>50 || Math.abs(dx)<Math.abs(dy)*1.6) return;
+  if(Date.now()-s.t>700) return;                  /* arrastre lento: no es un swipe */
+  const ks=MED_CAPAS.map(c=>c[0]);
+  const i=Math.max(0, ks.indexOf(['carga','fuerza','cruce','grasa','meta'].includes(UI.cuerpoSub)?UI.cuerpoSub:'medidas'));
+  const j=clamp(i+(dx<0?1:-1), 0, ks.length-1);
+  if(j===i) return;
+  UI.cuerpoSub=ks[j]; UI.medZona=null;
+  SWSUP=Date.now();          /* el click que sigue al swipe no debe elegir una zona */
+  render();
+  toast(MED_CAPAS[j][1]);
 }, {passive:true});
 /* bloqueo de zoom en la PWA (iOS): pellizco, doble-clic y doble-toque rapido.
    Los controles interactivos (botones, data-a, inputs...) quedan afuera para no romper

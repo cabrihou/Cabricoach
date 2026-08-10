@@ -1623,7 +1623,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 164';
+const APPREV='REV 165';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -11173,6 +11173,10 @@ function matchExId(name){
         ninguno existe ahi, contra el catalogo EXCAT (antes solo miraba el plan y
         "Squat (Barbell)" caia por similitud en Hack Squat, que es otro ejercicio:
         era la queja de "no agrega los ejercicios correctos") */
+  /* nombre exacto en el catalogo ANTES que los sinonimos: "Bayesian Curl" existe tal cual
+     y por sinonimo caia en el curl de cable, que es otro ejercicio */
+  const catEx=EXCAT.find(e=>{ const n=normEx(e.name); return n===qFull||n===qTrad; });
+  if(catEx) return catEx.id;
   const q=normEx(name.replace(/\([^)]*\)/g,''));
   const have=id=>!!EXMAP[id];
   const haveCat=id=>EXCAT.some(e=>e.id===id);
@@ -11199,14 +11203,24 @@ function parseWorkoutText(text){
   const d=parseWorkoutDate(text)||TODAY();
   const lines=text.split(/\r?\n/).map(l=>l.trim());
   const items=[]; let cur=null;
-  const setRe=/set\s*\d+\s*:?\s*([\d]+(?:[.,]\d+)?)\s*(?:kg|lb)?\s*[×xX*]\s*(\d+)/i;
+  /* el peso puede venir con signo: en dominadas y fondos Strong escribe "+10 kg", que es
+     el lastre. Sin admitir el + esas lineas no matchean y acaban tomandose por nombres de
+     ejercicio, con lo que la sesion entera se descarta: era lo de "no lo encuentra". */
+  const setRe=/set\s*\d+\s*:?\s*([+-]?\s*[\d]+(?:[.,]\d+)?)\s*(?:kg|lb|lbs)?\s*[×xX*]\s*(\d+)/i;
   const repsOnly=/set\s*\d+\s*:?\s*(\d+)\s*(?:reps?)?\s*$/i;
+  /* peso corporal sin lastre: "Set 3: BW × 8" o "Set 3: peso corporal x 8" */
+  const bwRe=/set\s*\d+\s*:?\s*(?:bw|body\s*weight|peso\s*corporal|sin\s*peso)\s*[×xX*]?\s*(\d+)/i;
   lines.forEach(l=>{
     if(!l) return;
     let m=l.match(setRe);
-    if(m){ if(cur) cur.sets.push({w:+m[1].replace(',','.'), r:+m[2]}); return; }
+    if(m){ if(cur) cur.sets.push({w:+String(m[1]).replace(/\s/g,'').replace(',','.'), r:+m[2]}); return; }
+    m=l.match(bwRe);
+    if(m){ if(cur) cur.sets.push({w:0, r:+m[1]}); return; }
     m=l.match(repsOnly);
     if(m){ if(cur) cur.sets.push({w:0, r:+m[1]}); return; }
+    /* cualquier otra linea que empiece por "Set N" pertenece a la serie, no es un
+       ejercicio nuevo: antes una variante no prevista partia la sesion en pedazos */
+    if(/^set\s*\d+/i.test(l)) return;
     if(/^workout notes|^notas|^https?:\/\/|link\.strong/i.test(l)) { cur=null; return; }
     if(parseWorkoutDate(l)) return;                 // la línea de fecha no es ejercicio
     if(/^\d/.test(l) && !/[a-zA-Z]/.test(l)) return; // solo números

@@ -358,3 +358,20 @@ La forma correcta en esta app es dar al contenedor su propio `data-a="nada"` (ac
 dentro siguen llegando al despachador. **Nunca usar `stopPropagation` en el HTML que genera
 el render.**
 
+## El importador y el signo del lastre (REV 165)
+
+Un entreno de Strong con dominadas lastradas no importaba **ningún** ejercicio, ni siquiera
+los que no llevaban lastre. La causa: Strong escribe el lastre como `Set 1: +10 kg × 7`, y el
+regex de series exigía que el peso empezara por dígito. Esas líneas no casaban con ningún
+patrón, así que el parser las trataba como **nombres de ejercicio nuevos**, cada uno sin
+series, y el filtro final (`items.filter(it => it.sets.length)`) los descartaba todos. De ahí
+el "no lo encuentra": el matcher nunca llegaba a ejecutarse.
+
+Arreglado en tres puntos: el peso admite signo (`+`/`-`), se reconoce el peso corporal
+explícito (`BW × 8`, `peso corporal x 8`), y cualquier línea que empiece por `Set N` que no
+case con nada se ignora en vez de convertirse en ejercicio. Probado con el entreno real: 6
+de 6 ejercicios, con `+10` y `+5` de lastre y una serie a peso limpio.
+
+También cambió el orden del emparejado: **el nombre exacto del catálogo va antes que los
+sinónimos**. "Bayesian Curl" existe tal cual y caía por sinónimo en el curl de cable.
+

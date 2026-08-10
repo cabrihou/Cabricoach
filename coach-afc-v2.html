@@ -120,6 +120,15 @@ a{color:inherit}
 .mod-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .mod-head .ttl{display:flex;align-items:center;gap:8px;font:500 20px/1.2 var(--ttl);letter-spacing:0;color:var(--ink)}
 .mod-head .ttl svg{color:var(--mint)}
+/* Cabecera de capa: el titulo manda. Antes era del mismo tamaño que cualquier subtitulo
+   y las tres capas se leian como una lista de cajas iguales. */
+.mod-head.hero{align-items:flex-start;margin-bottom:14px}
+.mod-head.hero .ttl{flex-direction:column;align-items:flex-start;gap:5px;
+  font:600 27px/1.05 var(--ttl);letter-spacing:-.025em}
+.mod-head.hero .ttl svg{width:22px;height:22px}
+.mod-head.hero .ttl .heroic{display:flex;align-items:center;justify-content:center;width:34px;height:34px;
+  border-radius:12px;background:rgba(var(--acc-rgb),.13);border:1px solid rgba(var(--acc-rgb),.26)}
+.mod-head.hero .ttl .heroic svg{color:rgb(var(--acc-rgb))}
 .cross{display:none}
 
 .grid1px{display:grid;gap:8px;background:transparent;border:none}
@@ -1095,6 +1104,19 @@ img{-webkit-user-drag:none;user-select:none}
 /* Cruce en rejilla: cada musculo es una casilla y solo el que tocas muestra el detalle,
    que se cuela a lo ancho justo debajo de su fila. */
 .crucegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:stretch}
+.crucegr{margin:9px 0;border-radius:16px;border:1px solid var(--line2);overflow:hidden;background:var(--paper2)}
+.crucegr.open{border-color:color-mix(in srgb, var(--cc) 40%, var(--line2))}
+.crucegrh{display:flex;align-items:center;gap:9px;width:100%;padding:12px 13px;border:0;cursor:pointer;
+  color:var(--ink);text-align:left;
+  background:linear-gradient(100deg, color-mix(in srgb, var(--cc) 15%, transparent) 0%, transparent 55%)}
+.crucegrh b{flex:1;min-width:0;font:700 14.5px var(--ui);letter-spacing:-.01em}
+.crucegrd{flex:none;width:9px;height:9px;border-radius:50%;background:var(--cc);
+  box-shadow:0 0 0 4px color-mix(in srgb, var(--cc) 18%, transparent)}
+.crucegrn{flex:none;font:700 11px var(--num);font-style:normal;color:var(--cc);padding:3px 9px;
+  border-radius:999px;background:color-mix(in srgb, var(--cc) 13%, transparent);
+  border:1px solid color-mix(in srgb, var(--cc) 34%, transparent)}
+.crucegr.open .nfchev{transform:rotate(90deg)}
+.crucegr .crucegrid{padding:0 11px 12px}
 .crucet{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:10px 9px;cursor:pointer;
   border-radius:14px;text-align:left;color:var(--ink);
   border:1px solid color-mix(in srgb, var(--cc) 26%, var(--line2));
@@ -1771,7 +1793,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 177';
+const APPREV='REV 178';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3857,8 +3879,16 @@ function fzaCard(){
   const solo = tb.length<2;
   const fuerte=tb[0], debil=tb[tb.length-1];
   const col=n=>['#8B97A1','#8FA0FF','#58DFA3','var(--gold)','#FF7AB6'][n]||'var(--ink2)';
-  return `<section class="mod">
-    <div class="mod-head"><span class="ttl">${ic('trend',16)} Tu nivel de fuerza</span><span class="chip dim">vs ${fmt1(Math.round(pc*10)/10)} kg</span></div>
+  return secPleg('fza', {
+    icono:'trend', ttl:'Tu nivel de fuerza',
+    desc: solo ? 'Registra más básicos y te digo dónde estás fuerte y dónde flojo.'
+      : 'Tu eslabón débil es '+esc(debil.n).toLowerCase()+'. Ponlo de primero un mes: ahí está la ganancia fácil.',
+    num: fmt1(fuerte.rm), uni:'kg',
+    lbl:'tu mejor levantamiento: '+esc(fuerte.n).toLowerCase(),
+    chips: solo ? [fuerte.nombre] : ['más fuerte: '+fuerte.n, 'más flojo: '+debil.n, tb.length+' básicos'],
+  }, `<section class="mod">
+    <div class="mod-head hero"><span class="ttl"><span class="heroic">${ic('trend',18)}</span>Tu nivel de fuerza</span>
+      <div class="flex" style="gap:6px"><span class="chip dim">vs ${fmt1(Math.round(pc*10)/10)} kg</span>${secCerrar('fza')}</div></div>
     ${solo?'':`<div class="fzadestacado">
       <div class="fzabox" style="--nc:${col(fuerte.nivel)}"><span class="lbl">MÁS FUERTE</span><b>${esc(fuerte.n)}</b>
         <span class="fzaboxkg">${fmt1(fuerte.rm)}<em>kg</em><i>${fuerte.ratio}×</i></span>
@@ -3912,7 +3942,7 @@ function fzaCard(){
       return `<details class="medhist mt8" ${UI.fzaOtros?'open':''}><summary data-a="fzaOtrosTgl">Ver los otros ${otros.length} ejercicios que registras</summary>
         <div class="small dim" style="line-height:1.5;margin-bottom:8px">Estos no tienen tabla de niveles (los baremos de fuerza relativa solo existen para los básicos), pero sí tu 1RM estimado y cuánto ha subido.</div>
         ${resto.map(fzaOtroRow).join('')}</details>`;})()}
-  </section>`;
+  </section>`);
   function fzaOtroRow(o){
     return `<div class="fzarow ${UI.fzaOpen==='x_'+o.id?'open':''}" data-a="fzaOpen" data-k="x_${o.id}" role="button" tabindex="0">
           <div class="flex" style="align-items:center;gap:9px">
@@ -4867,12 +4897,30 @@ function fzaQueMeter(vista, zona, yaTiene, musculo){
 /* Desequilibrio entre lados: la medida ya la teniamos, y si hay registros de un ejercicio
    unilateral tambien se puede comparar la fuerza. Un lado que mide igual pero levanta
    menos es un desequilibrio real, no una diferencia de cinta. */
+/* Una seccion larga plegada: en reposo es la tarjeta destacada con el dato que la resume,
+   y al tocar "Ver todo" se abre entera. La tarjeta no es decoracion: es el titular. */
+function secPleg(k, tarjeta, cuerpo){
+  if((UI.secAb||{})[k]) return cuerpo;
+  return hlCard(Object.assign({btn:'Ver todo', a:'secPlegTgl', s:k}, tarjeta));
+}
+function secCerrar(k){
+  return `<button class="chip" data-a="secPlegTgl" data-s="${esc(k)}">${ic('chevL',9)} Cerrar</button>`;
+}
 function fzaAsimetria(){
   const med=medAsimetrias();
   const out=med.map(a=>({tipo:'medida', n:a.n, dif:a.dif, der:a.der, izq:a.izq, fuerte:a.fuerte}));
   if(!out.length) return '';
-  return `<section class="mod">
-    <div class="mod-head"><span class="ttl">${ic('alert',16)} Lado contra lado</span></div>
+  const peor=out.slice().sort((a,b)=>b.dif-a.dif)[0];
+  const hayF=out.some(a=>a.fuerte);
+  return secPleg('asim', {
+    icono:'alert', ttl:'Lado contra lado',
+    desc: hayF ? 'Hay una diferencia por encima del umbral. Vale la pena mirarla.'
+      : 'Las diferencias que tienes están dentro de lo normal.',
+    num: fmt1(peor.dif), uni:'cm',
+    lbl:'la mayor diferencia, en '+peor.n.toLowerCase(),
+    chips: out.slice(0,3).map(a=>a.n+' '+fmt1(a.dif)+' cm'),
+  }, `<section class="mod">
+    <div class="mod-head hero"><span class="ttl"><span class="heroic">${ic('alert',18)}</span>Lado contra lado</span>${secCerrar('asim')}</div>
     ${out.map(a=>`<div class="crucecard" style="--cc:${a.fuerte?'var(--red)':'var(--mint)'}">
       <div class="flex" style="gap:10px;align-items:flex-start">
         <span class="cruceic">${ic('ruler',16)}</span>
@@ -4890,7 +4938,7 @@ function fzaAsimetria(){
     </div>`).join('')}
     <div class="small dim mt8" style="line-height:1.5">Hasta 1 cm de diferencia es normal y no significa nada. Desde 1,5 conviene empezar la sesión por el lado flojo y hacer el mismo número de repeticiones con los dos, no el mismo peso.
     ${out.some(a=>a.fuerte)?'<b> Tienes alguna por encima de ese umbral.</b>':''}</div>
-  </section>`;
+  </section>`);
 }
 /* ============ EL CRUCE ============
    Las tres capas por separado dicen donde estas. Lo que de verdad informa es la
@@ -5006,10 +5054,10 @@ function vCruce(){
   const zonas=crucePorZona(vista, datos);
   const sel=UI.medZona, zs=sel?zonas[sel]:null;
   /* si hay una zona tocada, las tarjetas son las de esa zona; si no, todo lo que pide accion */
-  const cards = zs ? zs.lista : hallazgos;
+  const cards = zs ? zs.lista : datos;
   return `
   <section class="mod">
-    <div class="mod-head"><span class="ttl">${ic('target',16)} El cruce</span><span class="chip dim">28 días</span></div>
+    <div class="mod-head hero"><span class="ttl"><span class="heroic">${ic('target',18)}</span>El cruce</span><span class="chip dim">28 días</span></div>
     <p class="small dim" style="margin:0 0 8px;line-height:1.55">Las otras tres pestañas te dicen dónde estás. Esta busca <b>dónde se contradicen</b>: un músculo fuerte que ya casi no entrenas, uno que recibe mucho y no cambia, uno flojo y encima abandonado. Eso no lo dice ninguna de las tres por separado.</p>
     <div class="medwrap">${medMapa(sel, {calor:crucePorMusculo(vista, datos), paths:MED_MUSC2[vista], cotas:false})}
       ${zs?`<div class="zpop ${((MED_ZONAS[vista][sel][0]+MED_ZONAS[vista][sel][2]/2+200)/1100)<0.5?'d':'i'}"
@@ -5032,31 +5080,44 @@ function vCruce(){
     ${zs?`<div class="flex between mt8" style="align-items:baseline">
       <b class="small">${esc(medNomZona(sel))}</b>
       <button class="chip" data-a="medZona" data-z="">${ic('x',9)} ver todo</button></div>`:''}
-    ${cards.length?`<div class="crucegrid mt8">${cards.map(o=>{
-      const ab = UI.cruceAbre===o.m;
-      return `<button class="crucet ${ab?'on':''}" data-a="cruceAbre" data-m="${esc(o.m)}"
-        style="--cc:${COL[o.d.t]}" aria-expanded="${ab?'true':'false'}">
-        <span class="cruceic">${ic(ICO[o.d.t],15)}</span>
-        <b>${esc(MUSC_NOM[o.m]||o.m)}</b>
-        <i>${fmt1(o.porSem)} ser/sem</i>
-      </button>
-      ${ab?`<div class="crucecard abierta" style="--cc:${COL[o.d.t]}" data-a="nada">
-        <div class="flex between" style="align-items:center;gap:8px">
-          <b class="crucen">${esc(MUSC_NOM[o.m]||o.m)}</b>
-          <em class="crucetag">${esc(o.d.ttl)}</em></div>
-        <div class="small dim mt4" style="line-height:1.55">${o.d.x}</div>
-        <div class="crucemini mt8">
-          <span>${ic('flame',10)} ${fmt1(o.porSem)}<i>ser/sem</i></span>
-          ${o.fza?`<span>${ic('trend',10)} ${o.fza.nombre}</span>`:''}
-          ${o.med?`<span>${ic('ruler',10)} ${fmt1(o.med.act)}<i>cm</i> ${o.med.dif>0?'+':''}${fmt1(o.med.dif)}</span>`:''}
-        </div>
-      </div>`:''}`;}).join('')}</div>`
-      :`<div class="propfoco ok">${ic('check',15)}<div><b>${zs?'Esta zona va en orden.':'Nada que corregir.'}</b>
-        <div class="small dim mt4">Las tres capas coinciden en todo lo que hay medido.</div></div></div>`}
-    ${(!zs&&bien.length)?`<details class="medhist mt8"><summary>Los ${bien.length} que van en orden</summary>
-      ${bien.map(o=>`<div class="medrow"><span class="grow"><b>${esc(MUSC_NOM[o.m]||o.m)}</b>
-        <i class="small dim" style="display:block">${esc(o.d.x.replace(/<[^>]+>/g,''))}</i></span></div>`).join('')}
-    </details>`:''}
+    ${(()=>{ /* tres grupos por estado: se ve primero lo que pide accion y lo demas queda
+        recogido. Al tocar una casilla se abre su lectura completa. */
+      const G=[['ojo','Pide atención'],['foco','Ganancia fácil'],['ok','En orden']];
+      const abierto = UI.cruceGrupo || 'ojo';
+      const html=G.map(([k,nom])=>{
+        const lista=cards.filter(o=>o.d.t===k);
+        if(!lista.length) return '';
+        const ab = abierto===k;
+        return `<div class="crucegr ${ab?'open':''}" style="--cc:${COL[k]}">
+          <button class="crucegrh" data-a="cruceGrupo" data-s="${k}" aria-expanded="${ab?'true':'false'}">
+            <span class="crucegrd" aria-hidden="true"></span>
+            <b>${nom}</b>
+            <i class="crucegrn">${lista.length}</i>
+            <span class="nfchev">${ic('chevR',14)}</span>
+          </button>
+          ${ab?`<div class="crucegrid">${lista.map(o=>{
+            const abo = UI.cruceAbre===o.m;
+            return `<button class="crucet ${abo?'on':''}" data-a="cruceAbre" data-m="${esc(o.m)}"
+              style="--cc:${COL[o.d.t]}" aria-expanded="${abo?'true':'false'}">
+              <span class="cruceic">${ic(ICO[o.d.t],15)}</span>
+              <b>${esc(MUSC_NOM[o.m]||o.m)}</b>
+              <i>${fmt1(o.porSem)} ser/sem</i>
+            </button>
+            ${abo?`<div class="crucecard abierta" style="--cc:${COL[o.d.t]}" data-a="nada">
+              <div class="flex between" style="align-items:center;gap:8px">
+                <b class="crucen">${esc(MUSC_NOM[o.m]||o.m)}</b>
+                <em class="crucetag">${esc(o.d.ttl)}</em></div>
+              <div class="small dim mt4" style="line-height:1.55">${o.d.x}</div>
+              <div class="crucemini mt8">
+                <span>${ic('flame',10)} ${fmt1(o.porSem)}<i>ser/sem</i></span>
+                ${o.fza?`<span>${ic('trend',10)} ${o.fza.nombre}</span>`:''}
+                ${o.med?`<span>${ic('ruler',10)} ${fmt1(o.med.act)}<i>cm</i> ${o.med.dif>0?'+':''}${fmt1(o.med.dif)}</span>`:''}
+              </div>
+            </div>`:''}`;}).join('')}</div>`:''}
+        </div>`;}).join('');
+      return html || `<div class="propfoco ok">${ic('check',15)}<div><b>${zs?'Esta zona va en orden.':'Nada que corregir.'}</b>
+        <div class="small dim mt4">Las tres capas coinciden en todo lo que hay medido.</div></div></div>`;
+    })()}
     <div class="small dim mt12" style="line-height:1.5">Se mira sobre <b>28 días</b>, no una semana: una semana suelta no distingue entre un músculo abandonado y una semana rara.</div>
   </section>`;
 }
@@ -5173,7 +5234,7 @@ function vFuerzaCuerpo(){
     <div class="small dim">Registra alguno de los básicos y te digo en qué nivel estás en cada parte del cuerpo.</div></section>`;
   return `
   <section class="mod">
-    <div class="mod-head"><span class="ttl">${ic('trend',16)} Fuerza por zona</span><span class="chip dim">vs ${fmt1(Math.round(pc*10)/10)} kg</span></div>
+    <div class="mod-head hero"><span class="ttl"><span class="heroic">${ic('trend',18)}</span>Fuerza por zona</span><span class="chip dim">vs ${fmt1(Math.round(pc*10)/10)} kg</span></div>
     <p class="small dim" style="margin:0 0 4px;line-height:1.5">El cuerpo pintado por el nivel que tienes en cada parte. Toca una zona para ver sus ejercicios y elegir con cuál se calcula.</p>
     <div class="medwrap">${medMapa(sel, {calor:fzaPorMusculo(vista), paths:MED_MUSC2[vista], cotas:false, zoom:!!sel})}
       ${zs?`<div class="zpop i" style="right:2.5%; bottom:4%">
@@ -5236,7 +5297,7 @@ function vCarga(){
     chips:[...flojos.slice(0,2).map(f=>(MUSC_NOM[f.m]||f.m)+' flojo'),
            ...pasados.slice(0,1).map(f=>(MUSC_NOM[f.m]||f.m)+' pasado')]})}
   <section class="mod">
-    <div class="mod-head"><span class="ttl">${ic('flame',16)} Carga por músculo</span>
+    <div class="mod-head hero"><span class="ttl"><span class="heroic">${ic('flame',18)}</span>Carga por músculo</span>
       <div class="flex" style="gap:5px">${[[7,'7 d'],[14,'14 d'],[28,'28 d']].map(([d,l])=>
         `<button class="chip ${dias===d?'fill':''}" data-a="cargaDias" data-d="${d}">${l}</button>`).join('')}</div></div>
     <p class="small dim" style="margin:0 0 4px;line-height:1.5">Cada serie se reparte entre los músculos que de verdad trabajan: un press de banca no es solo pecho, también suma tríceps y deltoide. Eso son <b>series efectivas</b>.</p>
@@ -5352,19 +5413,11 @@ function vMedidasCuerpo(){
     <div class="flex between"><span class="small dim">Todo al día. La próxima toca ${(()=>{const e=medEstado().filter(x=>x.ult).sort((a,b)=>(a.cada-a.dias)-(b.cada-b.dias))[0];
       return e? e.n.toLowerCase()+' en '+Math.max(0,e.cada-e.dias)+' días' : 'cuando quieras';})()}.</span></div>
   </section>`}
-  <section class="mod tight">
-    <div class="small dim">Puedes medirte cuando quieras, no solo el día que toca.</div>
-    <div class="flex wrapf mt8" style="gap:6px">
-      ${Object.keys(MED_GRUPOS).map(g=>`<button class="chip ${UI.medForm===g?'fill':''}" data-a="medAbrir" data-g="${g}">${MED_GRUPOS[g].n}</button>`).join('')}
-      <button class="chip ${UI.medForm==='todo'?'fill':''}" data-a="medAbrir" data-g="todo">Todo</button>
-    </div>
-  </section>
-  ${hoyForm?medForm(hoyForm):''}
   
   ${box==='grasa'?metaGrasaCard():''}
   ${box==='cuerpo'?`
   <section class="mod">
-    <div class="mod-head"><span class="ttl">${ic('ruler',16)} Tu cuerpo</span>${sel?`<button class="btn sm ghost" data-a="medZona" data-z="">Ver todo</button>`:''}</div>
+    <div class="mod-head hero"><span class="ttl"><span class="heroic">${ic('ruler',18)}</span>Tu cuerpo</span>${sel?`<button class="btn sm ghost" data-a="medZona" data-z="">Ver todo</button>`:''}</div>
     <div class="medwrap">${medMapa(sel)}${medZonaPop(sel)}</div>
     <div class="small dim tc">${sel?'Toca otra zona para cambiar':'Toca una zona del cuerpo para ver su medida'}</div>
     ${sel?medPanelZona(sel):''}
@@ -5391,6 +5444,21 @@ function vMedidasCuerpo(){
         return `<tr><td>${fmtD(d)}</td><td class="r">${m.cintura?fmt1(m.cintura):'·'}</td><td class="r">${m.pecho?fmt1(m.pecho):'·'}</td><td class="r">${m.cadera?fmt1(m.cadera):'·'}</td><td class="r">${m.peso?fmt1(m.peso):'·'}</td></tr>`;}).join('')}
       </table></div></section>`;})()}
 })()}
+  <section class="mod tight">
+    ${(()=>{ /* nav de abajo de Medidas: las dos metas y el desplegable para medirse */
+      const abre=!!UI.medirAbre||!!UI.medForm;
+      const items=[{k:'grasa',n:'Grasa',i:'drop'},{k:'meta',n:'Meta',i:'scale'},{k:'medir',n:'Tomar medidas',i:'ruler'}];
+      return `<div class="xtabs" role="tablist">${items.map(x=>`
+        <button class="xtab ${x.k==='medir'&&abre?'on':''}" data-a="medNavAb" data-s="${x.k}"
+          aria-label="${x.n}" title="${x.n}" aria-expanded="${x.k==='medir'?(abre?'true':'false'):'false'}">
+          ${ic(x.i,17)}<span>${x.n}</span></button>`).join('')}</div>
+      ${abre?`<div class="flex wrapf mt10" style="gap:6px;justify-content:center">
+        ${Object.keys(MED_GRUPOS).map(g=>`<button class="chip ${UI.medForm===g?'fill':''}" data-a="medAbrir" data-g="${g}">${MED_GRUPOS[g].n}</button>`).join('')}
+        <button class="chip ${UI.medForm==='todo'?'fill':''}" data-a="medAbrir" data-g="todo">Todo</button>
+      </div>
+      <div class="small dim tc mt8">Puedes medirte cuando quieras, no solo el día que toca.</div>`:''}`;})()}
+  </section>
+  ${hoyForm?medForm(hoyForm):''}
   `:''}
   ${box==='meta'?`
   ${metaCard()}
@@ -16344,7 +16412,14 @@ const ACTIONS = {
   },
   fzaMusc(d, el){ UI.fzaMusc = UI.fzaMusc===d.m ? null : d.m; renderAnclado(el); },
   fzaGrupoTgl(d, el){ UI.fzaGrupo = UI.fzaGrupo===d.k ? null : d.k; renderAnclado(el); },
+  medNavAb(d, el){
+    if(d.s==='medir'){ UI.medirAbre=!UI.medirAbre; if(!UI.medirAbre) UI.medForm=null; }
+    else { UI.cuerpoSub=d.s; UI.medZona=null; }
+    renderAnclado(el);
+  },
   cruceAbre(d, el){ UI.cruceAbre = UI.cruceAbre===d.m ? null : d.m; renderAnclado(el); },
+  secPlegTgl(d, el){ UI.secAb=UI.secAb||{}; UI.secAb[d.s]=!UI.secAb[d.s]; renderAnclado(el); },
+  cruceGrupo(d, el){ UI.cruceGrupo = (UI.cruceGrupo||'ojo')===d.s ? '' : d.s; renderAnclado(el); },
   fzaEjTgl(d, el){ UI.fzaEj = UI.fzaEj===d.k ? null : d.k; renderAnclado(el); },
   /* accion vacia: sirve para que closest('[data-a]') se detenga en un contenedor y no
      dispare la accion del padre, sin romper el despachador con stopPropagation */

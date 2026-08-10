@@ -857,3 +857,28 @@ Lo que se aprendió del SVG y conviene no volver a averiguar:
 - **Trapecio y romboides no tienen forma propia** en el dibujo: quedan vacíos a propósito.
   Mejor no pintar nada que pintar el músculo de al lado. Si algún día se quieren pintar, hay
   que dibujarles un path nuevo en `MED_ARTE.espalda`.
+
+
+### Secciones plegadas y jerarquía (REV 178)
+
+Tres cosas que van juntas:
+
+- **`secPleg(clave, tarjeta, cuerpo)`**: una sección larga en reposo es la tarjeta destacada
+  con el dato que la resume, y "Ver todo" la abre entera. La tarjeta no es decoración: es el
+  titular. Se usa en `fzaCard` (plegada muestra tu mejor levantamiento y las cápsulas de más
+  fuerte y más flojo) y en `fzaAsimetria` (la mayor diferencia entre lados).
+- **`.mod-head.hero`**: el título de capa pasa a 27 px con el icono en un cuadrado tintado del
+  acento. Antes era del mismo tamaño que cualquier subtítulo y las capas se leían como una
+  lista de cajas iguales. Lo usan Tu cuerpo, Carga por músculo, Fuerza por zona, El cruce,
+  Tu nivel de fuerza y Lado contra lado.
+- **Cruce agrupado**: las casillas se reparten en Pide atención, Ganancia fácil y En orden.
+  Solo un grupo abierto a la vez (`UI.cruceGrupo`, arranca en `ojo`), y dentro, tocar una
+  casilla abre su lectura completa a lo ancho.
+
+### El nav de abajo de Medidas
+
+En la capa Medidas el pie de página no repite las seis capas: lleva **Grasa**, **Meta** y
+**Tomar medidas**. Las dos primeras cambian de capa; la tercera despliega ahí mismo los grupos
+de medición (peso de hoy, cintura y cuello, resto del set, estructura, todo) y el formulario
+sale justo debajo. Antes esos chips vivían arriba, lejos de donde uno termina de mirar el
+cuerpo.

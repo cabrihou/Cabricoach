@@ -326,3 +326,22 @@ El mapa de calor reusa la misma maquinaria de máscaras del mapa de medidas: una
 zona con los paths de sus músculos, y un rect del color del nivel encima. Por eso el color
 sigue la forma anatómica y no se sale del cuerpo.
 
+## El salto al abrir un ejercicio (REV 153)
+
+Reportado como "cada vez que hago algo me sube hasta el inicio" en una sesión de
+entrenamiento. Medido: `exToggle` movía la pantalla **266 px**.
+
+La causa: abrir un ejercicio cierra el anterior. Si el que se cierra está más arriba, todo
+el contenido de encima se encoge de golpe. El ancla general del render (`anclaVisualTomar`)
+se agarra de **la primera sección visible del viewport**, que en este caso es justo la que
+cambia de alto, así que no compensa nada.
+
+`renderAnclado(el)` ancla al **elemento que el dedo tocó**: guarda su `top` antes del
+render y lo devuelve a su sitio después. Medido tras el arreglo: el elemento tocado se mueve
+**0 px** en las cinco aperturas de la prueba. El `scrollY` sí cambia (el contenido de arriba
+se encogió de verdad), pero visualmente la tarjeta que tocaste queda clavada, que es lo que
+el usuario percibe.
+
+Aplicado a todo lo que abre o cierra un bloque en su sitio: `exToggle`, `exOptsTgl`,
+`addExTgl`, `exPickCat`, `rutEdit`, `fzaOpen`.
+

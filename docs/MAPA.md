@@ -566,3 +566,10 @@ así el resumen del día, el tonelaje y las gráficas de fuerza la cuentan igual
 También aparece **en días que ya tienen sesión registrada** ("Agregar más ejercicios de ese
 día"): si entrenaste la rutina y además hiciste algo extra, antes no había forma de anotarlo.
 
+### Buscar ejercicio por categorías
+
+En el editor de rutinas y en el registro libre, sin búsqueda escrita se ve el catálogo
+**agrupado por grupo muscular** en secciones plegables (`exPickCats`, `exPickRow`), que es
+como uno busca cuando no tiene el nombre en la cabeza. Al escribir, pasa a resultados de
+texto.
+

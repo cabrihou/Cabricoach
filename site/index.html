@@ -1543,7 +1543,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 152';
+const APPREV='REV 153';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -5601,8 +5601,9 @@ function navIndicator(){
    calendario y XP las traten igual sin logica aparte. */
 function rutinasRefrescar(){
   const propias=((typeof S!=='undefined'&&S&&S.customRoutines)||[]).map(r=>({tag:'Propia', day:null, ...r, custom:true}));
-  /* los cambios del dueño se aplican encima del plan, sin tocar la constante original */
-  ROUTINES=rutAplicarMods(ROUTINES_BY[UID]).concat(propias);
+  /* los cambios del dueño se aplican encima del plan Y de las rutinas propias, sin tocar
+     ni la constante ni el original guardado */
+  ROUTINES=rutAplicarMods(ROUTINES_BY[UID].concat(propias));
   buildExmap();
 }
 function applyUser(){
@@ -9661,6 +9662,31 @@ function vEntrenar(){
 /* Editor de una rutina del plan: quitar, cambiar series y meter otros ejercicios.
    No toca la constante original, escribe en la capa S.rutMod, asi que "Volver al plan"
    siempre funciona. */
+/* Fila y listado del selector de ejercicios, compartidos por el editor de rutinas y el
+   registro libre. Sin busqueda escrita se ve el catalogo por grupos musculares plegados,
+   que es como uno busca cuando no tiene el nombre en la cabeza. */
+function exPickRow(x, accion, extra){
+  const at=Object.entries(extra||{}).map(([k,v])=>`data-${k}="${v}"`).join(' ');
+  return `<button class="actrow" data-a="${accion}" ${at} data-id="${x.id}">${excatThumb(x)}
+    <span class="grow tl" style="min-width:0"><b class="small" style="display:block">${esc(x.name)}</b>
+      <i class="small dim">${EXCAT_LABELS[x.cat]||x.cat}${x.equip?' · '+(EXCAT_EQUIP_BADGE[x.equip]||x.equip):''}</i></span>${ic('plus',14)}</button>`;
+}
+function exPickCats(pool, accion, extra, uiKey){
+  const abierta=UI[uiKey]||null;
+  const porCat={};
+  pool.forEach(x=>{ const cid=x.cat||'otros'; (porCat[cid]=porCat[cid]||[]).push(x); });
+  const cats=EXCAT_ORDER.filter(cid=>porCat[cid] && porCat[cid].length);
+  if(!cats.length) return '<div class="small dim mt8">No queda nada por agregar.</div>';
+  return `<div class="mt8">${cats.map(cid=>{
+    const items=porCat[cid], open=abierta===cid;
+    return `<section class="mod tight" style="margin:0 0 6px">
+      <button class="schedhead ${open?'open':''}" data-a="exPickCat" data-k="${uiKey}" data-cat="${cid}">
+        <span class="grow tl" style="min-width:0"><b class="schedt" style="display:block">${EXCAT_LABELS[cid]||cid}</b>
+          <span class="small dim">${items.length} ejercicio${items.length===1?'':'s'}</span></span>
+        <span class="nfchev">${ic('chevR',16)}</span></button>
+      ${open?`<div class="schedbody">${items.map(x=>exPickRow(x, accion, extra)).join('')}</div>`:''}
+    </section>`;}).join('')}</div>`;
+}
 function rutEditorHTML(r){
   const m=rutModDe(r.id)||{};
   const q=nrmTxt(UI.rutQ||'');
@@ -9668,9 +9694,11 @@ function rutEditorHTML(r){
   const seen=new Set(r.ex.map(e=>e.id));
   EXCAT.forEach(x=>{ if(!seen.has(x.id) && x.cat!=='movilidad') pool.push(x); });
   const found=q?pool.filter(x=>nrmTxt(x.name).includes(q)).slice(0,7):[];
+  const orig=ROUTINES_BY[UID].find(x=>x.id===r.id)
+    || ((S.customRoutines||[]).find(x=>x.id===r.id)) || {ex:[]};
   const quitados=(m.quita||[]).map(id=>{
-    const o=(ROUTINES_BY[UID].find(x=>x.id===r.id)||{ex:[]}).ex.find(e=>e.id===id);
-    return o?{id, n:o.name}:null; }).filter(Boolean);
+    const o=(orig.ex||[]).find(e=>e.id===id);
+    return o?{id, n:o.name}:{id, n:exNombre(id)}; }).filter(Boolean);
   return `<div class="ruteditor">
     <div class="small dim" style="line-height:1.5;margin-bottom:10px">Cambia lo que quieras: quitar un ejercicio, subir o bajar series, o meter otro. El plan original no se pierde y puedes volver a él cuando quieras.</div>
     ${sessEx(r).map(e=>{
@@ -9687,12 +9715,10 @@ function rutEditorHTML(r){
       </div>`;}).join('')}
     ${quitados.length?`<div class="small dim mt8">Quitados: ${quitados.map(x=>
       `<button class="chip" data-a="rutQuita" data-rid="${r.id}" data-id="${x.id}" data-und="1">${esc(shortEx(x.n))} ${ic('plus',9)}</button>`).join(' ')}</div>`:''}
-    <div class="inwrap mt12">${ic('search',15)}<input class="in has-ic" placeholder="Agregar un ejercicio…" value="${esc(UI.rutQ||'')}" data-ch="rutq"></div>
-    ${found.length?`<div class="mt8">${found.map(x=>
-      `<button class="actrow" data-a="rutAgrega" data-rid="${r.id}" data-id="${x.id}">${excatThumb(x)}
-        <span class="grow tl" style="min-width:0"><b class="small" style="display:block">${esc(x.name)}</b>
-          <i class="small dim">${EXCAT_LABELS[x.cat]||x.cat}</i></span>${ic('plus',14)}</button>`).join('')}</div>`
-      :(q?'<div class="small dim mt8">Nada con esa búsqueda.</div>':'')}
+    <div class="inwrap mt12">${ic('search',15)}<input class="in has-ic" placeholder="Buscar un ejercicio…" value="${esc(UI.rutQ||'')}" data-ch="rutq"></div>
+    ${q ? (found.length?`<div class="mt8">${found.map(x=>exPickRow(x, 'rutAgrega', {rid:r.id})).join('')}</div>`
+                       :'<div class="small dim mt8">Nada con esa búsqueda.</div>')
+        : exPickCats(pool, 'rutAgrega', {rid:r.id}, 'rutCat')}
     ${rutTieneMods(r.id)?`<button class="btn ghost full mt12" data-a="rutReset" data-rid="${r.id}">${ic('repeat',13)} Volver al plan original</button>`:''}
   </div>`;
 }
@@ -9730,10 +9756,10 @@ function libreForm(sel){
       </div>`).join('')}</div>`:''}
     ${frec.length&&!q?`<div class="flex wrapf mt8" style="gap:6px">${frec.map(f=>
       `<button class="chip" data-a="libreAdd" data-id="${f.id}">${ic('plus',9)} ${esc(shortEx(exNombre(f.id)))}</button>`).join('')}</div>`:''}
-    <div class="inwrap mt8">${ic('search',15)}<input class="in has-ic" placeholder="Busca un ejercicio…" value="${esc(UI.libreQ||'')}" data-ch="libreq"></div>
-    ${found.length?`<div class="mt8">${found.map(x=>
-      `<button class="actrow" data-a="libreAdd" data-id="${x.id}"><span class="grow tl" style="min-width:0"><b class="small">${esc(x.name)}</b></span>${ic('plus',14)}</button>`).join('')}</div>`
-      :(q?'<div class="small dim mt8">Nada con esa búsqueda.</div>':'')}
+    <div class="inwrap mt8">${ic('search',15)}<input class="in has-ic" placeholder="Buscar un ejercicio…" value="${esc(UI.libreQ||'')}" data-ch="libreq"></div>
+    ${q ? (found.length?`<div class="mt8">${found.map(x=>exPickRow(excatById(x.id)||{id:x.id,name:x.name,cat:'otros'}, 'libreAdd', {})).join('')}</div>`
+                       :'<div class="small dim mt8">Nada con esa búsqueda.</div>')
+        : exPickCats(pool.map(x=>excatById(x.id)||{id:x.id,name:x.name,cat:'otros'}), 'libreAdd', {}, 'libreCat')}
     <div class="flex mt12" style="gap:8px">
       <button class="btn primary grow" data-a="libreSave" data-d="${sel}">${ic('check',14)} Guardar el ${fmtD(sel)}</button>
       <button class="btn" data-a="libreAbrir" data-d="">Cancelar</button>
@@ -13856,6 +13882,25 @@ function anclaVisualTomar(preferirCampo){
   if(f && f.getBoundingClientRect && f.isConnected) return {el:f, top:f.getBoundingClientRect().top, alt};
   return alt;
 }
+/* Abrir un ejercicio de la sesion cierra el anterior. Si el que se cierra estaba mas
+   arriba, todo el contenido de encima se encoge y la pantalla se va: medido, saltaba 266
+   px. El ancla general del render mira la primera seccion visible, que en este caso es
+   justo la que cambia de alto. Esto ancla al elemento que el dedo toco, que es lo que el
+   usuario espera que no se mueva. */
+function renderAnclado(el){
+  if(!el || !el.isConnected){ render(); return; }
+  const sel = el.dataset && el.dataset.a
+    ? '#view [data-a="'+el.dataset.a+'"]'+(el.dataset.ex?'[data-ex="'+el.dataset.ex+'"]':'')+(el.dataset.id?'[data-id="'+el.dataset.id+'"]':'')
+    : null;
+  const top0 = el.getBoundingClientRect().top;
+  render();
+  if(!sel) return;
+  requestAnimationFrame(()=>{
+    const n=document.querySelector(sel); if(!n) return;
+    const d=n.getBoundingClientRect().top-top0;
+    if(Math.abs(d)>1) window.scrollBy(0, d);
+  });
+}
 function anclaVisualAplicar(av){
   if(!av) return;
   let a=av;
@@ -14242,7 +14287,7 @@ const ACTIONS = {
   tab(d){ UI.tab=d.t; if(d.t==='agenda'){ UI.calView='mes'; UI.calM=0; UI.calSel=null; UI.calDay=null; UI.session=null; } if(d.t==='entrenar'){ UI.session=null; UI.routineView=null; } if(d.t==='mas'){ markIdeasSeen(); } render(); },
   routineOpen(d){ UI.tab='entrenar'; UI.session=null; UI.routineView=d.rid; render(); window.scrollTo({top:0}); },
   routineBack(){ UI.routineView=null; UI.rutEdit=null; render(); },
-  rutEdit(d){ UI.rutEdit = UI.rutEdit===d.rid ? null : d.rid; UI.rutQ=''; render(); },
+  rutEdit(d, el){ UI.rutEdit = UI.rutEdit===d.rid ? null : d.rid; UI.rutQ=''; renderAnclado(el); },
   rutMod(rid){ S.rutMod=S.rutMod||{}; S.rutMod[rid]=S.rutMod[rid]||{}; return S.rutMod[rid]; },
   rutSets(d){
     const m=ACTIONS.rutMod(d.rid), r=ROUTINES.find(x=>x.id===d.rid);
@@ -14323,7 +14368,7 @@ const ACTIONS = {
     save('draft'); render();
     snackUndo('Quitaste '+shortEx(nm)+' de la sesión de hoy', undo);
   },
-  exToggle(d){ UI.exOpen = (UI.exOpen===d.ex)?null:d.ex; UI.swapOpen=false; UI.noteOpen=false; UI.platesOpen=false; render(); },
+  exToggle(d, el){ UI.exOpen = (UI.exOpen===d.ex)?null:d.ex; UI.swapOpen=false; UI.noteOpen=false; UI.platesOpen=false; renderAnclado(el); },
   /* F5: el checkbox de la cabecera marca/desmarca TODAS las series de una vez; si
      alguna no tiene peso o reps, los rellena con lo previsto (ultimo log, o el
      placeholder de reps si es la primera vez) para que si cuenten en el cierre.
@@ -14378,12 +14423,12 @@ const ACTIONS = {
   swapOpen(){ UI.swapOpen=!UI.swapOpen; render(); },
   noteOpen(){ UI.noteOpen=!UI.noteOpen; render(); },
   platesOpen(){ UI.platesOpen=!UI.platesOpen; render(); },
-  exOptsTgl(d){ UI.exOpts = UI.exOpts===d.ex ? null : d.ex; render(); },
+  exOptsTgl(d, el){ UI.exOpts = UI.exOpts===d.ex ? null : d.ex; renderAnclado(el); },
   exOptPick(d){ UI.exOpen=d.ex;  // abre la fila para ver el panel
     if(d.o==='swap'){ UI.swapOpen=!UI.swapOpen; UI.noteOpen=UI.platesOpen=false; }
     else if(d.o==='note'){ UI.noteOpen=!UI.noteOpen; UI.swapOpen=UI.platesOpen=false; }
     else if(d.o==='plates'){ UI.platesOpen=!UI.platesOpen; UI.swapOpen=UI.noteOpen=false; }
-    render();
+    renderAnclado(el);
   },
   swapEx(d){
     S.draft.alts=S.draft.alts||{};
@@ -14561,7 +14606,7 @@ const ACTIONS = {
     toast(xp?('Meal prep hecho · +'+xp+' XP'):'Ya contaba por hoy');
   },
   restMenu(){ UI.restOpen=!UI.restOpen; render(); },
-  addExTgl(){ UI.addExOpen=!UI.addExOpen; render(); },
+  addExTgl(d, el){ UI.addExOpen=!UI.addExOpen; renderAnclado(el); },
   importWorkout(){
     /* devuelve true/false (ademas de pintar el toast) para que impBox() sepa si
        debe cerrar la ventana flotante tras un import exitoso */
@@ -15011,7 +15056,7 @@ const ACTIONS = {
     const g=(S.goals||[]).find(x=>x.id===d.id); if(!g) return;
     delete g.base; save('goals'); UI.goalBase=null; render(); toast('Vuelve a contar todo el historial');
   },
-  fzaOpen(d){ UI.fzaOpen = UI.fzaOpen===d.k ? null : d.k; render(); },
+  fzaOpen(d, el){ UI.fzaOpen = UI.fzaOpen===d.k ? null : d.k; renderAnclado(el); },
   fzaFuente(d){
     S.cfg.fzaFuente=S.cfg.fzaFuente||{};
     if(d.id) S.cfg.fzaFuente[d.k]=d.id; else delete S.cfg.fzaFuente[d.k];
@@ -15313,6 +15358,7 @@ const ACTIONS = {
     UI.libre.items.push({id:d.id, name:nom, s, w, r});
     UI.libreQ=''; render();
   },
+  exPickCat(d, el){ UI[d.k] = UI[d.k]===d.cat ? null : d.cat; renderAnclado(el); },
   libreDel(d){ if(UI.libre) UI.libre.items.splice(+d.i,1); render(); },
   libreSave(d){
     const L=UI.libre; if(!L || !L.items.length){ toast('Agrega al menos un ejercicio'); return; }

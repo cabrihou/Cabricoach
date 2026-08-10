@@ -494,3 +494,31 @@ arranque de una curva nueva. `g.base = {d, rm, w, r, motivo, previoRM}`: `goalHi
 `goalBestRM` y `goalProy` ignoran todo lo anterior a esa fecha, y la marca vieja se guarda y
 se muestra para no perderla.
 
+### Los otros ejercicios (P7a, plegado)
+
+Llevan **nivel propio** cuando hay baremo para su patrón (`fzaNivelOtro`), con su escalera
+completa al abrir. Se pueden marcar con estrella para **seguirlos de cerca**
+(`S.cfg.fzaSigue`): los marcados suben a un bloque propio junto a los principales.
+
+El `<details>` guarda su estado en `UI.fzaOtros`. Sin eso se cerraba en cada render y tocar
+un ejercicio de dentro daba un salto de pantalla enorme.
+
+### Peso por lado
+
+`exUnilateral(id)` detecta los ejercicios que se hacen un lado a la vez;
+`S.cfg.porLado[id]` guarda si el peso apuntado es de un lado o el total, y `exPesoReal`
+lo aplica al tonelaje y al 1RM. La app no lo puede adivinar: 27 kg en un curl con mancuerna
+pueden ser 27 o 54 de trabajo real. Se marca desde la ficha del ejercicio o desde la fila
+abierta en nivel de fuerza, y donde aparece el peso se ve la etiqueta "por lado".
+
+### De qué ejercicio sale cada estándar
+
+`FZA_MAP` lista los candidatos de cada estándar **en orden de fidelidad** y se usa el primero
+que tenga registros. Antes se cogía el que diera más 1RM, y por eso el press banca acababa
+saliendo de un press inclinado y el curl de barra de uno en polea, que mueve más peso pero no
+es el mismo levantamiento. Los que tienen tabla propia en `FZA_STD2` (inclinado, hack,
+rumano, remo con mancuerna) salieron de aquí: se ven en su propia fila con su propio baremo.
+
+Se puede elegir a mano desde la fila abierta (`S.cfg.fzaFuente[estandar] = exId`), con los
+candidatos y el 1RM de cada uno a la vista.
+

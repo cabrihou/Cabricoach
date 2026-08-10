@@ -72,3 +72,29 @@ app lo dice. El deltoide anterior lleva MEV 0 a propósito: se llena solo con cu
 - [Fondos en banco, barra y anillas: cinemática y activación](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9603242/)
 - [Actividad EMG en el peso muerto y sus variantes (PLOS ONE)](https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0229507)
 - [Pullover: efecto sobre pectoral mayor y dorsal ancho](https://www.researchgate.net/publication/51695295_Effects_of_the_Pullover_Exercise_on_the_Pectoralis_Major_and_Latissimus_Dorsi_Muscles_as_Evaluated_by_EMG)
+
+## Baremos de fuerza relativa ampliados
+
+`FZA_STD` cubre los nueve básicos. `FZA_STD2` (09/08/2026) añade **22 ejercicios más**
+para poder dar nivel también a lo que no es un básico: press inclinado, elevación lateral,
+pájaro posterior, remo con mancuerna, remo en polea, encogimiento, curl martillo, tríceps en
+polea, press francés, sentadilla frontal, hack, extensión de cuádriceps, curl femoral, peso
+muerto rumano, zancada, búlgara, gemelo, abductor, aductor y face pull.
+
+Se llega a ellos por **patrón de movimiento** (`FZA_PAT2`), así cubren también los
+importados de Strong, con overrides por nombre (`FZA_NOM2`) donde el patrón se queda corto:
+el face pull comparte patrón con el pájaro posterior pero mueve mucho menos peso, y con la
+tabla equivocada un intermedio salía élite.
+
+**Se excluyeron a propósito** flexiones, remo invertido y muscle up: se registran sin kilos,
+así que no hay ratio que calcular.
+
+Los baremos de mancuerna están normalizados al **total de las dos**. Por eso importa marcar
+si un peso es por lado (`S.cfg.porLado`): un curl de 27 por brazo son 54 kg de trabajo, y sin
+ese dato el nivel sale a la mitad y el tonelaje también.
+
+Fuentes: [StrengthLevel](https://strengthlevel.com/strength-standards),
+[ExRx](https://exrx.net/Testing/WeightLifting/StrengthStandards),
+[Symmetric Strength](https://symmetricstrength.com/standards),
+[Fitness Volt](https://fitnessvolt.com/strength-standards/).
+

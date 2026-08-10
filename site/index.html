@@ -876,6 +876,24 @@ svg .acc{fill:var(--mint);stroke:none}
 .mrotb.on{background:var(--acc);border-color:var(--acc);color:#0B0D0F}
 .medbp{width:100%;height:auto;display:block;max-height:56vh;touch-action:pan-y;border-radius:16px;transition:max-height .25s}
 .medbp.hassel{max-height:42vh}
+.goalbase{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:9px 11px;border-radius:12px;background:rgba(143,160,255,.09);border:1px solid rgba(143,160,255,.22)}
+.fzafuente{padding:10px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line2)}
+.fzarow{cursor:pointer;transition:background .18s;border-radius:12px;padding:8px 10px;margin:0 -10px}
+.fzarow:hover,.fzarow.open{background:rgba(255,255,255,.03)}
+.fzaesc{margin-top:10px;padding-top:10px;border-top:1px solid var(--line2);cursor:default}
+.fzaescrow{display:flex;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid var(--line2)}
+.fzaescrow:last-of-type{border-bottom:0}
+.fzaescrow.on{background:rgba(255,255,255,.04);border-radius:8px;padding:6px 8px;margin:0 -8px}
+.fzaescrow.hecho .fen{opacity:.75}
+.fzaescrow .fen{flex:1;font:600 12px var(--ui)}
+.fzaescrow .few{font:700 14px var(--num);color:var(--ink);display:flex;align-items:baseline;gap:3px}
+.fzaescrow .few em{font:600 8.5px var(--ui);color:var(--smoke);font-style:normal}
+.fzaescrow .fe5{flex:0 0 74px;text-align:right;font:600 11.5px var(--num);color:var(--smoke)}
+.propfoco{padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--line2)}
+.propfoco.ok{display:flex;gap:10px;align-items:flex-start;border-color:rgba(88,223,163,.3);background:rgba(88,223,163,.06)}
+.propfoco .lbl{display:block;margin-bottom:6px}
+.excatpc{flex:none;font:800 15px var(--num);color:var(--acc);display:flex;align-items:baseline;gap:1px;padding-left:6px}
+.excatpc em{font:600 9px var(--ui);color:var(--smoke);font-style:normal}
 .muscrep{padding-top:10px;border-top:1px solid var(--line2)}
 .mrbar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--line2)}
 .mrbar i{display:block;height:100%}
@@ -1505,7 +1523,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 147';
+const APPREV='REV 148';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3122,58 +3140,75 @@ function propReeves(){
 }
 function propCard(){
   const P=propObjetivos();
-  if(!P.ok) return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('target',16)} Proporciones</span></div>
-    <div class="small dim" style="line-height:1.5">Para calcular tus proporciones necesito <b>${esc(P.txt)}</b>. Es la medida que ancla todo el sistema${UID==='cami'?' en mujeres':' en hombres'}, así que sin ella no calculo nada a medias.</div>
+  if(!P.ok) return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('target',16)} Tu forma</span></div>
+    <div class="small dim" style="line-height:1.5">Para calcular esto me falta <b>${esc(P.txt)}</b>. Es la medida que ancla todo${UID==='cami'?' en mujeres':' en hombres'}: sin ella los objetivos saldrían inventados.</div>
     <button class="btn primary full mt12" data-a="medAbrir" data-g="${P.falta==='muneca'?'anio':'mes'}">${ic('ruler',13)} Medir ${esc(P.txt)}</button></section>`;
-  /* se ordena por diferencia RELATIVA: la primera fila es siempre en lo que hay que
+  /* ordenado por diferencia RELATIVA: la primera fila es siempre en lo que hay que
      trabajar, sin que haya que interpretar nada */
   const filas=P.obj.map(o=>{
-    const u=medUltimo(o.k);
-    return {...o, act:u?u.v:null, rel:u?Math.abs(u.v-o.o)/o.o:-1};
+    const u=medUltimo(o.k), tol=o.tol||0;
+    const act=u?u.v:null;
+    const dif=act!=null?act-o.o:null;
+    const logrado = act==null?false : (o.dir==='baja' ? dif<=tol : dif>=-tol);
+    return {...o, act, dif, logrado, rel:act!=null&&!logrado?Math.abs(dif)/o.o:-1};
   }).sort((a,b)=>b.rel-a.rel);
+  const medidas=filas.filter(f=>f.act!=null);
+  const hechas=medidas.filter(f=>f.logrado).length;
+  const foco=filas.find(f=>f.act!=null && !f.logrado);
+  const sinMedir=filas.filter(f=>f.act==null);
   const reeves=propReeves();
+  const fila=f=>{
+    if(f.act==null) return `<div class="proprow flex between" style="align-items:baseline"><b class="small">${f.n}</b>
+      <span class="small dim">objetivo ${fmt1(f.o)} cm · sin medir</span></div>`;
+    const pct=clamp(f.dir==='baja' ? (f.o/f.act)*100 : (f.act/f.o)*100, 0, 100);
+    return `<div class="proprow">
+      <div class="flex between" style="align-items:baseline">
+        <b class="small">${f.n}</b>
+        <span class="medval"><b class="${f.logrado?'mint':''}">${fmt1(f.act)}</b><em>de ${fmt1(f.o)} cm</em></span>
+      </div>
+      <div class="fzabar mt4"><i style="width:${Math.round(pct)}%;background:${f.logrado?'linear-gradient(90deg,var(--mint),var(--mint2))':'linear-gradient(90deg,rgba(var(--acc-rgb),.9),rgba(var(--acc-rgb),.5))'}"></i></div>
+      <div class="small mt4" style="color:${f.logrado?'var(--mint)':'var(--ink2)'}">${f.logrado?'En rango ✓':(f.dir==='baja'?`${fmt1(Math.abs(f.dif))} cm por bajar`:`${fmt1(Math.abs(f.dif))} cm por ganar`)}</div>
+    </div>`;
+  };
   return `<section class="mod">
-    <div class="mod-head"><span class="ttl">${ic('target',16)} Proporciones</span><span class="chip dim">${P.ancla.n} ${fmt1(P.ancla.v)} cm</span></div>
-    <div class="small dim mb12" style="line-height:1.5">Todo se calcula desde tu ${P.ancla.n}${UID!=='cami'?` (marco de pecho ${fmt1(P.pechoBase)} cm)`:''}. Son referencias <b>estéticas</b>, no de salud: la única con respaldo clínico es cintura/estatura.</div>
-    ${filas.map(f=>{
-      if(f.act==null) return `<div class="proprow"><span class="grow"><b>${f.n}</b><i class="small dim" style="display:block">objetivo ${fmt1(f.o)} cm · sin medir</i></span></div>`;
-      const dif=f.act-f.o, tol=f.tol||0;
-      const logrado = f.dir==='baja' ? (dif<=tol) : (dif>=-tol);
-      const pct=clamp(f.dir==='baja' ? (f.o/f.act)*100 : (f.act/f.o)*100, 0, 100);
-      return `<div class="proprow">
-        <div class="flex between" style="align-items:baseline">
-          <b class="small">${f.n}</b>
-          <span class="medval"><b class="${logrado?'mint':''}">${fmt1(f.act)}</b><em>de ${fmt1(f.o)} cm</em></span>
-        </div>
-        <div class="fzabar mt4"><i style="width:${Math.round(pct)}%;background:${logrado?'linear-gradient(90deg,var(--mint),var(--mint2))':'linear-gradient(90deg,rgba(var(--acc-rgb),.9),rgba(var(--acc-rgb),.5))'}"></i></div>
-        <div class="small mt4" style="color:${logrado?'var(--mint)':'var(--ink2)'}">${logrado?'En rango ✓':(f.dir==='baja'?`${fmt1(Math.abs(dif))} cm por bajar`:`${fmt1(Math.abs(dif))} cm por ganar`)}</div>
-      </div>`;
-    }).join('')}
-    <span class="lbl" style="display:block;margin-top:14px">FORMA</span>
-    ${P.ratios.filter(r=>r.v!=null).map(r=>{
-      const ok = r.menor ? r.v<=r.meta : r.v>=r.meta;
-      const okSalud = r.salud!=null ? (r.menor? r.v<=r.salud : r.v>=r.salud) : null;
-      return `<div class="proprow"><div class="flex between" style="align-items:baseline">
-        <b class="small">${r.n}${r.clinico?' <i class="small" style="color:var(--mint);font-style:normal">· salud</i>':''}</b>
-        <span class="medval"><b class="${ok?'mint':okSalud===false?'red':''}">${r.v.toFixed(2)}</b><em>meta ${r.meta.toFixed(r.meta<1?2:3)}</em></span></div>
-        ${r.nota?`<div class="small dim mt4">${r.nota}</div>`:''}
-        ${(!ok&&okSalud)?`<div class="small dim mt4">Por encima de la referencia estética, pero dentro del rango sano (${r.salud.toFixed(2)}).</div>`:''}
-      </div>`;
-    }).join('')}
-    ${reeves?`<div class="mt12"><span class="lbl">SIMETRÍA DE REEVES</span>
-      <div class="small mt4" style="line-height:1.5">Brazo, pantorrilla y cuello deberían medir casi lo mismo: ${reeves.vs.map(x=>`${x.n} <b>${fmt1(x.v)}</b>`).join(' · ')}.
-      ${reeves.ok?'Están parejos ✓':`Hay <b>${fmt1(reeves.dif)} cm</b> de diferencia entre el mayor y el menor.`}</div></div>`:''}
-    <div class="small dim mt12" style="line-height:1.5">${UID==='cami'
-      ? 'Tu cadera y tu estructura ósea no cambian con entrenamiento. Si algún objetivo queda lejos por estructura, no es un fallo tuyo: es el sistema pidiendo algo que tu esqueleto no da.'
-      : 'La muñeca es hueso: no se entrena. Si un objetivo queda lejos, se trabaja con años de entreno, no con dieta.'}</div>
+    <div class="mod-head"><span class="ttl">${ic('target',16)} Tu forma</span>
+      ${medidas.length?`<span class="chip ${hechas===medidas.length?'fill':'dim'}">${hechas} de ${medidas.length}</span>`:''}</div>
+    <p class="small dim" style="margin:0 0 10px;line-height:1.55">Un cuerpo se ve equilibrado cuando sus medidas guardan cierta relación entre sí. Aquí comparo las tuyas con esa relación, tomando tu <b>${P.ancla.n} (${fmt1(P.ancla.v)} cm)</b> como referencia, que es hueso y no cambia.</p>
+    ${foco?`<div class="propfoco">
+      <span class="lbl">EN LO QUE ESTÁS MÁS LEJOS</span>
+      ${fila(foco)}
+      <div class="small dim mt8" style="line-height:1.5">${esc(propComo(foco))}</div>
+    </div>`:`<div class="propfoco ok">${ic('check',15)}<div><b>Estás en rango en todo lo medido.</b>
+      <div class="small dim mt4">A partir de aquí no es cuestión de centímetros sino de mantenerlos mientras baja la grasa.</div></div></div>`}
+    ${medidas.length>1?`<details class="medhist mt8"><summary>Ver las ${medidas.length} medidas</summary>
+      ${filas.filter(f=>f!==foco && f.act!=null).map(fila).join('')}
+      ${sinMedir.length?`<div class="small dim mt8">Sin medir: ${esc(sinMedir.map(f=>f.n.toLowerCase()).join(', '))}.</div>`:''}
+    </details>`:''}
+    <details class="medhist"><summary>De dónde salen estos objetivos</summary>
+      <div class="small dim" style="line-height:1.6">
+        Son proporciones <b>estéticas</b> clásicas del culturismo natural, calculadas sobre tu ${P.ancla.n}: se usa porque es hueso, no cambia con la dieta ni el entreno, así que da una referencia estable de tu estructura.
+        <div class="mt8">No son metas de salud y no hay que perseguirlas al centímetro. <b>La única con respaldo médico es cintura sobre estatura</b>, y esa sí conviene tenerla por debajo de 0,50.</div>
+        ${P.ratios.filter(r=>r.v!=null).length?`<div class="mt12">${P.ratios.filter(r=>r.v!=null).map(r=>{
+          const ok = r.menor ? r.v<=r.meta : r.v>=r.meta;
+          return `<div class="flex between" style="align-items:baseline;padding:5px 0">
+            <span class="small">${r.n}${r.clinico?' <b style="color:var(--mint)">· salud</b>':''}</span>
+            <span class="medval"><b class="${ok?'mint':''}">${r.v.toFixed(2)}</b><em>meta ${r.menor?'≤':'≥'} ${r.meta.toFixed(2)}</em></span></div>`;}).join('')}</div>`:''}
+        ${reeves?`<div class="mt12" style="padding-top:10px;border-top:1px solid var(--line2)">${reeves}</div>`:''}
+      </div>
+    </details>
   </section>`;
 }
-/* ============ NIVEL DE FUERZA vs ESTANDARES ============
-   Un 1RM suelto no dice nada: 100 kg de sentadilla es otra cosa a 60 kg que a 95.
-   Aqui se compara el 1RM ESTIMADO contra el peso corporal y se traduce a un nivel,
-   con los umbrales habituales de fuerza relativa (ratio 1RM / peso corporal), que
-   son distintos por sexo. Sirve para lo unico que importa: saber cual es el eslabon
-   debil y priorizarlo, en vez de seguir puliendo el que ya va bien. */
+/* que hacer con la medida que mas lejos esta, dicho en una frase */
+function propComo(f){
+  if(f.dir==='baja') return 'Esto no se entrena: baja con déficit y pasos, sosteniendo la proteína para no perder músculo por el camino.';
+  const COMO={pecho:'Press de banca e inclinado, más fondos.', hombros:'Press militar y elevaciones laterales, dos veces por semana.',
+    'Brazo (contraído)':'Curl y tríceps al final de la sesión, series de 8 a 12.',
+    Muslo:'Sentadilla y prensa pesadas, más peso muerto rumano.', Pantorrilla:'Gemelos de pie, series largas y casi a diario.',
+    Antebrazo:'Agarre: colgarse de la barra y cargadas de granjero.', Cuello:'Encogimientos y face pull; crece lento y es normal.',
+    Busto:'Esta no se entrena: es tejido mamario. Lo que se trabaja es el pectoral de abajo.'};
+  const c=COMO[f.n]||'';
+  return (c?c+' ':'')+'Un centímetro real de músculo son meses de trabajo, no semanas.';
+}
 const FZA_NIVELES=['Principiante','Novato','Intermedio','Avanzado','Élite'];
 /* ratios de 1RM/peso corporal para [novato, intermedio, avanzado, elite] */
 const FZA_STD={
@@ -3202,10 +3237,10 @@ const FZA_MAP={
 function fzaPesoCorporal(){ const pm=pesoProm7(); return pm?pm.kg:(currentWeight()||0); }
 /* mejor 1RM estimado historico de un ejercicio (ignora los sustituidos) */
 function fzaMejor1RM(id){
-  const h=(S.logs||{})[id]||[]; let b=0, d=null;
+  const h=(S.logs||{})[id]||[]; let b=0, d=null, bw=0, br=0;
   h.forEach(en=>{ if(en.alt) return;
-    en.sets.forEach(s=>{ const w=+s.w||0, r=+s.r||0; if(w>0&&r>0){ const e=e1rm(w,r); if(e>b){ b=e; d=en.d; } } }); });
-  return b>0?{rm:b, d}:null;
+    en.sets.forEach(s=>{ const w=+s.w||0, r=+s.r||0; if(w>0&&r>0){ const e=e1rm(w,r); if(e>b){ b=e; d=en.d; bw=w; br=r; } } }); });
+  return b>0?{rm:b, d, w:bw, r:br}:null;
 }
 function fzaNivelDe(ratio, umbrales){
   let i=0; while(i<umbrales.length && ratio>=umbrales[i]) i++;
@@ -3226,22 +3261,58 @@ function fzaTabla(){
     if(!mejor) return;
     const ratio=mejor.rm/pc;
     const nv=fzaNivelDe(ratio, FZA_STD[k][key]);
-    out.push({k, n:FZA_STD[k].n, ex:exId, rm:Math.round(mejor.rm*10)/10, d:mejor.d, ratio:Math.round(ratio*100)/100, ...nv,
+    out.push({k, n:FZA_STD[k].n, ex:exId, rm:Math.round(mejor.rm*10)/10, d:mejor.d, sw:mejor.w, sr:mejor.r, ratio:Math.round(ratio*100)/100, ...nv,
       /* puntaje comparable entre ejercicios: cuanto del camino a elite lleva */
       score: ratio/FZA_STD[k][key][3]});
   });
   return out.sort((x,y)=>y.score-x.score);
 }
+/* el peso de 1RM que hace falta para estar en un nivel, con TU peso corporal */
+function fzaPesoNivel(k, nivel, pc){
+  const key = UID==='cami' ? 'c' : 'a';
+  const u=FZA_STD[k][key];
+  if(nivel<=0) return 0;
+  return Math.round(u[nivel-1]*pc*10)/10;
+}
+/* la escalera completa: que hay que levantar para cada categoria. En 1RM y, mas util,
+   en una serie de 5, que es lo que uno hace de verdad en el gimnasio. */
+function fzaEscalera(x, pc){
+  const key = UID==='cami' ? 'c' : 'a';
+  const u=FZA_STD[x.k][key];
+  const col=n=>['#8B97A1','#8FA0FF','#58DFA3','var(--gold)','#FF7AB6'][n]||'var(--ink2)';
+  /* Epley al reves: con que peso × 5 repeticiones se llega a ese 1RM */
+  const por5=rm=>Math.round(rm/(1+5/30)/2.5)*2.5;
+  return `<div class="fzaesc" onclick="event.stopPropagation()">
+    ${x.sw?`<div class="fzafuente">
+      <span class="lbl">DE DÓNDE SALE TU NÚMERO</span>
+      <div class="small mt4" style="line-height:1.55">El <b>${fmtD(x.d)}</b> hiciste <b style="color:var(--ink)">${fmt1(x.sw)} kg × ${x.sr} ${x.sr===1?'repetición':'repeticiones'}</b>${x.ex?` en ${esc(shortEx(exNombre(x.ex)))}`:''}. De ahí sale tu 1RM estimado de <b style="color:var(--ink)">${fmt1(x.rm)} kg</b>.</div>
+      <div class="small dim mt4">${fmt1(x.sw)} × (1 + ${x.sr} ÷ 30) = ${fmt1(x.rm)} kg. Es tu mejor serie de todo el historial, no la última.</div>
+    </div>`:''}
+    <div class="small dim" style="line-height:1.5;margin:10px 0 8px">Lo que hay que levantar en <b>${esc(x.n).toLowerCase()}</b> para cada nivel, con tus ${fmt1(Math.round(pc*10)/10)} kg de peso corporal:</div>
+    ${FZA_NIVELES.map((nom,i)=>{
+      if(i===0) return '';
+      const rm=Math.round(u[i-1]*pc*10)/10, aqui=x.nivel===i, pasado=x.nivel>i;
+      return `<div class="fzaescrow ${aqui?'on':''} ${pasado?'hecho':''}">
+        <span class="fen" style="color:${pasado||aqui?col(i):'var(--smoke)'}">${nom}${pasado?' ✓':''}</span>
+        <span class="few"><b>${fmt1(rm)}</b><em>kg 1RM</em></span>
+        <span class="fe5">${fmt1(por5(rm))} × 5</span></div>`;
+    }).join('')}
+    ${x.nivel<4?`<div class="small mt8" style="line-height:1.5;color:var(--ink2)">Para pasar a <b>${FZA_NIVELES[x.nivel+1]}</b> necesitas un 1RM de <b style="color:var(--ink)">${fmt1(fzaPesoNivel(x.k,x.nivel+1,pc))} kg</b>, o sea unas <b style="color:var(--ink)">${fmt1(por5(fzaPesoNivel(x.k,x.nivel+1,pc)))} kg × 5</b>. Hoy vas por ${fmt1(x.rm)}.</div>`
+      :`<div class="small mt8" style="color:var(--gold)">Ya estás en el tope de la tabla. De aquí en adelante compites contra ti mismo.</div>`}
+    <div class="small dim mt8">El 1RM no hay que probarlo nunca: sale estimado de tus series con la fórmula de Epley.</div>
+  </div>`;
+}
 function fzaCard(){
   const tb=fzaTabla();
   const pc=fzaPesoCorporal();
-  if(tb.length<2) return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('trend',16)} Tu nivel de fuerza</span></div>
-    <div class="small dim">Registra al menos dos de los básicos (banca, sentadilla, peso muerto, remo, press de hombro) y te digo en qué nivel estás y cuál es tu punto débil.</div></section>`;
+  if(!tb.length) return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('trend',16)} Tu nivel de fuerza</span></div>
+    <div class="small dim">Registra alguno de los básicos (banca, sentadilla, peso muerto, remo, press de hombro, hip thrust) y te digo en qué nivel estás y qué te falta para el siguiente.</div></section>`;
+  const solo = tb.length<2;
   const fuerte=tb[0], debil=tb[tb.length-1];
   const col=n=>['#8B97A1','#8FA0FF','#58DFA3','var(--gold)','#FF7AB6'][n]||'var(--ink2)';
   return `<section class="mod">
     <div class="mod-head"><span class="ttl">${ic('trend',16)} Tu nivel de fuerza</span><span class="chip dim">vs ${fmt1(Math.round(pc*10)/10)} kg</span></div>
-    <div class="fzadestacado">
+    ${solo?'':`<div class="fzadestacado">
       <div class="fzabox"><span class="lbl">MÁS FUERTE</span><b>${esc(fuerte.n)}</b>
         <i style="color:${col(fuerte.nivel)}">${fuerte.nombre}</i>
         <span class="small dim">${fmt1(fuerte.rm)} kg · ${fuerte.ratio}× tu peso</span></div>
@@ -3249,18 +3320,49 @@ function fzaCard(){
         <i style="color:${col(debil.nivel)}">${debil.nombre}</i>
         <span class="small dim">${fmt1(debil.rm)} kg · ${debil.ratio}× tu peso</span></div>
     </div>
-    <div class="small mt12" style="line-height:1.5">Tu eslabón débil es <b>${esc(debil.n).toLowerCase()}</b>. Ponlo de primero en la sesión un mes: ahí está la ganancia fácil.</div>
+    <div class="small mt12" style="line-height:1.5">Tu eslabón débil es <b>${esc(debil.n).toLowerCase()}</b>. Ponlo de primero en la sesión un mes: ahí está la ganancia fácil.</div>`}
+    ${solo?`<div class="small dim" style="line-height:1.5">Con más básicos registrados te puedo decir cuál es tu punto fuerte y cuál el débil. Por ahora, esto es lo que hay:</div>`:''}
     <div class="mt12">${tb.map(x=>`
-      <div class="fzarow">
+      <div class="fzarow ${UI.fzaOpen===x.k?'open':''}" data-a="fzaOpen" data-k="${x.k}" role="button" tabindex="0"
+        aria-expanded="${UI.fzaOpen===x.k?'true':'false'}" aria-label="${esc(x.n)}, ${x.nombre}, toca para ver los pesos de cada nivel">
         <div class="flex between" style="align-items:baseline">
           <b class="small">${esc(x.n)}</b>
           <span class="medval"><b>${fmt1(x.rm)}</b><em>kg · ${x.ratio}×</em></span>
         </div>
         <div class="fzabar mt4"><i style="width:${Math.round(x.pct)}%;background:${col(x.nivel)}"></i></div>
         <div class="flex between mt4"><span class="small" style="color:${col(x.nivel)}">${x.nombre}</span>
-          <span class="small dim">${x.nivel>=4?'tope de la tabla':'faltan '+fmt1(Math.round(x.faltaRatio*pc*10)/10)+' kg para '+FZA_NIVELES[x.nivel+1]}</span></div>
+          <span class="small dim">${x.nivel>=4?'tope de la tabla':'te falta llegar a '+fmt1(fzaPesoNivel(x.k,x.nivel+1,pc))+' kg'} ${ic('chevR',11)}</span></div>
+        ${UI.fzaOpen===x.k?fzaEscalera(x, pc):''}
       </div>`).join('')}</div>
     <div class="small dim mt12" style="line-height:1.5">Los niveles comparan tu 1RM estimado contra tu peso corporal, con los baremos habituales de fuerza relativa (${UID==='cami'?'tabla femenina':'tabla masculina'}). Es una referencia, no un examen.</div>
+    ${(()=>{ /* el resto de ejercicios con historial: no tienen baremo de nivel, pero si
+       progreso, que es lo que uno quiere mirar */
+      const enTabla=new Set(tb.map(x=>x.ex));
+      const otros=Object.keys(S.logs||{}).map(id=>{
+        if(enTabla.has(id)) return null;
+        const m=fzaMejor1RM(id); if(!m) return null;
+        const h=goalHistRM(id);
+        const prim=h.length>1?h[0]:null;
+        return {id, n:exNombre(id), rm:m.rm, d:m.d, w:m.w, r:m.r,
+          delta: prim? m.rm-prim.v : null, desde: prim?prim.d:null, ses:h.length};
+      }).filter(Boolean).sort((a,b)=>b.rm-a.rm);
+      if(!otros.length) return '';
+      return `<details class="medhist mt8"><summary>Ver los otros ${otros.length} ejercicios que registras</summary>
+        <div class="small dim" style="line-height:1.5;margin-bottom:8px">Estos no tienen tabla de niveles (los baremos de fuerza relativa solo existen para los básicos), pero sí tu 1RM estimado y cuánto ha subido.</div>
+        ${otros.map(o=>`<div class="fzarow ${UI.fzaOpen==='x_'+o.id?'open':''}" data-a="fzaOpen" data-k="x_${o.id}" role="button" tabindex="0">
+          <div class="flex between" style="align-items:baseline">
+            <b class="small" style="min-width:0">${esc(shortEx(o.n))}</b>
+            <span class="medval"><b>${fmt1(o.rm)}</b><em>kg 1RM</em></span></div>
+          <div class="flex between mt4">
+            <span class="small dim">${o.ses} sesión${o.ses===1?'':'es'} registrada${o.ses===1?'':'s'}</span>
+            <span class="small" style="color:${o.delta==null?'var(--smoke)':o.delta>0.5?'var(--mint)':o.delta<-0.5?'#FF6B6B':'var(--smoke)'}">${
+              o.delta==null?'sin comparación':(o.delta>0?'+':'')+fmt1(o.delta)+' kg desde '+fmtD(o.desde)}</span></div>
+          ${UI.fzaOpen==='x_'+o.id?`<div class="fzaesc" onclick="event.stopPropagation()">
+            <div class="fzafuente"><span class="lbl">DE DÓNDE SALE</span>
+              <div class="small mt4" style="line-height:1.55">El <b>${fmtD(o.d)}</b> hiciste <b style="color:var(--ink)">${fmt1(o.w)} kg × ${o.r} ${o.r===1?'repetición':'repeticiones'}</b>. De ahí sale tu 1RM estimado de <b style="color:var(--ink)">${fmt1(o.rm)} kg</b>.</div>
+              <div class="small dim mt4">${fmt1(o.w)} × (1 + ${o.r} ÷ 30) = ${fmt1(o.rm)} kg</div></div>
+          </div>`:''}
+        </div>`).join('')}</details>`;})()}
   </section>`;
 }
 /* ---- mapa corporal: cabrito bipedo de frente, en paths por zona ----
@@ -3305,13 +3407,13 @@ const MED_COTAS={"frente":[["cuello","cuello","i",330,300,400],["pecho","pecho",
    biceps de quien entrena espalda sale a la mitad de lo que realmente recibe.
    Los multiarticulares olimpicos son los mas discutibles: ahi el reparto depende mucho de
    la tecnica y de la carga relativa. */
-const EJ_PATRONES={"press_horizontal":{"pectoral":65,"deltoide_anterior":20,"triceps":15},"press_cerrado":{"triceps":45,"pectoral":40,"deltoide_anterior":15},"palanca_frontal":{"dorsal":45,"abdomen":30,"lumbar":15,"triceps":10},"parada_manos":{"deltoide_anterior":45,"triceps":30,"trapecio":15,"abdomen":10},"sosten_anillas":{"triceps":40,"pectoral":30,"deltoide_anterior":20,"abdomen":10},"agarre_antebrazo":{"antebrazo":85,"biceps":15},"abduccion_cadera":{"gluteo":90,"aductor":10},"press_inclinado":{"pectoral":55,"deltoide_anterior":30,"triceps":15},"press_declinado":{"pectoral":70,"deltoide_anterior":15,"triceps":15},"fondo_pecho":{"pectoral":50,"triceps":45,"deltoide_anterior":5},"apertura_pecho":{"pectoral":85,"deltoide_anterior":15},"flexion_pecho":{"pectoral":60,"triceps":25,"deltoide_anterior":15},"press_vertical":{"deltoide_anterior":45,"triceps":30,"deltoide_lateral":20,"deltoide_posterior":5},"elevacion_lateral":{"deltoide_lateral":60,"deltoide_anterior":20,"deltoide_posterior":20},"elevacion_frontal":{"deltoide_anterior":70,"pectoral":20,"deltoide_lateral":10},"pajaro_posterior":{"deltoide_posterior":70,"trapecio":20,"deltoide_lateral":10},"jalon_vertical":{"dorsal":55,"biceps":20,"trapecio":15,"romboides":10},"remo_horizontal":{"dorsal":55,"trapecio":20,"biceps":15,"romboides":10},"remo_unilateral":{"dorsal":55,"biceps":20,"trapecio":15,"romboides":10},"remo_invertido":{"dorsal":50,"trapecio":25,"biceps":15,"romboides":10},"muscle_up":{"dorsal":30,"pectoral":20,"triceps":20,"biceps":15,"trapecio":15},"pullover":{"pectoral":50,"dorsal":35,"triceps":15},"encogimiento_trapecio":{"trapecio":90,"romboides":10},"curl_biceps":{"biceps":85,"antebrazo":15},"curl_martillo":{"biceps":70,"antebrazo":30},"extension_triceps":{"triceps":95,"antebrazo":5},"fondo_triceps":{"triceps":90,"deltoide_anterior":10},"sentadilla":{"cuadriceps":55,"gluteo":30,"isquiotibial":15},"prensa":{"cuadriceps":70,"gluteo":20,"isquiotibial":10},"zancada":{"cuadriceps":45,"gluteo":40,"isquiotibial":15},"extension_cuadriceps":{"cuadriceps":100},"curl_femoral":{"isquiotibial":100},"peso_muerto_convencional":{"isquiotibial":35,"cuadriceps":30,"gluteo":20,"lumbar":15},"peso_muerto_rumano":{"isquiotibial":50,"gluteo":35,"lumbar":15},"hip_thrust":{"gluteo":85,"isquiotibial":10,"cuadriceps":5},"gemelo_de_pie":{"pantorrilla":100},"gemelo_sentado":{"pantorrilla":100},"plancha_core":{"abdomen":85,"isquiotibial":15},"crunch_abdominal":{"abdomen":100},"elevacion_piernas":{"abdomen":100},"rotacion_core":{"oblicuos":70,"abdomen":30},"cargada_olimpica":{"gluteo":25,"isquiotibial":20,"cuadriceps":20,"trapecio":20,"lumbar":15},"arrancada_olimpica":{"gluteo":25,"isquiotibial":20,"cuadriceps":20,"deltoide_anterior":20,"trapecio":15},"farmer_walk":{"trapecio":45,"antebrazo":35,"abdomen":20}};
+const EJ_PATRONES={"press_horizontal":{"pectoral":65,"deltoide_anterior":20,"triceps":15},"press_cerrado":{"triceps":45,"pectoral":40,"deltoide_anterior":15},"palanca_frontal":{"dorsal":45,"abdomen":30,"lumbar":15,"triceps":10},"parada_manos":{"deltoide_anterior":45,"triceps":30,"trapecio":15,"abdomen":10},"sosten_anillas":{"triceps":40,"pectoral":30,"deltoide_anterior":20,"abdomen":10},"agarre_antebrazo":{"antebrazo":85,"biceps":15},"abduccion_cadera":{"gluteo":90,"aductor":10},"aduccion_cadera":{"aductor":90,"gluteo":10},"extension_lumbar":{"lumbar":45,"gluteo":35,"isquiotibial":20},"press_inclinado":{"pectoral":55,"deltoide_anterior":30,"triceps":15},"press_declinado":{"pectoral":70,"deltoide_anterior":15,"triceps":15},"fondo_pecho":{"pectoral":50,"triceps":45,"deltoide_anterior":5},"apertura_pecho":{"pectoral":85,"deltoide_anterior":15},"flexion_pecho":{"pectoral":60,"triceps":25,"deltoide_anterior":15},"press_vertical":{"deltoide_anterior":45,"triceps":30,"deltoide_lateral":20,"deltoide_posterior":5},"elevacion_lateral":{"deltoide_lateral":60,"deltoide_anterior":20,"deltoide_posterior":20},"elevacion_frontal":{"deltoide_anterior":70,"pectoral":20,"deltoide_lateral":10},"pajaro_posterior":{"deltoide_posterior":70,"trapecio":20,"deltoide_lateral":10},"jalon_vertical":{"dorsal":55,"biceps":20,"trapecio":15,"romboides":10},"remo_horizontal":{"dorsal":55,"trapecio":20,"biceps":15,"romboides":10},"remo_unilateral":{"dorsal":55,"biceps":20,"trapecio":15,"romboides":10},"remo_invertido":{"dorsal":50,"trapecio":25,"biceps":15,"romboides":10},"muscle_up":{"dorsal":30,"pectoral":20,"triceps":20,"biceps":15,"trapecio":15},"pullover":{"pectoral":50,"dorsal":35,"triceps":15},"encogimiento_trapecio":{"trapecio":90,"romboides":10},"curl_biceps":{"biceps":85,"antebrazo":15},"curl_martillo":{"biceps":70,"antebrazo":30},"extension_triceps":{"triceps":95,"antebrazo":5},"fondo_triceps":{"triceps":90,"deltoide_anterior":10},"sentadilla":{"cuadriceps":55,"gluteo":30,"isquiotibial":15},"prensa":{"cuadriceps":70,"gluteo":20,"isquiotibial":10},"zancada":{"cuadriceps":45,"gluteo":40,"isquiotibial":15},"extension_cuadriceps":{"cuadriceps":100},"curl_femoral":{"isquiotibial":100},"peso_muerto_convencional":{"isquiotibial":35,"cuadriceps":30,"gluteo":20,"lumbar":15},"peso_muerto_rumano":{"isquiotibial":50,"gluteo":35,"lumbar":15},"hip_thrust":{"gluteo":85,"isquiotibial":10,"cuadriceps":5},"gemelo_de_pie":{"pantorrilla":100},"gemelo_sentado":{"pantorrilla":100},"plancha_core":{"abdomen":85,"isquiotibial":15},"crunch_abdominal":{"abdomen":100},"elevacion_piernas":{"abdomen":100},"rotacion_core":{"oblicuos":70,"abdomen":30},"cargada_olimpica":{"gluteo":25,"isquiotibial":20,"cuadriceps":20,"trapecio":20,"lumbar":15},"arrancada_olimpica":{"gluteo":25,"isquiotibial":20,"cuadriceps":20,"deltoide_anterior":20,"trapecio":15},"farmer_walk":{"trapecio":45,"antebrazo":35,"abdomen":20}};
 /* Volumen semanal de referencia en SERIES EFECTIVAS por musculo (Renaissance Periodization
    y literatura reciente de hipertrofia):
    MEV = minimo para crecer · MAV = punto optimo · MRV = maximo que se recupera.
    Varia mucho por persona (años de entreno, sueño, comida): son referencias, no leyes.
    El deltoide anterior lleva MEV 0 a proposito: se llena solo con cualquier press. */
-const MUSC_VOL={"pectoral":{"mev":8,"mav":14,"mrv":20},"dorsal":{"mev":8,"mav":14,"mrv":20},"deltoide_lateral":{"mev":10,"mav":15,"mrv":22},"deltoide_posterior":{"mev":8,"mav":12,"mrv":18},"deltoide_anterior":{"mev":0,"mav":8,"mrv":16},"triceps":{"mev":8,"mav":14,"mrv":20},"biceps":{"mev":8,"mav":12,"mrv":18},"antebrazo":{"mev":4,"mav":8,"mrv":14},"cuadriceps":{"mev":10,"mav":14,"mrv":20},"isquiotibial":{"mev":8,"mav":12,"mrv":18},"gluteo":{"mev":8,"mav":14,"mrv":20},"pantorrilla":{"mev":6,"mav":10,"mrv":16},"abdomen":{"mev":6,"mav":10,"mrv":12},"trapecio":{"mev":8,"mav":12,"mrv":18},"romboides":{"mev":4,"mav":8,"mrv":14},"lumbar":{"mev":2,"mav":6,"mrv":10},"oblicuos":{"mev":4,"mav":8,"mrv":12},"aductor":{"mev":0,"mav":6,"mrv":12}};
+const MUSC_VOL={"pectoral":{"mev":8,"mav":14,"mrv":20},"dorsal":{"mev":8,"mav":14,"mrv":20},"deltoide_lateral":{"mev":10,"mav":15,"mrv":22},"deltoide_posterior":{"mev":8,"mav":12,"mrv":18},"deltoide_anterior":{"mev":0,"mav":8,"mrv":16},"triceps":{"mev":8,"mav":14,"mrv":20},"biceps":{"mev":8,"mav":12,"mrv":18},"antebrazo":{"mev":4,"mav":8,"mrv":14},"cuadriceps":{"mev":10,"mav":14,"mrv":20},"isquiotibial":{"mev":8,"mav":12,"mrv":18},"gluteo":{"mev":8,"mav":14,"mrv":20},"pantorrilla":{"mev":6,"mav":10,"mrv":16},"abdomen":{"mev":6,"mav":10,"mrv":12},"trapecio":{"mev":8,"mav":12,"mrv":18},"romboides":{"mev":4,"mav":8,"mrv":14},"lumbar":{"mev":2,"mav":6,"mrv":10},"oblicuos":{"mev":4,"mav":8,"mrv":12},"aductor":{"mev":4,"mav":8,"mrv":14}};
 const MUSC_NOM={pectoral:'Pectoral', deltoide_anterior:'Deltoide anterior', deltoide_lateral:'Deltoide lateral',
   deltoide_posterior:'Deltoide posterior', triceps:'Tríceps', biceps:'Bíceps', antebrazo:'Antebrazo',
   dorsal:'Dorsal', trapecio:'Trapecio', romboides:'Romboides', lumbar:'Lumbar', abdomen:'Abdomen',
@@ -3353,9 +3455,11 @@ const EJ_PATRON_ID={
   lext:'extension_cuadriceps', c_lext:'extension_cuadriceps',
   lunge:'zancada', c_bulg:'zancada', c_step:'zancada',
   lcurl:'curl_femoral', lcurl2:'curl_femoral', c_fcurl:'curl_femoral', c_lying:'curl_femoral',
-  rdl:'peso_muerto_rumano', c_dead:'peso_muerto_rumano', c_backext:'peso_muerto_rumano',
-  hip:'hip_thrust', c_hip:'hip_thrust', c_kick:'hip_thrust', c_abd:'hip_thrust',
-  adduct:'hip_thrust', c_adduct:'hip_thrust',
+  rdl:'peso_muerto_rumano',
+  hip:'hip_thrust', c_hip:'hip_thrust',
+  c_kick:'abduccion_cadera', c_abd:'abduccion_cadera',   /* abductor: gluteo medio */
+  adduct:'aduccion_cadera', c_adduct:'aduccion_cadera',  /* aductor: cara interna, NO gluteo */
+  c_backext:'extension_lumbar', c_dead:'peso_muerto_convencional',
   calfst:'gemelo_de_pie', calfse:'gemelo_sentado',
 };
 const EJ_PATRON_NOM=[
@@ -3365,8 +3469,7 @@ const EJ_PATRON_NOM=[
   [/fondo|dip/i,'fondo_pecho'],
   [/apertur|fly|pec.?deck|contract|crossover|cruce|around the world/i,'apertura_pecho'],
   [/chest press|press de pecho|floor press/i,'press_horizontal'],
-  [/pull through|glute ham|puente|bridge/i,'hip_thrust'],
-  [/aductor|adductor|aduccion/i,'hip_thrust'],
+  [/pull through|glute ham/i,'hip_thrust'],
   [/skip|high knee|trote|sprint/i,'flexion_pecho'],
   [/turkish|get up/i,'plancha_core'],
   [/flexion|push.?up/i,'flexion_pecho'],
@@ -3386,15 +3489,17 @@ const EJ_PATRON_NOM=[
   [/prensa|leg press/i,'prensa'],
   [/zancada|lunge|b[uú]lgar|step.?up|split squat/i,'zancada'],
   [/sentadilla|squat|hack/i,'sentadilla'],
-  [/peso muerto.*(rumano|rigid)|rdl|romanian|buenos d[ií]as|good morning|hiperext|back ext/i,'peso_muerto_rumano'],
+  [/peso muerto.*(rumano|rigid)|rdl|romanian|buenos d[ií]as|good morning/i,'peso_muerto_rumano'],
   [/peso muerto|deadlift/i,'peso_muerto_convencional'],
-  [/hip thrust|puente|gl[uú]teo|patada|abducci[oó]n|aducci[oó]n/i,'hip_thrust'],
+  [/aductor|adductor|aducci[oó]n|adducci[oó]n|inner thigh/i,'aduccion_cadera'],
+  [/abductor|abducci[oó]n|kickback|patada de gl[uú]teo|glute kick/i,'abduccion_cadera'],
+  [/hip thrust|puente|bridge|gl[uú]teo|glute/i,'hip_thrust'],
   [/gemelo.*sentad|seated calf/i,'gemelo_sentado'], [/gemelo|pantorrilla|calf/i,'gemelo_de_pie'],
   [/plancha|plank|hollow|ab wheel|rueda/i,'plancha_core'],
   [/crunch|abdominal|sit.?up/i,'crunch_abdominal'],
   [/elevaci[oó]n.*(pierna|rodilla)|leg raise|knee raise|v.?up/i,'elevacion_piernas'],
   [/rusa|russian|rotaci[oó]n|rotation|twist|le[nñ]ador|woodchop|oblicu/i,'rotacion_core'],
-  [/superman|bird.?dog|extensi[oó]n lumbar/i,'peso_muerto_rumano'],
+  [/superman|bird.?dog|extensi[oó]n lumbar|back extension|hiperext|hyperext/i,'extension_lumbar'],
   [/rack pull|jump shrug|high pull/i,'peso_muerto_convencional'],
   [/swing|ball slam|thruster|wall ball/i,'cargada_olimpica'],
   [/burpee|jumping jack|mountain climber|escalador|salto de caj[oó]n|box jump/i,'flexion_pecho'],
@@ -3405,7 +3510,6 @@ const EJ_PATRON_NOM=[
   [/support hold|sost[eé]n|soporte en anillas/i,'sosten_anillas'],
   [/l.?sit|dragon flag|hollow|knees to elbows|toes to bar|rodillas al pecho/i,'elevacion_piernas'],
   [/wrist|mu[nñ]eca|roller|agarre|grip|dead hang|colgarse/i,'agarre_antebrazo'],
-  [/kickback|patada de gl[uú]teo|abducci[oó]n|abductor/i,'abduccion_cadera'],
   [/side bend|lateral de tronco|inclinaci[oó]n lateral/i,'rotacion_core'], [/muscle.?up/i,'muscle_up'],
 ];
 function ejPatron(id, nombre){
@@ -3450,6 +3554,22 @@ const MED_EJGRUPO={
   'brazo-der':'brazos','brazo-izq':'brazos','antebrazo-der':'brazos','antebrazo-izq':'brazos',
   'muslo-der':'pierna','muslo-izq':'pierna','pantorrilla-der':'pierna','pantorrilla-izq':'pierna',
 };
+/* ejercicios que trabajan un musculo, de mayor a menor activacion. Filtrar por la
+   categoria del catalogo no servia: tocar el gluteo devolvia "pierna" entera, con
+   extensiones de cuadriceps incluidas. Esto responde a la pregunta real: que ejercicios
+   me trabajan ESTE musculo, y cuanto. */
+function ejerciciosDe(musculo, equip){
+  const out=[];
+  EXCAT.forEach(x=>{
+    if(equip && x.equip!==equip) return;
+    if(x.cat==='movilidad'||x.cat==='cardio') return;
+    const pat=ejPatron(x.id,x.name); if(!pat) return;
+    const pc=(EJ_PATRONES[pat]||{})[musculo];
+    if(!pc) return;
+    out.push({x, pc, pat});
+  });
+  return out.sort((a,b)=> b.pc-a.pc || a.x.name.localeCompare(b.x.name));
+}
 function medGrupoEj(zona, vista){
   if(zona==='pecho' && vista==='espalda') return 'espalda';
   if(zona==='hombros' && vista==='espalda') return 'espalda';
@@ -3725,7 +3845,11 @@ function vCarga(){
   }).filter(f=>MUSC_VOL[f.m].mev>0 || f.s>0).sort((a,b)=>b.s-a.s);
   const flojos=filas.filter(f=>f.nv.k==='cero'||f.nv.k==='bajo');
   const pasados=filas.filter(f=>f.nv.k==='exceso');
-  const selM = sel ? ((ZONA_MUSC[vista]||{})[sel]||[])[0] : null;
+  /* una zona puede tener varios musculos (el hombro son tres deltoides): se muestran
+     todos, ordenados por las series que recibieron, y se elige cual mirar en detalle */
+  const selMs = sel ? ((ZONA_MUSC[vista]||{})[sel]||[]).slice().sort((a,b)=>
+    (((carga.musc[b]||{}).series)||0)-(((carga.musc[a]||{}).series)||0)) : [];
+  const selM = selMs.includes(UI.cargaMusc) ? UI.cargaMusc : selMs[0];
   const selF = selM ? filas.find(f=>f.m===selM) : null;
   const totalSeries=Math.round(filas.reduce((a,f)=>a+f.s,0));
   return `
@@ -3739,6 +3863,10 @@ function vCarga(){
       `<span><i style="background:${c}"></i>${l}</span>`).join('')}</div>
     ${selF?`<div class="medpanel">
       <div class="medph">${ic('barbell',13)} <b>${esc(MUSC_NOM[selF.m]||selF.m)}</b><span class="small dim">en ${dias} días</span></div>
+      ${selMs.length>1?`<div class="flex wrapf" style="gap:6px;margin-bottom:10px">${selMs.map(mm=>{
+        const s=((carga.musc[mm]||{}).series)||0, nv=cargaNivel(mm,s);
+        return `<button class="chip ${mm===selM?'fill':''}" data-a="cargaMusc" data-m="${mm}">
+          ${esc(MUSC_NOM[mm]||mm)} <b style="${mm===selM?'':'color:'+nv.c}">${fmt1(s)}</b></button>`;}).join('')}</div>`:''}
       <div class="flex between" style="align-items:baseline;gap:10px">
         <b class="numi" style="font:800 22px var(--num)">${fmt1(selF.s)} <span class="small dim" style="font-weight:600">series efectivas</span></b>
         <span class="chip" style="color:${selF.nv.c};border-color:${selF.nv.c}">${esc(selF.nv.n)}</span></div>
@@ -3846,11 +3974,6 @@ function vMedidasCuerpo(){
     :`<div class="small dim">Para calcularlo me falta: <b>${nav.falta.join(', ')}</b>.</div>
       <button class="btn ghost full mt8" data-a="medAbrir" data-g="todo">${ic('ruler',13)} Medir lo que falta</button>`}
   </section>
-  ${(r.ce||r.cc)?`<section class="mod">
-    <div class="mod-head"><span class="ttl">${ic('chart',16)} Proporciones</span></div>
-    ${r.ce?medRatioRow('Cintura / estatura', r.ce.v, r.ce.umbral, 'Por debajo de 0,50 es la referencia de salud, igual para todos.'):''}
-    ${r.cc?medRatioRow('Cintura / cadera', r.cc.v, r.cc.umbral, UID==='cami'?'Referencia en mujeres: por debajo de 0,85.':'Referencia en hombres: por debajo de 0,90.'):''}
-  </section>`:''}
   ${propCard()}
   ${(()=>{ const as=medAsimetrias(); if(!as.length) return '';
     return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('alert',16)} Diferencias entre lados</span></div>
@@ -9344,6 +9467,11 @@ function vRutinas(){
 }
 /* ============ VISTA: EJERCICIOS (dentro de Entrenar, catalogo EXCAT) ============ */
 const EXCAT_ORDER=['pierna','espalda','pecho','hombros','brazos','core','movilidad','calistenia','anillas','cardio','olimpicos','fullbody','otros'];
+/* la fila normal del catalogo, con el % de activacion de ese musculo pegado */
+function excatRowPc(x, pc){
+  return excatRow(x).replace('</button>',
+    `<span class="excatpc">${pc}<em>%</em></span></button>`);
+}
 function excatRow(x){
   return `<button class="actrow" data-a="excatOpen" data-id="${x.id}" aria-label="${esc(x.name)}">
     ${excatThumb(x)}
@@ -9381,17 +9509,24 @@ function vExcat(){
      "algo de hombro" y no se acuerda del nombre del ejercicio. */
   if(UI.excatMapa){
     const vista = MED_ZONAS[UI.medVista] ? UI.medVista : 'frente';
-    const z=UI.excatZona, cat=z?medGrupoEj(z,vista):null;
-    const items=cat?base.filter(x=>x.cat===cat):[];
+    const z=UI.excatZona;
+    const musz = z ? ((ZONA_MUSC[vista]||{})[z]||[]) : [];
+    /* dentro de una zona puede haber varios musculos (el hombro son tres deltoides):
+       se eligen con chips, y la lista se ordena por cuanto activa cada ejercicio ESE musculo */
+    const conEj = musz.filter(mm=>ejerciciosDe(mm).length);
+    const m = musz.includes(UI.excatMusc) && ejerciciosDe(UI.excatMusc).length ? UI.excatMusc : conEj[0];
+    const items = m ? ejerciciosDe(m, eq) : [];
     return equipRow+`<section class="mod">
       <div class="mod-head"><span class="ttl">${ic('barbell',16)} Elige por músculo</span>
         <button class="chip" data-a="excatMapa" aria-label="Volver a la lista">${ic('x',10)} Lista</button></div>
-      <p class="small dim" style="margin:0 0 2px">Toca el músculo que quieres trabajar. Gira el cuerpo para ver la espalda.</p>
+      <p class="small dim" style="margin:0 0 2px">Toca la zona que quieres trabajar. Gira el cuerpo para llegar a la espalda.</p>
       ${medMapa(z, {accion:'excatZona', cotas:false})}
-      ${cat?`<div class="flex between mt8" style="align-items:baseline">
-          <b>${EXCAT_LABELS[cat]}</b><span class="small dim">${items.length} ejercicio${items.length===1?'':'s'}${eq?' con '+EXCAT_EQUIP_LABELS[eq].toLowerCase():''}</span></div>
-        ${items.length?items.map(excatRow).join(''):`<div class="small dim" style="padding:10px 2px">No hay ejercicios de ${EXCAT_LABELS[cat].toLowerCase()} con ese filtro de equipo. Quítalo y vuelve a mirar.</div>`}`
-        :`<div class="small dim tc" style="padding:8px 0">Ningún músculo elegido todavía.</div>`}
+      ${conEj.length>1?`<div class="flex wrapf mt8" style="gap:6px">${conEj.map(mm=>
+        `<button class="chip ${mm===m?'fill':''}" data-a="excatMusc" data-m="${mm}">${esc(MUSC_NOM[mm]||mm)}</button>`).join('')}</div>`:''}
+      ${m?`<div class="flex between mt8" style="align-items:baseline">
+          <b>${esc(MUSC_NOM[m]||m)}</b><span class="small dim">${items.length} ejercicio${items.length===1?'':'s'}${eq?' con '+EXCAT_EQUIP_LABELS[eq].toLowerCase():''} · de más a menos activación</span></div>
+        ${items.length?items.map(it=>excatRowPc(it.x, it.pc)).join(''):`<div class="small dim" style="padding:10px 2px">Ninguno con ese filtro de equipo. Quítalo y vuelve a mirar.</div>`}`
+        :`<div class="small dim tc" style="padding:8px 0">${z?'Para esta zona no hay ejercicios en el catálogo. El cuello se trabaja indirectamente con los encogimientos y el face pull, que están en Hombros.':'Ninguna zona elegida todavía.'}</div>`}
     </section>`;
   }
   return equipRow+searchBox+`<section class="mod tight">
@@ -12326,16 +12461,30 @@ function rendimientoCard(sub){
    limpiamente con un historial hecho a 8 o a 10 reps, y las proyecciones usan
    los datos que ya existen. En pantalla los numeros se muestran convertidos a
    las reps de la meta (nadie piensa en "1RM teorico" mientras entrena). */
-function goalHistRM(exId){
+function goalHistRM(exId, base){
   const h=S.logs[exId]||[]; const out=[];
   h.forEach(en=>{ if(en.alt) return;
+    if(base && base.d && en.d<base.d) return;     /* antes del reinicio no cuenta */
     let rm=0; en.sets.forEach(s=>{ const w=+s.w||0, r=+s.r||0; if(w>0&&r>0) rm=Math.max(rm, e1rm(w,r)); });
     if(rm>0) out.push({d:en.d, v:rm}); });
+  /* el propio punto de partida es el primer dato de la nueva curva */
+  if(base && base.d && base.rm>0 && !out.some(x=>x.d===base.d)) out.push({d:base.d, v:base.rm});
   out.sort((a,b)=>a.d<b.d?-1:1); return out;
 }
-function goalBestRM(exId){ const h=goalHistRM(exId); return h.length?Math.max(...h.map(p=>p.v)):0; }
-function goalProy(exId, targetRM){
-  const h=goalHistRM(exId).slice(-12); if(h.length<3) return null;
+/* Una meta puede reiniciarse a proposito: bajar el peso para corregir la tecnica, volver
+   despues de parar, cambiar de maquina. Sin esto la app leeria ese bajon como retroceso y
+   la proyeccion se iria a la basura, cuando en realidad es el arranque de una curva nueva.
+   La marca vieja no se borra: se guarda y se dice de donde viene. */
+const GOAL_MOTIVOS=[
+  ['tecnica','Corregí la técnica','Bajaste el peso para hacerlo bien. La marca anterior se hizo con una ejecución que no cuenta.'],
+  ['pausa','Volví después de parar','Retomas tras una pausa: la fuerza baja y vuelve rápido, pero el punto de partida es otro.'],
+  ['equipo','Cambié de máquina o barra','Otra máquina, otro agarre u otra barra mueven el peso que puedes: no son comparables.'],
+  ['lesion','Vengo de una lesión','Arrancas de más abajo a propósito. Sube despacio y sin prisa por la marca vieja.'],
+];
+function goalMotivo(k){ return GOAL_MOTIVOS.find(m=>m[0]===k)||null; }
+function goalBestRM(exId, base){ const h=goalHistRM(exId, base); return h.length?Math.max(...h.map(p=>p.v)):0; }
+function goalProy(exId, targetRM, base){
+  const h=goalHistRM(exId, base).slice(-12); if(h.length<3) return null;
   const t0=fromISO(h[0].d).getTime()/864e5;
   const xs=h.map(p=>fromISO(p.d).getTime()/864e5 - t0), ys=h.map(p=>p.v);
   const n=xs.length, mx=xs.reduce((a,b)=>a+b,0)/n, my=ys.reduce((a,b)=>a+b,0)/n;
@@ -12358,28 +12507,58 @@ function goalSteps(startW, targetW){
   return out;
 }
 function goalCardHTML(g){
+  const B=g.base||null;
   const reps=g.reps||1;
   const targetRM=e1rm(g.target, reps);
-  const startRM=g.startRM!==undefined?g.startRM:e1rm(g.start||0, 1);
-  const bestRM=goalBestRM(g.ex);
+  const startRM=(B&&B.rm>0)?B.rm:(g.startRM!==undefined?g.startRM:e1rm(g.start||0, 1));
+  const bestRM=goalBestRM(g.ex, B);
   const done=bestRM>=targetRM-0.01;
   const baseRM=Math.min(startRM, bestRM), span=Math.max(1, targetRM-baseRM);
   const pct=clamp(Math.round((bestRM-baseRM)/span*100), 0, 100);
   const hoyW=bestRM?rmAReps(bestRM, reps):0;      /* lo de hoy, traducido a las reps de la meta */
   const steps=goalSteps(rmAReps(baseRM,reps), g.target);
-  const py=done?null:goalProy(g.ex, targetRM);
+  const py=done?null:goalProy(g.ex, targetRM, B);
   let proyTxt;
   if(done) proyTxt='<b style="color:var(--mint)">Meta cumplida.</b> Ponte una nueva o sube la barra.';
-  else if(!goalHistRM(g.ex).length) proyTxt='Todavía no hay registros de este ejercicio: entrena y regístralo para ver tu camino.';
+  else if(!goalHistRM(g.ex, B).length) proyTxt='Todavía no hay registros de este ejercicio: entrena y regístralo para ver tu camino.';
   else if(py&&py.ya) proyTxt='Tu tendencia ya toca la meta: confírmalo en tu próxima sesión.';
-  else if(py&&py.sube) proyTxt=`Al ritmo actual (+${fmt1(py.porSem)} kg/sem de 1RM) la lograrías <b style="color:var(--ink)">≈ ${fmtD(py.fecha)}</b>${py.dias>13?' ('+Math.round(py.dias/7)+' semanas)':''}.`;
-  else proyTxt='Aún no hay una tendencia que suba: dale 2-3 sesiones más a este ejercicio.';
+  else if(py&&py.sube) proyTxt=`Vas subiendo <b style="color:var(--mint)">${fmt1(py.porSem)} kg por semana</b> de 1RM. Te faltan <b style="color:var(--ink)">${fmt1(Math.max(0,targetRM-bestRM))} kg</b>, así que a este ritmo la lograrías <b style="color:var(--ink)">≈ ${fmtD(py.fecha)}</b>${py.dias>13?', en unas '+Math.round(py.dias/7)+' semanas':''}.`;
+  else if(py&&!py.sube) proyTxt='Tu marca <b>lleva rato sin subir</b> en este ejercicio, así que no puedo darte fecha. Prueba a subir 2,5 kg o una repetición la próxima sesión.';
+  else proyTxt='Aún no hay suficientes sesiones para trazar una tendencia: dale 2 o 3 más a este ejercicio.';
   return `<div class="goalcard ${done?'done':''}">
     <div class="flex between" style="align-items:flex-start">
       <div class="grow" style="min-width:0"><b style="font:600 16px var(--ui)">${esc(g.name)}</b>
         <div class="small dim">Meta: <b class="numi" style="color:var(--ink)">${fmt1(g.target)} kg × ${reps}</b>${done?' · <b style="color:var(--mint)">cumplida ✓</b>':''}</div></div>
-      <button class="chip red" data-a="goalDel" data-id="${g.id}" aria-label="Borrar meta ${esc(g.name)}" style="flex:none">${ic('x',10)}</button>
+      <div class="flex" style="gap:5px;flex:none">
+        <button class="chip" data-a="goalBaseBox" data-id="${g.id}" aria-label="Ajustar dónde voy hoy">${ic('repeat',10)}</button>
+        <button class="chip red" data-a="goalDel" data-id="${g.id}" aria-label="Borrar meta ${esc(g.name)}">${ic('x',10)}</button>
+      </div>
     </div>
+    ${B?(()=>{const mo=goalMotivo(B.motivo);
+      return `<div class="goalbase">${ic('info',13)}<div class="small" style="line-height:1.5">
+        <b>Punto de partida ajustado el ${fmtD(B.d)}</b>${mo?': '+esc(mo[1].toLowerCase()):''}.
+        ${B.w?`Arrancaste de <b style="color:var(--ink)">${fmt1(B.w)} kg × ${B.r}</b>. `:''}
+        ${B.previoRM?`Tu marca anterior (${fmt1(B.previoRM)} kg de 1RM) sigue guardada, pero <b>no cuenta para la tendencia</b>: la curva arranca aquí.`:'La tendencia se calcula desde esta fecha.'}
+        ${mo?`<div class="dim mt4">${esc(mo[2])}</div>`:''}
+      </div></div>`;})():''}
+    ${UI.goalBase===g.id?(()=>{
+      const bw=UI.goalBaseW||'', br=UI.goalBaseR||'', bm=UI.goalBaseM||'tecnica';
+      return `<div class="mod tight mt8" style="border-style:dashed">
+        <b class="small">¿Dónde vas hoy de verdad?</b>
+        <div class="small dim mt4" style="line-height:1.5">Si bajaste el peso a propósito (por técnica, por una pausa o porque cambiaste de máquina), dilo aquí. La app va a tomar esto como el nuevo punto de partida en vez de leerlo como un retroceso.</div>
+        <div class="flex mt8" style="gap:8px;align-items:center">
+          <input class="in" data-ch="goalbasew" type="text" inputmode="decimal" placeholder="peso" aria-label="peso real de hoy" value="${esc(bw)}" style="flex:1;min-width:0">
+          <span class="t-unit" style="flex:none">kg ×</span>
+          <input class="in" data-ch="goalbaser" type="text" inputmode="numeric" placeholder="reps" aria-label="repeticiones" value="${esc(br)}" style="width:64px;flex:none">
+        </div>
+        <div class="flex wrapf mt8" style="gap:6px">${GOAL_MOTIVOS.map(m=>
+          `<button class="chip ${bm===m[0]?'fill':''}" data-a="goalBaseM" data-m="${m[0]}">${m[1]}</button>`).join('')}</div>
+        <div class="flex mt12" style="gap:8px">
+          <button class="btn primary grow" data-a="goalBaseSave" data-id="${g.id}">Guardar punto de partida</button>
+          <button class="btn" data-a="goalBaseBox" data-id="">Cancelar</button>
+        </div>
+        ${B?`<button class="btn ghost full mt8" data-a="goalBaseClear" data-id="${g.id}">Quitar el ajuste y usar todo el historial</button>`:''}
+      </div>`;})():''}
     <div class="flex mt8" style="align-items:baseline;gap:6px">
       <span class="t-metric-md" style="line-height:1">${hoyW?fmt1(hoyW):'–'}</span><span class="t-unit">kg × ${reps} hoy${hoyW?' (est.)':''}</span>
       <span class="small dim" style="margin-left:auto">${pct}%</span>
@@ -12392,7 +12571,7 @@ function goalCardHTML(g){
     ${(()=>{ /* grafica de proyeccion (pedido del dueno): el historial convertido a
       las reps de la meta + la tendencia extendida hasta cruzar la linea de la meta;
       lineChart ya pinta el punto de cruce con su fecha estimada (≈ dd/mm) */
-      const hist=goalHistRM(g.ex).slice(-16);
+      const hist=goalHistRM(g.ex, B).slice(-16);
       if(hist.length<2) return '';
       const pts=hist.map(p=>({d:p.d, x:'', v:rmAReps(p.v,reps), tip:fmtD(p.d)+' · '+fmt1(rmAReps(p.v,reps))+' kg × '+reps+' (est.)'}));
       const horiz=(py&&py.sube&&py.dias)?clamp(py.dias+14,21,200):(done?14:60);
@@ -14127,7 +14306,7 @@ const ACTIONS = {
   mobilOpen(){ UI.mobilOpen=!UI.mobilOpen; render(); },
   movPlay(){ movPlayerOpen(); },
   puStart(){ if(PU){ puBoxOpen(); return; } puStart(); },
-  medZona(d){ UI.medZona = d.z ? (UI.medZona===d.z?null:d.z) : null; render(); },
+  medZona(d){ UI.medZona = d.z ? (UI.medZona===d.z?null:d.z) : null; UI.cargaMusc=null; render(); },
   medAbrir(d){ UI.medForm = (UI.medForm===d.g) ? null : (d.g==='pend'?'pend':d.g); render();
     if(UI.medForm) setTimeout(()=>irACaja('medform'), 60); },
   medCerrar(){ UI.medForm=null; render(); },
@@ -14413,7 +14592,27 @@ const ACTIONS = {
   excatMapa(){ UI.excatMapa=!UI.excatMapa; if(!UI.excatMapa) UI.excatZona=null; UI.excatQ=''; render(); window.scrollTo({top:0}); },
   cuerpoSub(d){ UI.cuerpoSub=d.s; UI.medZona=null; render(); window.scrollTo({top:0}); },
   cargaDias(d){ UI.cargaDias=+d.d||7; render(); },
-  excatZona(d){ UI.excatZona = UI.excatZona===d.z ? null : d.z; render(); },
+  cargaMusc(d){ UI.cargaMusc=d.m; render(); },
+  goalBaseBox(d){ UI.goalBase = d.id || null; UI.goalBaseW=''; UI.goalBaseR=''; UI.goalBaseM='tecnica'; render(); },
+  goalBaseM(d){ UI.goalBaseM=d.m; render(); },
+  goalBaseSave(d){
+    const g=(S.goals||[]).find(x=>x.id===d.id); if(!g) return;
+    const w=parseFloat(String(UI.goalBaseW||'').replace(',','.'))||0;
+    const r=clamp(parseInt(UI.goalBaseR||'1',10)||1,1,30);
+    if(w<=0){ toast('Escribe con cuánto peso vas hoy'); return; }
+    /* la marca vieja no se borra: se guarda para poder contarla */
+    const previo=goalBestRM(g.ex, null);
+    g.base={d:TODAY(), rm:e1rm(w,r), w, r, motivo:UI.goalBaseM||'tecnica', previoRM:Math.round(previo*10)/10};
+    save('goals'); UI.goalBase=null; render();
+    toast('Listo: la tendencia arranca desde hoy');
+  },
+  goalBaseClear(d){
+    const g=(S.goals||[]).find(x=>x.id===d.id); if(!g) return;
+    delete g.base; save('goals'); UI.goalBase=null; render(); toast('Vuelve a contar todo el historial');
+  },
+  fzaOpen(d){ UI.fzaOpen = UI.fzaOpen===d.k ? null : d.k; render(); },
+  excatZona(d){ UI.excatZona = UI.excatZona===d.z ? null : d.z; UI.excatMusc=null; render(); },
+  excatMusc(d){ UI.excatMusc=d.m; render(); },
   medRotar(n){ const i=MED_VISTAS.findIndex(v=>v[0]===(MED_ZONAS[UI.medVista]?UI.medVista:'frente'));
     const j=(i+n+MED_VISTAS.length)%MED_VISTAS.length;
     UI.medVista=MED_VISTAS[j][0];
@@ -15299,6 +15498,9 @@ const CHANGES = {
     S.cfg.metaGrasa=clamp(+el.value||c.def, c.min, 40);   /* el tope se respeta aqui tambien */
     save('cfg'); render();
   },
+  /* sin render: no necesitan recalcular nada mientras se escribe, y asi no se pierde el foco */
+  goalbasew(el){ UI.goalBaseW=el.value; },
+  goalbaser(el){ UI.goalBaseR=el.value; },
   goalq(el){ UI.goalQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=goalq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   goalw(el){ UI.goalW=el.value; render(); const inp=document.getElementById('goalW'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   goalr(el){ UI.goalR=el.value; render(); const inp=document.getElementById('goalR'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },

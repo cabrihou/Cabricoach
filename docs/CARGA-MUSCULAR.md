@@ -24,11 +24,28 @@ el nombre (`EJ_PATRON_NOM`, ~45 reglas), que es lo único que traen los importad
 Cobertura: **273 de 300** del catálogo. Los que quedan fuera son estiramientos y un
 olímpico raro; la app los lista como "no supe repartir" en vez de callarlos.
 
-### Corrección propia sobre la fuente
+### Correcciones propias sobre la fuente
 
-En **jalón vertical, remos y muscle up la recopilación no contaba el bíceps**. Se le
-devolvió su 15-20%. Sin eso, el volumen de bíceps de quien entrena espalda salía a la mitad
-del que realmente recibe, y la app le habría recomendado añadir curl sin necesidad.
+**El bíceps en jalones y remos.** En jalón vertical, remos y muscle up la recopilación no
+lo contaba. Se le devolvió su 15-20%. Sin eso, el volumen de bíceps de quien entrena espalda
+salía a la mitad del que realmente recibe, y la app le habría recomendado añadir curl sin
+necesidad.
+
+**Aductor, abductor y lumbar** (encontrado auditando las rutinas reales, 09/08). El aductor
+de máquina caía en el mismo saco que el hip thrust y contaba **85% glúteo**, cuando trabaja
+la cara interna del muslo. Ahora hay tres patrones separados:
+
+| Patrón | Reparto | Ejercicios |
+|---|---|---|
+| `hip_thrust` | glúteo 85 · isquio 10 · cuádriceps 5 | hip thrust, puente |
+| `abduccion_cadera` | glúteo 90 · aductor 10 | abductor de máquina, patada de glúteo |
+| `aduccion_cadera` | **aductor 90** · glúteo 10 | aductor de máquina |
+| `extension_lumbar` | lumbar 45 · glúteo 35 · isquio 20 | hiperextensiones, superman |
+
+Antes, la hiperextensión también contaba como peso muerto rumano.
+
+**Press con agarre cerrado** (`press_cerrado`: tríceps 45, pectoral 40) se separó del banca
+normal, donde el reparto es al revés.
 
 Lo más discutible son los olímpicos (cargada, arrancada): ahí el reparto depende mucho de la
 técnica y de la carga relativa.

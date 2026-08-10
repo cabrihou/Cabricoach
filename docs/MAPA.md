@@ -465,3 +465,32 @@ El mismo cuerpo, pintado por volumen de la semana en vez de por medidas.
 
 De dónde salen los números: [CARGA-MUSCULAR.md](CARGA-MUSCULAR.md).
 
+## Elegir ejercicios por músculo, no por categoría
+
+`ejerciciosDe(musculo, equipo)` devuelve los ejercicios que trabajan un músculo **ordenados
+de mayor a menor activación**, con el % a la derecha de cada fila. Filtrar por la categoría
+del catálogo no servía: tocar el glúteo devolvía "pierna" entera, extensiones de cuádriceps
+incluidas. Si la zona tiene varios músculos (el hombro son tres deltoides) se eligen con
+chips, y se descartan los que no tienen ningún ejercicio (el cuello).
+
+## Nivel de fuerza · la escalera (P7a)
+
+Cada fila se abre (`UI.fzaOpen`) y muestra:
+- **De dónde sale el número**: el día, el peso y las repeticiones de la mejor serie del
+  historial, y la cuenta de Epley hecha a la vista
+- **El peso de cada categoría** con tu peso corporal, en 1RM y en serie de 5, que es lo que
+  uno hace de verdad en el gimnasio
+- Qué falta exactamente para el siguiente nivel
+
+Debajo, plegado, **los demás ejercicios que registras**: no tienen baremo de nivel (los
+estándares de fuerza relativa solo existen para los básicos) pero sí 1RM y cuánto ha subido.
+
+## Metas · reiniciar el punto de partida
+
+Una meta puede reiniciarse a propósito: bajar el peso para corregir la técnica, volver
+después de parar, cambiar de máquina o venir de una lesión (`GOAL_MOTIVOS`). Sin esto la app
+leía ese bajón como retroceso y la proyección se iba a la basura, cuando en realidad es el
+arranque de una curva nueva. `g.base = {d, rm, w, r, motivo, previoRM}`: `goalHistRM`,
+`goalBestRM` y `goalProy` ignoran todo lo anterior a esa fecha, y la marca vieja se guarda y
+se muestra para no perderla.
+

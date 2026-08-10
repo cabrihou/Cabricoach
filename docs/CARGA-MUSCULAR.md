@@ -243,3 +243,14 @@ peso apuntado en otra unidad, un ejercicio que no mueve tu peso entero, una seri
 registrada. Se descarta desde la fila abierta y se recupera con un botón. Antes, un registro
 erróneo que te ponía en Élite se quedaba ahí sin forma de corregirlo.
 
+## El carro de la máquina (`S.cfg.tara`)
+
+Las máquinas de discos —hack squat, prensa, press de hombro *plate loaded*— llevan un carro
+que **ya pesa por sí solo**, entre 15 y 45 kg según el modelo. Contando solo los discos, el
+1RM sale corto: en un hack squat de 140 kg con carro de 40, el 1RM pasa de **177,3 a 228 kg**.
+
+Como el peso del carro cambia de gimnasio a gimnasio y de modelo a modelo, no se puede
+adivinar: lo pone el dueño desde la ficha del ejercicio, con chips de los valores habituales.
+Por defecto es **cero**, porque quedarse corto es mejor que inventar un número. El detalle de
+"de dónde sale tu número" lo dice cuando está puesto: *"Más los 40 kg del carro: 180 kg"*.
+

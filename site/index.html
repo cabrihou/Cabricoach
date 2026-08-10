@@ -1633,7 +1633,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 168';
+const APPREV='REV 169';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3509,9 +3509,19 @@ function pesoDeDia(d){
   return (mejor||ws[0]).kg;
 }
 /* el peso real movido en una serie: cuerpo + lastre, o los dos lados si aplica */
+/* Las maquinas de discos (hack squat, prensa, press de hombro plate loaded) llevan un carro
+   que ya pesa por si solo: entre 15 y 45 kg segun el modelo. Si solo cuentas los discos, el
+   1RM sale corto. Como el peso del carro cambia de gimnasio a gimnasio, lo pone el dueño. */
+function exTara(id){ return +(((S.cfg&&S.cfg.tara)||{})[id]||0) || 0; }
+function exEsMaquina(id){
+  const x=excatById(id)||{};
+  if(x.equip==='maquina'||x.equip==='smith') return true;
+  return /m[aá]quina|machine|plate\s*loaded|hack|prensa|leg press|smith/i.test(exNombre(id)||'');
+}
 function exPesoReal(id, w, fecha){
   if(exPesoCorporal(id)) return Math.round((pesoDeDia(fecha)*exFraccion(id)+(+w||0))*10)/10;
-  return exPorLado(id) ? w*2 : w;
+  const base=(+w||0)+exTara(id);
+  return exPorLado(id) ? base*2 : base;
 }
 /* Baremos de fuerza relativa (1RM / peso corporal) para los ejercicios que NO son los
    nueve basicos. Recopilados el 09/08/2026 de StrengthLevel, ExRx, Symmetric Strength y
@@ -4800,10 +4810,16 @@ function fzaEjHTML(e, pc, COL, gk){
         :`<div class="fzafuente">
           <span class="lbl">DE DÓNDE SALE</span>
           <div class="small mt4" style="line-height:1.55">El <b>${fmtD(e.d)}</b> hiciste <b style="color:var(--ink)">${fmt1(e.sw)} kg${e.corp?' de lastre':''}${e.lado&&exPorLado(e.ex)?' por lado':''} × ${e.sr}</b> en ${esc(shortEx(exNombre(e.ex)))}.</div>
-          <div class="small dim mt4">${e.corp?`Cuenta tu peso de ese día (${fmt1(pesoDeDia(e.d))} kg) más el lastre: ${fmt1(exPesoReal(e.ex, e.sw, e.d))} kg movidos. `:''}${exPorLado(e.ex)?`Como está marcado por lado, cuentan ${fmt1(e.sw*2)} kg. `:''}De ahí sale tu 1RM de <b>${fmt1(e.rm)} kg</b>.</div>
+          <div class="small dim mt4">${e.corp?`Cuenta ${exFraccion(e.ex)<1?`el ${Math.round(exFraccion(e.ex)*100)}% de tu peso de ese día (el resto lo sostiene la inclinación)`:`tu peso de ese día`} (${fmt1(pesoDeDia(e.d)*exFraccion(e.ex))} kg) más el lastre: ${fmt1(exPesoReal(e.ex, e.sw, e.d))} kg movidos. `:''}${exTara(e.ex)?`Más los ${fmt1(exTara(e.ex))} kg del carro: ${fmt1(exPesoReal(e.ex, e.sw, e.d))} kg. `:''}${exPorLado(e.ex)?`Como está marcado por lado, cuentan ${fmt1((e.sw+exTara(e.ex))*2)} kg. `:''}De ahí sale tu 1RM de <b>${fmt1(e.rm)} kg</b>.</div>
           <div class="mt8 flex between" style="align-items:center;gap:8px">
             <span class="small dim grow">¿El peso es por brazo o pierna, o el total?</span>
             <button class="chip ${exPorLado(e.ex)?'fill':''}" data-a="exLado" data-id="${e.ex}">${exPorLado(e.ex)?'Por lado':'Total'}</button></div>
+          ${exEsMaquina(e.ex)?`<div class="mt8" style="padding-top:8px;border-top:1px solid var(--line2)">
+            <span class="small dim">¿Cuánto pesa el carro vacío de esa máquina?</span>
+            <div class="flex wrapf mt4" style="gap:5px">${[0,15,20,25,30,40,45].map(v=>
+              `<button class="chip ${exTara(e.ex)===v?'fill':''}" data-a="exTara" data-id="${e.ex}" data-v="${v}">${v===0?'nada':v+' kg'}</button>`).join('')}</div>
+            <div class="small dim mt4" style="line-height:1.5">Se suma a los discos. Si no lo sabes, mira la placa de la máquina o déjalo en nada: es mejor quedarse corto que inventarlo.</div>
+          </div>`:''}
         </div>
         <div class="small dim mt8" style="line-height:1.5">Comparado con la tabla de <b>${esc(e.tablaN.toLowerCase())}</b>, con tus ${fmt1(Math.round(pc*10)/10)} kg:</div>
         ${FZA_NIVELES.map((nm,i)=>{ if(i===0) return '';
@@ -15964,6 +15980,13 @@ const ACTIONS = {
     if(d.id) S.cfg.fzaFuente[d.k]=d.id; else delete S.cfg.fzaFuente[d.k];
     save('cfg'); render();
     toast(d.id?'Listo, lo saco de ahí':'Vuelve a elegirlo solo');
+  },
+  exTara(d){
+    S.cfg.tara=S.cfg.tara||{};
+    const v=+d.v||0;
+    if(v) S.cfg.tara[d.id]=v; else delete S.cfg.tara[d.id];
+    save('cfg'); render();
+    toast(v?('Carro de '+v+' kg, se suma a los discos'):'Sin peso de carro');
   },
   fzaFuera(d){
     S.cfg.fzaFuera=S.cfg.fzaFuera||[];

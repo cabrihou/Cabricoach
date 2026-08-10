@@ -731,3 +731,23 @@ recomendación es empezar por el lado flojo y **igualar repeticiones, no peso**.
 del mismo reparto EMG del mapa de carga y descartando los que ya haces. Cierra el círculo
 entre "estoy flojo aquí" y "haz esto".
 
+## Las cuatro capas viven en el mapa
+
+El selector de capa (`medCapaBar`) son cuatro chips pequeños encima del cuerpo, no una fila
+de pestañas aparte: **Medidas · Carga · Fuerza · Cruce**. Vive fuera de `medMapa` a
+propósito, porque si una capa no tiene datos y la barra estuviera dentro del mapa te quedabas
+encerrado en ella. En pantallas de menos de 360 px se queda solo el icono.
+
+**Zoom a la zona** (Fuerza): al elegir una zona el `viewBox` se recorta alrededor con margen,
+cuadrado a la proporción del lienzo para que el cuerpo no se deforme, con un botón "Ver el
+cuerpo" para volver.
+
+**Animaciones**: las zonas de color entran con un fundido corto, el contorno del músculo
+seleccionado se dibuja desde un trazo grueso, la isla entra con un desplazamiento y escala, y
+las zonas tocables responden al `:active`. Todas con la misma curva `cubic-bezier(.32,.72,0,1)`
+que ya usa el resto de la app.
+
+**El cruce también se ve en el mapa**: cada zona toma el estado de su músculo más urgente
+(rojo pide atención, naranja ganancia fácil, verde en orden) y al tocarla salen solo las
+tarjetas de esa zona.
+

@@ -522,3 +522,33 @@ rumano, remo con mancuerna) salieron de aquí: se ven en su propia fila con su p
 Se puede elegir a mano desde la fila abierta (`S.cfg.fzaFuente[estandar] = exId`), con los
 candidatos y el 1RM de cada uno a la vista.
 
+## Editar una rutina del plan (E2b)
+
+Las rutinas del plan son constantes: el mismo plan para los dos. Pero uno quiere quitar un
+ejercicio que hoy no puede hacer, subir series o meter otro. En vez de duplicar las rutinas,
+se guarda una **capa de cambios** por rutina en `S.rutMod[rid] = {quita, sets, reps, extra,
+orden}` y `rutAplicarMods` la aplica encima al montar `ROUTINES`. El plan original nunca se
+toca, así que **"Volver al plan original"** siempre funciona, y los ejercicios quitados
+quedan a la vista para poder devolverlos de un toque.
+
+## Long press
+
+Mantener pulsado sobre una imagen abría el menú del navegador (guardar, copiar, compartir).
+En una app eso no tiene sentido. Se desactivó el callout y el arrastre en todo lo tocable, y
+el long press sobre la fila de un ejercicio abre su ficha, que es lo que uno quería hacer.
+
+## Peso corporal y lastre
+
+En anillas, dominadas, fondos y flexiones el número que se apunta es el **lastre** (0 si va
+a peso limpio) y el peso real de la serie es **el corporal de ese día más el lastre**
+(`exPesoCorporal`, `pesoDeDia`, `exPesoReal`). Sin esto una dominada contaba 0 kg y no
+aportaba nada ni al tonelaje ni al 1RM.
+
+## Correr en el mapa de carga
+
+Correr también carga las piernas, y dejarlo fuera hacía que el gemelo saliera "sin trabajo"
+en una semana de 30 km. Se cuenta en series equivalentes: **10 minutos ≈ 1 serie**, repartida
+30% pantorrilla, 25% cuádriceps, 20% isquio, 20% glúteo, 5% abdomen. La equivalencia es
+conservadora a propósito: correr es resistencia, no hipertrofia, y no debe tapar la falta de
+trabajo con carga.
+

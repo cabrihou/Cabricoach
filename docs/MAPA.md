@@ -581,3 +581,31 @@ lo contrario de fácil de llenar. `serieW` / `serieValida` tratan el vacío como
 `exPesoCorporal(id)`, el campo muestra **"lastre"** en vez de "kg", y al marcar una serie no
 se rellena el peso desde el histórico. Sirve igual en la sesión y en el registro libre.
 
+## MD0 · Las tres cajas de Medidas
+
+Al entrar solo se ven **tres cajas plegadas** en fila (`UI.medBox`, acordeón), en vez de una
+pared de secciones: **Meta de grasa · Tu cuerpo · Tu meta**. El aviso de lo que toca hoy
+queda siempre arriba porque es lo único accionable desde ahí.
+
+**"Tu forma" (las proporciones) vive dentro de "Tu cuerpo"**: es lo mismo mirado de otra
+manera, y tenerlo aparte obligaba a saltar entre cajas para entender un solo número. Esa caja
+lleva el mapa, el detalle de la zona, las proporciones, las asimetrías, la cadencia y el
+historial: una sola sección.
+
+Cada caja lleva **una cabrita que ya existía** en `assets/cab` (racha, medidas, plan) según
+el usuario, más su icono en el rótulo. No hizo falta generar nada: antes de pedir imágenes
+nuevas conviene mirar las 106 que ya hay. Los nodos por si se quieren propias están creados
+en Magnific (`UI — med_grasa`, `UI — med_cuerpo`, `UI — med_meta`), sin generar.
+
+## De dónde salieron las series (Carga → músculo)
+
+Al abrir un músculo, un desplegable lista **día, ejercicio, series y cuánto aportó cada uno**
+con su porcentaje. Un total suelto no dice si esas 6 series salieron de un día o de tres, ni
+de qué ejercicios. Los minutos de carrera aparecen como series equivalentes.
+
+## Banner de rutina de anillas
+
+`routineBanner` reconoce sola una rutina de anillas: si la mitad o más de sus ejercicios son
+de anillas, el banner es `ring_pullup.jpg` en vez del de push/pull genérico. El nodo del
+banner propio (`BAN — rutina_anillas`) está creado en Magnific, sin generar.
+

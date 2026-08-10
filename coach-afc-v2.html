@@ -931,6 +931,15 @@ img{-webkit-user-drag:none;user-select:none}
 .cargarow .cb i{display:block;height:100%;border-radius:4px}
 .cargarow .cb .cmev{position:absolute;top:-3px;width:2px;height:14px;background:var(--smoke);opacity:.55;border-radius:1px}
 .cargarow .cv{flex:0 0 34px;text-align:right;font:700 12px var(--num);color:var(--ink)}
+.medboxes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.medbox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  padding:11px 5px;border-radius:16px;border:1px solid var(--line2);background:var(--paper2);
+  color:var(--smoke);cursor:pointer;transition:.2s;min-height:96px}
+.medbox.on{background:var(--grad);border-color:transparent;color:var(--onmint)}
+.medbox .mbimg{width:52px;height:52px;object-fit:contain;pointer-events:none}
+.medbox .mblb{display:flex;align-items:center;gap:4px;font:600 11px/1.2 var(--ui);text-align:center}
+@media (max-width:360px){.medbox .mbimg{width:42px;height:42px}}
+@media (max-width:360px){.medbox{padding:11px 4px;min-height:76px}.medbox .mblb{font-size:10.5px}}
 .medph{display:flex;align-items:baseline;gap:7px;margin:0 0 8px;padding-bottom:8px;border-bottom:1px solid var(--line2)}
 .medph b{font:700 15px var(--ui);color:var(--ink)}
 .medobj{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid var(--line2);border-radius:12px;background:rgba(255,255,255,.02)}
@@ -1543,7 +1552,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 154';
+const APPREV='REV 155';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3762,7 +3771,7 @@ function ejPatron(id, nombre){
 /* series efectivas por musculo en los ultimos N dias */
 function cargaMuscular(dias){
   const hoy=TODAY(), desde=addDays(hoy,-((dias||7)-1));
-  const out={}, ejer={}, sinMapear=[];
+  const out={}, ejer={}, det={}, sinMapear=[];
   Object.entries(S.logs||{}).forEach(([id,hist])=>{
     const enRango=hist.filter(h=>h.d>=desde && h.d<=hoy);
     if(!enRango.length) return;
@@ -3773,6 +3782,11 @@ function cargaMuscular(dias){
     Object.entries(rep).forEach(([m,pc])=>{
       out[m]=(out[m]||0)+series*pc/100;
       (ejer[m]=ejer[m]||new Set()).add(nom);
+      /* de donde salio cada serie: sirve para poder abrir el detalle y ver el reparto
+         por dia y por ejercicio en vez de un total suelto */
+      det[m]=det[m]||[];
+      enRango.forEach(e=>{ const ns=(e.sets||[]).length; if(!ns) return;
+        det[m].push({d:e.d, ej:nom, series:ns, pc, aporta:Math.round(ns*pc/100*10)/10}); });
     });
   });
   /* Correr tambien carga las piernas, y dejarlo fuera del mapa hacia que el gemelo
@@ -3790,10 +3804,17 @@ function cargaMuscular(dias){
     Object.entries(EJ_PATRONES.correr).forEach(([m,pc])=>{
       out[m]=(out[m]||0)+serEq*pc/100;
       (ejer[m]=ejer[m]||new Set()).add('Correr'+(corrKm?' ('+fmt1(corrKm)+' km)':''));
+      det[m]=det[m]||[];
+      Object.entries(S.acts||{}).forEach(([d,a])=>{
+        if(d<desde||d>hoy||!a||a.t!=='run'||!a.run) return;
+        const mi=+a.run.min||0; if(!mi) return;
+        det[m].push({d, ej:'Correr'+(a.run.km?' '+fmt1(a.run.km)+' km':''), series:Math.round(mi/10*10)/10, pc, aporta:Math.round(mi/10*pc/100*10)/10, run:true});
+      });
     });
   }
   const res={};
-  Object.keys(out).forEach(m=>{ res[m]={series:Math.round(out[m]*10)/10, ejercicios:[...(ejer[m]||[])]}; });
+  Object.keys(out).forEach(m=>{ res[m]={series:Math.round(out[m]*10)/10, ejercicios:[...(ejer[m]||[])],
+    detalle:(det[m]||[]).sort((a,b)=>a.d<b.d?1:-1)}; });
   return {musc:res, sinMapear:[...new Set(sinMapear)], dias:dias||7, corrMin, corrKm};
 }
 /* en que nivel esta ese musculo frente a las referencias de volumen semanal */
@@ -4098,7 +4119,7 @@ function vCarga(){
   /* ranking de todos los musculos con referencia, para el detalle y las alertas */
   const filas=Object.keys(MUSC_VOL).map(m=>{
     const s=(carga.musc[m]||{}).series||0;
-    return {m, s, nv:cargaNivel(m,s), ej:(carga.musc[m]||{}).ejercicios||[]};
+    return {m, s, nv:cargaNivel(m,s), ej:(carga.musc[m]||{}).ejercicios||[], det:(carga.musc[m]||{}).detalle||[]};
   }).filter(f=>MUSC_VOL[f.m].mev>0 || f.s>0).sort((a,b)=>b.s-a.s);
   const flojos=filas.filter(f=>f.nv.k==='cero'||f.nv.k==='bajo');
   const pasados=filas.filter(f=>f.nv.k==='exceso');
@@ -4131,6 +4152,12 @@ function vCarga(){
       ${MUSC_VOL[selF.m]?(()=>{const v=MUSC_VOL[selF.m];
         return `<div class="medbar mt8"><i style="width:${clamp(selF.s/v.mrv*100,2,100)}%;background:${selF.nv.c};box-shadow:none"></i></div>
         <div class="flex between small dim mt4"><span>mínimo ${v.mev}</span><span>óptimo ${v.mav}</span><span>tope ${v.mrv}</span></div>`;})():''}
+      ${selF.det.length?`<details class="medhist mt8" ${UI.cargaDet?'open':''}><summary data-a="cargaDetTgl">De dónde salieron esas ${fmt1(selF.s)} series</summary>
+        <table class="medtab"><thead><tr><th>Día</th><th>Ejercicio</th><th>Series</th><th>Aporta</th></tr></thead><tbody>
+        ${selF.det.map(x=>`<tr><td>${fmtD(x.d)}</td><td style="text-align:left">${esc(shortEx(x.ej))}<i class="small dim"> ${x.pc}%</i></td>
+          <td>${x.run?fmt1(x.series)+' eq':x.series}</td><td><b>${fmt1(x.aporta)}</b></td></tr>`).join('')}</tbody></table>
+        <div class="small dim mt8" style="line-height:1.5">Cada ejercicio reparte sus series entre los músculos que trabaja: la columna del porcentaje es cuánto le toca a <b>${esc(MUSC_NOM[selF.m]||selF.m)}</b>.${selF.det.some(x=>x.run)?' Los minutos de carrera entran como series equivalentes (10 min ≈ 1).':''}</div>
+      </details>`:''}
       <div class="medsug">${ic('zap',12)}<div>${cargaConsejo(selF, dias)}</div></div>
     </div>`:`<div class="small dim tc mt8">Toca un músculo para ver sus series, su nivel y qué hacer.</div>`}
   </section>
@@ -4197,7 +4224,14 @@ function vMedidasCuerpo(){
   const pm=pesoProm7();
   const est=medUltimo('estatura');
   const hoyForm=UI.medForm ? medCamposHoy(UI.medForm) : null;
+  /* Tres cajas plegadas al entrar en vez de una pared de secciones: cada una abre la suya
+     (acordeon) para que solo se vea lo que se vino a mirar. El aviso de lo que toca hoy
+     queda siempre arriba porque es lo unico accionable desde aqui.
+     "Tu forma" (las proporciones) vive dentro de "Tu cuerpo": es lo mismo mirado de otra
+     manera, y separarlo obligaba a saltar entre cajas para entender un solo numero. */
+  const box=UI.medBox||null;
   return `
+  
   ${pend.length?`<section class="mod tight glowtop">
     <div class="flex" style="gap:10px;align-items:flex-start">${ic('bell',16)}
       <div class="grow" style="min-width:0"><b>Hoy toca: ${pend.map(p=>p.n.toLowerCase()).join(' y ')}</b>
@@ -4216,14 +4250,52 @@ function vMedidasCuerpo(){
     </div>
   </section>
   ${hoyForm?medForm(hoyForm):''}
-  ${metaGrasaCard()}
-  ${metaCard()}
+  
+  <section class="mod tight">
+    <div class="medboxes">
+      ${(()=>{const A=UID==='andres';
+        /* se usan las cabritas que ya existen en assets/cab en vez de generar nuevas:
+           medidas (cinta metrica), la de plan para la meta y la de racha para la grasa */
+        const IMG={grasa:A?CAB.rachaA:CAB.rachaC, cuerpo:A?CAB.medidasA:CAB.medidasC, meta:A?CAB.planA:CAB.planC};
+        return [['grasa','Meta de grasa','target'],['cuerpo','Tu cuerpo','ruler'],['meta','Tu meta','scale']].map(([k,lb,icn])=>
+        `<button class="medbox ${box===k?'on':''}" data-a="medBox" data-k="${k}" aria-expanded="${box===k?'true':'false'}">
+          ${IMG[k]?`<img loading="lazy" class="mbimg" src="${IMG[k]}" alt="" decoding="async">`:`<span class="mbic">${ic(icn,20)}</span>`}
+          <span class="mblb">${ic(icn,11)} ${lb}</span></button>`).join('');})()}
+    </div>
+  </section>
+  ${box==='grasa'?`${metaGrasaCard()}`:''}
+  ${box==='cuerpo'?`
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('ruler',16)} Tu cuerpo</span>${sel?`<button class="btn sm ghost" data-a="medZona" data-z="">Ver todo</button>`:''}</div>
     <div class="medwrap">${medMapa(sel)}</div>
     <div class="small dim tc">${sel?'Toca otra zona para cambiar':'Toca una zona del cuerpo para ver su medida'}</div>
     ${sel?medPanelZona(sel):''}
   </section>
+  
+  ${propCard()}
+  ${(()=>{ const as=medAsimetrias(); if(!as.length) return '';
+    return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('alert',16)} Diferencias entre lados</span></div>
+      ${as.map(a=>`<div class="medrow"><span class="grow"><b>${esc(a.n)}</b><i class="small dim" style="display:block">der ${fmt1(a.der)} · izq ${fmt1(a.izq)} cm</i></span>
+        <span class="medval"><b>${fmt1(a.dif)}</b><em>cm</em></span></div>`).join('')}
+      <div class="small dim mt8">Hasta 1 cm es normal. Desde 1,5 conviene trabajo unilateral del grupo.</div></section>`;})()}
+  
+  ${medCadenciaCard()}
+  ${(()=>{ const fs=medFechas(); if(fs.length<2) return '';
+    return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('cal',16)} Historial</span></div>
+      <div class="tbwrap"><table class="tb"><tr><th>Fecha</th><th class="r">Cintura</th><th class="r">Pecho</th><th class="r">Cadera</th><th class="r">Peso</th></tr>
+      ${fs.slice(-8).reverse().map(d=>{const m=S.medidas[d]||{};
+        return `<tr><td>${fmtD(d)}</td><td class="r">${m.cintura?fmt1(m.cintura):'·'}</td><td class="r">${m.pecho?fmt1(m.pecho):'·'}</td><td class="r">${m.cadera?fmt1(m.cadera):'·'}</td><td class="r">${m.peso?fmt1(m.peso):'·'}</td></tr>`;}).join('')}
+      </table></div></section>`;})()}
+  ${(()=>{ const fs=medFechas(); if(fs.length<2) return '';
+  return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('cal',16)} Historial</span></div>
+      <div class="tbwrap"><table class="tb"><tr><th>Fecha</th><th class="r">Cintura</th><th class="r">Pecho</th><th class="r">Cadera</th><th class="r">Peso</th></tr>
+      ${fs.slice(-8).reverse().map(d=>{const m=S.medidas[d]||{};
+        return `<tr><td>${fmtD(d)}</td><td class="r">${m.cintura?fmt1(m.cintura):'·'}</td><td class="r">${m.pecho?fmt1(m.pecho):'·'}</td><td class="r">${m.cadera?fmt1(m.cadera):'·'}</td><td class="r">${m.peso?fmt1(m.peso):'·'}</td></tr>`;}).join('')}
+      </table></div></section>`;})()}
+})()}
+  `:''}
+  ${box==='meta'?`
+  ${metaCard()}
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('target',16)} Grasa corporal · método Navy</span></div>
     ${nav.ok?`
@@ -4252,25 +4324,16 @@ function vMedidasCuerpo(){
     :`<div class="small dim">Para calcularlo me falta: <b>${nav.falta.join(', ')}</b>.</div>
       <button class="btn ghost full mt8" data-a="medAbrir" data-g="todo">${ic('ruler',13)} Medir lo que falta</button>`}
   </section>
-  ${propCard()}
-  ${(()=>{ const as=medAsimetrias(); if(!as.length) return '';
-    return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('alert',16)} Diferencias entre lados</span></div>
-      ${as.map(a=>`<div class="medrow"><span class="grow"><b>${esc(a.n)}</b><i class="small dim" style="display:block">der ${fmt1(a.der)} · izq ${fmt1(a.izq)} cm</i></span>
-        <span class="medval"><b>${fmt1(a.dif)}</b><em>cm</em></span></div>`).join('')}
-      <div class="small dim mt8">Hasta 1 cm es normal. Desde 1,5 conviene trabajo unilateral del grupo.</div></section>`;})()}
-  ${medCadenciaCard()}
+  
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('zap',16)} Qué hacer con esto</span></div>
     ${medPlan().map(p=>`<div class="flex mt8" style="gap:9px;align-items:flex-start">${ic(p.t==='ok'?'check':'alert',14)}<div class="small grow" style="line-height:1.5">${p.x}</div></div>`).join('')}
   </section>
-  ${(()=>{ const fs=medFechas(); if(fs.length<2) return '';
-    return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('cal',16)} Historial</span></div>
-      <div class="tbwrap"><table class="tb"><tr><th>Fecha</th><th class="r">Cintura</th><th class="r">Pecho</th><th class="r">Cadera</th><th class="r">Peso</th></tr>
-      ${fs.slice(-8).reverse().map(d=>{const m=S.medidas[d]||{};
-        return `<tr><td>${fmtD(d)}</td><td class="r">${m.cintura?fmt1(m.cintura):'·'}</td><td class="r">${m.pecho?fmt1(m.pecho):'·'}</td><td class="r">${m.cadera?fmt1(m.cadera):'·'}</td><td class="r">${m.peso?fmt1(m.peso):'·'}</td></tr>`;}).join('')}
-      </table></div></section>`;})()}
+  `:''}
+  ${!box?`<div class="small dim tc" style="padding:14px 6px;line-height:1.55">Toca una de las tres para abrirla. Así no tienes toda la pantalla encima cuando solo vienes a mirar una cosa.</div>`:''}
   `;
 }
+
 function medRatioRow(nom, v, umbral, nota){
   const ok=v<=umbral, pct=clamp(v/(umbral*1.5)*100,0,100);
   return `<div class="mt8"><div class="flex between" style="align-items:baseline">
@@ -4825,6 +4888,15 @@ function entrenoImg(r){
 /* banner horizontal dedicado para la tarjeta de rutina (16:9, fondo night-gym); null si no hay */
 function routineBanner(r){
   const nm=(r.name||'').toLowerCase(), ph=(phOf(r)||'').toLowerCase();
+  /* una rutina de anillas se reconoce sola: si la mayoria de sus ejercicios son de
+     anillas, el banner es de anillas y no el de push/pull genérico */
+  const ex=r.ex||[];
+  if(ex.length){
+    const anillas=ex.filter(e=>{ const x=excatById(e.id);
+      return (x&&x.equip==='anillas') || /anilla|ring/i.test(e.name||''); }).length;
+    if(anillas>=Math.max(2, Math.ceil(ex.length*0.5))) return 'assets/ej/ring_pullup.jpg';
+  }
+  if(/anilla|ring/.test(nm)) return 'assets/ej/ring_pullup.jpg';
   if(UID==='andres'){
     if(/pull|jalon|espalda/.test(ph)||/pull|espalda/.test(nm)) return CAB.banPullA;
     if(/leg|lower|pierna|cuad|femoral/.test(ph)||/leg|pierna/.test(nm)) return CAB.banLegsA;
@@ -15049,10 +15121,12 @@ const ACTIONS = {
   waterAt(d){ S.water[UI.calSel]=Math.max(0,(S.water[UI.calSel]||0)+Number(d.n)); save('water'); render(); },
   /* Check-in y Fotos son vistas propias (no estan en el nav): guardo de donde vine para el boton volver */
   medVista(d){ UI.medVista=d.v; render(); },
+  medBox(d, el){ UI.medBox = UI.medBox===d.k ? null : d.k; renderAnclado(el); },
   excatMapa(){ UI.excatMapa=!UI.excatMapa; if(!UI.excatMapa) UI.excatZona=null; UI.excatQ=''; render(); window.scrollTo({top:0}); },
   cuerpoSub(d){ UI.cuerpoSub=d.s; UI.medZona=null; render(); window.scrollTo({top:0}); },
   cargaDias(d){ UI.cargaDias=+d.d||7; render(); },
   cargaMusc(d){ UI.cargaMusc=d.m; render(); },
+  cargaDetTgl(d, el){ UI.cargaDet=!UI.cargaDet; renderAnclado(el); },
   goalBaseBox(d){ UI.goalBase = d.id || null; UI.goalBaseW=''; UI.goalBaseR=''; UI.goalBaseM='tecnica'; render(); },
   goalBaseM(d){ UI.goalBaseM=d.m; render(); },
   goalBaseSave(d){

@@ -278,15 +278,31 @@ Lo que se agregó ahora:
   inventarse un dato que no existe a nivel poblacional. El nivel de un grupo tampoco lo puede
   marcar un accesorio: `fzaGrupo` solo mira los calibrados.
 - **Los dos ejes, a la vista.** `fzaScoreMixto` da `rel` (ratio contra tu peso), `abs`
-  (el mismo peso evaluado contra un cuerpo mediano, `FZA_PESO_REF` 80 kg / 62 kg) y `mix`
+  (qué tan raro es ese peso, ver abajo) y `mix`
   = 0.7·rel + 0.3·abs, con los pesos en `FZA_MEZCLA`. `fzaGlobal` promedia los calibrados y
   `fzaGlobalHTML` pinta el bloque que abre la sección: **nivel global** con su porcentaje al
   siguiente y, debajo, **fuerza relativa** y **fuerza total** en dos cajas separadas con su
   propio nivel y su propia barra. No se fusionan en la etiqueta de cada ejercicio: ahí manda
   la relativa y el absoluto sale como cápsula solo cuando difiere. Un tipo de 60 kg con banca
   de 90 y uno de 120 con banca de 150 no son comparables con un solo número.
-  A 90 kg contra una referencia de 80, la total sale por encima de la relativa; a 59,5 kg
-  contra 62 las dos coinciden, que es lo correcto.
+  El segundo eje **no** es "el mismo peso en un cuerpo de referencia", que era un atajo. Es
+  **cuánta gente que entrena mueve esos kilos**, sin mirar la báscula. Se calcula así:
+
+  1. Los umbrales de la tabla **son percentiles** de la gente que entrena, así los publica
+     Strength Level: Novato el 20%, Intermedio el 50%, Avanzado el 80%, Élite el 95%. Con eso
+     `fzaPctlRatio` lee cualquier ratio como percentil, interpolando entre umbrales y con una
+     cola exponencial por encima de Élite.
+  2. Para pasar de ratio a kilos sueltos, `fzaPctlAbs` integra ese percentil sobre la
+     distribución de pesos corporales de la población que entrena (`FZA_PESO_DIST`, normal de
+     80 ± 13 kg en hombre y 64 ± 12 en mujer, en pasos de 0.125 sigma entre ±2.5): para cada
+     peso posible, qué fracción de gente de ese peso mueve esos kilos. La suma ponderada es el
+     percentil absoluto.
+  3. `fzaUnoDeCada` lo traduce a lenguaje llano: "1 de cada 5", "la mayoría llega".
+
+  Contraste con datos reales de Cami (59,5 kg): hip thrust de 160,3 kg sale relativo Avanzado
+  (percentil 84) y en kilos "1 de cada 5"; press banca de 23,8 kg sale Principiante y "la
+  mayoría llega". Los dos números conviven en pantalla: la etiqueta de nivel de siempre y la
+  rareza del peso.
 - **Sin datos recientes.** Si el mejor 1RM tiene más de 60 días (`FZA_VIEJO`), sale una cápsula
   que lo dice. Se marca, no se degrada.
 - **Guardia de déficit.** `fzaDeficitGanancia` cruza el peso con las cargas: si bajaste 1 kg o

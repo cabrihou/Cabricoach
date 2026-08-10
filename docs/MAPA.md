@@ -785,3 +785,37 @@ desaturada. Antes era una fila de texto donde el progreso no se veía.
 El nombre que se muestra es **el de la lista** (Fondos lastrados), no el del id registrado
 (Chest Dip); el nombre real solo aparece en el detalle, y únicamente si es distinto.
 
+
+### Gradaciones, cápsulas y jerarquía (REV 172)
+
+La tarjeta de ejercicio se volvió el patrón visual de toda la capa de Fuerza:
+
+- **Degradación**: además del degradado de fondo, un `radial-gradient` en la esquina superior
+  izquierda (`.fzaejglow`) con el color del nivel, y el marco de la foto (`.fzaejmarco`) con un
+  degradado del mismo color. El color entra por la variable `--nc`.
+- **Cápsulas** (`.fzacap`): dicen de un vistazo lo que antes había que leer en una frase.
+  `cuerpo + lastre` o `40% del cuerpo` (azul), `anillas` y `por lado` (oro), `carro 40 kg`
+  (gris) y `tu más fuerte` (verde) en el mejor del grupo cuando hay con qué comparar.
+- **Jerarquía**: peso a 25 px, nombre a 15 px, cápsulas a 8,5 px en mayúsculas. Encima de la
+  barra va `Camino a Intermedio` con el porcentaje a la derecha; debajo, el nivel como píldora
+  tintada (`.fzaniv`) y lo que falta en kilos.
+- La **cabecera de grupo** (`.fzamush`) usa el mismo idioma: punto de color con halo, nombre a
+  15 px, cápsula `3/4 con registro` y píldora de nivel. El grupo abierto tiñe su borde.
+- La fila de "Tu nivel de fuerza" (`fzaFilaHTML`) quedó igual de tarjeta, para que sea la misma
+  cosa mirada desde otro lado.
+
+### Pestañas expandibles (`xtabs`)
+
+En reposo cada pestaña es **solo el icono**; la activa se abre con una transición de `max-width`
+y saca su nombre. Cabe una fila de seis sin scroll horizontal y se ve de lejos cuál está puesta.
+Se usa en las cuatro capas del mapa (`medCapaBar`) y en las sub-pestañas de Progreso
+(`PROG_ACT`). Helper: `xtabs(items, activa, accion)` donde cada item es `{k,n,i}` y el string
+`"|"` mete un separador. Respeta `prefers-reduced-motion`.
+
+### Tarjeta destacada (`hlCard`)
+
+Degradado con trama de puntos, marcador con icono arriba a la derecha, una cifra grande con su
+unidad, cápsulas de contexto y un botón de píldora. Es para una sola cosa por pantalla: en
+**Inicio** el avance del peso hacia la meta, en **Carga** las series efectivas de la ventana.
+Paletas en `HL_COL` (verde, azul, violeta, naranja, rojo, oro); el color lo elige el dato, no
+el gusto: naranja cuando algo va mal, verde cuando va bien.

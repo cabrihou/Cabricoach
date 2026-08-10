@@ -977,6 +977,15 @@ img{-webkit-user-drag:none;user-select:none}
 .mzoomout{position:absolute;bottom:8px;left:8px;z-index:5;display:flex;align-items:center;gap:5px;
   padding:6px 11px;border-radius:999px;border:1px solid var(--line2);background:rgba(14,17,22,.9);
   backdrop-filter:blur(8px);color:var(--ink2);font:600 11px var(--ui);cursor:pointer}
+.fzafnt{margin-top:10px;padding-top:9px;border-top:1px solid var(--line2)}
+.fzaej{border-top:1px solid var(--line2)}
+.fzaejh{display:flex;align-items:center;gap:9px;width:100%;padding:8px 0;background:transparent;border:0;color:var(--ink);cursor:pointer;text-align:left}
+.fzaejimg{width:38px;height:38px;border-radius:10px;object-fit:cover;flex:none;background:var(--paper2)}
+.fzaejimg.ph{display:flex;align-items:center;justify-content:center;color:var(--smoke)}
+.fzaej.sin .fzaejh{opacity:.55}
+.fzaej.open .nfchev{transform:rotate(90deg)}
+.fzaejb{padding:2px 0 12px}
+.fzamusn.dim{color:var(--smoke)}
 .fzamus{border-bottom:1px solid var(--line2)}
 .fzamus:last-of-type{border-bottom:0}
 .fzamush{display:flex;align-items:center;gap:9px;width:100%;padding:10px 0;background:transparent;border:0;color:var(--ink);cursor:pointer;text-align:left}
@@ -1623,7 +1632,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 166';
+const APPREV='REV 167';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3341,16 +3350,28 @@ function propComo(f){
 const FZA_NIVELES=['Principiante','Novato','Intermedio','Avanzado','Élite'];
 /* ratios de 1RM/peso corporal para [novato, intermedio, avanzado, elite] */
 const FZA_STD={
-  bench:   {n:'Press banca',      a:[0.75,1.00,1.50,2.00], c:[0.40,0.60,0.90,1.25]},
-  squat:   {n:'Sentadilla',       a:[1.00,1.50,2.00,2.50], c:[0.60,1.00,1.40,1.85]},
-  dead:    {n:'Peso muerto',      a:[1.25,1.75,2.50,3.00], c:[0.75,1.15,1.65,2.15]},
-  ohp:     {n:'Press de hombro',  a:[0.50,0.70,1.00,1.30], c:[0.30,0.45,0.65,0.90]},
-  row:     {n:'Remo',             a:[0.70,1.00,1.35,1.75], c:[0.40,0.60,0.85,1.15]},
-  pulldown:{n:'Jalón / dominada', a:[0.70,0.95,1.25,1.60], c:[0.40,0.60,0.85,1.10]},
-  hip:     {n:'Hip thrust',       a:[1.00,1.50,2.25,3.00], c:[0.90,1.40,2.00,2.60]},
-  legpress:{n:'Prensa',           a:[1.75,2.50,3.50,4.50], c:[1.25,1.90,2.70,3.50]},
-  curl:    {n:'Curl de bíceps',   a:[0.30,0.45,0.65,0.85], c:[0.20,0.30,0.45,0.60]},
+  bench:   {n:'Press banca',      a:[1.00,1.25,1.50,2.00], c:[0.50,0.75,1.10,1.45], f:'sl'},
+  squat:   {n:'Sentadilla',       a:[1.25,1.75,2.25,2.75], c:[0.75,1.25,1.75,2.25], f:'sl'},
+  dead:    {n:'Peso muerto',      a:[1.25,1.75,2.50,3.00], c:[0.75,1.15,1.65,2.15], f:'sl'},
+  ohp:     {n:'Press de hombro',  a:[0.55,0.80,1.05,1.35], c:[0.35,0.50,0.70,0.95], f:'sl'},
+  row:     {n:'Remo',             a:[0.75,1.00,1.50,1.75], c:[0.45,0.70,0.95,1.25], f:'sl'},
+  pulldown:{n:'Jalón / dominada', a:[0.75,1.00,1.50,1.75], c:[0.50,0.75,0.95,1.25], f:'sl'},
+  hip:     {n:'Hip thrust',       a:[1.25,1.75,2.75,3.75], c:[1.00,1.75,2.50,3.25], f:'sl'},
+  legpress:{n:'Prensa',           a:[2.00,2.75,4.00,5.25], c:[1.50,2.25,3.25,4.50], f:'sl'},
+  curl:    {n:'Curl de bíceps',   a:[0.40,0.60,0.80,1.05], c:[0.25,0.40,0.55,0.75], f:'sl'},
 };
+/* De donde sale cada baremo y cuanto hay que fiarse. Se muestra en pantalla porque un
+   "eres avanzado" sin respaldo no vale nada:
+   sl   = Strength Level, 195 millones de levantamientos reportados. Solido.
+   est  = estimado: la fuente da el lastre en libras absolutas, no un ratio, asi que la
+          conversion a (peso corporal + lastre) / peso corporal asume un peso medio.
+   ext  = extrapolado de la version equivalente en barra, sin datos propios. */
+const FZA_FUENTE={
+  sl:  {n:'Strength Level', d:'195 millones de levantamientos reportados', c:'alta'},
+  est: {n:'Strength Level, convertido', d:'la fuente da el lastre en libras; el ratio asume un peso corporal medio', c:'media'},
+  ext: {n:'sin datos propios', d:'se usa la tabla de la versión en barra fija; en anillas el mismo peso es más difícil, así que tu nivel real es probablemente mayor', c:'baja'},
+};
+
 /* que id de ejercicio cuenta para cada estandar (el mejor de los suyos manda) */
 /* Candidatos de cada estandar EN ORDEN DE FIDELIDAD: el primero es el que mejor representa
    ese levantamiento, y se usa el primero que tenga registros (antes se cogia el que diera
@@ -3474,7 +3495,7 @@ function exPesoReal(id, w, fecha){
    marcar si un peso es por lado. Se excluyeron a proposito flexiones, remo invertido y
    muscle up: se registran sin kilos y el ratio no se podria calcular.
    Se llega a ellos por PATRON de movimiento, asi cubren tambien los importados. */
-const FZA_STD2={"press_inclinado":{"n":"Press inclinado","a":[0.55,0.9,1.25,1.65],"c":[0.25,0.55,0.8,1.1]},"press_banca_db":{"n":"Press banca con mancuerna","a":[0.4,1.0,1.4,1.85],"c":[0.2,0.6,0.95,1.35]},"press_militar_db":{"n":"Press de hombro con mancuerna","a":[0.3,0.8,1.1,1.4],"c":[0.15,0.45,0.65,0.9]},"elevacion_lateral":{"n":"Elevaci\u00f3n lateral","a":[0.12,0.4,0.6,0.85],"c":[0.1,0.28,0.42,0.6]},"pajaro_posterior":{"n":"P\u00e1jaro posterior","a":[0.05,0.45,0.7,0.95],"c":[0.08,0.3,0.5,0.7]},"remo_mancuerna":{"n":"Remo con mancuerna","a":[0.35,1.0,1.4,1.8],"c":[0.25,0.65,0.9,1.25]},"remo_polea":{"n":"Remo sentado en polea","a":[0.4,1.05,1.5,1.95],"c":[0.3,0.75,1.0,1.35]},"encogimiento":{"n":"Encogimiento","a":[0.65,1.6,2.25,3.0],"c":[0.25,1.0,1.6,2.25]},"curl_martillo":{"n":"Curl martillo","a":[0.18,0.58,0.88,1.28],"c":[0.12,0.4,0.62,0.9]},"triceps_polea":{"n":"Tr\u00edceps en polea","a":[0.4,0.7,1.05,1.45],"c":[0.3,0.48,0.72,1.0]},"press_frances":{"n":"Press franc\u00e9s","a":[0.28,0.68,0.95,1.3],"c":[0.18,0.42,0.6,0.85]},"sentadilla_frontal":{"n":"Sentadilla frontal","a":[0.75,1.3,1.65,2.0],"c":[0.5,0.9,1.2,1.5]},"hack":{"n":"Hack squat","a":[1.0,1.94,2.78,3.72],"c":[0.7,1.44,2.27,3.24]},"ext_cuadriceps":{"n":"Extensi\u00f3n de cu\u00e1driceps","a":[0.5,1.2,1.7,2.3],"c":[0.35,0.9,1.28,1.7]},"curl_femoral":{"n":"Curl femoral","a":[0.4,1.0,1.43,1.9],"c":[0.3,0.73,1.05,1.47]},"rdl":{"n":"Peso muerto rumano","a":[0.95,1.52,1.97,2.4],"c":[0.65,1.04,1.42,1.85]},"zancada":{"n":"Zancada","a":[0.28,0.6,0.88,1.2],"c":[0.18,0.4,0.6,0.8]},"bulgara":{"n":"Sentadilla b\u00falgara","a":[0.5,0.81,1.25,1.65],"c":[0.32,0.55,0.85,1.15]},"gemelo":{"n":"Gemelo de pie","a":[0.4,0.75,1.2,1.65],"c":[0.25,0.5,0.8,1.1]},"abductor":{"n":"Abductor en m\u00e1quina","a":[0.7,1.3,1.92,2.5],"c":[0.6,1.15,1.7,2.25]},"aductor":{"n":"Aductor en m\u00e1quina","a":[0.75,1.39,2.07,2.75],"c":[0.65,1.1,1.65,2.3]},"dominada_lastrada":{"n":"Dominada lastrada","a":[1.05,1.25,1.55,1.90],"c":[0.95,1.10,1.35,1.65]},"peso_muerto_sumo":{"n":"Peso muerto sumo","a":[1.25,1.80,2.55,3.05],"c":[0.75,1.20,1.70,2.20]},"trap_bar":{"n":"Peso muerto trap bar","a":[1.30,1.85,2.60,3.15],"c":[0.80,1.25,1.75,2.25]},"face_pull":{"n":"Face pull","a":[0.1,0.2,0.31,0.45],"c":[0.06,0.12,0.2,0.3]}};
+const FZA_STD2={"press_inclinado":{"n":"Press inclinado","a":[0.55,0.9,1.25,1.65],"c":[0.25,0.55,0.8,1.1]},"press_banca_db":{"n":"Press banca con mancuerna","a":[0.4,1.0,1.4,1.85],"c":[0.2,0.6,0.95,1.35]},"press_militar_db":{"n":"Press de hombro con mancuerna","a":[0.5,0.8,1.1,1.4],"c":[0.3,0.5,0.7,0.9],"f":"sl"},"elevacion_lateral":{"n":"Elevación lateral","a":[0.12,0.4,0.6,0.85],"c":[0.1,0.28,0.42,0.6]},"pajaro_posterior":{"n":"Pájaro posterior","a":[0.05,0.45,0.7,0.95],"c":[0.08,0.3,0.5,0.7]},"remo_mancuerna":{"n":"Remo con mancuerna","a":[0.35,1.0,1.4,1.8],"c":[0.25,0.65,0.9,1.25]},"remo_polea":{"n":"Remo sentado en polea","a":[0.4,1.05,1.5,1.95],"c":[0.3,0.75,1.0,1.35]},"encogimiento":{"n":"Encogimiento","a":[0.65,1.6,2.25,3.0],"c":[0.25,1.0,1.6,2.25]},"curl_martillo":{"n":"Curl martillo","a":[0.18,0.58,0.88,1.28],"c":[0.12,0.4,0.62,0.9]},"triceps_polea":{"n":"Tríceps en polea","a":[0.4,0.7,1.05,1.45],"c":[0.3,0.48,0.72,1.0]},"press_frances":{"n":"Press francés","a":[0.35,0.6,0.9,1.25],"c":[0.15,0.3,0.5,0.75],"f":"sl"},"sentadilla_frontal":{"n":"Sentadilla frontal","a":[0.75,1.3,1.65,2.0],"c":[0.5,0.9,1.2,1.5]},"hack":{"n":"Hack squat","a":[1.25,2.0,2.75,3.75],"c":[0.75,1.5,2.25,3.0],"f":"sl"},"ext_cuadriceps":{"n":"Extensión de cuádriceps","a":[0.5,1.2,1.7,2.3],"c":[0.35,0.9,1.28,1.7]},"curl_femoral":{"n":"Curl femoral","a":[0.4,1.0,1.43,1.9],"c":[0.3,0.73,1.05,1.47]},"rdl":{"n":"Peso muerto rumano","a":[0.95,1.52,1.97,2.4],"c":[0.65,1.04,1.42,1.85]},"zancada":{"n":"Zancada","a":[0.28,0.6,0.88,1.2],"c":[0.18,0.4,0.6,0.8]},"bulgara":{"n":"Sentadilla búlgara","a":[0.5,0.81,1.25,1.65],"c":[0.32,0.55,0.85,1.15]},"gemelo":{"n":"Gemelo de pie","a":[0.4,0.75,1.2,1.65],"c":[0.25,0.5,0.8,1.1]},"abductor":{"n":"Abductor en máquina","a":[0.7,1.3,1.92,2.5],"c":[0.6,1.15,1.7,2.25]},"aductor":{"n":"Aductor en máquina","a":[0.75,1.39,2.07,2.75],"c":[0.65,1.1,1.65,2.3]},"dominada_lastrada":{"n":"Dominada lastrada","a":[1.17,1.41,1.67,1.95],"c":[0.92,1.14,1.38,1.65],"f":"est"},"fondos":{"n":"Fondos lastrados","a":[1.31,1.64,2.01,2.41],"c":[0.98,1.28,1.63,2.0],"f":"est"},"peso_muerto_sumo":{"n":"Peso muerto sumo","a":[1.25,1.8,2.55,3.05],"c":[0.75,1.2,1.7,2.2]},"trap_bar":{"n":"Peso muerto trap bar","a":[1.3,1.85,2.6,3.15],"c":[0.8,1.25,1.75,2.25]},"face_pull":{"n":"Face pull","a":[0.1,0.2,0.31,0.45],"c":[0.06,0.12,0.2,0.3]},"dominada_anillas":{"n":"Dominada en anillas","a":[1.17,1.41,1.67,1.95],"c":[0.92,1.14,1.38,1.65],"f":"ext"},"fondos_anillas":{"n":"Fondos en anillas","a":[1.31,1.64,2.01,2.41],"c":[0.98,1.28,1.63,2.0],"f":"ext"}};
 const FZA_PAT2={"press_inclinado":"press_inclinado","press_vertical":"press_militar_db","elevacion_lateral":"elevacion_lateral","pajaro_posterior":"pajaro_posterior","remo_unilateral":"remo_mancuerna","remo_horizontal":"remo_polea","encogimiento_trapecio":"encogimiento","curl_martillo":"curl_martillo","extension_triceps":"triceps_polea","extension_cuadriceps":"ext_cuadriceps","curl_femoral":"curl_femoral","peso_muerto_rumano":"rdl","zancada":"zancada","gemelo_de_pie":"gemelo","gemelo_sentado":"gemelo","abduccion_cadera":"abductor","aduccion_cadera":"aductor","apertura_pecho":"press_banca_db","press_horizontal":"press_banca_db","extension_lumbar":"rdl"};
 /* nivel de un ejercicio que no esta entre los basicos, si tenemos baremo de su patron */
 /* algunos ejercicios comparten patron pero tienen tabla propia y muy distinta: el face
@@ -4399,6 +4420,77 @@ function cargaPop(zona, vista, carga, dias){
 /* Nivel de fuerza de UN musculo: el mejor basico que lo carga al 25% o mas manda, y se
    listan todos los que lo tocan con cuanto le aportan. Antes la zona devolvia ejercicios
    sueltos y no se sabia si el brazo iba flojo de biceps o de triceps. */
+/* ============ EJERCICIOS QUE MIDEN CADA GRUPO ============
+   Lista cerrada, definida a mano: son los que de verdad miden la fuerza de ese grupo, no
+   todo lo que lo roza. Cada entrada dice con que TABLA se compara y si el peso que se
+   apunta es lastre (en ese caso el peso movido es el corporal del dia mas el lastre).
+   Los ids alternativos cubren el mismo ejercicio segun de donde venga el registro: de las
+   rutinas propias o importado de Strong. */
+const FZA_GRUPOS={
+  espalda:{n:'Espalda', zonas:['pecho'], vistas:['espalda'], ej:[
+    {n:'Remo con barra',      ids:['row','row_bent_bb','row_pendlay','row_under_bb'], tabla:'row'},
+    {n:'Jalón al pecho',      ids:['latcl','latop','latpull_cbl','latpull_mach','latpull_wide','latpull_close','c_jalon'], tabla:'pulldown'},
+    {n:'Dominada',            ids:['pullup','pullup2','pullup_bw','pullup_wide','chinup','pullup_kip'], tabla:'dominada_lastrada', corp:true},
+    {n:'Dominada en anillas', ids:['ring_pullup'], tabla:'dominada_anillas', corp:true, anillas:true},
+  ]},
+  pecho:{n:'Pecho', zonas:['pecho'], vistas:['frente','lado'], ej:[
+    {n:'Press banca',       ids:['bench','bench_bb','bench_smith','c_bench','c_chest','cpress_conv'], tabla:'bench'},
+    {n:'Fondos lastrados',  ids:['dip','chest_dip','tricep_dip'], tabla:'fondos', corp:true},
+    {n:'Fondos en anillas', ids:['ring_dip'], tabla:'fondos_anillas', corp:true, anillas:true},
+  ]},
+  triceps:{n:'Tríceps', zonas:['brazo-der','brazo-izq'], ej:[
+    {n:'Skullcrusher',      ids:['skull','skull_bb','skull_db','tricep_ext_bb'], tabla:'press_frances'},
+    {n:'Fondos lastrados',  ids:['dip','chest_dip','tricep_dip'], tabla:'fondos', corp:true},
+    {n:'Fondos en anillas', ids:['ring_dip'], tabla:'fondos_anillas', corp:true, anillas:true},
+  ]},
+  biceps:{n:'Bíceps', zonas:['brazo-der','brazo-izq'], ej:[
+    {n:'Curl con barra',     ids:['curl_bb','curl'], tabla:'curl'},
+    {n:'Curl con mancuerna', ids:['curl_db','inccurl_db','curl_incline'], tabla:'curl', lado:true},
+    {n:'Curl preacher',      ids:['preach','preach_bb','preach_db','preach_mach'], tabla:'curl'},
+  ]},
+  hombro:{n:'Hombro', zonas:['hombros'], ej:[
+    {n:'Press militar con barra',     ids:['ohp_bb','military_press','ohp_seat_bb','shpress'], tabla:'ohp'},
+    {n:'Press militar con mancuerna', ids:['ohpdb','ohp_db','ohp_seat_db','arnold_db'], tabla:'press_militar_db', lado:true},
+    {n:'Press militar en máquina',    ids:['shpress_mach','shpress_plate','c_ohp'], tabla:'ohp'},
+  ]},
+  pierna:{n:'Pierna', zonas:['muslo-der','muslo-izq','cadera'], ej:[
+    {n:'Sentadilla', ids:['squat_bb','c_smith','squat_smith','squat_mach','squat_box'], tabla:'squat'},
+    {n:'Hack squat', ids:['hack','hacksquat','hacksquat_bb'], tabla:'hack'},
+    {n:'Prensa',     ids:['lpress','legpress','c_prensa','legpress_seat'], tabla:'legpress'},
+    {n:'Hip thrust', ids:['hip','c_hip','hipthrust_bb'], tabla:'hip'},
+  ]},
+};
+/* nivel de UN ejercicio de la lista: coge el mejor 1RM de cualquiera de sus ids */
+function fzaEjNivel(e, pc){
+  let mejor=null, usado=null;
+  e.ids.forEach(id=>{ const m=fzaMejor1RM(id); if(m && (!mejor || m.rm>mejor.rm)){ mejor=m; usado=id; } });
+  if(!mejor) return {...e, sin:true};
+  const TB=FZA_STD2[e.tabla]||FZA_STD[e.tabla]||null;
+  const T=TB ? {u:TB[UID==='cami'?'c':'a'], n:TB.n, f:TB.f||'sl'} : null;
+  if(!T) return {...e, sin:true};
+  const ratio=mejor.rm/pc;
+  const nv=fzaNivelDe(ratio, T.u);
+  return {...e, ex:usado, rm:Math.round(mejor.rm*10)/10, d:mejor.d, sw:mejor.w, sr:mejor.r,
+    ratio:Math.round(ratio*100)/100, tablaN:T.n, tablaF:T.f, umbrales:T.u, ...nv,
+    proxKg: nv.nivel<4 ? Math.round(T.u[nv.nivel]*pc*10)/10 : 0};
+}
+/* el grupo entero: sus ejercicios con nivel y el nivel del grupo (el mejor de ellos) */
+function fzaGrupo(k, pc){
+  const g=FZA_GRUPOS[k]; if(!g) return null;
+  const ej=g.ej.map(e=>fzaEjNivel(e, pc));
+  const con=ej.filter(x=>!x.sin);
+  return {k, n:g.n, ej, con, nivel: con.length?Math.max(...con.map(x=>x.nivel)):null,
+    nombre: con.length?FZA_NIVELES[Math.max(...con.map(x=>x.nivel))]:null};
+}
+/* que grupos toca cada zona del mapa */
+function fzaGruposDeZona(vista, zona){
+  return Object.keys(FZA_GRUPOS).filter(k=>{
+    const g=FZA_GRUPOS[k];
+    if(!(g.zonas||[]).includes(zona)) return false;
+    if(g.vistas && !g.vistas.includes(vista)) return false;
+    return true;
+  });
+}
 function fzaDeMusculo(m){
   const tb=fzaTabla();
   const lista=[];
@@ -4436,17 +4528,19 @@ function fzaMusculosDe(vista, zona){
     .sort((a,b)=> a.d.nivel-b.d.nivel || a.d.principal.score-b.d.principal.score);
 }
 function fzaPorZona(vista){
-  const tb=fzaTabla(), pc=fzaPesoCorporal();
+  const pc=fzaPesoCorporal();
   const out={};
+  const COL=['#8B97A1','#8FA0FF','#58DFA3','#FFC94D','#FF7AB6'];
   Object.keys(MED_ZONAS[vista]||{}).forEach(z=>{
-    const mus=fzaMusculosDe(vista, z);
-    if(!mus.length) return;
-    /* la zona se pinta por su musculo MAS FLOJO: es el que limita, y es lo que uno
-       necesita ver de un vistazo */
-    const flojo=mus[0];
-    const COL=['#8B97A1','#8FA0FF','#58DFA3','#FFC94D','#FF7AB6'];
-    out[z]={col:COL[flojo.d.nivel]||'#8B97A1', op:clamp(0.45+flojo.d.nivel*0.12,0.45,0.9),
-      mus, nivel:flojo.d.nivel, nombre:flojo.d.nombre, musculo:flojo.m};
+    const ks=fzaGruposDeZona(vista, z);
+    if(!ks.length) return;
+    const grupos=ks.map(k=>fzaGrupo(k, pc)).filter(g=>g && g.con.length);
+    if(!grupos.length) return;
+    /* la zona se pinta por el grupo mas FLOJO: es el que limita */
+    grupos.sort((a,b)=>a.nivel-b.nivel);
+    const flojo=grupos[0];
+    out[z]={col:COL[flojo.nivel]||'#8B97A1', op:clamp(0.45+flojo.nivel*0.12,0.45,0.9),
+      grupos, nivel:flojo.nivel, nombre:flojo.nombre, grupo:flojo.n};
   });
   return out;
 }
@@ -4621,6 +4715,64 @@ function vCruce(){
     <div class="small dim mt12" style="line-height:1.5">Se mira sobre <b>28 días</b>, no una semana: una semana suelta no distingue entre un músculo abandonado y una semana rara.</div>
   </section>`;
 }
+/* Un grupo con sus ejercicios: cada uno con su foto, su nivel y, al abrirlo, la escalera
+   completa. Los que no has hecho salen igual, en gris, para que se vea que faltan. */
+function fzaGrupoHTML(g, pc, COL){
+  const ab = UI.fzaGrupo===g.k;
+  return `<div class="fzamus ${ab?'open':''}">
+    <button class="fzamush" data-a="fzaGrupoTgl" data-k="${g.k}" aria-expanded="${ab?'true':'false'}">
+      <span class="grow tl" style="min-width:0"><b class="small" style="display:block">${esc(g.n)}</b>
+        <i class="small dim">${g.con.length} de ${g.ej.length} ejercicio${g.ej.length===1?'':'s'} registrado${g.con.length===1?'':'s'}</i></span>
+      ${g.nivel!=null?`<span class="fzamusn" style="color:${COL(g.nivel)}">${g.nombre}</span>`:'<span class="fzamusn dim">sin datos</span>'}
+      <span class="nfchev">${ic('chevR',14)}</span>
+    </button>
+    ${ab?`<div class="fzamusb">
+      ${g.ej.map(e=>fzaEjHTML(e, pc, COL, g.k)).join('')}
+    </div>`:''}
+  </div>`;
+}
+function fzaEjHTML(e, pc, COL, gk){
+  const key=gk+'|'+e.n;
+  const ab = UI.fzaEj===key;
+  const foto=(()=>{ for(const id of e.ids){ const x=excatById(id); if(x&&x.img) return 'assets/ej/'+x.img; } return null; })();
+  const notas=[e.corp?'cuerpo + lastre':'', e.anillas?'anillas':'', e.lado?'peso por lado':''].filter(Boolean).join(' · ');
+  return `<div class="fzaej ${ab?'open':''} ${e.sin?'sin':''}">
+    <button class="fzaejh" data-a="fzaEjTgl" data-k="${esc(key)}" aria-expanded="${ab?'true':'false'}">
+      ${foto?`<img loading="lazy" class="fzaejimg" src="${foto}" alt="" decoding="async" onerror="this.remove()">`
+            :`<span class="fzaejimg ph">${ic('barbell',15)}</span>`}
+      <span class="grow tl" style="min-width:0"><b class="small" style="display:block">${esc(e.n)}</b>
+        <i class="small dim">${e.sin?'sin registros':fmt1(e.rm)+' kg · '+e.ratio+'× tu peso'}${notas?' · '+notas:''}</i></span>
+      ${e.sin?'<span class="small dim">—</span>'
+        :`<span class="fzamusn" style="color:${COL(e.nivel)}">${e.nombre}</span>`}
+      <span class="nfchev">${ic('chevR',13)}</span>
+    </button>
+    ${ab?`<div class="fzaejb" data-a="nada">
+      ${e.sin?`<div class="small dim" style="line-height:1.5">Todavía no has registrado este ejercicio. En cuanto lo hagas, aquí sale tu nivel.</div>`
+        :`<div class="fzafuente">
+          <span class="lbl">DE DÓNDE SALE</span>
+          <div class="small mt4" style="line-height:1.55">El <b>${fmtD(e.d)}</b> hiciste <b style="color:var(--ink)">${fmt1(e.sw)} kg${e.corp?' de lastre':''}${e.lado&&exPorLado(e.ex)?' por lado':''} × ${e.sr}</b> en ${esc(shortEx(exNombre(e.ex)))}.</div>
+          <div class="small dim mt4">${e.corp?`Cuenta tu peso de ese día (${fmt1(pesoDeDia(e.d))} kg) más el lastre: ${fmt1(exPesoReal(e.ex, e.sw, e.d))} kg movidos. `:''}${exPorLado(e.ex)?`Como está marcado por lado, cuentan ${fmt1(e.sw*2)} kg. `:''}De ahí sale tu 1RM de <b>${fmt1(e.rm)} kg</b>.</div>
+          <div class="mt8 flex between" style="align-items:center;gap:8px">
+            <span class="small dim grow">¿El peso es por brazo o pierna, o el total?</span>
+            <button class="chip ${exPorLado(e.ex)?'fill':''}" data-a="exLado" data-id="${e.ex}">${exPorLado(e.ex)?'Por lado':'Total'}</button></div>
+        </div>
+        <div class="small dim mt8" style="line-height:1.5">Comparado con la tabla de <b>${esc(e.tablaN.toLowerCase())}</b>, con tus ${fmt1(Math.round(pc*10)/10)} kg:</div>
+        ${FZA_NIVELES.map((nm,i)=>{ if(i===0) return '';
+          const rm=Math.round(e.umbrales[i-1]*pc*10)/10, aqui=e.nivel===i, pas=e.nivel>i;
+          const lastre=e.corp?Math.max(0, rm-pesoDeDia(TODAY())):null;
+          return `<div class="fzaescrow ${aqui?'on':''} ${pas?'hecho':''}">
+            <span class="fen" style="color:${pas||aqui?COL(i):'var(--smoke)'}">${nm}${pas?' ✓':''}</span>
+            <span class="few"><b>${fmt1(rm)}</b><em>kg 1RM</em></span>
+            <span class="fe5">${e.corp?(lastre>0?'+'+fmt1(lastre)+' lastre':'peso limpio'):fmt1(Math.round(rm/(1+5/30)/2.5)*2.5)+' × 5'}</span></div>`;}).join('')}
+        ${e.nivel<4?`<div class="small mt8" style="line-height:1.5;color:var(--ink2)">Para <b>${FZA_NIVELES[e.nivel+1]}</b> necesitas <b style="color:var(--ink)">${fmt1(e.proxKg)} kg</b> de 1RM${e.corp?` (o sea ${fmt1(Math.max(0,e.proxKg-pesoDeDia(TODAY())))} kg de lastre)`:''}. Hoy vas por ${fmt1(e.rm)}.</div>`
+          :`<div class="small mt8" style="color:var(--gold)">Estás en el tope de la tabla en este ejercicio.</div>`}
+        ${(()=>{const F=FZA_FUENTE[e.tablaF]||FZA_FUENTE.sl;
+          const col=F.c==='alta'?'var(--mint)':F.c==='media'?'var(--gold)':'#FF9F45';
+          return `<div class="fzafnt"><span class="lbl" style="color:${col}">FIABILIDAD ${F.c.toUpperCase()}</span>
+            <div class="small dim mt4" style="line-height:1.5">Baremo de <b>${esc(F.n)}</b>: ${esc(F.d)}.</div></div>`;})()}`}
+    </div>`:''}
+  </div>`;
+}
 function vFuerzaCuerpo(){
   const vista = MED_ZONAS[UI.medVista] ? UI.medVista : 'frente';
   const pc=fzaPesoCorporal();
@@ -4639,32 +4791,28 @@ function vFuerzaCuerpo(){
       ${zs?`<div class="zpop i" style="right:2.5%; bottom:4%">
         <button class="zpx" data-a="medZona" data-z="" aria-label="Ver el cuerpo entero">${ic('x',10)}</button>
         <span class="zpn">${esc(medNomZona(sel).toUpperCase())}</span>
-        <div class="zpv">${fmt1(zs.mus[0].d.principal.rm)}<em>kg 1RM</em></div>
-        <div class="zpd" style="color:${COL(zs.nivel)}">${esc(MUSC_NOM[zs.musculo]||zs.musculo)}: ${zs.nombre}</div>
-        <p class="zps">${zs.mus.length>1?'El más flojo de '+zs.mus.length+' en esta zona.':esc(zs.mus[0].d.principal.n)}</p>
+        <div class="zpv" style="font-size:20px;line-height:1.25">${esc(zs.grupo)}</div>
+        <div class="zpd" style="color:${COL(zs.nivel)}">${zs.nombre}</div>
+        <p class="zps">${zs.grupos.length>1?'El más flojo de '+zs.grupos.length+' grupos de esta zona.':zs.grupos[0].con.length+' ejercicio'+(zs.grupos[0].con.length===1?'':'s')+' registrado'+(zs.grupos[0].con.length===1?'':'s')}</p>
       </div>
       <button class="mzoomout" data-a="medZona" data-z="">${ic('x',12)} Ver el cuerpo</button>`:''}
     </div>
     <div class="cargaleg">${FZA_NIVELES.map((nm,i)=>`<span><i style="background:${COL(i)}"></i>${nm}</span>`).join('')}</div>
-    ${zs?(()=>{
-      const abierto = zs.mus.some(x=>x.m===UI.fzaMusc) ? UI.fzaMusc : null;
-      return `<div class="medpanel">
-      <div class="medph">${ic('barbell',13)} <b>${esc(medNomZona(sel))}</b><span class="small dim">${zs.mus.length} músculo${zs.mus.length===1?'':'s'}, del más flojo al más fuerte</span></div>
-      ${zs.mus.map(({m,d})=>`
-        <div class="fzamus ${abierto===m?'open':''}">
-          <button class="fzamush" data-a="fzaMusc" data-m="${m}" aria-expanded="${abierto===m?'true':'false'}">
-            <span class="grow tl" style="min-width:0"><b class="small" style="display:block">${esc(MUSC_NOM[m]||m)}</b>
-              <i class="small dim">${d.lista.length} ejercicio${d.lista.length===1?'':'s'} lo cargan</i></span>
-            <span class="fzamusn" style="color:${COL(d.nivel)}">${d.nombre}</span>
-            <span class="nfchev">${ic('chevR',14)}</span>
-          </button>
-          ${abierto===m?`<div class="fzamusb">
-            ${d.lista.map(x=>`<div class="fzamusap">${esc(x.n)} <b>${x.aporte}%</b></div>`).join('')}
-            ${d.lista.map(x=>fzaFilaHTML(x, pc, COL)).join('')}
-            ${fzaQueMeter(vista, sel, d.lista.map(x=>x.ex), m)}
-          </div>`:''}
-        </div>`).join('')}
-    </div>`;})():`<div class="small dim tc mt8">Toca una zona para ver el nivel de cada uno de sus músculos.</div>`}
+    <details class="medhist mt8"><summary>Cómo se calcula tu nivel</summary>
+      <div class="small dim" style="line-height:1.6">
+        El nivel compara tu <b>1RM estimado</b> con tu <b>peso corporal</b>. El 1RM sale de tu mejor serie de todo el historial con la fórmula de Epley (<i>peso × (1 + reps ÷ 30)</i>), nunca de probar un máximo.
+        <div class="mt8"><b>Qué peso cuenta en cada caso:</b> en press, remos, curl y prensa cuenta solo la carga externa. En <b>dominadas y fondos</b> cuenta tu peso corporal del día <b>más el lastre</b>, porque eso es lo que estás moviendo de verdad. En los de mancuerna, si marcas "por lado" se suman las dos.</div>
+        <div class="mt8">Los baremos vienen de <b>Strength Level</b> (195 millones de levantamientos reportados). Cada ejercicio dice su fiabilidad: los de carga externa salen directos de la fuente; los de <b>dominadas y fondos lastrados</b> están convertidos, porque la fuente da el lastre en libras absolutas y pasarlo a ratio asume un peso corporal medio; y las <b>anillas no tienen tabla propia</b>, así que usan la de barra fija y tu nivel real es probablemente mayor.</div>
+        <div class="mt8">Sobre ajustar por <b>% de grasa</b>: no hay ningún estándar serio que lo haga. Todos comparan contra el peso total. Dos personas del mismo peso con distinta composición dan el mismo ratio aunque su fuerza por kilo de músculo sea distinta; es una limitación real del método, no algo que la app decida.</div>
+      </div>
+    </details>
+    ${zs?`<div class="medpanel">
+      <div class="medph">${ic('barbell',13)} <b>${esc(medNomZona(sel))}</b><span class="small dim">${zs.grupos.length} grupo${zs.grupos.length===1?'':'s'}</span></div>
+      ${zs.grupos.map(g=>fzaGrupoHTML(g, pc, COL)).join('')}
+    </div>`:`<div class="medpanel">
+      ${Object.keys(FZA_GRUPOS).map(k=>fzaGrupo(k, pc)).filter(g=>g&&g.con.length).map(g=>fzaGrupoHTML(g, pc, COL)).join('')
+        ||'<div class="small dim tc">Registra alguno de los básicos y aquí verás tu nivel por grupo.</div>'}
+    </div>`}
   </section>
   ${fzaAsimetria()}
   ${fzaCard()}`;
@@ -15774,6 +15922,8 @@ const ACTIONS = {
     save('cfg'); render();
   },
   fzaMusc(d, el){ UI.fzaMusc = UI.fzaMusc===d.m ? null : d.m; renderAnclado(el); },
+  fzaGrupoTgl(d, el){ UI.fzaGrupo = UI.fzaGrupo===d.k ? null : d.k; renderAnclado(el); },
+  fzaEjTgl(d, el){ UI.fzaEj = UI.fzaEj===d.k ? null : d.k; renderAnclado(el); },
   /* accion vacia: sirve para que closest('[data-a]') se detenga en un contenedor y no
      dispare la accion del padre, sin romper el despachador con stopPropagation */
   nada(){},

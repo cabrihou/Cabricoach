@@ -165,3 +165,53 @@ salía "por debajo del mínimo" siempre, que es ruido y no información. Ajustad
 También subieron algunos techos (MRV) donde estaban cortos: pectoral y dorsal a 22, abdomen
 a 16, lumbar a 14, antebrazo a 16.
 
+## Los ejercicios que miden cada grupo (`FZA_GRUPOS`)
+
+Lista cerrada, definida a mano por el dueño: son los que **de verdad miden** la fuerza de ese
+grupo, no todo lo que lo roza.
+
+| Grupo | Ejercicios |
+|---|---|
+| Espalda | Remo con barra · Jalón al pecho · Dominada · Dominada en anillas |
+| Pecho | Press banca · Fondos lastrados · Fondos en anillas |
+| Tríceps | Skullcrusher · Fondos lastrados · Fondos en anillas |
+| Bíceps | Curl con barra · Curl con mancuerna · Curl preacher |
+| Hombro | Press militar con barra · con mancuerna · en máquina |
+| Pierna | Sentadilla · Hack squat · Prensa · Hip thrust |
+
+Cada entrada lleva varios ids alternativos (el mismo ejercicio según venga de las rutinas
+propias o importado de Strong) y declara si el peso apuntado es **lastre** y si es de
+**anillas**. Los que no has hecho salen igual, en gris, para que se vea qué falta.
+
+## Fiabilidad de cada baremo (`FZA_FUENTE`)
+
+Un "eres avanzado" sin respaldo no vale nada, así que cada ejercicio dice de dónde sale su
+tabla y cuánto hay que fiarse:
+
+- **alta** (`sl`): directo de Strength Level, 195 millones de levantamientos. Todos los de
+  carga externa: press, remos, jalón, curl, sentadilla, hack, prensa, hip thrust.
+- **media** (`est`): dominadas y fondos lastrados. La fuente da el lastre en **libras
+  absolutas**, no un ratio; convertirlo a `(peso corporal + lastre) / peso corporal` obliga a
+  asumir un peso corporal medio, así que el número se mueve según ese supuesto.
+- **baja** (`ext`): anillas. **No hay datos**. Se usa la tabla de la versión en barra fija y
+  se avisa de que en anillas el mismo peso es más difícil, así que el nivel real es
+  probablemente mayor. La literatura sugiere entre 1,3 y 1,5 veces más exigente pero **sin
+  consenso medible**, así que no se aplica un factor inventado.
+
+### Qué peso cuenta en cada caso
+
+En press, remos, curl y prensa cuenta solo la carga externa. En **dominadas y fondos** cuenta
+el peso corporal del día **más el lastre**, porque es lo que se mueve de verdad. En los de
+mancuerna, si está marcado "por lado" se suman las dos.
+
+### Sobre ajustar por porcentaje de grasa
+
+**No existe ningún estándar serio que lo haga.** Todos comparan contra el peso total. Dos
+personas del mismo peso con distinta composición dan el mismo ratio aunque su fuerza por kilo
+de músculo sea distinta: es una limitación real del método, y la app lo dice en pantalla en
+vez de inventar un ajuste.
+
+Fuente verificada el 10/08/2026: [Strength Level](https://strengthlevel.com). No se pudo
+acceder a ExRx ni Symmetric Strength (403), así que los números descansan sobre una sola
+fuente y eso también está declarado.
+

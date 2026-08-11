@@ -1,5 +1,5 @@
 /* Coach Cabritos · offline para el gimnasio sin señal */
-const CACHE = 'cabritos-v126';
+const CACHE = 'cabritos-v127';
 const CORE = ['./', 'index.html', 'manifest.webmanifest'];
 /* Las imagenes de la interfaz salieron del HTML a archivos sueltos (bajo de 4,3 MB a
    1 MB). Como el gimnasio puede no tener señal, se precargan en segundo plano al

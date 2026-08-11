@@ -1845,7 +1845,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 182';
+const APPREV='REV 183';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -12337,6 +12337,14 @@ function exRowImgSrc(id, alt){
 function exExtras(e){
   const alt=(S.draft.alts||{})[e.id];
   return `
+  ${UI.taraOpen?`<div class="mt8 exopanel">
+    <span class="lbl">EL CARRO DE LA MÁQUINA</span>
+    <div class="small dim mt4" style="line-height:1.5">El carro vacío ya pesa, y ese peso se mueve igual. Si no se cuenta, el 1RM y el nivel salen bajos. Hack squat suele ir entre 20 y 45 kg.</div>
+    <div class="flex wrapf mt8" style="gap:5px">
+      ${[0,15,20,25,30,40,45].map(v=>`<button class="chip ${exTara(e.id)===v?'fill':''}" data-a="exTara" data-id="${e.id}" data-v="${v}">${v===0?'nada':v+' kg'}</button>`).join('')}
+    </div>
+    <div class="small dim mt8">Se guarda para este ejercicio y se aplica también a lo que ya registraste.</div>
+  </div>`:''}
   ${UI.swapOpen?`<div class="mt8">
     ${(()=>{const g=MUSCLE[e.id]; if(!g) return '';
       const cands=swapCandidates(e.id); if(!cands.length) return '';
@@ -12430,6 +12438,9 @@ function exRow(e,idx,N,done){
       <button class="chip ${UI.swapOpen?'fill':''}" data-a="exOptPick" data-ex="${e.id}" data-o="swap">${ic('repeat',12)} Cambiar</button>
       <button class="chip ${UI.noteOpen?'fill':''}" data-a="exOptPick" data-ex="${e.id}" data-o="note">${ic('clip',12)} Nota</button>
       <button class="chip ${UI.platesOpen?'fill':''}" data-a="exOptPick" data-ex="${e.id}" data-o="plates">${ic('barbell',12)} Discos</button>
+      <button class="chip ${exPorLado(e.id)?'fill':''}" data-a="exLado" data-id="${e.id}"
+        aria-pressed="${exPorLado(e.id)?'true':'false'}">${ic('eqMancuerna',12)} ${exPorLado(e.id)?'Por lado':'Total'}</button>
+      ${exEsMaquina(e.id)?`<button class="chip ${UI.taraOpen?'fill':''}" data-a="exOptPick" data-ex="${e.id}" data-o="tara">${ic('eqMaquina',12)} Carro ${exTara(e.id)?fmt1(exTara(e.id))+' kg':'sin poner'}</button>`:''}
     </div>`:''}
     ${open?setTable(e)+exExtras(e):''}
   </div>`;
@@ -16037,10 +16048,11 @@ const ACTIONS = {
   noteOpen(){ UI.noteOpen=!UI.noteOpen; render(); },
   platesOpen(){ UI.platesOpen=!UI.platesOpen; render(); },
   exOptsTgl(d, el){ UI.exOpts = UI.exOpts===d.ex ? null : d.ex; renderAnclado(el); },
-  exOptPick(d){ UI.exOpen=d.ex;  // abre la fila para ver el panel
-    if(d.o==='swap'){ UI.swapOpen=!UI.swapOpen; UI.noteOpen=UI.platesOpen=false; }
-    else if(d.o==='note'){ UI.noteOpen=!UI.noteOpen; UI.swapOpen=UI.platesOpen=false; }
-    else if(d.o==='plates'){ UI.platesOpen=!UI.platesOpen; UI.swapOpen=UI.noteOpen=false; }
+  exOptPick(d, el){ UI.exOpen=d.ex;  // abre la fila para ver el panel
+    if(d.o==='swap'){ UI.swapOpen=!UI.swapOpen; UI.noteOpen=UI.platesOpen=UI.taraOpen=false; }
+    else if(d.o==='note'){ UI.noteOpen=!UI.noteOpen; UI.swapOpen=UI.platesOpen=UI.taraOpen=false; }
+    else if(d.o==='plates'){ UI.platesOpen=!UI.platesOpen; UI.swapOpen=UI.noteOpen=UI.taraOpen=false; }
+    else if(d.o==='tara'){ UI.taraOpen=!UI.taraOpen; UI.swapOpen=UI.noteOpen=UI.platesOpen=false; }
     renderAnclado(el);
   },
   swapEx(d){
@@ -16688,11 +16700,11 @@ const ACTIONS = {
     save('cfg'); render();
     toast(d.id?'Listo, lo saco de ahí':'Vuelve a elegirlo solo');
   },
-  exTara(d){
+  exTara(d, el){
     S.cfg.tara=S.cfg.tara||{};
     const v=+d.v||0;
     if(v) S.cfg.tara[d.id]=v; else delete S.cfg.tara[d.id];
-    save('cfg'); render();
+    save('cfg'); renderAnclado(el);
     toast(v?('Carro de '+v+' kg, se suma a los discos'):'Sin peso de carro');
   },
   fzaFuera(d){
@@ -16730,10 +16742,10 @@ const ACTIONS = {
     S.cfg.fzaSigue=[...s]; save('cfg'); render();
     toast(s.has(d.id)?'Lo vas a ver con los principales':'Ya no lo sigues');
   },
-  exLado(d){
+  exLado(d, el){
     S.cfg.porLado=S.cfg.porLado||{};
     S.cfg.porLado[d.id]=!S.cfg.porLado[d.id];
-    save('cfg'); render();
+    save('cfg'); renderAnclado(el);
     toast(S.cfg.porLado[d.id]?'Marcado: el peso es por lado':'Marcado: el peso es el total');
   },
   excatZona(d){ UI.excatZona = UI.excatZona===d.z ? null : d.z; UI.excatMusc=null; render(); },

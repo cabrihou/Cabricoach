@@ -882,3 +882,27 @@ En la capa Medidas el pie de página no repite las seis capas: lleva **Grasa**, 
 de medición (peso de hoy, cintura y cuello, resto del set, estructura, todo) y el formulario
 sale justo debajo. Antes esos chips vivían arriba, lejos de donde uno termina de mirar el
 cuerpo.
+
+
+### Editar el carro y el peso por lado desde la sesión (REV 183)
+
+Los dos ajustes vivían solo en la escalera de Fuerza, que es donde uno **descubre** que el
+número está mal, pero no donde está mirando el ejercicio. Ahora el panel de opciones de cada
+ejercicio (los tres puntos, dentro de la sesión, sea de hoy o de un día pasado) lleva dos
+controles más:
+
+- **Total / Por lado**: alterna `S.cfg.porLado[id]`. Se ofrece siempre, no solo en los que
+  suelen ser unilaterales.
+- **Carro N kg**: solo en máquinas y Smith (`exEsMaquina`). Abre un panel con los valores
+  habituales (nada, 15, 20, 25, 30, 40, 45) y guarda `S.cfg.tara[id]`.
+
+Los dos son configuración del ejercicio, no del registro: se aplican a todo el historial, que
+es justo lo que se quiere cuando uno cae en cuenta de que el hack squat pesaba 40 kg de más.
+
+### El swipe lateral
+
+Deslizar de lado en la vista del cuerpo cambia de capa en el orden del nav. No se activa si
+el dedo arranca en los primeros 36 px (eso es el gesto de atrás), ni sobre algo que se
+desplaza en horizontal por su cuenta, ni si el gesto es más vertical que horizontal, ni si
+dura más de 700 ms. Después de un swipe se descarta el click que dispara el navegador
+(`SWSUP`), porque si no se elegía la zona del mapa que quedara debajo del dedo.

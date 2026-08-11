@@ -1086,7 +1086,24 @@ img{-webkit-user-drag:none;user-select:none}
 .fzaejeb.grande{height:9px;border-radius:6px}
 .fzaejeb em{display:block;height:100%;border-radius:6px;background:var(--nc);
   transition:width .45s cubic-bezier(.32,.72,0,1)}
-.fzadosw{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.prplan{padding:13px;border-radius:16px;border:1px solid rgba(var(--acc-rgb),.28);
+  background:linear-gradient(150deg, rgba(var(--acc-rgb),.12) 0%, transparent 58%), var(--card)}
+.prplan .crucen{display:flex;align-items:center;gap:7px}
+.prplan .crucetag{color:rgb(var(--accHi-rgb));background:rgba(var(--acc-rgb),.13);border-color:rgba(var(--acc-rgb),.3)}
+.printentos{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.printento{padding:9px 10px;border-radius:12px;border:1px solid var(--line2);background:rgba(255,255,255,.03)}
+.printento.on{border-color:rgba(var(--acc-rgb),.45);background:rgba(var(--acc-rgb),.11)}
+.printento i{display:block;font:600 8.5px var(--ui);font-style:normal;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--smoke)}
+.printento b{display:flex;align-items:baseline;gap:3px;font:800 19px/1 var(--num);color:var(--ink);margin-top:3px}
+.printento b em{font:700 10px var(--num);font-style:normal;color:var(--smoke)}
+.prrampa{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.prrampa span{display:flex;align-items:baseline;gap:3px;padding:5px 9px;border-radius:999px;
+  border:1px solid var(--line2);background:rgba(255,255,255,.04);font:700 12px var(--num);color:var(--ink2)}
+.prrampa span.fin{border-color:rgba(var(--acc-rgb),.45);background:rgba(var(--acc-rgb),.13);color:var(--ink)}
+.prrampa i{font:600 9px var(--num);font-style:normal;color:var(--smoke)}
+.prrampa u{text-decoration:none;color:var(--smoke);font-size:11px}
+.fzadosw{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .fzados{padding:8px 10px;border-radius:12px;border:1px solid var(--line2);background:rgba(255,255,255,.03)}
 .fzados.on{border-color:rgba(var(--acc-rgb),.5);background:rgba(var(--acc-rgb),.11)}
 .fzados i{display:block;font:600 8.5px var(--ui);font-style:normal;letter-spacing:.05em;
@@ -1095,11 +1112,11 @@ img{-webkit-user-drag:none;user-select:none}
 .fzados b{display:flex;align-items:baseline;gap:2px;font:800 17px/1 var(--num);color:var(--ink);margin-top:3px}
 .fzados b em{font:700 9.5px var(--num);font-style:normal;color:var(--smoke)}
 .fzados u{display:block;font:600 9.5px var(--num);text-decoration:none;color:var(--smoke);margin-top:3px}
-.fzabasesel{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:11px}
-.fzabaseb{padding:9px 10px;border-radius:13px;cursor:pointer;text-align:left;color:var(--ink);
+.fzabasesel{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:11px}
+.fzabaseb{padding:9px 8px;border-radius:13px;cursor:pointer;text-align:left;color:var(--ink);
   border:1px solid var(--line2);background:rgba(255,255,255,.03);transition:border-color .2s,background .2s}
 .fzabaseb.on{border-color:rgba(var(--acc-rgb),.5);background:rgba(var(--acc-rgb),.12)}
-.fzabaseb b{display:block;font:700 11.5px var(--ui)}
+.fzabaseb b{display:block;font:700 10.5px/1.2 var(--ui)}
 .fzabaseb.on b{color:rgb(var(--accHi-rgb))}
 .fzabaseb i{display:block;font:500 9.5px/1.3 var(--ui);font-style:normal;color:var(--smoke);margin-top:2px}
 .fzaejes2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}
@@ -1867,7 +1884,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 185';
+const APPREV='REV 186';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3684,30 +3701,36 @@ function fzaPesoCorporal(){ const pm=pesoProm7(); return pm?pm.kg:(currentWeight
 
    El modo vive en S.cfg.fzaBase y se elige en pantalla. Pase lo que pase las DOS cifras
    se calculan y se muestran: cambiar de lectura nunca borra un record. */
-const FZA_BASES={max:{n:'Tope histórico', d:'la mejor serie de todo el historial'},
-                 recio:{n:'Lo más reciente', d:'la mejor serie de la última sesión de ese ejercicio'}};
-function fzaBaseModo(){ return ((S.cfg&&S.cfg.fzaBase)==='recio') ? 'recio' : 'max'; }
-/* las dos lecturas de un ejercicio, de una sola pasada por el historial */
+const FZA_BASES={max:{n:'Tope histórico', d:'la mejor de todo el historial'},
+                 mes:{n:'Últimas 4 semanas', d:'la mejor de los últimos 28 días'},
+                 recio:{n:'Última sesión', d:'la mejor de la última vez que lo hiciste'}};
+function fzaBaseModo(){ const b=(S.cfg&&S.cfg.fzaBase); return FZA_BASES[b] ? b : 'max'; }
+/* las tres lecturas de un ejercicio, de una sola pasada por el historial.
+   La de 4 semanas es el punto medio: no arrastra una serie vieja de hace un ano ni se
+   desploma porque la ultima sesion cayo en fatiga o en descarga. */
 function fzaLecturas(id){
   const h=(S.logs||{})[id]||[];
   const lado=exPorLado(id), corp=exPesoCorporal(id);
-  let mx=null, ult=null, ultD=null;
+  const corte=addDays(TODAY(),-28);
+  let mx=null, mes=null, ult=null, ultD=null;
   h.forEach(en=>{ if(en.alt) return;
     let mejorDia=null;
     en.sets.forEach(s=>{ const w0=+s.w||0, r=+s.r||0, w=exPesoReal(id, w0, en.d);
       if(w>0&&r>0){ const e=e1rm(w,r);
         if(!mx || e>mx.rm) mx={rm:e, d:en.d, w:w0, r, lado, corp};
+        if(en.d>=corte && (!mes || e>mes.rm)) mes={rm:e, d:en.d, w:w0, r, lado, corp};
         if(!mejorDia || e>mejorDia.rm) mejorDia={rm:e, d:en.d, w:w0, r, lado, corp};
-      } }); 
+      } });
     if(mejorDia && (!ultD || en.d>=ultD)){ ultD=en.d; ult=mejorDia; }
   });
-  return {max:mx, recio:ult};
+  return {max:mx, mes:mes||ult||mx, recio:ult};
 }
 /* el 1RM con el que se calcula el nivel, segun el modo elegido. Lleva pegadas las dos
    lecturas para que la UI pueda mostrar siempre la otra sin recalcular. */
 function fzaMejor1RM(id){
   const L=fzaLecturas(id);
-  const base=(fzaBaseModo()==='recio' ? (L.recio||L.max) : L.max);
+  const m=fzaBaseModo();
+  const base = m==='recio' ? (L.recio||L.max) : m==='mes' ? (L.mes||L.max) : L.max;
   return base ? {...base, lecturas:L} : null;
 }
 function fzaNivelDe(ratio, umbrales){
@@ -3911,6 +3934,43 @@ function fzaPesoNivel(k, nivel, pc){
 }
 /* la escalera completa: que hay que levantar para cada categoria. En 1RM y, mas util,
    en una serie de 5, que es lo que uno hace de verdad en el gimnasio. */
+/* ============ SESION DE PR ============
+   Que intentar y como llegar. El objetivo es el 1RM del siguiente nivel si esta a tiro
+   (hasta un 6% por encima de lo que ya mueves); si esta mas lejos, un PR realista de
+   +2,5%, que es un salto que se logra en una sesion buena sin jugarse la semana.
+   La rampa son porcentajes clasicos de aproximacion: sube rapido y llega fresco. */
+function fzaPRPlan(x, pc){
+  if(!x || !x.rm) return null;
+  const red=v=>Math.round(v/2.5)*2.5;
+  const prox = x.nivel<4 ? fzaPesoNivel(x.k, x.nivel+1, pc) : 0;
+  const estira = !!prox && prox<=x.rm*1.06;
+  const objetivo = estira ? prox : x.rm*1.025;
+  const single=red(objetivo), doble=red(objetivo/(1+2/30)), triple=red(objetivo/(1+3/30));
+  const rampa=[[0.4,5],[0.55,4],[0.7,3],[0.8,2],[0.88,1]].map(([p,r])=>({kg:red(single*p), r}));
+  return {single, doble, triple, estira, prox, rampa, nivelSig:FZA_NIVELES[Math.min(4,x.nivel+1)],
+    porLado: !!(x.ex&&exPorLado(x.ex))};
+}
+function fzaPRHTML(x, pc){
+  const P=fzaPRPlan(x, pc); if(!P) return '';
+  const dl=isDeload();
+  const lado=P.porLado?' <i class="small dim">(por lado)</i>':'';
+  return `<div class="prplan mt8">
+    <div class="flex between" style="align-items:center;gap:8px">
+      <b class="crucen">${ic('target',14)} Sesión de PR</b>
+      <span class="crucetag">${P.estira?'te sube a '+P.nivelSig:'PR realista'}</span></div>
+    <div class="small dim mt4" style="line-height:1.5">${P.estira
+      ? 'Estás a tiro: con este intento pasas a <b>'+P.nivelSig+'</b>.'
+      : 'El siguiente nivel está lejos para una sola sesión. Este intento es un récord tuyo, que es lo que de verdad mueve la aguja.'}</div>
+    <div class="printentos mt8">
+      <div class="printento on"><i>EL INTENTO</i><b>${fmt1(P.single)}<em>kg × 1</em></b>${lado}</div>
+      <div class="printento"><i>SI NO QUIERES UN SINGLE</i><b>${fmt1(P.triple)}<em>kg × 3</em></b></div>
+    </div>
+    <div class="lbl mt10" style="display:block">CÓMO LLEGAR</div>
+    <div class="prrampa mt4">${P.rampa.map(s=>`<span>${fmt1(s.kg)}<i>× ${s.r}</i></span>`).join('<u>→</u>')}<u>→</u><span class="fin">${fmt1(P.single)}<i>× 1</i></span></div>
+    <div class="small dim mt8" style="line-height:1.55">Descansa <b>3 a 5 minutos</b> entre las tres últimas. Ponlo <b>de primero en la sesión</b>, con 48 a 72 horas desde la última vez que cargaste ese grupo${dl?', y <b style="color:var(--gold)">no esta semana: estás en descarga</b>':''}.</div>
+    <div class="small dim mt4" style="line-height:1.55">Si el intento sale con dos repeticiones de sobra, sube 2,5 a 5 kg y repite. Si se te pega en la mitad, para ahí: un fallo no suma nada y te cuesta el resto de la semana.</div>
+  </div>`;
+}
 function fzaEscalera(x, pc){
   const u=(x.tabla&&x.tabla.u)||fzaTablaDe(x.k).u;
   const col=n=>['#8B97A1','#8FA0FF','#58DFA3','var(--gold)','#FF7AB6'][n]||'var(--ink2)';
@@ -3923,17 +3983,21 @@ function fzaEscalera(x, pc){
       <div class="small dim mt4">${x.ex&&exPorLado(x.ex)?`${fmt1(x.sw)} × 2 lados = ${fmt1(x.sw*2)} kg · `:''}${fmt1(x.ex&&exPorLado(x.ex)?x.sw*2:x.sw)} × (1 + ${x.sr} ÷ 30) = ${fmt1(x.rm)} kg.</div>
       ${(()=>{ /* las dos lecturas, siempre las dos: cambiar de modo no borra un record */
         const L=x.lecturas || (x.ex?fzaLecturas(x.ex):null); if(!L || !L.max || !L.recio) return '';
-        if(Math.abs(L.max.rm-L.recio.rm)<0.5) return '';
+        const ks=Object.keys(FZA_BASES).filter(k=>L[k]);
+        if(ks.length<2) return '';
+        const rms=ks.map(k=>L[k].rm);
+        if(Math.max(...rms)-Math.min(...rms)<0.5) return '';
         const m=fzaBaseModo();
-        const fila=(k,o)=>`<div class="fzados ${k===m?'on':''}">
+        const fila=k=>`<div class="fzados ${k===m?'on':''}">
           <i>${FZA_BASES[k].n}</i>
-          <b>${fmt1(Math.round(o.rm*10)/10)}<em>kg</em></b>
-          <u>${fmt1(o.w)} × ${o.r} · ${fmtD(o.d)}</u></div>`;
-        return `<div class="fzadosw mt8">${fila('max',L.max)}${fila('recio',L.recio)}</div>
-          <div class="small dim mt4" style="line-height:1.5">Las dos existen y ninguna se borra. Ahora manda <b>${FZA_BASES[m].n.toLowerCase()}</b>; se cambia arriba, en Tu nivel global.</div>`;})()}
+          <b>${fmt1(Math.round(L[k].rm*10)/10)}<em>kg</em></b>
+          <u>${fmt1(L[k].w)} × ${L[k].r} · ${fmtD(L[k].d)}</u></div>`;
+        return `<div class="fzadosw mt8">${ks.map(fila).join('')}</div>
+          <div class="small dim mt4" style="line-height:1.5">Las tres existen y ninguna se borra. Ahora manda <b>${FZA_BASES[m].n.toLowerCase()}</b>; se cambia arriba, en Tu nivel global.</div>`;})()}
       ${x.ex?`<div class="mt8 flex between" style="align-items:center;gap:8px">
         <span class="small dim grow">¿Ese peso es por brazo o pierna, o el total?</span>
         <button class="chip ${exPorLado(x.ex)?'fill':''}" data-a="exLado" data-id="${x.ex}">${exPorLado(x.ex)?'Por lado':'Total'}</button></div>`:''}
+    ${fzaPRHTML(x, pc)}
       ${(()=>{const todos=fzaCandidatos(x.k).slice(0,14);
         if(todos.length<2) return '';
         return `<div class="mt8" style="padding-top:8px;border-top:1px solid var(--line2)">
@@ -16872,7 +16936,7 @@ const ACTIONS = {
     renderAnclado(el);
   },
   cruceAbre(d, el){ UI.cruceAbre = UI.cruceAbre===d.m ? null : d.m; renderAnclado(el); },
-  fzaBase(d, el){ S.cfg.fzaBase = d.s==='recio' ? 'recio' : 'max'; save('cfg');
+  fzaBase(d, el){ S.cfg.fzaBase = FZA_BASES[d.s] ? d.s : 'max'; save('cfg');
     metasInvalidar && metasInvalidar();
     renderAnclado(el);
     toast(FZA_BASES[fzaBaseModo()].n+': '+FZA_BASES[fzaBaseModo()].d);

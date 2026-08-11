@@ -323,6 +323,11 @@ Dos lecturas legítimas del mismo historial, y ninguna es la correcta siempre:
 - **Lo más reciente**: la mejor serie de la última sesión registrada de ese ejercicio. Refleja
   lo que mueves hoy con la técnica de hoy, y se corrige sola.
 
+Y una tercera, que es el punto medio:
+
+- **Últimas 4 semanas**: la mejor serie de los últimos 28 días. No arrastra una serie de hace
+  un año ni se desploma porque la última sesión cayera en fatiga o en semana de descarga.
+
 El modo vive en `S.cfg.fzaBase` (`max` por defecto) y se elige en el bloque de Tu nivel global.
 `fzaLecturas(id)` calcula **las dos de una sola pasada** y `fzaMejor1RM` devuelve la que manda
 con `lecturas` pegado, así que la UI siempre puede mostrar la otra:
@@ -332,4 +337,24 @@ con `lecturas` pegado, así que la UI siempre puede mostrar la otra:
 - En "De dónde sale tu número", las dos lado a lado con su peso, sus repeticiones y su fecha,
   resaltada la que manda.
 
-Cambiar de modo **no borra nada**: son dos lecturas del mismo historial, no dos historiales.
+Cambiar de modo **no borra nada**: son tres lecturas del mismo historial, no tres historiales.
+
+## La sesión de PR
+
+`fzaPRPlan(x, pc)` arma el intento y la aproximación. El objetivo es el 1RM del siguiente nivel
+si está a tiro (hasta un 6% por encima de lo que ya mueves); si está más lejos, un PR de
+**+2,5%**, que es un salto que se logra en una sesión buena sin jugarse la semana. Todo se
+redondea a la placa de 2,5 kg, porque un número que no se puede cargar no sirve de nada.
+
+- **El intento**: un single al objetivo, y al lado el equivalente en triple
+  (`objetivo / (1 + 3/30)`, Epley al revés) para quien no quiere ir a una repetición.
+- **Cómo llegar**: rampa de 40% × 5 → 55% × 4 → 70% × 3 → 80% × 2 → 88% × 1 → intento. Sube
+  rápido y llega fresco; una aproximación larga se come el PR.
+- **Cuándo**: de primero en la sesión, con 48 a 72 horas desde la última carga de ese grupo, y
+  con 3 a 5 minutos entre las tres últimas. Si `isDeload()` dice que la semana es de descarga,
+  lo advierte en amarillo.
+- **Qué hacer con el resultado**: si sale con dos repeticiones de sobra, +2,5 a 5 kg y repetir;
+  si se pega en la mitad, parar. Un fallo no suma y cuesta el resto de la semana.
+
+Vive dentro de la escalera de cada ejercicio, debajo de "De dónde sale tu número", así que
+cambia solo cuando cambia la lectura que manda.

@@ -1086,6 +1086,22 @@ img{-webkit-user-drag:none;user-select:none}
 .fzaejeb.grande{height:9px;border-radius:6px}
 .fzaejeb em{display:block;height:100%;border-radius:6px;background:var(--nc);
   transition:width .45s cubic-bezier(.32,.72,0,1)}
+.fzadosw{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.fzados{padding:8px 10px;border-radius:12px;border:1px solid var(--line2);background:rgba(255,255,255,.03)}
+.fzados.on{border-color:rgba(var(--acc-rgb),.5);background:rgba(var(--acc-rgb),.11)}
+.fzados i{display:block;font:600 8.5px var(--ui);font-style:normal;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--smoke)}
+.fzados.on i{color:rgb(var(--accHi-rgb))}
+.fzados b{display:flex;align-items:baseline;gap:2px;font:800 17px/1 var(--num);color:var(--ink);margin-top:3px}
+.fzados b em{font:700 9.5px var(--num);font-style:normal;color:var(--smoke)}
+.fzados u{display:block;font:600 9.5px var(--num);text-decoration:none;color:var(--smoke);margin-top:3px}
+.fzabasesel{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:11px}
+.fzabaseb{padding:9px 10px;border-radius:13px;cursor:pointer;text-align:left;color:var(--ink);
+  border:1px solid var(--line2);background:rgba(255,255,255,.03);transition:border-color .2s,background .2s}
+.fzabaseb.on{border-color:rgba(var(--acc-rgb),.5);background:rgba(var(--acc-rgb),.12)}
+.fzabaseb b{display:block;font:700 11.5px var(--ui)}
+.fzabaseb.on b{color:rgb(var(--accHi-rgb))}
+.fzabaseb i{display:block;font:500 9.5px/1.3 var(--ui);font-style:normal;color:var(--smoke);margin-top:2px}
 .fzaejes2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}
 .fzaeje{padding:10px;border-radius:14px;border:1px solid color-mix(in srgb, var(--nc) 24%, var(--line2));
   background:color-mix(in srgb, var(--nc) 8%, transparent)}
@@ -1851,7 +1867,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 184';
+const APPREV='REV 185';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3656,14 +3672,43 @@ const FZA_MAP={
   curl:['curl_bb','preach_bb','preach','c_curl','curl','hammer'],
 };
 function fzaPesoCorporal(){ const pm=pesoProm7(); return pm?pm.kg:(currentWeight()||0); }
-/* mejor 1RM estimado historico de un ejercicio (ignora los sustituidos) */
-function fzaMejor1RM(id){
-  const h=(S.logs||{})[id]||[]; let b=0, d=null, bw=0, br=0;
+/* ============ DE QUE SERIE SALE EL NIVEL ============
+   Dos lecturas legitimas del mismo historial y ninguna es la correcta siempre:
+
+   - TOPE HISTORICO: el mejor 1RM que hayas estimado alguna vez. Es tu marca, y no se
+     borra nunca. El problema es que una serie vieja con tecnica floja se queda mandando
+     para siempre: 130 x 7 con rebote pesa mas que 120 x 7 al fallo bien controlado,
+     aunque la segunda represente mejor la fuerza de hoy.
+   - LO MAS RECIENTE: la mejor serie de la ultima sesion registrada de ese ejercicio.
+     Refleja lo que mueves hoy, con la tecnica de hoy, y se corrige sola.
+
+   El modo vive en S.cfg.fzaBase y se elige en pantalla. Pase lo que pase las DOS cifras
+   se calculan y se muestran: cambiar de lectura nunca borra un record. */
+const FZA_BASES={max:{n:'Tope histórico', d:'la mejor serie de todo el historial'},
+                 recio:{n:'Lo más reciente', d:'la mejor serie de la última sesión de ese ejercicio'}};
+function fzaBaseModo(){ return ((S.cfg&&S.cfg.fzaBase)==='recio') ? 'recio' : 'max'; }
+/* las dos lecturas de un ejercicio, de una sola pasada por el historial */
+function fzaLecturas(id){
+  const h=(S.logs||{})[id]||[];
   const lado=exPorLado(id), corp=exPesoCorporal(id);
+  let mx=null, ult=null, ultD=null;
   h.forEach(en=>{ if(en.alt) return;
+    let mejorDia=null;
     en.sets.forEach(s=>{ const w0=+s.w||0, r=+s.r||0, w=exPesoReal(id, w0, en.d);
-      if(w>0&&r>0){ const e=e1rm(w,r); if(e>b){ b=e; d=en.d; bw=w0; br=r; } } }); });
-  return b>0?{rm:b, d, w:bw, r:br, lado, corp}:null;
+      if(w>0&&r>0){ const e=e1rm(w,r);
+        if(!mx || e>mx.rm) mx={rm:e, d:en.d, w:w0, r, lado, corp};
+        if(!mejorDia || e>mejorDia.rm) mejorDia={rm:e, d:en.d, w:w0, r, lado, corp};
+      } }); 
+    if(mejorDia && (!ultD || en.d>=ultD)){ ultD=en.d; ult=mejorDia; }
+  });
+  return {max:mx, recio:ult};
+}
+/* el 1RM con el que se calcula el nivel, segun el modo elegido. Lleva pegadas las dos
+   lecturas para que la UI pueda mostrar siempre la otra sin recalcular. */
+function fzaMejor1RM(id){
+  const L=fzaLecturas(id);
+  const base=(fzaBaseModo()==='recio' ? (L.recio||L.max) : L.max);
+  return base ? {...base, lecturas:L} : null;
 }
 function fzaNivelDe(ratio, umbrales){
   let i=0; while(i<umbrales.length && ratio>=umbrales[i]) i++;
@@ -3694,7 +3739,7 @@ function fzaTabla(){
     const ratio=mejor.rm/pc;
     const TB=fzaTablaDe(k);
     const nv=fzaNivelDe(ratio, TB.u);
-    out.push({k, n:FZA_STD[k].n, tabla:TB, ex:exId, cands, manual:!!elegido[k], pedido, pendiente, rm:Math.round(mejor.rm*10)/10, d:mejor.d, sw:mejor.w, sr:mejor.r, ratio:Math.round(ratio*100)/100, ...nv,
+    out.push({k, n:FZA_STD[k].n, tabla:TB, ex:exId, cands, manual:!!elegido[k], pedido, pendiente, rm:Math.round(mejor.rm*10)/10, d:mejor.d, sw:mejor.w, sr:mejor.r, lecturas:mejor.lecturas||null, ratio:Math.round(ratio*100)/100, ...nv,
       /* puntaje comparable entre ejercicios: cuanto del camino a elite lleva */
       score: ratio/TB.u[3]});
   });
@@ -3875,7 +3920,17 @@ function fzaEscalera(x, pc){
     ${x.sw?`<div class="fzafuente">
       <span class="lbl">DE DÓNDE SALE TU NÚMERO</span>
       <div class="small mt4" style="line-height:1.55">El <b>${fmtD(x.d)}</b> hiciste <b style="color:var(--ink)">${fmt1(x.sw)} kg × ${x.sr} ${x.sr===1?'repetición':'repeticiones'}</b>${x.ex&&exPorLado(x.ex)?' <b style="color:var(--gold)">por lado</b>':''}${x.ex?` en ${esc(shortEx(exNombre(x.ex)))}`:''}. De ahí sale tu 1RM estimado de <b style="color:var(--ink)">${fmt1(x.rm)} kg</b>.</div>
-      <div class="small dim mt4">${x.ex&&exPorLado(x.ex)?`${fmt1(x.sw)} × 2 lados = ${fmt1(x.sw*2)} kg · `:''}${fmt1(x.ex&&exPorLado(x.ex)?x.sw*2:x.sw)} × (1 + ${x.sr} ÷ 30) = ${fmt1(x.rm)} kg. Es tu mejor serie de todo el historial, no la última.</div>
+      <div class="small dim mt4">${x.ex&&exPorLado(x.ex)?`${fmt1(x.sw)} × 2 lados = ${fmt1(x.sw*2)} kg · `:''}${fmt1(x.ex&&exPorLado(x.ex)?x.sw*2:x.sw)} × (1 + ${x.sr} ÷ 30) = ${fmt1(x.rm)} kg.</div>
+      ${(()=>{ /* las dos lecturas, siempre las dos: cambiar de modo no borra un record */
+        const L=x.lecturas || (x.ex?fzaLecturas(x.ex):null); if(!L || !L.max || !L.recio) return '';
+        if(Math.abs(L.max.rm-L.recio.rm)<0.5) return '';
+        const m=fzaBaseModo();
+        const fila=(k,o)=>`<div class="fzados ${k===m?'on':''}">
+          <i>${FZA_BASES[k].n}</i>
+          <b>${fmt1(Math.round(o.rm*10)/10)}<em>kg</em></b>
+          <u>${fmt1(o.w)} × ${o.r} · ${fmtD(o.d)}</u></div>`;
+        return `<div class="fzadosw mt8">${fila('max',L.max)}${fila('recio',L.recio)}</div>
+          <div class="small dim mt4" style="line-height:1.5">Las dos existen y ninguna se borra. Ahora manda <b>${FZA_BASES[m].n.toLowerCase()}</b>; se cambia arriba, en Tu nivel global.</div>`;})()}
       ${x.ex?`<div class="mt8 flex between" style="align-items:center;gap:8px">
         <span class="small dim grow">¿Ese peso es por brazo o pierna, o el total?</span>
         <button class="chip ${exPorLado(x.ex)?'fill':''}" data-a="exLado" data-id="${x.ex}">${exPorLado(x.ex)?'Por lado':'Total'}</button></div>`:''}
@@ -3984,6 +4039,15 @@ function fzaGlobal(tb, pc){
   return {rel:et(prom('rel'), prom('pRel')), abs:et(prom('abs'), prom('pAbs')),
     mix:et(prom('mix')), n:cal.length};
 }
+/* De donde sale el numero: el tope de siempre o lo ultimo que moviste. Las dos cifras
+   existen igual; esto solo elige cual manda para el nivel. */
+function fzaBaseSelHTML(){
+  const m=fzaBaseModo();
+  return `<div class="fzabasesel" data-a="nada">
+    ${Object.keys(FZA_BASES).map(k=>`<button class="fzabaseb ${k===m?'on':''}" data-a="fzaBase" data-s="${k}"
+      aria-pressed="${k===m?'true':'false'}"><b>${FZA_BASES[k].n}</b><i>${FZA_BASES[k].d}</i></button>`).join('')}
+  </div>`;
+}
 function fzaGlobalHTML(g, pc){
   if(!g) return '';
   const COL=['#8B97A1','#8FA0FF','#58DFA3','var(--gold)','#FF7AB6'];
@@ -4006,6 +4070,7 @@ function fzaGlobalHTML(g, pc){
       ${g.mix.i<4?`<span class="small dim">${g.mix.pct}% hacia ${g.mix.sig}</span>`:'<span class="small dim">tope de la tabla</span>'}
     </div>
     <span class="fzaejeb grande"><em style="width:${clamp(g.mix.i>=4?100:(g.mix.i*25+g.mix.pct*0.25),4,100)}%;background:linear-gradient(90deg, color-mix(in srgb, ${c} 55%, transparent), ${c})"></em></span>
+    ${fzaBaseSelHTML()}
     <div class="fzaejes2">
       ${eje('FUERZA RELATIVA', g.rel, 'a tu ratio, entre quienes pesan lo que tú')}
       ${eje('FUERZA TOTAL', g.abs, 'a esos kilos, pese lo que pese quien los mueva')}
@@ -5120,7 +5185,7 @@ function fzaEjNivel(e, pc){
   const dias=mejor.d ? Math.round((fromISO(TODAY())-fromISO(mejor.d))/864e5) : null;
   return {...e, ex:usado, rm:Math.round(mejor.rm*10)/10, d:mejor.d, sw:mejor.w, sr:mejor.r,
     ratio:Math.round(ratio*100)/100, tablaN:T.n, tablaF:T.f, umbrales:T.u, ...nv,
-    cal, sec:!cal, sc, ses:hist.length,
+    cal, sec:!cal, sc, ses:hist.length, lecturas:mejor.lecturas||null,
     subida: prim ? Math.round((mejor.rm-prim.v)*10)/10 : null, desde: prim?prim.d:null,
     diasUlt: dias, viejo: dias!=null && dias>FZA_VIEJO,
     proxKg: nv.nivel<4 ? Math.round(T.u[nv.nivel]*pc*10)/10 : 0};
@@ -5483,6 +5548,12 @@ function fzaEjHTML(e, pc, COL, gk, destacado){
   if(e.ex&&exTara(e.ex)) caps.push({t:'carro '+fmt1(exTara(e.ex))+' kg', c:'gris'});
   if(destacado) caps.push({t:'tu más fuerte', c:'verde'});
   if(e.viejo) caps.push({t:'sin datos hace '+e.diasUlt+' d', c:'gris'});
+  /* la lectura que NO se esta usando, para que el tope historico nunca se pierda de vista */
+  if(e.lecturas){
+    const otra = fzaBaseModo()==='recio' ? e.lecturas.max : e.lecturas.recio;
+    if(otra && Math.abs(otra.rm-e.rm)>0.5)
+      caps.push({t:(fzaBaseModo()==='recio'?'tope ':'hoy ')+fmt1(Math.round(otra.rm*10)/10)+' kg', c:'gris'});
+  }
   /* el eje absoluto solo se dice cuando NO coincide con el relativo: ahi es donde informa */
   if(!e.sin && e.cal && e.sc){
     const nAbs=Math.min(4,Math.floor(e.sc.abs));
@@ -16801,6 +16872,11 @@ const ACTIONS = {
     renderAnclado(el);
   },
   cruceAbre(d, el){ UI.cruceAbre = UI.cruceAbre===d.m ? null : d.m; renderAnclado(el); },
+  fzaBase(d, el){ S.cfg.fzaBase = d.s==='recio' ? 'recio' : 'max'; save('cfg');
+    metasInvalidar && metasInvalidar();
+    renderAnclado(el);
+    toast(FZA_BASES[fzaBaseModo()].n+': '+FZA_BASES[fzaBaseModo()].d);
+  },
   fzaIsla(){ UI.fzaIsla=true; render(); },
   fzaIslaCerrar(){ UI.fzaIsla=false; render(); },
   secPlegTgl(d, el){ UI.secAb=UI.secAb||{}; UI.secAb[d.s]=!UI.secAb[d.s]; renderAnclado(el); },

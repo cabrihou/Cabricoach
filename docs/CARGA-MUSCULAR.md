@@ -311,3 +311,25 @@ Lo que se agregó ahora:
 
 Pendiente y a propósito: el cabrito no cambia de forma según el nivel. Generar variantes en
 Magnific cuesta créditos y solo se hace cuando Andy lo pide.
+
+## De qué serie sale el nivel (REV 185)
+
+Dos lecturas legítimas del mismo historial, y ninguna es la correcta siempre:
+
+- **Tope histórico**: el mejor 1RM estimado de todo el historial. Es tu marca y no se borra
+  nunca. El problema es que una serie vieja con técnica floja se queda mandando para siempre.
+  Caso real: 130 kg × 7 con rebote en mayo dan 160,3 kg estimados y pesan más que 120 × 7 al
+  fallo bien controladas en agosto, que dan 148,0. La segunda representa mejor la fuerza de hoy.
+- **Lo más reciente**: la mejor serie de la última sesión registrada de ese ejercicio. Refleja
+  lo que mueves hoy con la técnica de hoy, y se corrige sola.
+
+El modo vive en `S.cfg.fzaBase` (`max` por defecto) y se elige en el bloque de Tu nivel global.
+`fzaLecturas(id)` calcula **las dos de una sola pasada** y `fzaMejor1RM` devuelve la que manda
+con `lecturas` pegado, así que la UI siempre puede mostrar la otra:
+
+- En la tarjeta de ejercicio, una cápsula gris con la lectura que no se está usando
+  (`tope 160,3 kg` cuando manda la reciente, `hoy 148,0 kg` cuando manda el tope).
+- En "De dónde sale tu número", las dos lado a lado con su peso, sus repeticiones y su fecha,
+  resaltada la que manda.
+
+Cambiar de modo **no borra nada**: son dos lecturas del mismo historial, no dos historiales.

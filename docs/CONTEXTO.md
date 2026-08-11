@@ -97,3 +97,47 @@ verosímil y proyección del periodo elegido, metas dinámicas por peso.
 - **Coach diario**: `herramientas/coach-diario/` escribe `afc2:u:coach:daily`.
   El MISMO patrón sirve para el agente del próximo entreno
   (`afc2:u:<uid>:proxIA`, ver ARQUITECTURA §6): Andy definirá ese agente.
+
+## Metas nutricionales de Andrés (agosto 2026)
+
+Antes: 2.200 kcal y proteína derivada del peso (peso × 1,8 = 195 g a 94,4 kg).
+Ahora: **2.400 kcal · 150 g de proteína · 75 g de grasa · 280 g de carbohidratos**, fijos.
+
+El porqué, que es lo que no se deduce del código: 195 g era inalcanzable en la práctica. La
+adherencia real estaba en 120-125 g por volumen de comida (usa un supresor del apetito) y por
+costo. Se subieron las calorías y se bajó la proteína a un número sostenible. El razonamiento:
+**150 g con un déficit de ~250 kcal preserva más masa magra que 125 g reales con un déficit de
+500**. La proteína y el tamaño del déficit son la misma palanca. 150 g son 2,1 g por kg de masa
+magra (70,72 kg, BIA del 27/07/2026), dentro del rango recomendado para atletas entrenados en
+déficit.
+
+- **Piso duro: 140 g.** Por debajo el día sale en rojo; verde desde 150. Está en
+  `PLANS.andres.protPiso` y lo aplica `protEstado()`. La gráfica de proteína día a día pinta
+  cada barra con ese semáforo y lleva una línea punteada roja en el piso.
+- **2 scoops de whey diarios** (48 g de proteína, 240 kcal). Es el componente que hace viable
+  llegar a 150 g comiendo lo que de verdad le cabe. Viven en `PLANS.andres.fijos`,
+  se muestran en la caja "La semana comida por comida" y **se descuentan del reparto**: las
+  comidas cubren 102 g y 2.160 kcal, no los 150 y 2.400.
+- **El déficit bajó de ~500 a ~250 kcal**, así que el ritmo esperado se corre a la mitad:
+  `rateGoal` pasa de 0,8 a 0,35 kg/semana y `lossAlert` de 1,0 a 0,7. La meta de 86,6 kg se
+  mueve de mediados a finales de septiembre. **Ojo**: la proyección que se muestra en pantalla
+  no sale de estos números sino de la regresión real del peso (`pesoRecta`), así que se corrige
+  sola; `rateGoal` es solo contra qué se juzga la semana.
+
+Las metas fijas se activan con `PLANS[uid].metasFijas`. Si un plan no lo trae, `metasDe` sigue
+derivando del peso como siempre. **Cami no se tocó**: sigue en 1.700 kcal con proteína por peso
+y su scoop dentro de la avena.
+
+### Receta nueva: hamburguesa de res casera
+
+Mezcla base que rinde 2.130 g crudos = 17 hamburguesas de 125 g. En crudo, que es como se pesa
+la mezcla antes de armar: **139 kcal, 14,3 g de proteína, 7,0 de grasa y 2,3 de carbo por cada
+100 g**. Una hamburguesa de 125 g son 174 kcal y 18 g de proteína, o sea **10,3 g de proteína
+por cada 100 kcal**: apta para día normal.
+
+La papada y la tocineta **no** van en la base. Son topping opcional y hunden la eficiencia
+proteica a 8,0.
+
+Ingredientes de la mezcla: 1.500 g de molida de res 90/10 (molida especial), 450 g de cebolla
+roja, 150 ml de Malbec, un ramo de cilantro, sal, ajo y pimienta. En la receta de la app las
+cantidades salen por plato: la carne es el 70% de la mezcla, la cebolla el 21% y el vino el 7%.

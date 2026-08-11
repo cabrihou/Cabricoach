@@ -1192,6 +1192,11 @@ img{-webkit-user-drag:none;user-select:none}
   border:1px solid color-mix(in srgb, var(--cc) 28%, transparent)}
 .crucen{font:700 15px var(--ui);letter-spacing:-.01em}
 /* Fila de "pide atencion": misma tarjeta que Cruce, con la cifra alineada a la derecha */
+.fijocard{position:relative;padding:13px;border-radius:16px;
+  border:1px solid rgba(var(--acc-rgb),.28);
+  background:linear-gradient(150deg, rgba(var(--acc-rgb),.12) 0%, transparent 58%), var(--paper2)}
+.fijocard .crucen{display:flex;align-items:center;gap:7px}
+.fijocard .crucetag{color:rgb(var(--accHi-rgb));background:rgba(var(--acc-rgb),.13);border-color:rgba(var(--acc-rgb),.3)}
 .atrow{display:flex;align-items:center;gap:10px;padding:11px 12px;margin:8px 0;cursor:pointer;
   border-radius:16px;border:1px solid color-mix(in srgb, var(--cc) 26%, var(--line2));
   background:linear-gradient(150deg, color-mix(in srgb, var(--cc) 12%, transparent) 0%, transparent 60%), var(--paper2);
@@ -1662,6 +1667,7 @@ img{-webkit-user-drag:none;user-select:none}
 .nchart i{flex:1;min-width:0;background:linear-gradient(180deg,rgba(var(--acc-rgb),.9),rgba(var(--acc2-rgb),.7));border-radius:3px 3px 0 0;min-height:2px}
 .nchart i.hit{background:linear-gradient(180deg,#58DFA3,#2FAE7E)}
 .nchart i.none{background:var(--line2);min-height:2px}
+.ncpiso{position:absolute;left:0;right:0;height:0;border-top:1px dashed rgba(255,82,87,.55);pointer-events:none;z-index:2}
 .ncgoal{position:absolute;left:0;right:0;height:0;border-top:1.5px dashed var(--gold);z-index:1;opacity:.85}
 .ncdload{position:absolute;top:0;bottom:0;background:rgba(255,201,77,.13);border-radius:3px;pointer-events:none;z-index:2}
 .ncdload span{position:absolute;top:2px;left:50%;transform:translateX(-50%);font:500 8px var(--ui);letter-spacing:.05em;text-transform:uppercase;color:rgba(255,201,77,.9);white-space:nowrap}
@@ -1845,7 +1851,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 183';
+const APPREV='REV 184';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2098,12 +2104,27 @@ const PLANS = {
        el 15% de grasa cae en 86,6 kg. La de 89 kg no se borra: pasa a ser la Fase 2,
        que es ganar 2 kg de magra DESPUES de definir (ver metaFases). */
     wStart:94.4, wGoal:86.6, wGoalFase2:89, metaNote:'Fase 1: 86,6 kg @ 15% de grasa · Fase 2: 89 kg manteniendo el 15%',
-    /* kcal/prot/fat/carb ya NO viven aca fijos: se calculan por peso (metasDe,
-       mas abajo). kcalKg conserva el nivel de kcal/kg de hoy (2200/94,4) para que
-       el recalculo no le cambie el deficit de golpe cuando baje de peso. */
-    kcalKg:2200/94.4, waterGoal:2500,
-    rateGoal:0.8, rateLabel:'0,75-0,9', lossAlert:1.0,
-    lossAdvice:'Pérdida >1 kg/sem sostenida: sube las calorías un 10% (≈2.420 kcal).',
+    /* Metas FIJAS (agosto 2026). Antes se calculaban por peso (peso×1,8 de proteina y
+       2200 kcal), pero 195 g de proteina era inalcanzable en la practica: la adherencia
+       real estaba en 120-125 g por volumen de comida (usa un supresor del apetito) y por
+       costo. Se subieron las kcal y se bajo la proteina a un numero sostenible.
+       El razonamiento: 150 g con un deficit de ~250 kcal preserva mas masa magra que
+       125 g reales con un deficit de 500. La proteina y el tamano del deficit son la
+       misma palanca. 150 g son 2,1 g por kg de masa magra (70,72 kg, BIA del 27/07/2026),
+       dentro del rango recomendado para atletas entrenados en deficit.
+       protPiso: por debajo de 140 g el dia se marca en rojo. Verde desde 150. */
+    metasFijas:{kcal:2400, prot:150, fat:75, carb:280}, protPiso:140,
+    /* 2 scoops de whey al dia. Es el componente que hace viable llegar a 150 g comiendo
+       lo que de verdad le cabe. Se descuenta del reparto por comidas (comidasDe). */
+    fijos:[{n:'Whey (scoop)', q:2, u:'unid', pg:48, cg:6, fg:3, kc:240,
+            nota:'Uno en el desayuno y otro post-entreno, o los dos donde te quepan.'}],
+    kcalKg:2400/94.4, waterGoal:2500,
+    /* El deficit bajo de ~500 a ~250 kcal al subir a 2400: el ritmo esperado se corre a la
+       mitad y la meta de 86,6 kg pasa de mediados a finales de septiembre. La proyeccion
+       que se muestra sale de la regresion real del peso (pesoRecta), no de estos numeros:
+       esto es solo contra que se juzga la semana. */
+    rateGoal:0.35, rateLabel:'0,25-0,45', lossAlert:0.7,
+    lossAdvice:'Pérdida >0,7 kg/sem sostenida: el déficit se agrandó solo, sube las calorías un 10% (≈2.640 kcal).',
     injectDay:3,
     trainDesc:'PPL × 2 · un día libre',
     phases:{1:'PROGRESIÓN',2:'PROGRESIÓN',3:'PROGRESIÓN',4:'DESCARGA',5:'EMPUJE FINAL',6:'EMPUJE FINAL'},
@@ -2148,17 +2169,32 @@ function pesoSemanaDe(uid){
    de siempre de cada quien), carbo = lo que sobra de esas kcal (minimo 0).
    Recalculo semanal (clave = lunes de hoy), cacheado para no recalcular en cada
    render; metasInvalidar fuerza el recalculo antes del proximo lunes. */
+/* Semaforo de proteina del dia. El piso duro (PLANS[uid].protPiso) existe porque hay una
+   diferencia real entre quedarse corto y quedarse MUY corto: por debajo del piso ya no se
+   sostiene la masa magra en deficit. Sin piso definido se comporta como antes. */
+function protEstado(g, uid){
+  const m=metasDe(uid||UID);
+  if(g>=m.prot) return {k:'ok', c:'#58DFA3', t:'en meta'};
+  if(m.protPiso && g<m.protPiso) return {k:'bajo', c:'var(--red)', t:'bajo el piso de '+m.protPiso+' g'};
+  return {k:'medio', c:'var(--gold)', t:'por debajo de la meta'};
+}
 function metasDe(uid){
   const mon=mondayOf(TODAY());
   const c=_metasCache[uid];
   if(c && c.mon===mon) return c.val;
   const plan=PLANS[uid];
   const pesoBase=Math.round(pesoSemanaDe(uid)*10)/10;
-  const prot=Math.round(pesoBase*1.8);
-  const fat=Math.round(pesoBase*0.8);
-  const kcal=Math.round(pesoBase*plan.kcalKg);
-  const carb=Math.max(0, Math.round((kcal-prot*4-fat*9)/4));
-  const val={kcal, prot, fat, carb, pesoBase};
+  /* si el plan trae metas fijas mandan esas: hay planes que no se derivan del peso
+     porque el numero sostenible pesa mas que la formula (ver PLANS.andres) */
+  const f=plan.metasFijas;
+  const prot=f?f.prot:Math.round(pesoBase*1.8);
+  const fat=f?f.fat:Math.round(pesoBase*0.8);
+  const kcal=f?f.kcal:Math.round(pesoBase*plan.kcalKg);
+  const carb=f?f.carb:Math.max(0, Math.round((kcal-prot*4-fat*9)/4));
+  const fijos=plan.fijos||[];
+  const fijo=fijos.length ? fijos.reduce((a,x)=>({pg:a.pg+x.pg, cg:a.cg+x.cg, fg:a.fg+x.fg, kc:a.kc+x.kc}),
+    {pg:0,cg:0,fg:0,kc:0}) : null;
+  const val={kcal, prot, fat, carb, pesoBase, fijo, fijos, protPiso: plan.protPiso||null};
   _metasCache[uid]={mon, val};
   return val;
 }
@@ -2263,7 +2299,10 @@ function comidasDe(uid){
   const n = clamp((prefs.comidas && prefs.comidas[key]) || 3, 1, 5);
   let pcts = repartoEfectivo(key, n);
   const labels = MEAL_LABELS(n);
-  const pgs=repartirMacro(plan.prot,pcts), cgs=repartirMacro(plan.carb,pcts), fgs=repartirMacro(plan.fat,pcts), kcs=repartirMacro(plan.kcal,pcts);
+  /* lo fijo del dia (los scoops) ya esta cubierto: las comidas reparten lo que falta */
+  const F=plan.fijo||{pg:0,cg:0,fg:0,kc:0};
+  const pgs=repartirMacro(Math.max(0,plan.prot-F.pg),pcts), cgs=repartirMacro(Math.max(0,plan.carb-F.cg),pcts),
+        fgs=repartirMacro(Math.max(0,plan.fat-F.fg),pcts), kcs=repartirMacro(Math.max(0,plan.kcal-F.kc),pcts);
   return labels.map((label,i)=>({k:'m'+(i+1), label, pg:pgs[i], cg:cgs[i], fg:fgs[i], kc:kcs[i]}));
 }
 /* momento(s) del vocabulario (desayuno|almuerzo|cena|snack) que acepta una etiqueta
@@ -6418,6 +6457,17 @@ const RECIPES = [
   dif:1,
   a:{pg:82,cg:47,fg:17,kc:670,ing:[['Pechuga de pollo',330,'g',28000],['Arroz (crudo)',55,'g',3800],['Ensalada verde',150,'g',5000]]},
   c:{pg:49,cg:39,fg:10,kc:440,ing:[['Pechuga de pollo',200,'g',28000],['Arroz (crudo)',45,'g',3800],['Ensalada verde',120,'g',5000]]}},
+ /* Mezcla base de hamburguesa. Rinde 2.130 g crudos = 17 hamburguesas de 125 g.
+    En crudo (que es como se pesa la mezcla antes de armar): 139 kcal, 14,3 g de proteina,
+    7,0 de grasa y 2,3 de carbo por cada 100 g. Una hamburguesa de 125 g son 174 kcal y
+    18 g de proteina: 10,3 g de proteina por cada 100 kcal, apta para dia normal.
+    La papada y la tocineta NO van en la base: son topping opcional y bajan la eficiencia
+    proteica a 8,0. Las cantidades de abajo son la parte de la mezcla que toca por plato
+    (la carne es el 70% de la mezcla, la cebolla el 21% y el vino el 7%). */
+ {id:'hamburguesares',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'res',name:'Hamburguesa de res casera',desc:'Mezcla base de la casa: molida 90/10 con cebolla roja, Malbec y cilantro. A: 3 de 125 g · C: 2.',prep:["Pica la cebolla roja bien menuda y el cilantro (hojas y tallos tiernos).","Mezcla en un bol la carne molida con la cebolla, el cilantro, sal, ajo y pimienta.","Agrega el vino tinto y amasa con la mano hasta integrar, sin trabajarla de más para que no quede gomosa.","Deja reposar 20 minutos en la nevera: la mezcla toma cuerpo y se arma mejor.","Pesa porciones de 125 g y forma las hamburguesas con un hueco en el centro para que no se abomben.","A la plancha bien caliente, 3-4 minutos por lado. No las aplastes: eso les saca el jugo.","La mezcla rinde 17 unidades. Lo que no uses hoy va al congelador separado con papel."],
+  dif:2,
+  a:{pg:58,cg:44,fg:27,kc:690,ing:[['Carne molida magra',264,'g',15000],['Cebolla roja',79,'g',4000],['Vino tinto',26,'ml',45000],['Cilantro',10,'g',2000],['Arroz (crudo)',40,'g',3800],['Ensalada verde',150,'g',5000]]},
+  c:{pg:39,cg:33,fg:18,kc:475,ing:[['Carne molida magra',176,'g',15000],['Cebolla roja',53,'g',4000],['Vino tinto',18,'ml',45000],['Cilantro',7,'g',2000],['Arroz (crudo)',30,'g',3800],['Ensalada verde',120,'g',5000]]}},
  {id:'carnepapa',mom:['almuerzo','cena'],momPref:'almuerzo',cat:'res',name:'Carne molida desmechada + papa criolla',desc:'Molida magra en hogao. A: 220 g cocidos · C: 130 g.',prep:["Sofríe la cebolla larga y el tomate en un poco de aceite hasta que ablanden (el hogao).","Agrega la carne molida y cocina revolviendo hasta que dore.","Sazona con sal, comino y pimienta al gusto.","Cocina la papa criolla en agua con sal hasta que esté blanda.","Sirve la carne sobre la papa."],
   dif:2,
   a:{pg:59,cg:45,fg:25,kc:640,ing:[['Carne molida magra',290,'g',15000],['Papa criolla',200,'g',6000],['Tomate',60,'g',4000],['Cebolla larga',25,'g',3500]]},
@@ -13197,7 +13247,10 @@ function repBoxHTML(){
     const comidas=comidasDe(uid);
     const mins=labels.map((_,i)=>pisoComida(uid,i,comidas));
     const sumMin=mins.reduce((a,m)=>a+(m?m.pct:0),0);
-    const pgs=repartirMacro(plan.prot,pcts), cgs=repartirMacro(plan.carb,pcts), fgs=repartirMacro(plan.fat,pcts), kcs=repartirMacro(plan.kcal,pcts);
+    /* lo fijo del dia (los scoops) ya esta cubierto: las comidas reparten lo que falta */
+  const F=plan.fijo||{pg:0,cg:0,fg:0,kc:0};
+  const pgs=repartirMacro(Math.max(0,plan.prot-F.pg),pcts), cgs=repartirMacro(Math.max(0,plan.carb-F.cg),pcts),
+        fgs=repartirMacro(Math.max(0,plan.fat-F.fg),pcts), kcs=repartirMacro(Math.max(0,plan.kcal-F.kc),pcts);
     return `<div class="mb16">
       <div class="flex between mb8"><b style="font-size:15px">${USERS[uid].name}</b><span class="small dim">meta ${plan.prot} g prot · ${plan.kcal} kcal</span></div>
       ${sumMin>100?`<div class="small" style="color:var(--gold);margin-bottom:8px">Los mínimos de las comidas de ${USERS[uid].name} ya suman ${sumMin}%: no caben en 100. Cambia una receta por algo más liviano o sube su meta de proteína.</div>`:''}
@@ -13719,6 +13772,22 @@ function gestSemanaHTML(){
    activas de esa persona; la eleccion se guarda en S.meal.plan (ver recetaDeComida
    mas arriba), que vive dentro de S.meal y por eso viaja con el resto de la
    informacion compartida entre los dos. */
+/* Lo fijo del dia: lo que se toma siempre y no depende de que se cocine (hoy, los dos
+   scoops de whey de Andres). Va en la caja que reparte el dia comida por comida, porque
+   estos gramos YA estan descontados de ese reparto (ver comidasDe). */
+function fijoDelDiaHTML(uid){
+  const M=metasDe(uid); if(!M.fijo) return '';
+  return `<div class="fijocard mb12">
+    <div class="flex between" style="align-items:center;gap:8px">
+      <b class="crucen">${ic('eqCuerpo',14)} Fijo cada día</b>
+      <span class="crucetag">ya descontado</span></div>
+    ${M.fijos.map(x=>`<div class="flex between mt8" style="align-items:baseline;gap:8px">
+      <span class="small" style="min-width:0"><b>${x.q} ${esc(x.n)}</b>
+        <i class="small dim" style="display:block;line-height:1.45">${esc(x.nota||'')}</i></span>
+      <span class="fzaislakg">${x.pg}<em>g prot</em></span></div>`).join('')}
+    <div class="small dim mt8" style="line-height:1.5">Son <b>${M.fijo.pg} g de proteína</b> y ${M.fijo.kc} kcal que no dependen de qué cocines. Las comidas de abajo reparten lo que falta: ${M.prot-M.fijo.pg} g y ${M.kcal-M.fijo.kc} kcal.</div>
+  </div>`;
+}
 function gestPlanHTML(){
   if(!recetasActivas('a').length && !recetasActivas('c').length) return '';
   const view=UI.gestView||'semana';
@@ -13895,6 +13964,7 @@ function gestPlanHTML(){
      calendario, no de lectura */
   const ORDEN=['L','M','X','J','V','S','D'];
   return `<section class="mod" id="gestplan">
+    ${fijoDelDiaHTML(UID)}
     <div class="flex wrapf mb12" style="gap:6px">
       <button class="chip ${view==='semana'?'fill':''}" data-a="gestVista" data-v="semana">${ic('vsemana',13)} Semana</button>
       <button class="chip ${view==='dia'?'fill':''}" data-a="gestVista" data-v="dia">${ic('cal',13)} Día</button>
@@ -14774,7 +14844,11 @@ function vNutriStats(){
     <div class="mod-head"><span class="ttl">${ic('trend',15)} Proteína día a día</span><span class="small dim">línea = meta</span></div>
     <div class="nchart">
       <div class="ncgoal" style="bottom:${goalPct}%"></div>
-      ${daily.map(x=>`<i class="${x.p>=goal*0.8?'hit':''} ${x.log?'':'none'}" style="height:${clamp(x.p/maxV*100,x.log?4:0,100)}%" title="${fmtD(x.d)}: ${x.p} g"></i>`).join('')}
+      ${(()=>{const pi=metasDe(UID).protPiso; if(!pi) return '';
+        return `<div class="ncpiso" style="bottom:${clamp(pi/maxV*100,0,100)}%" title="piso duro: ${pi} g"></div>`;})()}
+      ${daily.map(x=>{const e=protEstado(x.p, UID);
+        return `<i class="${x.p>=goal*0.8?'hit':''} ${x.log?'':'none'}" title="${fmtD(x.d)}: ${x.p} g, ${e.t}"
+          style="height:${clamp(x.p/maxV*100,x.log?4:0,100)}%${x.log?';background:'+e.c:''}"></i>`;}).join('')}
       ${ncDeload}
     </div>
     <div class="flex between mt8"><span class="small dim">${fmtD(daily[0].d)}</span><span class="small dim">hoy</span></div>

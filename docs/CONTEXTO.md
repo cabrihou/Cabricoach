@@ -186,3 +186,37 @@ en MÁS para que el número no salga de la nada.
 El "+500 ml por creatina" que se repite por ahí no tiene respaldo firme; lo documentado es que
 hay que mantenerse bien hidratado, y +250 lo cubre sin volver a una meta que nadie cumple. El agua de la comida no se
 cuenta aquí, así que la ingesta real es mayor que el número.
+
+## El déficit es lo que se fija, no las calorías (REV 196)
+
+Estaban formulados **distinto entre los dos**, y los dos mal:
+
+- **Andrés**: 2.400 kcal **fijas**, no se movían con el peso. Al bajar de 94,4 a 86,6 kg el
+  gasto cae unas 117 kcal, así que el déficit se encogía solo de 250 a **133**: el plan se
+  frenaba justo al final, cuando más cuesta.
+- **Cami**: `kcal = peso × 28,6`. Recortaba 28,6 kcal por cada kilo perdido cuando el gasto
+  real solo baja unas 15. Su déficit crecía solo de 330 a **371** sin que nadie lo decidiera,
+  justo cuando menos margen hay.
+
+Ahora los dos usan `metasBase:{peso, kcal, deficit}` y las calorías salen de
+**gasto estimado − déficit**, con el gasto recalculado desde el peso de la semana:
+
+```
+kcal(peso) = kcal_base + 15 × (peso − peso_base)
+```
+
+Los 15 kcal/kg no son un invento: en Mifflin-St Jeor lo único que escala con el peso corporal
+es el término de peso (10 kcal/kg); estatura, edad y constante no se mueven. Con un factor de
+actividad de ~1,5 quedan ~15. Un "kcal por kg" plano de 28 recorta casi el doble de lo que de
+verdad se deja de gastar.
+
+Se ancla en el peso y las kcal de hoy, así que **no hace falta ni estatura ni edad**: lo que
+importa es la pendiente, no el valor absoluto.
+
+| | Hoy | A mitad de camino | En la meta | Déficit |
+|---|---|---|---|---|
+| Andrés | 2.400 @ 94,4 kg | 2.342 @ 90,5 | 2.283 @ 86,6 | 250 siempre |
+| Cami | 1.700 @ 59,5 kg | 1.678 @ 58,0 | 1.655 @ 56,5 | 330 siempre |
+
+En Gestión → La semana comida por comida sale la caja **"De dónde salen tus N kcal"** con el
+gasto, el déficit y la meta, para que se vea que el número se mueve y por qué.

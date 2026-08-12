@@ -1266,6 +1266,23 @@ img{-webkit-user-drag:none;user-select:none}
   border:1px solid color-mix(in srgb, var(--cc) 28%, transparent)}
 .crucen{font:700 15px var(--ui);letter-spacing:-.01em}
 /* Fila de "pide atencion": misma tarjeta que Cruce, con la cifra alineada a la derecha */
+.metascomo{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.metascomo span{display:block;padding:8px 9px;border-radius:12px;border:1px solid var(--line2);
+  background:rgba(255,255,255,.03)}
+.metascomo span.on{border-color:rgba(var(--acc-rgb),.45);background:rgba(var(--acc-rgb),.12)}
+.metascomo i{display:block;font:600 8px var(--ui);font-style:normal;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--smoke)}
+.metascomo b{display:flex;align-items:baseline;gap:2px;font:800 16px/1 var(--num);color:var(--ink);margin-top:3px}
+.metascomo b em{font:700 9px var(--num);font-style:normal;color:var(--smoke)}
+.ckmini{display:flex;align-items:center;gap:7px;margin-top:9px;padding:6px 9px 6px 6px;cursor:pointer;
+  border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.03);
+  color:var(--smoke);font:600 10.5px var(--ui);transition:.2s}
+.ckmini.on{color:var(--ink);border-color:rgba(var(--acc-rgb),.4);background:rgba(var(--acc-rgb),.12)}
+.ckminibox{flex:none;display:flex;align-items:center;justify-content:center;width:18px;height:18px;
+  border-radius:6px;border:1.5px solid var(--line);background:transparent}
+.ckmini.on .ckminibox{background:var(--grad);border-color:transparent;color:var(--onmint)}
+.ckmini i{font:700 9px var(--num);font-style:normal;color:rgb(var(--accHi-rgb))}
+.ckmini::after{content:'';position:absolute}
 .creatcard{border-color:rgba(var(--acc-rgb),.24)}
 .creatcard.ok{background:linear-gradient(150deg, rgba(var(--acc-rgb),.11) 0%, transparent 58%), var(--card)}
 .creatbtn{flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;
@@ -1934,7 +1951,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 195';
+const APPREV='REV 196';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2196,7 +2213,12 @@ const PLANS = {
        misma palanca. 150 g son 2,1 g por kg de masa magra (70,72 kg, BIA del 27/07/2026),
        dentro del rango recomendado para atletas entrenados en deficit.
        protPiso: por debajo de 140 g el dia se marca en rojo. Verde desde 150. */
-    metasFijas:{kcal:2400, prot:150, fat:75, carb:280}, protPiso:140,
+    /* El deficit es la decision; las calorias son la consecuencia. Antes 2400 era un numero
+       fijo: al bajar de 94,4 a 86,6 kg el gasto cae ~117 kcal y el deficit se encogia solo
+       de 250 a 133, o sea el plan se frenaba justo al final. Ahora se ancla el deficit y las
+       kcal bajan con el peso (ver metasDe). */
+    metasBase:{peso:94.4, kcal:2400, deficit:250},
+    metasFijas:{prot:150, fat:75}, protPiso:140,
     /* 2 scoops de whey al dia. Es el componente que hace viable llegar a 150 g comiendo
        lo que de verdad le cabe. Se descuenta del reparto por comidas (comidasDe). */
     fijos:[{n:'Whey (scoop)', q:2, u:'unid', pg:48, cg:6, fg:3, kc:240,
@@ -2228,6 +2250,10 @@ const PLANS = {
        peso, escala con la masa muscular, y 3 g saturan igual solo que mas despacio.
        El agua que retiene si escala con el musculo, y ella tiene menos: 0,6 a 1,2 kg. */
     creatina:{dosis:3, kgAgua:[0.6,1.2], semanas:5, desde:'2026-08-07'},
+    /* mismo modelo que Andres. El kcalKg plano (28,6 kcal por kg) recortaba 28,6 kcal por
+       cada kilo perdido cuando el gasto real solo baja ~15: el deficit crecia solo de 330 a
+       371 sin que nadie lo decidiera, justo cuando menos margen hay. */
+    metasBase:{peso:59.5, kcal:1700, deficit:330},
     kcalKg:1700/59.5, waterGoal:2000,
     rateGoal:0.3, rateLabel:'0,2-0,4', lossAlert:0.7,
     lossAdvice:'Pérdida >0,7 kg/sem sostenida: sube a 1.850 kcal para no perder músculo.',
@@ -2261,6 +2287,11 @@ function pesoSemanaDe(uid){
   if(pesos.length) return pesos[pesos.length-1].kg;
   return PLANS[uid].wStart;
 }
+/* Cuanto baja el gasto diario por cada kilo de peso corporal perdido. En Mifflin-St Jeor
+   solo el termino de peso escala (10 kcal/kg); el resto es estatura, edad y constante. Con
+   un factor de actividad de ~1,5 quedan ~15 kcal/kg. Un "kcal por kg" plano de 28 recorta
+   casi el doble de lo que de verdad se deja de gastar. */
+const KCAL_POR_KG=15;
 /* metas del uid: prot = peso×1,8, grasa = peso×0,8, kcal = peso×kcalKg (el nivel
    de siempre de cada quien), carbo = lo que sobra de esas kcal (minimo 0).
    Recalculo semanal (clave = lunes de hoy), cacheado para no recalcular en cada
@@ -2282,15 +2313,24 @@ function metasDe(uid){
   const pesoBase=Math.round(pesoSemanaDe(uid)*10)/10;
   /* si el plan trae metas fijas mandan esas: hay planes que no se derivan del peso
      porque el numero sostenible pesa mas que la formula (ver PLANS.andres) */
-  const f=plan.metasFijas;
-  const prot=f?f.prot:Math.round(pesoBase*1.8);
-  const fat=f?f.fat:Math.round(pesoBase*0.8);
-  const kcal=f?f.kcal:Math.round(pesoBase*plan.kcalKg);
-  const carb=f?f.carb:Math.max(0, Math.round((kcal-prot*4-fat*9)/4));
+  const f=plan.metasFijas||{};
+  const prot=f.prot||Math.round(pesoBase*1.8);
+  const fat=f.fat||Math.round(pesoBase*0.8);
+  /* Las kcal salen del GASTO estimado menos el deficit que se decidio, no de un numero fijo
+     ni de un kcal/kg plano. Del gasto total, lo unico que se mueve con el peso corporal es
+     el termino de peso del metabolismo basal (10 kcal por kg en Mifflin-St Jeor); con un
+     factor de actividad de ~1,5 eso son ~15 kcal por kg. Se ancla en el peso y las kcal de
+     hoy, asi que no hace falta ni estatura ni edad: la pendiente es lo que importa. */
+  const B=plan.metasBase;
+  const kcal = B ? Math.max(1200, Math.round(B.kcal + KCAL_POR_KG*(pesoBase-B.peso)))
+    : (f.kcal || Math.round(pesoBase*plan.kcalKg));
+  const carb=f.carb||Math.max(0, Math.round((kcal-prot*4-fat*9)/4));
+  const gasto = B ? Math.round(kcal + B.deficit) : null;
   const fijos=plan.fijos||[];
   const fijo=fijos.length ? fijos.reduce((a,x)=>({pg:a.pg+x.pg, cg:a.cg+x.cg, fg:a.fg+x.fg, kc:a.kc+x.kc}),
     {pg:0,cg:0,fg:0,kc:0}) : null;
-  const val={kcal, prot, fat, carb, pesoBase, fijo, fijos, protPiso: plan.protPiso||null};
+  const val={kcal, prot, fat, carb, pesoBase, fijo, fijos, protPiso: plan.protPiso||null,
+    gasto, deficit: B?B.deficit:null};
   _metasCache[uid]={mon, val};
   return val;
 }
@@ -11347,23 +11387,15 @@ function vInicio(){
   return `
   ${(()=>{const al=partnerAlerts(); if(!al.length) return '';
     return `<section class="mod tight alertcard" data-a="retosGo" role="button"><div class="flex"><span class="alertic">${ic('bell',16)}</span><div class="small grow"><b>Para revisar (${al.length})</b><div style="margin-top:3px;line-height:1.45">${al.slice(0,2).join('<br>')}</div></div>${ic('chevR',15)}</div></section>`;})()}
-  ${(()=>{ const c=creatCfg(); if(!c) return '';
-    const hoy=creatHoy(), n=creatDias(), sat=creatSaturando(), agua=creatAgua(), rk=creatRacha();
-    return `<section class="mod tight creatcard ${hoy?'ok':''}">
-      <div class="flex" style="gap:11px;align-items:center">
-        <button class="creatbtn ${hoy?'on':''}" data-a="creat" aria-pressed="${hoy?'true':'false'}"
-          aria-label="${hoy?'Creatina tomada hoy':'Marcar creatina de hoy'}">${ic(hoy?'check':'drop',18)}</button>
+  ${(()=>{ /* la marca diaria vive en el checkpoint; aqui solo queda el aviso de la bascula,
+       y solo mientras satura, que es cuando confunde */
+    const c=creatCfg(); if(!c || !creatSaturando()) return '';
+    return `<section class="mod tight creatcard">
+      <div class="flex" style="gap:10px;align-items:flex-start">${ic('drop',16)}
         <div class="grow" style="min-width:0">
-          <b class="small" style="display:block">Creatina · ${c.dosis} g${hoy?'':' <i class="small dim">pendiente</i>'}</b>
-          <div class="small dim" style="line-height:1.45">${
-            n==null ? 'Tócala el primer día que la tomes y arranca el conteo.'
-            : (rk>1 ? rk+' días seguidos · ' : '') + 'día '+n+' desde que empezaste'}</div>
-        </div>
-        ${rk>2?`<span class="chip xs">${ic('flame',9)} ${rk}</span>`:''}
-      </div>
-      ${sat?`<div class="small mt8" style="line-height:1.55;color:var(--ink2)">
-        <b style="color:var(--gold)">La báscula va a subir y no es grasa.</b> La creatina satura el músculo de agua: ${c.kgAgua[0]} a ${c.kgAgua[1]} kg en las primeras ${c.semanas} semanas. Vas por <b>+${fmt1(agua)} kg</b> de agua estimada. Mide el progreso por la cintura y por lo que levantas hasta que se estabilice.</div>`
-        : (n!=null?`<div class="small dim mt8" style="line-height:1.5">Ya pasó la saturación: los ${fmt1(agua)} kg de agua del músculo son constantes y la báscula vuelve a leerse normal.</div>`:'')}
+          <b class="small">La báscula va a subir y no es grasa</b>
+          <div class="small dim mt4" style="line-height:1.55">La creatina satura el músculo de agua: ${c.kgAgua[0]} a ${c.kgAgua[1]} kg en las primeras ${c.semanas} semanas. Vas por <b style="color:var(--ink)">+${fmt1(creatAgua())} kg</b> de agua estimada, día ${creatDias()}. Mide el progreso por la cintura y por lo que levantas hasta que se estabilice.</div>
+        </div></div>
     </section>`;})()}
   ${BACKEND!=='ls'?`<section class="mod tight inv"><div class="flex">${ic('alert',18)}<div class="small"><b>Esta vista no guarda datos.</b> El navegador bloquea el almacenamiento aquí: lo que registres se pierde al cerrar. Usa la versión instalada/local, o exporta un respaldo desde MÁS → DATOS antes de salir.</div></div></section>`:''}
   ${(BACKEND==='ls'&&!DEMO&&(!S.cfg.lastBackup||addDays(S.cfg.lastBackup,7)<=TODAY()))?`<section class="mod tight"><div class="flex between"><div class="flex">${ic('down',18)}<div class="small"><b>Respaldo semanal.</b> ${S.cfg.lastBackup?'Último: '+fmtD(S.cfg.lastBackup)+'.':'Aún no tienes el primero.'} ${SB?'La nube ayuda; el archivo es el seguro.':'Sin nube, este archivo es tu único seguro.'}</div></div><button class="btn sm primary" data-a="backupNow" style="flex:none">Descargar</button></div></section>`:''}
@@ -11525,6 +11557,13 @@ const node=(on,icn,val,lb,bonus)=>{
             <span class="ckln gold ${st.prote?'on':''}"></span>
             ${node(st.entreno&&!st.isRest,'barbell','★','BONUS',true)}
           </div>
+          ${(()=>{ const c=creatCfg(); if(!c) return '';
+            const hoy=creatHoy(), rk=creatRacha();
+            return `<button class="ckmini ${hoy?'on':''}" data-a="creat" aria-pressed="${hoy?'true':'false'}">
+              <span class="ckminibox">${hoy?ic('check',11):''}</span>
+              <span>Creatina · ${c.dosis} g</span>
+              ${rk>2?`<i>${rk} d</i>`:''}
+            </button>`;})()}
         </div>
       </div>
       `})()}
@@ -14349,6 +14388,22 @@ function gestSemanaHTML(){
 /* Lo fijo del dia: lo que se toma siempre y no depende de que se cocine (hoy, los dos
    scoops de whey de Andres). Va en la caja que reparte el dia comida por comida, porque
    estos gramos YA estan descontados de ese reparto (ver comidasDe). */
+/* De donde salen las kcal de hoy. El deficit es lo que se decidio; las calorias son la
+   consecuencia del peso de esta semana. Verlo evita la pregunta de si el numero se mueve. */
+function metasComoHTML(uid){
+  const M=metasDe(uid); if(!M.gasto) return '';
+  return `<div class="fijocard mb12">
+    <div class="flex between" style="align-items:center;gap:8px">
+      <b class="crucen">${ic('zap',14)} De dónde salen tus ${fmtInt(M.kcal)} kcal</b>
+      <span class="crucetag">déficit ${M.deficit}</span></div>
+    <div class="metascomo mt8">
+      <span><i>GASTO ESTIMADO</i><b>${fmtInt(M.gasto)}<em>kcal</em></b></span>
+      <span><i>MENOS EL DÉFICIT</i><b>−${M.deficit}<em>kcal</em></b></span>
+      <span class="on"><i>TU META</i><b>${fmtInt(M.kcal)}<em>kcal</em></b></span>
+    </div>
+    <div class="small dim mt8" style="line-height:1.55">Con tus <b>${fmt1(M.pesoBase)} kg</b> de esta semana. Lo que se fijó es el <b>déficit</b>, no las calorías: conforme bajes de peso, el gasto baja unas ${KCAL_POR_KG} kcal por kilo y la meta baja con él, así que el déficit se mantiene en ${M.deficit} en vez de encogerse solo.</div>
+  </div>`;
+}
 function fijoDelDiaHTML(uid){
   const M=metasDe(uid); if(!M.fijo) return '';
   return `<div class="fijocard mb12">
@@ -14538,6 +14593,7 @@ function gestPlanHTML(){
      calendario, no de lectura */
   const ORDEN=['L','M','X','J','V','S','D'];
   return `<section class="mod" id="gestplan">
+    ${metasComoHTML(UID)}
     ${fijoDelDiaHTML(UID)}
     <div class="flex wrapf mb12" style="gap:6px">
       <button class="chip ${view==='semana'?'fill':''}" data-a="gestVista" data-v="semana">${ic('vsemana',13)} Semana</button>

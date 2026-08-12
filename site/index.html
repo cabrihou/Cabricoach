@@ -1078,6 +1078,8 @@ img{-webkit-user-drag:none;user-select:none}
   text-transform:uppercase;color:var(--smoke)}
 .fzaislam b{display:block;font:700 12.5px var(--ui);margin-top:2px}
 .fzaislam u{display:block;font:600 10px var(--num);text-decoration:none;color:var(--smoke);margin-top:1px}
+.hlc + .hlc{margin-top:12px}
+.hlc + section.mod, section.mod + .hlc{margin-top:14px}
 .fzaglob{cursor:pointer;position:relative;overflow:hidden;padding:14px;border-radius:18px;margin-bottom:12px;
   border:1px solid color-mix(in srgb, var(--nc) 30%, var(--line2));
   background:linear-gradient(150deg, color-mix(in srgb, var(--nc) 14%, transparent) 0%, transparent 58%), var(--paper2)}
@@ -1086,6 +1088,15 @@ img{-webkit-user-drag:none;user-select:none}
 .fzaejeb.grande{height:9px;border-radius:6px}
 .fzaejeb em{display:block;height:100%;border-radius:6px;background:var(--nc);
   transition:width .45s cubic-bezier(.32,.72,0,1)}
+.prgancho{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;cursor:pointer;
+  border-radius:14px;color:var(--ink);text-align:left;
+  border:1px solid rgba(var(--acc-rgb),.3);
+  background:linear-gradient(150deg, rgba(var(--acc-rgb),.13) 0%, transparent 58%), var(--card)}
+.prgancho b{display:block;font:700 13px var(--ui)}
+.prgancho i{display:block;font:500 10.5px var(--ui);font-style:normal;color:var(--smoke);margin-top:2px}
+.prganchoic{flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;
+  border-radius:10px;color:rgb(var(--acc-rgb));background:rgba(var(--acc-rgb),.14);
+  border:1px solid rgba(var(--acc-rgb),.28)}
 .prplan{padding:13px;border-radius:16px;border:1px solid rgba(var(--acc-rgb),.28);
   background:linear-gradient(150deg, rgba(var(--acc-rgb),.12) 0%, transparent 58%), var(--card)}
 .prplan .crucen{display:flex;align-items:center;gap:7px}
@@ -1884,7 +1895,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 186';
+const APPREV='REV 187';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3858,7 +3869,7 @@ function exPesoReal(id, w, fecha){
    marcar si un peso es por lado. Se excluyeron a proposito flexiones, remo invertido y
    muscle up: se registran sin kilos y el ratio no se podria calcular.
    Se llega a ellos por PATRON de movimiento, asi cubren tambien los importados. */
-const FZA_STD2={"press_inclinado":{"n":"Press inclinado","a":[0.55,0.9,1.25,1.65],"c":[0.25,0.55,0.8,1.1]},"press_banca_db":{"n":"Press banca con mancuerna","a":[0.4,1.0,1.4,1.85],"c":[0.2,0.6,0.95,1.35]},"press_militar_db":{"n":"Press de hombro con mancuerna","a":[0.5,0.8,1.1,1.4],"c":[0.3,0.5,0.7,0.9],"f":"sl"},"elevacion_lateral":{"n":"Elevación lateral","a":[0.12,0.4,0.6,0.85],"c":[0.1,0.28,0.42,0.6]},"pajaro_posterior":{"n":"Pájaro posterior","a":[0.05,0.45,0.7,0.95],"c":[0.08,0.3,0.5,0.7]},"remo_mancuerna":{"n":"Remo con mancuerna","a":[0.35,1.0,1.4,1.8],"c":[0.25,0.65,0.9,1.25]},"remo_polea":{"n":"Remo sentado en polea","a":[0.4,1.05,1.5,1.95],"c":[0.3,0.75,1.0,1.35]},"encogimiento":{"n":"Encogimiento","a":[0.65,1.6,2.25,3.0],"c":[0.25,1.0,1.6,2.25]},"curl_martillo":{"n":"Curl martillo","a":[0.18,0.58,0.88,1.28],"c":[0.12,0.4,0.62,0.9]},"triceps_polea":{"n":"Tríceps en polea","a":[0.4,0.7,1.05,1.45],"c":[0.3,0.48,0.72,1.0]},"press_frances":{"n":"Press francés","a":[0.35,0.6,0.9,1.25],"c":[0.15,0.3,0.5,0.75],"f":"sl"},"sentadilla_frontal":{"n":"Sentadilla frontal","a":[0.75,1.3,1.65,2.0],"c":[0.5,0.9,1.2,1.5]},"hack":{"n":"Hack squat","a":[1.25,2.0,2.75,3.75],"c":[0.75,1.5,2.25,3.0],"f":"sl"},"ext_cuadriceps":{"n":"Extensión de cuádriceps","a":[0.5,1.2,1.7,2.3],"c":[0.35,0.9,1.28,1.7]},"curl_femoral":{"n":"Curl femoral","a":[0.4,1.0,1.43,1.9],"c":[0.3,0.73,1.05,1.47]},"rdl":{"n":"Peso muerto rumano","a":[0.95,1.52,1.97,2.4],"c":[0.65,1.04,1.42,1.85]},"zancada":{"n":"Zancada","a":[0.28,0.6,0.88,1.2],"c":[0.18,0.4,0.6,0.8]},"bulgara":{"n":"Sentadilla búlgara","a":[0.5,0.81,1.25,1.65],"c":[0.32,0.55,0.85,1.15]},"gemelo":{"n":"Gemelo de pie","a":[0.4,0.75,1.2,1.65],"c":[0.25,0.5,0.8,1.1]},"abductor":{"n":"Abductor en máquina","a":[0.7,1.3,1.92,2.5],"c":[0.6,1.15,1.7,2.25]},"aductor":{"n":"Aductor en máquina","a":[0.75,1.39,2.07,2.75],"c":[0.65,1.1,1.65,2.3]},"dominada_lastrada":{"n":"Dominada lastrada","a":[1.17,1.41,1.67,1.95],"c":[0.92,1.14,1.38,1.65],"f":"est"},"fondos":{"n":"Fondos lastrados","a":[1.31,1.64,2.01,2.41],"c":[0.98,1.28,1.63,2.0],"f":"est"},"peso_muerto_sumo":{"n":"Peso muerto sumo","a":[1.25,1.8,2.55,3.05],"c":[0.75,1.2,1.7,2.2]},"trap_bar":{"n":"Peso muerto trap bar","a":[1.3,1.85,2.6,3.15],"c":[0.8,1.25,1.75,2.25]},"face_pull":{"n":"Face pull","a":[0.1,0.2,0.31,0.45],"c":[0.06,0.12,0.2,0.3]},"dominada_anillas":{"n":"Dominada en anillas","a":[1.17,1.41,1.67,1.95],"c":[0.92,1.14,1.38,1.65],"f":"ext"},"fondos_anillas":{"n":"Fondos en anillas","a":[1.31,1.64,2.01,2.41],"c":[0.98,1.28,1.63,2.0],"f":"ext"}};
+const FZA_STD2={"press_inclinado":{"n":"Press inclinado","a":[0.55,0.9,1.25,1.65],"c":[0.25,0.55,0.8,1.1]},"press_banca_db":{"n":"Press banca con mancuerna","a":[0.4,1.0,1.4,1.85],"c":[0.2,0.6,0.95,1.35]},"press_militar_db":{"n":"Press de hombro con mancuerna","a":[0.5,0.8,1.1,1.4],"c":[0.3,0.5,0.7,0.9],"f":"sl"},"elevacion_lateral":{"n":"Elevación lateral","a":[0.12,0.4,0.6,0.85],"c":[0.1,0.28,0.42,0.6]},"pajaro_posterior":{"n":"Pájaro posterior","a":[0.05,0.45,0.7,0.95],"c":[0.08,0.3,0.5,0.7]},"remo_mancuerna":{"n":"Remo con mancuerna","a":[0.35,1.0,1.4,1.8],"c":[0.25,0.65,0.9,1.25]},"remo_polea":{"n":"Remo sentado en polea","a":[0.4,1.05,1.5,1.95],"c":[0.3,0.75,1.0,1.35]},"encogimiento":{"n":"Encogimiento","a":[0.65,1.6,2.25,3.0],"c":[0.25,1.0,1.6,2.25]},"curl_martillo":{"n":"Curl martillo","a":[0.18,0.58,0.88,1.28],"c":[0.12,0.4,0.62,0.9]},"triceps_polea":{"n":"Tríceps en polea","a":[0.4,0.7,1.05,1.45],"c":[0.3,0.48,0.72,1.0]},"press_frances":{"n":"Press francés","a":[0.35,0.6,0.9,1.25],"c":[0.15,0.3,0.5,0.75],"f":"sl"},"sentadilla_frontal":{"n":"Sentadilla frontal","a":[0.75,1.3,1.65,2.0],"c":[0.5,0.9,1.2,1.5]},"hack":{"n":"Hack squat","a":[1.28,1.87,2.58,3.36],"c":[0.77,1.4,2.11,2.69],"f":"sl","ver":"2026-08-11"},"ext_cuadriceps":{"n":"Extensión de cuádriceps","a":[0.5,1.2,1.7,2.3],"c":[0.35,0.9,1.28,1.7]},"curl_femoral":{"n":"Curl femoral","a":[0.4,1.0,1.43,1.9],"c":[0.3,0.73,1.05,1.47]},"rdl":{"n":"Peso muerto rumano","a":[0.95,1.52,1.97,2.4],"c":[0.65,1.04,1.42,1.85]},"zancada":{"n":"Zancada","a":[0.28,0.6,0.88,1.2],"c":[0.18,0.4,0.6,0.8]},"bulgara":{"n":"Sentadilla búlgara","a":[0.5,0.81,1.25,1.65],"c":[0.32,0.55,0.85,1.15]},"gemelo":{"n":"Gemelo de pie","a":[0.4,0.75,1.2,1.65],"c":[0.25,0.5,0.8,1.1]},"abductor":{"n":"Abductor en máquina","a":[0.7,1.3,1.92,2.5],"c":[0.6,1.15,1.7,2.25]},"aductor":{"n":"Aductor en máquina","a":[0.75,1.39,2.07,2.75],"c":[0.65,1.1,1.65,2.3]},"dominada_lastrada":{"n":"Dominada lastrada","a":[1.17,1.41,1.67,1.95],"c":[0.92,1.14,1.38,1.65],"f":"est"},"fondos":{"n":"Fondos lastrados","a":[1.31,1.64,2.01,2.41],"c":[0.98,1.28,1.63,2.0],"f":"est"},"peso_muerto_sumo":{"n":"Peso muerto sumo","a":[1.25,1.8,2.55,3.05],"c":[0.75,1.2,1.7,2.2]},"trap_bar":{"n":"Peso muerto trap bar","a":[1.3,1.85,2.6,3.15],"c":[0.8,1.25,1.75,2.25]},"face_pull":{"n":"Face pull","a":[0.1,0.2,0.31,0.45],"c":[0.06,0.12,0.2,0.3]},"dominada_anillas":{"n":"Dominada en anillas","a":[1.17,1.41,1.67,1.95],"c":[0.92,1.14,1.38,1.65],"f":"ext"},"fondos_anillas":{"n":"Fondos en anillas","a":[1.31,1.64,2.01,2.41],"c":[0.98,1.28,1.63,2.0],"f":"ext"}};
 const FZA_PAT2={"press_inclinado":"press_inclinado","press_vertical":"press_militar_db","elevacion_lateral":"elevacion_lateral","pajaro_posterior":"pajaro_posterior","remo_unilateral":"remo_mancuerna","remo_horizontal":"remo_polea","encogimiento_trapecio":"encogimiento","curl_martillo":"curl_martillo","extension_triceps":"triceps_polea","extension_cuadriceps":"ext_cuadriceps","curl_femoral":"curl_femoral","peso_muerto_rumano":"rdl","zancada":"zancada","gemelo_de_pie":"gemelo","gemelo_sentado":"gemelo","abduccion_cadera":"abductor","aduccion_cadera":"aductor","apertura_pecho":"press_banca_db","press_horizontal":"press_banca_db","extension_lumbar":"rdl"};
 /* nivel de un ejercicio que no esta entre los basicos, si tenemos baremo de su patron */
 /* algunos ejercicios comparten patron pero tienen tabla propia y muy distinta: el face
@@ -3950,6 +3961,33 @@ function fzaPRPlan(x, pc){
   return {single, doble, triple, estira, prox, rampa, nivelSig:FZA_NIVELES[Math.min(4,x.nivel+1)],
     porLado: !!(x.ex&&exPorLado(x.ex))};
 }
+/* En la escalera solo va el gancho: dos cifras y un boton. El plan completo, con la rampa
+   y las notas, vive en una isla flotante. Un parrafo largo dentro de una tarjeta que ya es
+   larga no se lee. */
+function fzaPRGancho(x, pc){
+  const P=fzaPRPlan(x, pc); if(!P) return '';
+  return `<button class="prgancho mt8" data-a="fzaPRIsla" data-k="${esc(x.k)}">
+    <span class="prganchoic">${ic('target',15)}</span>
+    <span class="grow tl" style="min-width:0">
+      <b>Sesión de PR</b>
+      <i>intento de ${fmt1(P.single)} kg × 1${P.estira?' · te sube a '+P.nivelSig:''}</i></span>
+    ${ic('chevR',14)}</button>`;
+}
+function fzaPRIslaHTML(){
+  const k=UI.prIsla; if(!k) return '';
+  const pc=fzaPesoCorporal();
+  const x=fzaTabla().find(y=>y.k===k); if(!x) return '';
+  return `<div class="fzaisla" data-a="fzaPRIslaCerrar">
+    <div class="fzaislain" data-a="nada" role="dialog" aria-label="Sesión de PR">
+      <div class="flex between" style="align-items:flex-start;gap:10px;margin-bottom:6px">
+        <div style="min-width:0"><span class="lbl">SESIÓN DE PR</span>
+          <div class="fzaglobn" style="color:rgb(var(--acc-rgb));margin-top:3px">${esc(x.n)}</div></div>
+        <button class="chip" data-a="fzaPRIslaCerrar" aria-label="Cerrar">${ic('x',10)}</button>
+      </div>
+      ${fzaPRHTML(x, pc)}
+    </div>
+  </div>`;
+}
 function fzaPRHTML(x, pc){
   const P=fzaPRPlan(x, pc); if(!P) return '';
   const dl=isDeload();
@@ -3997,18 +4035,30 @@ function fzaEscalera(x, pc){
       ${x.ex?`<div class="mt8 flex between" style="align-items:center;gap:8px">
         <span class="small dim grow">¿Ese peso es por brazo o pierna, o el total?</span>
         <button class="chip ${exPorLado(x.ex)?'fill':''}" data-a="exLado" data-id="${x.ex}">${exPorLado(x.ex)?'Por lado':'Total'}</button></div>`:''}
-    ${fzaPRHTML(x, pc)}
+    ${fzaPRGancho(x, pc)}
       ${(()=>{const todos=fzaCandidatos(x.k).slice(0,14);
         if(todos.length<2) return '';
         return `<div class="mt8" style="padding-top:8px;border-top:1px solid var(--line2)">
         <span class="small dim">¿De cuál quieres que lo saque?</span>
-        <div class="flex wrapf mt4" style="gap:6px">${todos.map(id=>{
+        <div class="inwrap mt4"><input class="in" placeholder="Busca la variante…" value="${esc(UI.fzaQ||'')}" data-ch="fzaq"></div>
+        <div class="flex wrapf mt8" style="gap:6px">${(()=>{
+          const q=(UI.fzaQ||'').trim().toLowerCase();
+          /* sin busqueda solo salen la elegida y las que tienen registros: la pared de
+             catorce botones era imposible de leer */
+          const vis=todos.filter(id=>{
+            if(q) return exVariante(id).toLowerCase().includes(q) || exNombre(id).toLowerCase().includes(q);
+            return !!fzaMejor1RM(id) || id===x.ex || id===x.pedido;
+          });
+          const ocultas=todos.length-vis.length;
+          return vis.map(id=>{
           const m=fzaMejor1RM(id);
           const excl=((S.cfg&&S.cfg.fzaFuera)||[]).includes(id);
           const elegidoAqui = !excl && (x.pedido ? id===x.pedido : id===x.ex);
           return `<button class="chip ${elegidoAqui?'fill':''} ${m&&!excl?'':'dim'} ${excl?'tach':''}" data-a="fzaFuente" data-k="${x.k}" data-id="${id}"
             ${excl?'title="descartado"':(m?'':'title="sin registros todavía"')}>
-            ${esc(exVariante(id))} ${m?`<b>${fmt1(m.rm)}</b>`:'<i class="small">–</i>'}</button>`;}).join('')}</div>
+            ${esc(exVariante(id))} ${m?`<b>${fmt1(m.rm)}</b>`:'<i class="small">–</i>'}</button>`;}).join('')
+          + (ocultas>0&&!q?`<span class="chip dim" style="pointer-events:none">+${ocultas} sin registros, búscalas arriba</span>`:'')
+          + (!vis.length?'<span class="small dim">Ninguna variante coincide.</span>':'');})()}</div>
         <div class="flex wrapf mt8" style="gap:6px">
           ${x.manual?`<button class="chip" data-a="fzaFuente" data-k="${x.k}" data-id="">Volver al automático</button>`:''}
           <button class="chip red" data-a="fzaFuera" data-id="${x.ex}" data-k="${x.k}">${ic('x',9)} No cuentes ${esc(shortEx(exNombre(x.ex)))}</button>
@@ -5121,22 +5171,22 @@ function cargaPop(zona, vista, carga, dias){
    apunta es lastre (en ese caso el peso movido es el corporal del dia mas el lastre).
    Los ids alternativos cubren el mismo ejercicio segun de donde venga el registro: de las
    rutinas propias o importado de Strong. */
+/* Los de anillas salieron de espalda, pecho y triceps: comparten patron con la version en
+   barra y aparecian dos veces en la misma lista, con un baremo extrapolado que confundia mas
+   de lo que aportaba. Siguen registrandose y siguen contando en la carga muscular. */
 const FZA_GRUPOS={
   espalda:{n:'Espalda', zonas:['pecho'], vistas:['espalda'], ej:[
     {n:'Remo con barra',      ids:['row','row_bent_bb','row_pendlay','row_under_bb'], tabla:'row'},
     {n:'Jalón al pecho',      ids:['latcl','latop','latpull_cbl','latpull_mach','latpull_wide','latpull_close','c_jalon'], tabla:'pulldown'},
     {n:'Dominada',            ids:['pullup','pullup2','pullup_bw','pullup_wide','chinup','pullup_kip'], tabla:'dominada_lastrada', corp:true},
-    {n:'Dominada en anillas', ids:['ring_pullup'], tabla:'dominada_anillas', corp:true, anillas:true},
   ]},
   pecho:{n:'Pecho', zonas:['pecho'], vistas:['frente','lado'], ej:[
     {n:'Press banca',       ids:['bench','bench_bb','bench_smith','c_bench','c_chest','cpress_conv'], tabla:'bench'},
     {n:'Fondos lastrados',  ids:['dip','chest_dip','tricep_dip'], tabla:'fondos', corp:true},
-    {n:'Fondos en anillas', ids:['ring_dip'], tabla:'fondos_anillas', corp:true, anillas:true},
   ]},
   triceps:{n:'Tríceps', zonas:['brazo-der','brazo-izq'], ej:[
     {n:'Skullcrusher',      ids:['skull','skull_bb','skull_db','tricep_ext_bb'], tabla:'press_frances'},
     {n:'Fondos lastrados',  ids:['dip','chest_dip','tricep_dip'], tabla:'fondos', corp:true},
-    {n:'Fondos en anillas', ids:['ring_dip'], tabla:'fondos_anillas', corp:true, anillas:true},
   ]},
   biceps:{n:'Bíceps', zonas:['brazo-der','brazo-izq'], ej:[
     {n:'Curl con barra',     ids:['curl_bb','curl'], tabla:'curl'},
@@ -5618,11 +5668,9 @@ function fzaEjHTML(e, pc, COL, gk, destacado){
     if(otra && Math.abs(otra.rm-e.rm)>0.5)
       caps.push({t:(fzaBaseModo()==='recio'?'tope ':'hoy ')+fmt1(Math.round(otra.rm*10)/10)+' kg', c:'gris'});
   }
-  /* el eje absoluto solo se dice cuando NO coincide con el relativo: ahi es donde informa */
-  if(!e.sin && e.cal && e.sc){
-    const nAbs=Math.min(4,Math.floor(e.sc.abs));
-    if(nAbs!==e.nivel) caps.push({t:'en kilos: '+fzaUnoDeCada(e.sc.pAbs), c:'azul'});
-  }
+  /* el eje absoluto va SIEMPRE: saber cuanta gente mueve ese peso vale igual coincida o no
+     con el nivel relativo, y que aparezca en unos si y en otros no se leia como un error */
+  if(!e.sin && e.cal && e.sc) caps.push({t:'en kilos: '+fzaUnoDeCada(e.sc.pAbs), c:'azul'});
   return `<div class="fzaej ${ab?'open':''} ${e.sin?'sin':''}">
     <button class="fzaejh" data-a="fzaEjTgl" data-k="${esc(key)}" aria-expanded="${ab?'true':'false'}"
       style="--nc:${col}">
@@ -5706,6 +5754,8 @@ function vFuerzaCuerpo(){
   <section class="mod">
     <div class="mod-head hero"><span class="ttl"><span class="heroic">${ic('trend',18)}</span>Fuerza por zona</span><span class="chip dim">vs ${fmt1(Math.round(pc*10)/10)} kg</span></div>
     <p class="small dim" style="margin:0 0 4px;line-height:1.5">El cuerpo pintado por el nivel que tienes en cada parte. Toca una zona para ver sus ejercicios y elegir con cuál se calcula.</p>
+    ${fzaBaseSelHTML()}
+    <div class="small dim tc" style="margin:6px 0 2px;line-height:1.45">De aquí sale el número de <b>todo</b> lo que ves abajo.</div>
     <div class="medwrap">${medMapa(sel, {calor:fzaPorMusculo(vista), paths:MED_MUSC2[vista], cotas:false, zoom:!!sel})}
       ${zs?`<div class="zpop i" style="right:2.5%; bottom:4%">
         <button class="zpx" data-a="medZona" data-z="" aria-label="Ver el cuerpo entero">${ic('x',10)}</button>
@@ -5733,8 +5783,8 @@ function vFuerzaCuerpo(){
         ||'<div class="small dim tc">Registra alguno de los básicos y aquí verás tu nivel por grupo.</div>'}
     </div>`}
   </section>
-  ${fzaAsimetria()}
-  ${fzaCard()}`;
+  ${fzaCard()}
+  ${fzaAsimetria()}`;
 }
 function vCarga(){
   const dias=UI.cargaDias||7;
@@ -8658,7 +8708,16 @@ function slopePerWeek(){
   let num=0, den=0; xs.forEach((x,i)=>{num+=(x-mx)*(ys[i]-my); den+=(x-mx)**2;});
   return den ? num/den*7 : null;
 }
-function e1rm(w,r){ return w*(1+r/30); }
+/* 1RM estimado. Se usa BRZYCKI (w x 36 / (37 - r)), no Epley, porque los baremos de la app
+   salen de Strength Level y esa es la formula con la que ellos estiman: 185 kg x 7 les da
+   222 kg y Brzycki da 222,0 exacto (Epley daria 228,2 y el nivel saldria inflado).
+   Por encima de 10 repeticiones Brzycki se dispara (a 15 reps daria 302 donde Epley da 277),
+   asi que ahi se vuelve a Epley, que es mas conservador. Una estimacion de 1RM con 15 reps
+   no es fiable de todos modos. */
+function e1rm(w,r){
+  if(r<=1) return w;
+  return r<=10 ? w*36/(37-r) : w*(1+r/30);
+}
 
 /* horario movible: cada rutina puede vivir en VARIOS días de la semana */
 /* plan semanal día-céntrico: cada día tiene una rutina, 'mov' (movilidad) o 'rest' (descanso) */
@@ -15799,7 +15858,7 @@ function renderReal(){
      ni el scroll). Al CAMBIAR de vista se reemplaza entero, que es lo correcto:
      empieza de cero arriba. Si el morph falla, cae al reemplazo de siempre. */
   /* la isla del nivel global es una capa flotante: viaja con el HTML de la vista */
-  const htmlNuevo = VIEWS[UI.tab]() + (UI.fzaIsla ? fzaIslaHTML() : '');
+  const htmlNuevo = VIEWS[UI.tab]() + (UI.fzaIsla ? fzaIslaHTML() : '') + (UI.prIsla ? fzaPRIslaHTML() : '');
   const puedeMorph = keep && MORPH_VISTAS.has(UI.tab);
   /* De donde viene este render decide a que anclarse. Si el despachador de clicks
      dejo UI._ancla, viene de un TAP: hay que quedarse donde esta la pantalla, no
@@ -16942,6 +17001,8 @@ const ACTIONS = {
     toast(FZA_BASES[fzaBaseModo()].n+': '+FZA_BASES[fzaBaseModo()].d);
   },
   fzaIsla(){ UI.fzaIsla=true; render(); },
+  fzaPRIsla(d){ UI.prIsla=d.k; render(); },
+  fzaPRIslaCerrar(){ UI.prIsla=null; render(); },
   fzaIslaCerrar(){ UI.fzaIsla=false; render(); },
   secPlegTgl(d, el){ UI.secAb=UI.secAb||{}; UI.secAb[d.s]=!UI.secAb[d.s]; renderAnclado(el); },
   cruceGrupo(d, el){ UI.cruceGrupo = (UI.cruceGrupo||'ojo')===d.s ? '' : d.s; renderAnclado(el); },
@@ -17872,6 +17933,7 @@ const CHANGES = {
   exnote(el){ const t=el.value.trim(); if(t) S.exnotes[el.dataset.ex]=t; else delete S.exnotes[el.dataset.ex]; save('exnotes'); },
   exq(el){ UI.exQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=exq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   excatq(el){ UI.excatQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=excatq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
+  fzaq(el){ UI.fzaQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=fzaq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length, inp.value.length); } },
   pegarin(el){ UI.pegarTxt=el.value; render();
     const inp=document.getElementById('pegarIn');
     if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; try{ inp.setSelectionRange(inp.value.length,inp.value.length); }catch(_){} } },
@@ -18126,7 +18188,7 @@ document.addEventListener('click', e=>{
 /* los buscadores en vivo ya se repintan desde el listener de 'input': si ademas
    atendieran el 'change' que dispara el navegador al destruirse el campo, se repintaria
    dos veces por tecla (ver el guardia de render) */
-const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq','goalq','goalw','goalr','nlogQtyIn','pegarin','rutq','libreq']);
+const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq','goalq','goalw','goalr','nlogQtyIn','pegarin','rutq','libreq','fzaq']);
 /* los dias de la semana son <details>: si no se recuerda cual quedo abierto, cada
    render los cierra, la pagina se encoge de golpe y el scroll cae al inicio (era el
    salto al tocar "ver ingredientes"). 'toggle' no burbujea: se escucha en captura. */
@@ -18183,7 +18245,7 @@ document.addEventListener('input', e=>{
   const el=e.target.closest('[data-ch]'); if(!el) return;
   const ch=el.dataset.ch;
   if(ch==='recq'){ UI.recQ=el.value; }
-  else if((ch==='nlogq'||ch==='exq'||ch==='excatq'||ch==='addexq'||ch==='nlogGrams'||ch==='nlogQtyIn'||ch==='pegarin'||ch==='goalq'||ch==='goalw'||ch==='goalr'||ch==='rutq'||ch==='libreq') && CHANGES[ch]){ CHANGES[ch](el); }  /* la estabilidad la pone el ancla de renderReal; devolver el scroll aqui la peleaba */
+  else if((ch==='nlogq'||ch==='exq'||ch==='excatq'||ch==='addexq'||ch==='nlogGrams'||ch==='nlogQtyIn'||ch==='pegarin'||ch==='goalq'||ch==='goalw'||ch==='goalr'||ch==='rutq'||ch==='libreq'||ch==='fzaq') && CHANGES[ch]){ CHANGES[ch](el); }  /* la estabilidad la pone el ancla de renderReal; devolver el scroll aqui la peleaba */
   /* la calculadora solo escuchaba 'change', que en un campo de texto salta al salir del
      campo: el numero se quedaba congelado mientras se escribia. Ahora recalcula por tecla. */
   else if(ch==='pcal' && CHANGES.pcal){ CHANGES.pcal(el); }

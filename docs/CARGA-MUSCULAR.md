@@ -358,3 +358,26 @@ redondea a la placa de 2,5 kg, porque un número que no se puede cargar no sirve
 
 Vive dentro de la escalera de cada ejercicio, debajo de "De dónde sale tu número", así que
 cambia solo cuando cambia la lectura que manda.
+
+## La fórmula del 1RM: Brzycki, no Epley (REV 187)
+
+Andy comparó el hack squat de la app contra Strength Level y no cuadraba. Dos errores, los dos
+reales:
+
+**1. La fórmula.** La app usaba Epley (`w × (1 + r/30)`). Strength Level usa **Brzycki**
+(`w × 36 / (37 − r)`). Con 185 kg × 7: Epley da 228,2 y Brzycki da 222,0, que es exactamente lo
+que muestra Strength Level. Como los baremos de la app **salen de ahí**, estimar con otra
+fórmula inflaba todos los niveles un 2,7% a 7 repeticiones.
+
+Brzycki se dispara por encima de 10 repeticiones (a 15 reps daría 302 donde Epley da 277), así
+que `e1rm` usa Brzycki hasta 10 y vuelve a Epley por encima, que es el más conservador. Con una
+serie de 15 la estimación no es fiable de todos modos.
+
+**2. La tabla del hack squat.** Estaba en `[1.25, 2.00, 2.75, 3.75]`. Los valores reales de
+Strength Level a 90 kg son 115 / 168 / 232 / 302, o sea `[1.28, 1.87, 2.58, 3.36]`. La app era
+más dura de Intermedio hacia arriba. Corregida y marcada con `ver:'2026-08-11'`.
+
+**Pendiente y hay que decirlo**: solo se verificó el hack squat, que es del que hay captura. El
+resto de tablas siguen como estaban. La corrección de fórmula sí aplica a todas, así que todos
+los 1RM estimados bajaron un poco. Para validar otra tabla hace falta la captura de Strength
+Level de ese ejercicio al peso de quien la use.

@@ -394,3 +394,20 @@ exactos a esos pesos y una aproximación fuera de ahí. Lo que estaba a ojo se n
 La de dominada lastrada en mujer era la más torcida: pedía casi el doble de lastre del real.
 En los lastrados el estándar de la fuente es **el lastre**, no el total, así que se convierte a
 `(peso corporal + lastre) / peso corporal`, que es lo que usa la app.
+
+
+### Las tablas de mancuerna estaban a la mitad
+
+Strength Level publica los estándares de mancuerna **por mancuerna**, no el total ("dumbbell
+weights are for one dumbbell"). La app compara contra el **total** (`exPesoReal` duplica cuando
+el ejercicio está marcado por lado), así que hay que multiplicar por dos. No se estaba haciendo:
+
+| Ejercicio | Teníamos (Novato, hombre) | Real |
+|---|---|---|
+| Press banca con mancuerna | 0,40× (36 kg total) | **0,71×** (64 kg total, 32 por mancuerna) |
+| Remo con mancuerna | 0,35× (31 kg) | **0,76×** (68 kg, 34 por mancuerna) |
+| Press de hombro con mancuerna | 0,50× | **0,56×** |
+
+Con la tabla vieja, alguien con 18 kg por mancuerna en press de banca ya salía Novato cuando el
+umbral real son 32. Verificadas también: press inclinado, remo en polea, sentadilla frontal y
+peso muerto rumano. Quedan 18 tablas sin contrastar, todas de aislados.

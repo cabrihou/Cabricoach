@@ -1071,6 +1071,24 @@ img{-webkit-user-drag:none;user-select:none}
   background:var(--paper2);border:1px solid var(--line);border-bottom:0;
   box-shadow:0 -12px 40px rgba(0,0,0,.5);animation:islaUp .28s cubic-bezier(.32,.72,0,1)}
 @keyframes islaUp{from{transform:translateY(40px)}to{transform:none}}
+.infgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.infdato{padding:10px 11px;border-radius:13px;border:1px solid var(--line2);background:var(--card)}
+.infdato i{display:block;font:600 8.5px var(--ui);font-style:normal;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--smoke)}
+.infdato b{display:block;font:800 19px/1 var(--num);color:var(--ink);margin-top:4px}
+.infdato u{display:block;font:600 9.5px var(--num);text-decoration:none;color:var(--smoke);margin-top:3px}
+.infgraf{display:flex;align-items:flex-end;gap:3px;height:74px;padding:6px 0}
+.infgraf i{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(180deg, rgb(var(--accHi-rgb)), rgba(var(--acc-rgb),.35))}
+.infmusc{display:flex;flex-direction:column;gap:6px}
+.infm{display:flex;align-items:center;gap:8px;font:500 11.5px var(--ui);color:var(--ink2)}
+.infm span{flex:none;width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.infm i{flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
+.infm i em{display:block;height:100%;border-radius:4px;background:rgb(var(--acc-rgb))}
+.infm b{flex:none;width:34px;text-align:right;font:700 11px var(--num);color:var(--smoke)}
+.infses{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:11px;
+  background:rgba(255,255,255,.03);border:1px solid var(--line2);margin-bottom:5px}
+.infses b{font:700 11.5px var(--ui);color:var(--ink2)}
+.infses span{font:600 11.5px var(--num);color:var(--ink);text-align:right}
 .fzaislar{padding:11px 12px;border-radius:14px;margin-bottom:7px;
   border:1px solid color-mix(in srgb, var(--nc) 26%, var(--line2));
   background:linear-gradient(150deg, color-mix(in srgb, var(--nc) 11%, transparent) 0%, transparent 58%), var(--card)}
@@ -1912,7 +1930,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 192';
+const APPREV='REV 193';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -4041,6 +4059,128 @@ function fzaPRHTML(x, pc){
     <div class="small dim mt4" style="line-height:1.55">Si el intento sale con dos repeticiones de sobra, sube 2,5 a 5 kg y repite. Si se te pega en la mitad, para ahí: un fallo no suma nada y te cuesta el resto de la semana.</div>
   </div>`;
 }
+/* ============ INFORME DE UN EJERCICIO ============
+   Todo lo que la app sabe de un ejercicio en una sola hoja: que hacer la proxima sesion,
+   los records, la serie de 1RM en el tiempo, cuanto volumen le has metido, cada cuanto lo
+   haces, que musculos mueve y en que nivel estas. Estaba repartido en cuatro pantallas. */
+function exInforme(id){
+  const hist=(S.logs[id]||[]).filter(h=>!h.alt);
+  const ex=EXMAP[id]||{id, name:exNombre(id), sets:3, reps:[8,12], inc:2.5};
+  const L=fzaLecturas(id);
+  let hw=0,hwd='',b1=0,b1d='',bvol=0,bvold='',breps=0,brepsd='';
+  let ton=0, series=0;
+  hist.forEach(h=>{ let sv=0;
+    h.sets.forEach(s=>{ const w=+s.w||0, r=+s.r||0; if(!(w>0&&r>0)) return;
+      series++; ton+=w*r; sv+=w*r;
+      if(w>hw){ hw=w; hwd=h.d; }
+      const e=e1rm(w,r); if(e>b1){ b1=e; b1d=h.d; }
+      if(r>breps){ breps=r; brepsd=h.d; }
+    });
+    if(sv>bvol){ bvol=sv; bvold=h.d; }
+  });
+  const dias=hist.length?Math.round((fromISO(TODAY())-fromISO(hist[hist.length-1].d))/864e5):null;
+  /* cada cuanto: promedio de dias entre sesiones de las ultimas ocho */
+  const ult=hist.slice(-8);
+  let cada=null;
+  if(ult.length>1){ let s=0; for(let i=1;i<ult.length;i++) s+=(fromISO(ult[i].d)-fromISO(ult[i-1].d))/864e5;
+    cada=Math.round(s/(ult.length-1)); }
+  const pat=ejPatron(id, exNombre(id));
+  const musc=pat?Object.entries(EJ_PATRONES[pat]||{}).sort((a,b)=>b[1]-a[1]):[];
+  const rm=goalHistRM(id)||[];
+  return {id, ex, hist, L, hw, hwd, b1, b1d, bvol, bvold, breps, brepsd,
+    ton:Math.round(ton), series, sesiones:hist.length, dias, cada, musc, rm,
+    porLado:exPorLado(id), tara:exTara(id), corp:exPesoCorporal(id)};
+}
+function exInformeHTML(){
+  const id=UI.exInf; if(!id) return '';
+  const I=exInforme(id);
+  const sug=(typeof suggestion==='function') ? suggestion(I.ex) : null;
+  const foto=(()=>{ const x=excatById(id); return x&&x.img?'assets/ej/'+x.img:null; })();
+  /* mini grafica del 1RM: barras proporcionales, sin libreria */
+  const serie=I.rm.slice(-14);
+  const mx=serie.length?Math.max(...serie.map(p=>p.v)):1;
+  const mn=serie.length?Math.min(...serie.map(p=>p.v)):0;
+  const graf=serie.length<2?'' : `<div class="infgraf">${serie.map(p=>{
+      const h=mx>mn?clamp((p.v-mn)/(mx-mn)*100,8,100):60;
+      return `<i style="height:${h}%" title="${fmtD(p.d)}: ${fmt1(p.v)} kg"></i>`;}).join('')}</div>
+    <div class="flex between"><span class="small dim">${fmtD(serie[0].d)}</span>
+      <span class="small dim">${fmt1(mn)} a ${fmt1(mx)} kg de 1RM</span>
+      <span class="small dim">${fmtD(serie[serie.length-1].d)}</span></div>`;
+  const dato=(lbl,val,sub)=>`<div class="infdato"><i>${lbl}</i><b>${val}</b>${sub?`<u>${sub}</u>`:''}</div>`;
+  return `<div class="fzaisla" data-a="exInfCerrar">
+    <div class="fzaislain" data-a="nada" role="dialog" aria-label="Informe de ${esc(exNombre(id))}">
+      <div class="flex between" style="align-items:flex-start;gap:10px;margin-bottom:10px">
+        <div class="flex" style="gap:11px;min-width:0">
+          ${foto?`<img loading="lazy" class="fzaejimg" src="${foto}" alt="" decoding="async">`:''}
+          <div style="min-width:0"><span class="lbl">INFORME</span>
+            <div class="fzaglobn" style="color:var(--ink);margin-top:2px">${esc(exNombre(id))}</div>
+            <div class="fzacaps mt4">
+              ${I.porLado?'<i class="fzacap oro">por lado</i>':''}
+              ${I.tara?`<i class="fzacap gris">carro ${fmt1(I.tara)} kg</i>`:''}
+              ${I.corp?'<i class="fzacap azul">cuerpo + lastre</i>':''}
+              ${I.dias!=null?`<i class="fzacap gris">hace ${I.dias} d</i>`:''}
+            </div>
+          </div>
+        </div>
+        <button class="chip" data-a="exInfCerrar" aria-label="Cerrar">${ic('x',10)}</button>
+      </div>
+      ${!I.sesiones?`<div class="small dim">Todavía no tienes series de este ejercicio. En cuanto registres una, aquí sale todo.</div>`:`
+      ${(()=>{ const ul=I.hist[I.hist.length-1]; if(!ul||!ul.sets.length) return '';
+        const top=Math.max(...ul.sets.map(s=>+s.w||0));
+        const repMax=Math.max(...ul.sets.map(s=>+s.r||0));
+        const rango=I.ex.reps||[8,12], inc=I.ex.inc||2.5;
+        /* suggestion solo opina en tres casos concretos y devuelve null en el resto. El
+           informe siempre tiene que decir algo, asi que si no opina se aplica la regla
+           llana: repetir el peso y ganar repeticiones hasta el tope del rango, y ahi subir. */
+        const alTope = ul.sets.length>=(I.ex.sets||ul.sets.length) && ul.sets.every(s=>(+s.r||0)>=rango[1]);
+        const sube = !!(sug&&sug.apply) || alTope;
+        const obj = (sug&&sug.apply) || (alTope ? top+inc : top);
+        const repObj = sube ? rango[0] : rango[1];
+        const TAG={up:'toca subir', down:'ojo'};
+        const tag = sug&&TAG[sug.type] ? TAG[sug.type] : (sube?'toca subir':'suma reps');
+        return `<div class="prplan mb12">
+          <div class="flex between" style="align-items:center;gap:8px">
+            <b class="crucen">${ic('target',14)} La próxima sesión</b>
+            <span class="crucetag">${esc(tag)}</span></div>
+          <div class="printentos mt8">
+            <div class="printento on"><i>OBJETIVO</i><b>${fmt1(obj)}<em>kg × ${repObj}</em></b></div>
+            <div class="printento"><i>LA ÚLTIMA VEZ</i><b>${fmt1(top)}<em>kg × ${repMax}</em></b></div>
+          </div>
+          <div class="small dim mt8" style="line-height:1.55">${sug&&sug.text?esc(sug.text)+'. ':''}${sube
+            ? 'Son '+(I.ex.sets||3)+' series en el rango de '+rango[0]+' a '+rango[1]+' repeticiones.'
+            : 'Mantén los '+fmt1(top)+' kg y suma repeticiones hasta llegar a '+rango[1]+' en todas las series; ahí sube a '+fmt1(top+inc)+' kg.'}</div>
+        </div>`;})()}
+      <div class="lbl" style="display:block">RÉCORDS</div>
+      <div class="infgrid mt4 mb12">
+        ${dato('Más peso', fmt1(I.hw)+' kg', fmtD(I.hwd))}
+        ${dato('Mejor 1RM', fmt1(I.b1)+' kg', fmtD(I.b1d))}
+        ${dato('Más reps', I.breps, fmtD(I.brepsd))}
+        ${dato('Mejor sesión', fmtInt(I.bvol)+' kg', fmtD(I.bvold))}
+      </div>
+      ${graf?`<div class="lbl" style="display:block">1RM ESTIMADO, ÚLTIMAS ${serie.length} SESIONES</div><div class="mt4 mb12">${graf}</div>`:''}
+      <div class="lbl" style="display:block">EN TOTAL</div>
+      <div class="infgrid mt4 mb12">
+        ${dato('Sesiones', I.sesiones, I.cada!=null?'cada '+I.cada+' días':'')}
+        ${dato('Series', I.series, '')}
+        ${dato('Tonelaje', fmtInt(I.ton)+' kg', 'levantados en total')}
+        ${dato('Última', I.dias===0?'hoy':'hace '+I.dias+' d', fmtD(I.hist[I.hist.length-1].d))}
+      </div>
+      ${I.musc.length?`<div class="lbl" style="display:block">QUÉ MUEVE</div>
+        <div class="infmusc mt4 mb12">${I.musc.map(([m,pc])=>`
+          <div class="infm"><span>${esc(MUSC_NOM[m]||m)}</span>
+            <i><em style="width:${clamp(pc,4,100)}%"></em></i><b>${pc}%</b></div>`).join('')}</div>`:''}
+      ${(I.L.max&&I.L.recio)?`<div class="lbl" style="display:block">LAS TRES LECTURAS</div>
+        <div class="fzadosw mt4 mb12">${Object.keys(FZA_BASES).filter(k=>I.L[k]).map(k=>`
+          <div class="fzados ${k===fzaBaseModo()?'on':''}"><i>${FZA_BASES[k].n}</i>
+            <b>${fmt1(Math.round(I.L[k].rm*10)/10)}<em>kg</em></b>
+            <u>${fmt1(I.L[k].w)} × ${I.L[k].r} · ${fmtD(I.L[k].d)}</u></div>`).join('')}</div>`:''}
+      <div class="lbl" style="display:block">SESIÓN POR SESIÓN</div>
+      <div class="mt4">${I.hist.slice(-12).reverse().map(h=>`
+        <div class="infses"><b>${fmtD(h.d)}</b><span>${h.sets.map(s=>fmt1(s.w)+'×'+s.r).join('  ')}</span></div>`).join('')}</div>
+      ${I.sesiones>12?`<div class="small dim mt4">Se muestran las últimas 12 de ${I.sesiones}.</div>`:''}`}
+    </div>
+  </div>`;
+}
 function fzaEscalera(x, pc){
   const u=(x.tabla&&x.tabla.u)||fzaTablaDe(x.k).u;
   const col=n=>['#8B97A1','#8FA0FF','#58DFA3','var(--gold)','#FF7AB6'][n]||'var(--ink2)';
@@ -4074,6 +4214,7 @@ function fzaEscalera(x, pc){
             `<button class="chip xs ${exTara(x.ex)===v?'fill':''}" data-a="exTara" data-id="${x.ex}" data-v="${v}">${v===0?'nada':v}</button>`).join('')}</span></div>`:''}
       </div>`:''}
     ${fzaPRGancho(x, pc)}
+    ${x.ex?`<button class="chip mt8" data-a="exInf" data-id="${x.ex}">${ic('clip',11)} Informe completo de ${esc(shortEx(exNombre(x.ex)))}</button>`:''}
       ${(()=>{const todos=fzaCandidatos(x.k).slice(0,14);
         if(todos.length<2) return '';
         return `<div class="mt8" style="padding-top:8px;border-top:1px solid var(--line2)">
@@ -12843,6 +12984,7 @@ function exRow(e,idx,N,done){
       <button class="chip ${exPorLado(e.id)?'fill':''}" data-a="exLado" data-id="${e.id}"
         aria-pressed="${exPorLado(e.id)?'true':'false'}">${ic('eqMancuerna',12)} ${exPorLado(e.id)?'Por lado':'Total'}</button>
       ${exEsMaquina(e.id)?`<button class="chip ${UI.taraOpen?'fill':''}" data-a="exOptPick" data-ex="${e.id}" data-o="tara">${ic('eqMaquina',12)} Carro ${exTara(e.id)?fmt1(exTara(e.id))+' kg':'sin poner'}</button>`:''}
+      <button class="chip" data-a="exInf" data-id="${e.id}">${ic('clip',12)} Informe</button>
     </div>`:''}
     ${open?setTable(e)+exExtras(e):''}
   </div>`;
@@ -15316,7 +15458,8 @@ function vEjercicios(){
   const prRow=(icn,lb,val,unit,d)=>`<div class="prrow"><span class="prl">${ic(icn,15)} ${lb}</span><span class="prv">${val?`${val}<small> ${unit}</small>${d?`<i>${fmtD(d)}</i>`:''}`:'·'}</span></div>`;
   return `
   <section class="mod">
-    <div class="mod-head"><span class="ttl">${ic('trend',16)} Progreso por ejercicio</span><span class="cross">+</span></div>
+    <div class="mod-head"><span class="ttl">${ic('trend',16)} Progreso por ejercicio</span>
+      <button class="chip" data-a="exInf" data-id="${ex.id}">${ic('clip',11)} Informe</button></div>
     <div class="inwrap mb8">${ic('search',16)}<input class="in has-ic" placeholder="¿Qué vas a entrenar hoy?" value="${esc(UI.exQ)}" data-ch="exq"></div>
     ${UI.exQ?`<div class="flex wrapf mb8">${ROUTINES.flatMap(r=>r.ex).filter(e=>e.name.toLowerCase().includes(UI.exQ.toLowerCase())).slice(0,8).map(e=>`<button class="chip ${e.id===UI.ex?'fill':''}" data-a="exPick" data-ex="${e.id}">${shortEx(e.name)}</button>`).join('')||'<span class="small dim">Nada con esa búsqueda</span>'}</div>`:''}
     <select class="in mb8" data-ch="exsel">
@@ -16032,7 +16175,8 @@ function renderReal(){
      ni el scroll). Al CAMBIAR de vista se reemplaza entero, que es lo correcto:
      empieza de cero arriba. Si el morph falla, cae al reemplazo de siempre. */
   /* la isla del nivel global es una capa flotante: viaja con el HTML de la vista */
-  const htmlNuevo = VIEWS[UI.tab]() + (UI.fzaIsla ? fzaIslaHTML() : '') + (UI.prIsla ? fzaPRIslaHTML() : '');
+  const htmlNuevo = VIEWS[UI.tab]() + (UI.fzaIsla ? fzaIslaHTML() : '') + (UI.prIsla ? fzaPRIslaHTML() : '')
+    + (UI.exInf ? exInformeHTML() : '');
   const puedeMorph = keep && MORPH_VISTAS.has(UI.tab);
   /* De donde viene este render decide a que anclarse. Si el despachador de clicks
      dejo UI._ancla, viene de un TAP: hay que quedarse donde esta la pantalla, no
@@ -17190,6 +17334,8 @@ const ACTIONS = {
   fzaIsla(){ UI.fzaIsla=true; render(); },
   fzaTodas(d, el){ UI.fzaTodas=!UI.fzaTodas; renderAnclado(el); },
   fzaPRIsla(d){ UI.prIsla=d.k; render(); },
+  exInf(d){ UI.exInf=d.id; render(); },
+  exInfCerrar(){ UI.exInf=null; render(); },
   fzaPRIslaCerrar(){ UI.prIsla=null; render(); },
   fzaIslaCerrar(){ UI.fzaIsla=false; render(); },
   secPlegTgl(d, el){ UI.secAb=UI.secAb||{}; UI.secAb[d.s]=!UI.secAb[d.s]; renderAnclado(el); },

@@ -906,3 +906,24 @@ el dedo arranca en los primeros 36 px (eso es el gesto de atrás), ni sobre algo
 desplaza en horizontal por su cuenta, ni si el gesto es más vertical que horizontal, ni si
 dura más de 700 ms. Después de un swipe se descarta el click que dispara el navegador
 (`SWSUP`), porque si no se elegía la zona del mapa que quedara debajo del dedo.
+
+### El informe de un ejercicio (REV 193)
+
+`exInformeHTML()` es una isla flotante con todo lo que la app sabe de un ejercicio, que antes
+estaba repartido en cuatro pantallas. Se abre con `data-a="exInf" data-id="…"` desde Progreso
+por ejercicio, desde el panel de opciones de la sesión y desde la escalera de fuerza.
+
+Qué trae, en este orden:
+
+1. **La próxima sesión**: objetivo en kg × reps y qué hiciste la última vez. Usa `suggestion()`
+   cuando opina, y cuando devuelve `null` (que es lo normal: solo cubre tres casos) aplica la
+   regla llana de repetir el peso y sumar repeticiones hasta el tope del rango, y ahí subir.
+   El informe **siempre** dice algo: un informe que a veces no opina no sirve.
+2. **Récords**: más peso, mejor 1RM, más repeticiones y mejor sesión por tonelaje, cada uno con
+   su fecha.
+3. **1RM estimado** de las últimas catorce sesiones, en barras proporcionales al rango real
+   (no desde cero: con 111 a 116 kg todas las barras se verían iguales).
+4. **En total**: sesiones y cada cuántos días, series, tonelaje acumulado y cuándo fue la última.
+5. **Qué mueve**: el reparto EMG por músculo con su barra.
+6. **Las tres lecturas** del 1RM, resaltada la que manda.
+7. **Sesión por sesión**, las últimas doce con sus series.

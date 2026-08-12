@@ -1653,6 +1653,14 @@ img{-webkit-user-drag:none;user-select:none}
 .cktile .cksub{white-space:nowrap}
 .cktile.on{border-color:rgba(var(--acc-rgb),.45);background:rgba(var(--acc-rgb),.07)}
 .cktile.wide{grid-column:1/-1}
+/* la segunda columna de la primera fila se parte 2:1, pasos arriba y creatina debajo */
+.ckcol2{display:grid;grid-template-rows:2fr 1fr;gap:9px;min-height:0}
+.ckcol2>.cktile{min-height:0}
+.ckcreat{cursor:pointer;justify-content:center;gap:5px}
+.ckcreat b{font-size:14px}
+.ckcreatn{display:flex;align-items:baseline;gap:2px;font:600 24px/1 var(--num);color:var(--ink)}
+.ckcreatn em{font:700 12px var(--num);font-style:normal;color:var(--smoke)}
+.ckcreat:active{transform:scale(.98)}
 .nuthero{position:relative;overflow:hidden;border-radius:14px;min-height:126px}
 .nuthrow{display:flex;gap:14px;align-items:center;position:relative;z-index:1;padding-right:66px;min-height:118px}
 .nutgoat{position:absolute;right:0;bottom:-6px;height:132px;width:auto;object-fit:contain;pointer-events:none;z-index:0;-webkit-mask-image:linear-gradient(90deg,transparent 4%,#000 52%);mask-image:linear-gradient(90deg,transparent 4%,#000 52%);filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
@@ -1951,7 +1959,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 197';
+const APPREV='REV 198';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -11588,13 +11596,6 @@ const node=(on,icn,val,lb,bonus)=>{
             <span class="ckln gold ${st.prote?'on':''}"></span>
             ${node(st.entreno&&!st.isRest,'barbell','★','BONUS',true)}
           </div>
-          ${(()=>{ const c=creatCfg(); if(!c) return '';
-            const hoy=creatHoy(), rk=creatRacha();
-            return `<button class="ckmini ${hoy?'on':''}" data-a="creat" aria-pressed="${hoy?'true':'false'}">
-              <span class="ckminibox">${hoy?ic('check',11):''}</span>
-              <span>Creatina · ${c.dosis} g</span>
-              ${rk>2?`<i>${rk} d</i>`:''}
-            </button>`;})()}
         </div>
       </div>
       `})()}
@@ -11606,6 +11607,7 @@ const node=(on,icn,val,lb,bonus)=>{
         ${routine?`<div class="lbrow"><button class="linkbtn" data-a="goSession" data-rid="${routine.id}">Ir a Entrenar</button><button class="okall" data-a="autoDone" data-rid="${routine.id}" aria-label="Completar toda la rutina con los valores sugeridos" title="Completar toda la rutina">${ic('check',15)}</button></div>`
         :st.isRest?'':`<button class="linkbtn" data-a="quickTrain">Marcar hecho ${ic('check',12)}</button>`}
       </div>
+      <div class="ckcol2">
       <div class="cktile ${st.pasos?'on':''}">
         <b>${ic('steps',17)} Pasos${st.pasos?`<span class="tick">${ic('check',11)}</span>`:''}</b>
         <div class="flex" style="width:100%;gap:12px;align-items:center">
@@ -11615,6 +11617,16 @@ const node=(on,icn,val,lb,bonus)=>{
           </div>
         </div>
         <div class="flex" style="width:100%;gap:8px"><input class="in ctr grow" inputmode="numeric" placeholder="pasos de hoy" value="${stepsToday||''}" data-ch="steps"><button class="btn sm" data-a="tab" data-t="mas" aria-label="sincronizar">${ic('repeat',13)}</button></div>
+      </div>
+      ${(()=>{ const cc=creatCfg(); if(!cc) return '';
+        const hoy=creatHoy(), rk=creatRacha();
+        return `<button class="cktile ckcreat ${hoy?'on':''}" data-a="creat" aria-pressed="${hoy?'true':'false'}">
+          <b>${ic('drop',15)} Creatina${hoy?`<span class="tick">${ic('check',11)}</span>`:''}</b>
+          <div class="flex between" style="width:100%;align-items:baseline;gap:8px">
+            <span class="ckcreatn">${cc.dosis}<em>g</em></span>
+            <span class="small dim">${hoy?(rk>1?rk+' días seguidos':'hecho hoy'):'toca para marcar'}</span>
+          </div>
+        </button>`;})()}
       </div>
       <div class="cktile ${st.agua?'on':''}">
         <b>${ic('drop',16)} Agua${st.agua?`<span class="tick">${ic('check',11)}</span>`:''}</b>

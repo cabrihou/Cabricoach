@@ -155,9 +155,10 @@ recortar calorías sin motivo.
 
 Cómo quedó:
 
-- `S.creat[iso]` es el registro diario y `S.cfg.creatDesde` la fecha de arranque, que se pone
-  sola el primer día que se marca. Tarjeta en Inicio con el toggle, los días seguidos y el día
-  del plan. Se sincroniza con la nube.
+- `S.creat[iso]` es el registro diario. La marca vive en la **rejilla del checkpoint**: la
+  segunda columna de la primera fila se parte 2:1 (`.ckcol2`, `grid-template-rows:2fr 1fr`),
+  con Pasos arriba y Creatina debajo como su propia casilla, con su check. Se sincroniza con
+  la nube. En Inicio solo queda, aparte, el aviso de la báscula, y solo mientras satura.
 - `creatAgua()` estima el agua acumulada en rampa lineal hasta la mitad del rango (1,5 kg) al
   cerrar las 4 semanas, y de ahí se queda fija: es una constante, no algo que siga creciendo.
 - **La lectura semanal cambia mientras satura**: "subiste 0,4 kg" pasa a decir que es agua del

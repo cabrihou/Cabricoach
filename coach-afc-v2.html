@@ -1071,7 +1071,7 @@ img{-webkit-user-drag:none;user-select:none}
   background:var(--paper2);border:1px solid var(--line);border-bottom:0;
   box-shadow:0 -12px 40px rgba(0,0,0,.5);animation:islaUp .28s cubic-bezier(.32,.72,0,1)}
 @keyframes islaUp{from{transform:translateY(40px)}to{transform:none}}
-.impisla{z-index:260}
+.fzaisla.impisla{z-index:400}
 .improw{padding:12px;border-radius:15px;margin-bottom:9px;border:1px solid var(--line2);background:var(--card)}
 .improw.ok{border-color:rgba(var(--acc-rgb),.4);background:linear-gradient(150deg, rgba(var(--acc-rgb),.1) 0%, transparent 58%), var(--card)}
 .improw>div>div>b{font:700 13.5px var(--ui)}
@@ -1963,7 +1963,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 199';
+const APPREV='REV 200';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -17012,10 +17012,12 @@ const ACTIONS = {
   },
   restMenu(){ UI.restOpen=!UI.restOpen; render(); },
   addExTgl(d, el){ UI.addExOpen=!UI.addExOpen; renderAnclado(el); },
-  importWorkout(){
+  importWorkout(txtDirecto){
     /* devuelve true/false (ademas de pintar el toast) para que impBox() sepa si
-       debe cerrar la ventana flotante tras un import exitoso */
-    const ta=$('#impText'), txt=ta?ta.value:'';
+       debe cerrar la ventana flotante tras un import exitoso. Acepta el texto por
+       parametro para poder reintentar despues de la revision, sin depender del textarea. */
+    const ta=$('#impText');
+    const txt=(typeof txtDirecto==='string' && txtDirecto) ? txtDirecto : (ta?ta.value:'');
     if(!txt || txt.trim().length<8){ toast('Pega el texto del entreno'); return false; }
     const {d, items}=parseWorkoutText(txt);
     if(!items.length){ toast('No encontré series en el texto'); return false; }
@@ -17040,8 +17042,16 @@ const ACTIONS = {
     });
     /* si queda alguna duda, no se escribe nada todavia: primero se resuelve */
     const dudas=plan.filter(p=>p.dudoso);
-    if(dudas.length){ UI.impRev={d, items, dudas:dudas.map(p=>({nom:p.nom, id:p.id, conf:p.conf, via:p.via, sets:p.it.sets}))};
-      render(); return false; }
+    if(dudas.length){
+      /* El texto se guarda aqui y la caja flotante se cierra: la isla de revision vive
+         dentro de #view y la caja es un fixed pegado al body, asi que se tapaban entre
+         ellas y no se podia tocar nada. Al cerrar la caja no hay con que competir, y el
+         re-import ya no depende de que el textarea siga vivo. */
+      UI.impRev={d, items, txt, dudas:dudas.map(p=>({nom:p.nom, id:p.id, conf:p.conf, via:p.via, sets:p.it.sets}))};
+      if(UI._impBox){ UI._impBox.remove(); UI._impBox=null;
+        const b=$('[data-a="impBoxTgl"]'); if(b) b.classList.remove('on'); }
+      render(); return false;
+    }
     const usable=plan.filter(p=>p.id);
     const repetidos=usable.filter(p=>(S.logs[p.id]||[]).some(h=>h.d===d));
     if(repetidos.length){
@@ -17557,9 +17567,10 @@ const ACTIONS = {
     const R=UI.impRev; if(!R) return;
     const pend=R.dudas.filter(x=>!((UI.impDec||{})[x.nom]));
     if(pend.length){ toast('Falta decidir '+pend.length+': acepta, elige otro, crea nuevo u omite'); return; }
+    const txt=R.txt||'';
     UI.impRev=null;
-    const ta=$('#impText');
-    if(ta) ACTIONS.importWorkout(); else { toast('Vuelve a pegar el texto'); }
+    if(!txt){ toast('Se perdió el texto, vuelve a pegarlo'); render(); return; }
+    ACTIONS.importWorkout(txt);
   },
   cruceGrupo(d, el){ UI.cruceGrupo = (UI.cruceGrupo||'ojo')===d.s ? '' : d.s; renderAnclado(el); },
   fzaEjTgl(d, el){ UI.fzaEj = UI.fzaEj===d.k ? null : d.k; renderAnclado(el); },

@@ -414,7 +414,12 @@ Conmutadores que pasaron a `renderAnclado`: `progSub`, `progRange`, `cuerpoSub`,
   revisión.**
 - **null**: nada. **Va a revisión.**
 
-Cuando algo va a revisión, `importWorkout` **no escribe nada todavía** y devuelve `false`.
+Cuando algo va a revisión, `importWorkout` **no escribe nada todavía**, guarda el texto pegado
+en `UI.impRev.txt`, **cierra la caja flotante de importar** y devuelve `false`. Lo de cerrar la
+caja no es cosmético: la isla de revisión vive dentro de `#view` y la caja es un `position:fixed`
+pegado al `body`, así que se tapaban y no se podía tocar nada de la revisión. Guardar el texto
+además quita la dependencia de que el `textarea` siga vivo: `impRevGo` reimporta desde
+`UI.impRev.txt`, no desde el DOM.
 Sube `impRevHTML()`, una isla por encima de la caja de importar, con una fila por dudoso: el
 nombre tal como vino, sus series y, si hay propuesta, "se parece a X (por qué)". Cuatro
 salidas: **aceptar**, **buscar el correcto** (busca en todo el catálogo), **crear nuevo** u

@@ -1656,6 +1656,10 @@ img{-webkit-user-drag:none;user-select:none}
 /* la segunda columna de la primera fila se parte 2:1, pasos arriba y creatina debajo */
 .ckcol2{display:grid;grid-template-rows:2fr 1fr;gap:9px;min-height:0}
 .ckcol2>.cktile{min-height:0}
+.wstep{display:flex;align-items:center;gap:4px;margin-top:7px;padding:5px 9px;cursor:pointer;
+  border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.03);
+  color:var(--smoke);font:600 10px var(--ui)}
+.wstep:active{transform:scale(.96)}
 .ckcreat{cursor:pointer;justify-content:center;gap:5px}
 .ckcreat b{font-size:14px}
 .ckcreatn{display:flex;align-items:baseline;gap:2px;font:600 24px/1 var(--num);color:var(--ink)}
@@ -1959,7 +1963,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 198';
+const APPREV='REV 199';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -10728,16 +10732,22 @@ function waterGoalDay(dISO){
 }
 function waterUI(dISO,act){
   const n=S.water[dISO]||0, goal=waterGoalDay(dISO), pct=clamp(n/goal*100,0,100);
+  /* el vaso no siempre es de 250: botella de 600, termo de 1 L, vasito de 150... */
+  const paso=Math.max(50, +((S.cfg&&S.cfg.waterStep)||250));
   return `<div class="wbox">
     <div class="wglass ${n>=goal?'full':''}"><i><div class="wfill" style="height:${pct}%"></div></i></div>
     <div style="min-width:0"><span class="wml">${fmtInt(n)}</span>
       <div class="small dim">de ${fmtInt(goal)} ml</div>
       <div class="small ${n>=goal?'mint':'dim'}">${n>=goal?'meta cumplida':'faltan '+fmtInt(goal-n)}</div></div>
     <div class="wbtns">
-      <button class="wbtn2" data-a="${act}" data-n="-250" aria-label="menos agua">−</button>
-      <button class="wbtn2 plus" data-a="${act}" data-n="250" aria-label="más agua">${ic('drop',13)} +250 ML</button>
+      <button class="wbtn2" data-a="${act}" data-n="-${paso}" aria-label="menos agua">−</button>
+      <button class="wbtn2 plus" data-a="${act}" data-n="${paso}" aria-label="más agua">${ic('drop',13)} +${fmtInt(paso)} ML</button>
     </div>
-  </div>`;
+  </div>
+  <button class="wstep" data-a="wStepTgl">${ic('drop',10)} vaso de ${paso>=1000?fmt1(paso/1000)+' L':paso+' ml'} ${ic(UI.wStepOpen?'minus':'chevR',9)}</button>
+  ${UI.wStepOpen?`<div class="flex wrapf mt4" style="gap:4px">
+    ${[150,200,250,330,500,600,750,1000].map(v=>`<button class="chip xs ${paso===v?'fill':''}" data-a="waterStep" data-n="${v}">${v>=1000?'1 L':v}</button>`).join('')}
+  </div>`:''}`;
 }
 function daystrip(){
   const t=TODAY(), base=fromISO(t), mon=addDays(t,-((base.getDay()+6)%7));
@@ -11636,12 +11646,12 @@ const node=(on,icn,val,lb,bonus)=>{
       const mp=(typeof medPendientes==='function')?medPendientes().filter(x=>x.g!=='dia'):[];
       const mTarde=mp.some(x=>x.tarde);
       return `<div class="cktile ${ciDone&&!mp.length?'on':''}" data-a="medGo" role="button" style="cursor:pointer;position:relative;overflow:hidden">
-        <b>${ic('ruler',16)} Medidas${ciDone&&!mp.length?`<span class="tick">${ic('check',11)}</span>`:''}</b>
-        <span class="small dim" style="max-width:52%">${mp.length
+        <b style="position:relative;z-index:1">${ic('ruler',16)} Medidas${ciDone&&!mp.length?`<span class="tick">${ic('check',11)}</span>`:''}</b>
+        <span class="small dim" style="max-width:46%;position:relative;z-index:1">${mp.length
           ?`Hoy toca: ${mp.map(x=>x.n.toLowerCase()).join(' y ')}${mTarde?' (con retraso)':''}`
           :'Al día · toca en '+medFaltanDias()+' días'}</span>
-        <span class="chip ${mp.length?'fill':'dim'} mt8">${mp.length?'MEDIR':'VER'}</span>
-        <img loading="lazy" src="${UID==='andres'?CAB.tileCheckA:CAB.tileCheckC}" alt="" decoding="async" style="position:absolute;right:-6px;bottom:0;height:134px;filter:drop-shadow(0 6px 12px rgba(0,0,0,.45))">
+        <span class="chip ${mp.length?'fill':'dim'} mt8" style="position:relative;z-index:1">${mp.length?'MEDIR':'VER'}</span>
+        <img loading="lazy" src="${UID==='andres'?CAB.tileCheckA:CAB.tileCheckC}" alt="" decoding="async" style="position:absolute;right:-16px;bottom:-6px;height:186px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.5));pointer-events:none">
       </div>`})()}
       ${''/* la caja de comidas se unificó en la sección NUTRICIÓN de abajo */}
       ${(FOTOS_OK||SB)?`<div class="cktile wide ${FOTODAYS.has(t)?'on':''}" data-a="fotoVer" role="button" style="cursor:pointer;position:relative;overflow:hidden;min-height:92px">
@@ -12366,39 +12376,10 @@ function runBox(sel){
   </div>`;
 }
 function vAgenda(){ return vCalendario(); }
-function vCalendario(){
-  if(!UI.calSel) UI.calSel=TODAY();
-  if(UI.calView==='fotos') UI.calView='mes';   // sesion vieja: la pestana Fotos ya no existe
-  const view=UI.calView||'mes';
-  if(UI.calDay) return vDia();
-  return `
-  <section class="mod tight">
-    <div class="calpick">
-      <div class="calseg">
-        <button class="${view==='sem'?'on':''}" data-a="calView" data-v="sem">${ic('vsemana',14)} Semana</button>
-        <button class="${view==='mes'?'on':''}" data-a="calView" data-v="mes">${ic('vmes',14)} Mes</button>
-      </div>
-      <button class="chip iconchip ${UI.calJumpOpen?'fill':''}" data-a="calJumpTgl" aria-label="ir a una fecha" title="ir a una fecha">${ic('cal',16)}</button>
-      <button class="chip" data-a="calToday">Hoy</button>
-      <button class="chip iconchip ${UI.calFoto?'on':''}" data-a="calFotoTgl" aria-label="${UI.calFoto?'Volver al calendario normal':'Ver las fotos dentro del calendario'}" title="${UI.calFoto?'Volver al calendario normal':'Ver las fotos dentro del calendario'}">${ic('camera',16)}</button>
-    </div>
-    ${UI.calFoto?`<div class="small dim mt8">${ic('camera',12)} Modo foto: las tarjetas se giran y muestran la foto de ese día.</div>`:''}
-    ${UI.calJumpOpen?`<div class="flex mt8" style="gap:8px">
-      <input type="date" class="in" id="calJump" value="${UI.calSel||TODAY()}" style="flex:1">
-      <button class="btn sm primary" data-a="calJumpGo" style="flex:none">IR</button>
-    </div>`:''}
-  </section>
-  <div data-swnav="cal">${view==='sem'?calSemana():calMes()}</div>
-  <section class="mod tight" id="schedbox">
-    <button class="schedhead ${UI.schedOpen?'open':''}" data-a="schedTgl">
-      <img loading="lazy" class="schedcab" src="${UID==='andres'?(CAB.planA||CAB.faceA):(CAB.planC||CAB.faceC)}" alt="" decoding="async">
-      <div class="grow tl" style="min-width:0">
-        <b class="schedt">Días de cada rutina</b>
-        <span class="small dim" style="display:block">${UI.schedOpen?'Toca un día y elige: rutina, movilidad o descanso':'Arma tu semana de entreno · toca para editar'}</span>
-      </div>
-      <span class="nfchev">${ic('chevR',16)}</span>
-    </button>
-    ${UI.schedOpen?`<div class="schedbody">
+/* El planificador de la semana. Vivia plegado debajo del calendario; ahora ES la vista
+   de Semana, que es donde uno va a organizar la rutina. */
+function schedPlanHTML(){
+  return `<div class="schedbody abierta">
     <div class="flex between mb10"><span class="small dim">Tu semana · toca un día para cambiarlo</span>${S.week?`<button class="btn sm ghost" data-a="schedReset">Restaurar</button>`:''}</div>
     ${[['Lun',1],['Mar',2],['Mié',3],['Jue',4],['Vie',5],['Sáb',6],['Dom',0]].map(([lb,dow])=>{
       const tok=weekTok(dow), rt=routineOn(dow), mov=tok==='mov';
@@ -12447,8 +12428,32 @@ function vCalendario(){
         ${overs.map(x=>`<div class="small mt8">${ic('alert',12)} ${x}</div>`).join('')}
         <div class="small dim mt8">Es libre: solo es la cuenta de descanso muscular y volumen. Mover un día suele resolverlo.</div>
       </div>`})()}
+    </div>`;
+}
+function vCalendario(){
+  if(!UI.calSel) UI.calSel=TODAY();
+  if(UI.calView==='fotos') UI.calView='mes';   // sesion vieja: la pestana Fotos ya no existe
+  const view=UI.calView||'mes';
+  if(UI.calDay) return vDia();
+  return `
+  <section class="mod tight">
+    <div class="calpick">
+      <div class="calseg">
+        <button class="${view==='sem'?'on':''}" data-a="calView" data-v="sem">${ic('vsemana',14)} Mi semana</button>
+        <button class="${view==='mes'?'on':''}" data-a="calView" data-v="mes">${ic('vmes',14)} Mes</button>
+      </div>
+      <button class="chip iconchip ${UI.calJumpOpen?'fill':''}" data-a="calJumpTgl" aria-label="ir a una fecha" title="ir a una fecha">${ic('cal',16)}</button>
+      <button class="chip" data-a="calToday">Hoy</button>
+      <button class="chip iconchip ${UI.calFoto?'on':''}" data-a="calFotoTgl" aria-label="${UI.calFoto?'Volver al calendario normal':'Ver las fotos dentro del calendario'}" title="${UI.calFoto?'Volver al calendario normal':'Ver las fotos dentro del calendario'}">${ic('camera',16)}</button>
+    </div>
+    ${UI.calFoto?`<div class="small dim mt8">${ic('camera',12)} Modo foto: las tarjetas se giran y muestran la foto de ese día.</div>`:''}
+    ${UI.calJumpOpen?`<div class="flex mt8" style="gap:8px">
+      <input type="date" class="in" id="calJump" value="${UI.calSel||TODAY()}" style="flex:1">
+      <button class="btn sm primary" data-a="calJumpGo" style="flex:none">IR</button>
     </div>`:''}
-  </section>`;
+  </section>
+  <div data-swnav="cal">${view==='sem'?schedPlanHTML():calMes()}</div>
+  `;
 }
 function calSemana(){
   const t=TODAY(), mon=mondayOf(UI.calSel);
@@ -17397,6 +17402,9 @@ const ACTIONS = {
   },
   creatReset(){ if(!confirm('¿Borrar la fecha de arranque de la creatina?')) return;
     delete S.cfg.creatDesde; save('cfg'); render(); },
+  wStepTgl(d, el){ UI.wStepOpen=!UI.wStepOpen; renderAnclado(el); },
+  waterStep(d, el){ S.cfg.waterStep=Math.max(50, +d.n||250); UI.wStepOpen=false; save('cfg'); renderAnclado(el);
+      toast('Cada toque suma '+fmtInt(S.cfg.waterStep)+' ml'); },
   water(d){ const t=TODAY(); S.water[t]=Math.max(0,(S.water[t]||0)+(+d.n)); save('water'); clearDayCache(); xpHabitos(t); render(); },
   inject(){ const t=TODAY(); if(!S.inject.includes(t)){ S.inject.push(t); save('inject'); toast('Inyección registrada'); } render(); },
   foodSub(d){ UI.sub.food=d.s; UI.foodCat=null; render(); },

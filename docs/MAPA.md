@@ -927,3 +927,18 @@ Qué trae, en este orden:
 5. **Qué mueve**: el reparto EMG por músculo con su barra.
 6. **Las tres lecturas** del 1RM, resaltada la que manda.
 7. **Sesión por sesión**, las últimas doce con sus series.
+
+### Agenda: la vista Semana es el planificador (REV 199)
+
+La vista Semana era un calendario de siete días que casi no se usaba, y debajo del calendario
+vivía plegada la caja "Días de cada rutina", que es lo que uno sí va a buscar. Se invirtió: la
+pestaña ahora se llama **Mi semana** y muestra el planificador abierto (`schedPlanHTML`), con
+sus siete días editables, la hora del entreno, el aviso de descanso muscular y el volumen
+semanal. La caja de abajo desapareció; `calSemana()` queda sin uso.
+
+### El vaso de agua no siempre es de 250
+
+`S.cfg.waterStep` define cuánto suma cada toque. En la casilla de Agua hay un botón chiquito
+que dice el vaso actual ("vaso de 600 ml") y al tocarlo despliega las opciones: 150, 200, 250,
+330, 500, 600, 750 y 1 L. Plegado por defecto, porque ocho chips en una columna de media
+pantalla se comían la casilla.

@@ -141,3 +141,29 @@ proteica a 8,0.
 Ingredientes de la mezcla: 1.500 g de molida de res 90/10 (molida especial), 450 g de cebolla
 roja, 150 ml de Malbec, un ramo de cilantro, sal, ajo y pimienta. En la receta de la app las
 cantidades salen por plato: la carne es el 70% de la mezcla, la cebolla el 21% y el vino el 7%.
+
+## Creatina (agosto 2026, solo Andrés)
+
+5 g diarios de monohidrato, sin fase de carga: cargar con 20 g acelera la saturación una o dos
+semanas y no cambia el resultado a los dos meses.
+
+Lo que hay que saber, y es lo que la app dice en pantalla: **la creatina satura el músculo de
+agua intracelular y sube el peso entre 1 y 2 kg en las primeras 4 semanas**. No es grasa ni es
+retención subcutánea. Si nadie lo avisa, ese salto se lee como "dejé de bajar" y lleva a
+recortar calorías sin motivo.
+
+Cómo quedó:
+
+- `S.creat[iso]` es el registro diario y `S.cfg.creatDesde` la fecha de arranque, que se pone
+  sola el primer día que se marca. Tarjeta en Inicio con el toggle, los días seguidos y el día
+  del plan. Se sincroniza con la nube.
+- `creatAgua()` estima el agua acumulada en rampa lineal hasta la mitad del rango (1,5 kg) al
+  cerrar las 4 semanas, y de ahí se queda fija: es una constante, no algo que siga creciendo.
+- **La lectura semanal cambia mientras satura**: "subiste 0,4 kg" pasa a decir que es agua del
+  músculo y que no se toque el déficit; "peso estable" pasa a decir que estable ya es bajar,
+  porque el agua nueva está tapando la grasa que se fue.
+- En Peso sale el **peso comparable** (el de la báscula menos el agua) y la **meta corrida**:
+  los 86,6 kg se fijaron sin creatina, así que el mismo cuerpo con creatina marca 88,1.
+
+No entra en la racha ni en los puntos de los retos: cambiar la fórmula de puntaje a mitad de
+camino invalidaría las semanas ya jugadas. Cami no la usa y no le aparece nada.

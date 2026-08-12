@@ -1242,6 +1242,13 @@ img{-webkit-user-drag:none;user-select:none}
   border:1px solid color-mix(in srgb, var(--cc) 28%, transparent)}
 .crucen{font:700 15px var(--ui);letter-spacing:-.01em}
 /* Fila de "pide atencion": misma tarjeta que Cruce, con la cifra alineada a la derecha */
+.creatcard{border-color:rgba(var(--acc-rgb),.24)}
+.creatcard.ok{background:linear-gradient(150deg, rgba(var(--acc-rgb),.11) 0%, transparent 58%), var(--card)}
+.creatbtn{flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;
+  border-radius:14px;cursor:pointer;color:var(--smoke);
+  border:1px solid var(--line);background:var(--card2);transition:.2s}
+.creatbtn.on{color:var(--onmint);background:var(--grad);border-color:transparent;box-shadow:var(--glow)}
+.creatbtn:active{transform:scale(.94)}
 .fijocard{position:relative;padding:13px;border-radius:16px;
   border:1px solid rgba(var(--acc-rgb),.28);
   background:linear-gradient(150deg, rgba(var(--acc-rgb),.12) 0%, transparent 58%), var(--paper2)}
@@ -1903,7 +1910,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 190';
+const APPREV='REV 191';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2178,6 +2185,13 @@ const PLANS = {
     rateGoal:0.35, rateLabel:'0,25-0,45', lossAlert:0.7,
     lossAdvice:'Pérdida >0,7 kg/sem sostenida: el déficit se agrandó solo, sube las calorías un 10% (≈2.640 kcal).',
     injectDay:3,
+    /* Creatina monohidrato, 5 g diarios, sin fase de carga: cargar con 20 g acelera la
+       saturacion una o dos semanas y no cambia el resultado a los dos meses.
+       El dato que importa para la bascula: satura el musculo de agua INTRACELULAR y sube
+       el peso entre 1 y 2 kg en las primeras 2 a 4 semanas. No es grasa y no es retencion
+       subcutanea. Si no se avisa, ese salto se lee como "dejaste de bajar" y se toman
+       decisiones equivocadas sobre el deficit. */
+    creatina:{dosis:5, kgAgua:[1,2], semanas:4},
     trainDesc:'PPL × 2 · un día libre',
     phases:{1:'PROGRESIÓN',2:'PROGRESIÓN',3:'PROGRESIÓN',4:'DESCARGA',5:'EMPUJE FINAL',6:'EMPUJE FINAL'},
   },
@@ -7320,6 +7334,7 @@ function loadState(){
     fotopub: store.get('fotopub', {}), // iso -> 1: fotos mías que el otro SÍ puede ver
     fotoSrc: store.get('fotoSrc', {}), // 'UID:iso' -> 'cam'|'up': origen de la foto, para que Semana de Fotos solo muestre las de rutina (F4)
     mobil: store.get('mobil', {}),     // iso -> 1: movilidad diaria hecha (+1 punto de reto)
+    creat: store.get('creat', {}),     // iso -> 1: creatina tomada ese dia
     perso: store.get('perso', {herr:[], min:45, grupos:[], nivel:'media'}),  // ultimas elecciones de la caja Personalizado
     pullup: store.get('pullup', {nivel:0, sesiones:[], reps:3}),   // reto de la primera dominada (Cami)
     /* medidas corporales por fecha: {'YYYY-MM-DD': {cuello, pecho, cintura, ...}}.
@@ -8325,7 +8340,7 @@ function save(k){ clearDayCache(); if(!DEMO){ store.set(k, S[k]); sbPush(k); } }
    'draft' y 'fired' no se sincronizan (son del dispositivo). */
 let SB=null, sbState='off', sbDiagMsg='';
 try{ SB=JSON.parse(localStorage.getItem('afc2:sb')||'null'); if(SB) sbState='ok'; }catch(e){}
-const SB_KEYS=['weights','logs','sessions','steps','water','meals','checkins','inject','meal','reminders','cfg','sched','week','acts','custom','customRoutines','exnotes','free','nlog','customFoods','retos','fotopub','fotoSrc','mobil','retoprops','retovotes','retoreset','ideas','recipeIdeas','facturas','perso','goals','pullup','medidas','rutMod'];
+const SB_KEYS=['weights','logs','sessions','steps','water','meals','checkins','inject','meal','reminders','cfg','sched','week','acts','custom','customRoutines','exnotes','free','nlog','customFoods','retos','fotopub','fotoSrc','mobil','retoprops','retovotes','retoreset','ideas','recipeIdeas','facturas','perso','goals','pullup','medidas','rutMod','creat'];
 const sbTimers={}, sbPending={};
 /* el payload se lee SIEMPRE del namespace correcto al momento de enviar: si el usuario cambió
    entre el save y el disparo del debounce, S ya es del otro y usarlo cruzaría los datos */
@@ -8776,6 +8791,40 @@ function routineOn(dow){ const t=weekTok(dow); if(t==='mov'||t==='rest') return 
 /* checklist del día (acts = registro manual: gym/pádel/cardio/descanso) */
 let _dsCache={}, _eoCache={};
 function clearDayCache(){ _dsCache={}; _eoCache={}; }
+/* ============ CREATINA ============
+   Objetivo diario propio, con su racha, y sobre todo: la correccion de lo que hace en la
+   bascula. Al empezar, el musculo se satura de agua y el peso sube 1-2 kg en 2-4 semanas.
+   Eso no es grasa. Durante esa ventana la app lo dice en vez de dejar que parezca un
+   estancamiento, y no dispara la alerta de "no estas bajando". */
+function creatCfg(uid){ return (PLANS[uid||UID]||{}).creatina || null; }
+function creatDesde(){ return (S.cfg&&S.cfg.creatDesde)||null; }
+function creatHoy(d){ return !!S.creat[d||TODAY()]; }
+function creatDias(){
+  const d0=creatDesde(); if(!d0) return null;
+  return Math.floor((fromISO(TODAY())-fromISO(d0))/864e5)+1;
+}
+/* en plena saturacion? la ventana son las primeras semanas del plan */
+function creatSaturando(){
+  const c=creatCfg(), n=creatDias();
+  return !!(c && n!=null && n <= c.semanas*7);
+}
+/* racha de dias seguidos con creatina, contando hacia atras desde hoy o ayer */
+function creatRacha(){
+  let n=0, d=TODAY();
+  if(!S.creat[d]) d=addDays(d,-1);
+  while(S.creat[d]){ n++; d=addDays(d,-1); }
+  return n;
+}
+/* cuanto de lo que marca la bascula es agua nueva del musculo, no grasa. Sube en rampa
+   durante la ventana de saturacion y despues se queda fijo: es una constante, no algo que
+   siga creciendo. Se usa para explicar, no para maquillar el numero. */
+function creatAgua(){
+  const c=creatCfg(), n=creatDias();
+  if(!c || n==null) return 0;
+  const t=clamp(n/(c.semanas*7), 0, 1);
+  const med=(c.kgAgua[0]+c.kgAgua[1])/2;
+  return Math.round(med*t*10)/10;
+}
 function dayState(dISO){
   if(_dsCache[dISO]) return _dsCache[dISO];
   const dow = fromISO(dISO).getDay();
@@ -11070,6 +11119,24 @@ function vInicio(){
   return `
   ${(()=>{const al=partnerAlerts(); if(!al.length) return '';
     return `<section class="mod tight alertcard" data-a="retosGo" role="button"><div class="flex"><span class="alertic">${ic('bell',16)}</span><div class="small grow"><b>Para revisar (${al.length})</b><div style="margin-top:3px;line-height:1.45">${al.slice(0,2).join('<br>')}</div></div>${ic('chevR',15)}</div></section>`;})()}
+  ${(()=>{ const c=creatCfg(); if(!c) return '';
+    const hoy=creatHoy(), n=creatDias(), sat=creatSaturando(), agua=creatAgua(), rk=creatRacha();
+    return `<section class="mod tight creatcard ${hoy?'ok':''}">
+      <div class="flex" style="gap:11px;align-items:center">
+        <button class="creatbtn ${hoy?'on':''}" data-a="creat" aria-pressed="${hoy?'true':'false'}"
+          aria-label="${hoy?'Creatina tomada hoy':'Marcar creatina de hoy'}">${ic(hoy?'check':'drop',18)}</button>
+        <div class="grow" style="min-width:0">
+          <b class="small" style="display:block">Creatina · ${c.dosis} g${hoy?'':' <i class="small dim">pendiente</i>'}</b>
+          <div class="small dim" style="line-height:1.45">${
+            n==null ? 'Tócala el primer día que la tomes y arranca el conteo.'
+            : (rk>1 ? rk+' días seguidos · ' : '') + 'día '+n+' desde que empezaste'}</div>
+        </div>
+        ${rk>2?`<span class="chip xs">${ic('flame',9)} ${rk}</span>`:''}
+      </div>
+      ${sat?`<div class="small mt8" style="line-height:1.55;color:var(--ink2)">
+        <b style="color:var(--gold)">La báscula va a subir y no es grasa.</b> La creatina satura el músculo de agua: ${c.kgAgua[0]} a ${c.kgAgua[1]} kg en las primeras ${c.semanas} semanas. Vas por <b>+${fmt1(agua)} kg</b> de agua estimada. Mide el progreso por la cintura y por lo que levantas hasta que se estabilice.</div>`
+        : (n!=null?`<div class="small dim mt8" style="line-height:1.5">Ya pasó la saturación: los ${fmt1(agua)} kg de agua del músculo son constantes y la báscula vuelve a leerse normal.</div>`:'')}
+    </section>`;})()}
   ${BACKEND!=='ls'?`<section class="mod tight inv"><div class="flex">${ic('alert',18)}<div class="small"><b>Esta vista no guarda datos.</b> El navegador bloquea el almacenamiento aquí: lo que registres se pierde al cerrar. Usa la versión instalada/local, o exporta un respaldo desde MÁS → DATOS antes de salir.</div></div></section>`:''}
   ${(BACKEND==='ls'&&!DEMO&&(!S.cfg.lastBackup||addDays(S.cfg.lastBackup,7)<=TODAY()))?`<section class="mod tight"><div class="flex between"><div class="flex">${ic('down',18)}<div class="small"><b>Respaldo semanal.</b> ${S.cfg.lastBackup?'Último: '+fmtD(S.cfg.lastBackup)+'.':'Aún no tienes el primero.'} ${SB?'La nube ayuda; el archivo es el seguro.':'Sin nube, este archivo es tu único seguro.'}</div></div><button class="btn sm primary" data-a="backupNow" style="flex:none">Descargar</button></div></section>`:''}
   ${!S.cfg.tour?`<section class="mod glowtop">
@@ -12204,12 +12271,20 @@ function daySummary(d){
   const rn=sess.map(s=>{const r=findRoutine(s.rid); return r?r.name:null;}).filter(Boolean).join(' + ');
   const rows=entries.map(({id,h,hi})=>{ const name=h.alt?h.alt+' (sust.)':exNombre(id);
     if(!edit) return `<div class="ingrow"><span>${esc(name)}</span><span class="dim">${h.sets.map(s=>fmt1(s.w)+'×'+s.r).join('  ')}</span></div>`;
-    return `<div class="dayedex"><div class="flex between" style="margin-bottom:6px"><b class="small">${esc(name)}</b><button class="chip red" data-a="dayDelEx" data-d="${d}" data-id="${id}" data-hi="${hi}" aria-label="Quitar ${esc(name)} de este día">${ic('x',10)} quitar</button></div>${h.sets.map((s,i)=>`<div class="deset"><span class="desi">${i+1}</span><input class="in ctr" inputmode="decimal" value="${s.w}" data-ch="logSet" data-ex="${id}" data-hi="${hi}" data-i="${i}" data-f="w" aria-label="kg"><span class="dex">kg ×</span><input class="in ctr" inputmode="numeric" value="${s.r}" data-ch="logSet" data-ex="${id}" data-hi="${hi}" data-i="${i}" data-f="r" aria-label="reps"><span class="dex">reps</span></div>`).join('')}</div>`;
+    /* aqui es donde uno cae en cuenta de que el peso era por lado o de que la maquina tiene
+       carro: los dos ajustes viven junto a las series, no escondidos en otra pantalla */
+    const opt=`<div class="flex wrapf mt8" style="gap:5px;align-items:center">
+      <span class="small dim" style="margin-right:2px">Ese peso es</span>
+      <button class="chip xs ${exPorLado(id)?'fill':''}" data-a="exLado" data-id="${id}">${exPorLado(id)?'por lado':'el total'}</button>
+      ${exEsMaquina(id)?`<span class="small dim" style="margin:0 2px 0 6px">Carro</span>
+        ${[0,15,20,25,30,40,45].map(v=>`<button class="chip xs ${exTara(id)===v?'fill':''}" data-a="exTara" data-id="${id}" data-v="${v}">${v===0?'nada':v}</button>`).join('')}`:''}
+    </div>`;
+    return `<div class="dayedex"><div class="flex between" style="margin-bottom:6px"><b class="small">${esc(name)}</b><button class="chip red" data-a="dayDelEx" data-d="${d}" data-id="${id}" data-hi="${hi}" aria-label="Quitar ${esc(name)} de este día">${ic('x',10)} quitar</button></div>${h.sets.map((s,i)=>`<div class="deset"><span class="desi">${i+1}</span><input class="in ctr" inputmode="decimal" value="${s.w}" data-ch="logSet" data-ex="${id}" data-hi="${hi}" data-i="${i}" data-f="w" aria-label="kg"><span class="dex">kg ×</span><input class="in ctr" inputmode="numeric" value="${s.r}" data-ch="logSet" data-ex="${id}" data-hi="${hi}" data-i="${i}" data-f="r" aria-label="reps"><span class="dex">reps</span></div>`).join('')}${opt}</div>`;
   }).join('');
   return `<div class="mb12" style="border:1px solid var(--line2);border-radius:14px;padding:12px">
     <div class="flex between mb8"><b style="font-size:16px">${rn||'Entreno'}</b>${edit?`<button class="btn sm primary" data-a="dayEditTgl" data-d="${d}">${ic('check',12)} Listo</button>`:`<div class="flex" style="gap:8px;align-items:center"><span class="mono small">${fmtInt(ton)} kg · ${nsets} series</span><button class="chip" data-a="dayEditTgl" data-d="${d}">${ic('clip',11)} Editar</button></div>`}</div>
     ${rows}
-    ${edit?`<div class="small dim mt8">Corrige los kg o reps si te equivocaste al escribir. Se guarda solo y actualiza las gráficas.</div>
+    ${edit?`<div class="small dim mt8" style="line-height:1.5">Corrige los kg o reps si te equivocaste al escribir. Se guarda solo y actualiza las gráficas. <b>Por lado</b> y <b>carro</b> son del ejercicio, no de este día: se aplican a todo el historial.</div>
     <button class="btn ghost full mt8" data-a="dayDelAll" data-d="${d}" style="color:var(--red);border-color:rgba(255,90,90,.35)">${ic('x',13)} Borrar todos los registros de este día</button>`:''}
   </div>`;
 }
@@ -15168,6 +15243,17 @@ function vPeso(){
   const cur=currentWeight(), slope=slopePerWeek();
   const wksTo = (slope!==null && slope<-0.05 && cur>PLAN.wGoal) ? Math.round((cur-PLAN.wGoal)/(-slope)) : null;
   return `
+  ${(()=>{ const agua=creatAgua(); if(!agua) return '';
+    /* La meta se fijo sobre un cuerpo sin creatina. El agua del musculo no es grasa ni hay
+       que perderla: lo honesto es correr la meta esos kilos, no perseguir un numero que ya
+       no significa lo mismo. */
+    return `<section class="mod tight creatcard">
+      <div class="flex" style="gap:10px;align-items:flex-start">${ic('drop',16)}
+        <div class="grow" style="min-width:0">
+          <b class="small">La creatina pesa ${fmt1(agua)} kg de agua</b>
+          <div class="small dim mt4" style="line-height:1.55">Es agua dentro del músculo, no grasa. Descontándola, hoy vas por <b style="color:var(--ink)">${fmt1(Math.round((cur-agua)*10)/10)} kg</b> de peso comparable con el de antes${creatSaturando()?', y todavía puede subir un poco más':''}. La meta de ${fmt1(PLAN.wGoal)} kg se fijó sin creatina: con ella, el mismo cuerpo marca <b style="color:var(--ink)">${fmt1(Math.round((PLAN.wGoal+agua)*10)/10)} kg</b>.</div>
+        </div></div>
+    </section>`;})()}
   <section class="mod tight">
     <div class="seg cols2"><button class="${!UI.wAvg?'on':''}" data-a="wAvgTgl" data-v="0">Diario</button><button class="${UI.wAvg?'on':''}" data-a="wAvgTgl" data-v="1">Promedio semanal</button></div>
     <div class="small dim mt8">Cambia cómo se pinta tu peso en Rendimiento, arriba. Pésate en las mismas condiciones (mañana, en ayunas): lee la tendencia, no el dato del día.</div>
@@ -15438,9 +15524,14 @@ function vCheckin(){
     if(wkh.some(h=>Math.max(...h.sets.map(s=>Number(s.w)||0))>=allMax) && hist.length>wkh.length) prsN++;
   });
   const dif=avgPrev!==null? avg-avgPrev : null;
+  /* si esta saturando creatina, un peso al alza es agua del musculo: decir "revisa
+     adherencia" ahi lleva a recortar calorias sin motivo */
   const linea1 = dif===null?'Primera semana con datos: desde la próxima te comparo contra la anterior.'
     : dif<-0.1?'Bajaste '+fmt1(-dif)+' kg vs. la semana pasada. '+(-dif>PLAN.lossAlert?'Ojo: vas muy rápido, come más.':'Buen ritmo, sin afán.')
-    : dif>0.1?'Subiste '+fmt1(dif)+' kg vs. la semana pasada. Una semana no es tendencia: revisa adherencia y sigue.'
+    : dif>0.1?(creatSaturando()
+        ? 'Subiste '+fmt1(dif)+' kg vs. la semana pasada, pero estás saturando creatina: eso pesa '+PLAN.creatina.kgAgua[0]+' a '+PLAN.creatina.kgAgua[1]+' kg de agua en el músculo. No toques el déficit por esto, mide por la cintura.'
+        : 'Subiste '+fmt1(dif)+' kg vs. la semana pasada. Una semana no es tendencia: revisa adherencia y sigue.')
+    : creatSaturando()?'Peso estable vs. la semana pasada. Con creatina saturando, estable ya es bajar: el agua nueva está tapando la grasa que se fue.'
     :'Peso estable vs. la semana pasada.';
   /* nutricion de la semana que cierra: misma logica que vNutriStats, en su rango fijo de 7 dias */
   const {aKc:nKc, adher:nAdh, R:nR}=nutriRangeStats(t, 7);
@@ -16920,6 +17011,14 @@ const ACTIONS = {
   },
   tPlus(){ TIMER.end+=30000; TIMER.total=Math.max(TIMER.total, Math.round((TIMER.end-Date.now())/1000)); paintTimer(); },
   meal(d){ const t=TODAY(); S.meals[t]=S.meals[t]||{}; S.meals[t][d.m]=!S.meals[t][d.m]; save('meals'); clearDayCache(); xpHabitos(t); render(); },
+  creat(){ const t=TODAY();
+    if(S.creat[t]) delete S.creat[t]; else S.creat[t]=1;
+    if(S.creat[t] && !S.cfg.creatDesde){ S.cfg.creatDesde=t; save('cfg');
+      toast('Creatina arrancada hoy. La báscula va a subir 1-2 kg de agua en el músculo: no es grasa.'); }
+    save('creat'); clearDayCache(); render();
+  },
+  creatReset(){ if(!confirm('¿Borrar la fecha de arranque de la creatina?')) return;
+    delete S.cfg.creatDesde; save('cfg'); render(); },
   water(d){ const t=TODAY(); S.water[t]=Math.max(0,(S.water[t]||0)+(+d.n)); save('water'); clearDayCache(); xpHabitos(t); render(); },
   inject(){ const t=TODAY(); if(!S.inject.includes(t)){ S.inject.push(t); save('inject'); toast('Inyección registrada'); } render(); },
   foodSub(d){ UI.sub.food=d.s; UI.foodCat=null; render(); },

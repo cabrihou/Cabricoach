@@ -130,3 +130,26 @@ S.cfg.cycStart=addDays(TODAY(),-9); S.cfg.cycEnd=addDays(TODAY(),-5); S.cfg.cycL
 
 Las pruebas corren sobre el localStorage del perfil de Chrome de prueba
 (`--user-data-dir` propio): no tocan los datos reales del teléfono de nadie.
+
+## Auditoría automática de UI (REV 190)
+
+`scratchpad/audit.py` recorre las 22 vistas y sub-vistas con los dos perfiles y mide tres
+cosas en cada una: desborde horizontal, objetivos táctiles por debajo de 32 px y texto por
+debajo de 9 px. También cronometra el render.
+
+Lo que encontró y se corrigió:
+
+- **Objetivos táctiles a la mitad de lo que pide cualquier guía.** Los chips medían 22 px de
+  alto, los selectores de rango 21, el interruptor 27. Ahora el alto real es 32-38 y encima
+  llevan un área de toque invisible (`::after` de −4 a −7 px) que llega a 42-44 sin engordar
+  el dibujo. El margen no pasa de la mitad del hueco entre filas, así que nunca roba el toque
+  del control de al lado.
+- **La fila de checkpoint no cabía**: seis nodos fijos de 62 px son 372 px más huecos, contra
+  362 de ancho de pantalla. Pasó a `flex:1 1 0` con `max-width:72px` y la etiqueta con elipsis.
+- **Texto de 8,5 px** en la cadencia de medidas, subido a 10.
+
+Render: todas las vistas por debajo de 16 ms. La más lenta es Retos.
+
+Lo que queda y es a propósito: las zonas del SVG del mapa miden 17×30 px en pantalla. Son las
+formas del dibujo, agrandar el área de toque implicaría rectángulos invisibles encima que
+taparían zonas vecinas. Las cotas de al lado (100-200 px de ancho) hacen de alternativa.

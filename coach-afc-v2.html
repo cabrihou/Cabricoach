@@ -194,10 +194,13 @@ select.in{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 input[type=time].in{text-align:left}
 
 .seg{display:grid;gap:4px;background:var(--paper2);border:1px solid var(--line);border-radius:999px;padding:4px}
-.seg>button{background:transparent;padding:9px 6px;font:500 13px/1 var(--ui);letter-spacing:.02em;color:var(--smoke);border-radius:999px;transition:background .15s,color .15s}
+.seg>button{background:transparent;min-height:38px;padding:10px 4px;font:500 13px/1 var(--ui);letter-spacing:.02em;color:var(--smoke);border-radius:999px;transition:background .15s,color .15s}
 .seg>button.on{background:var(--grad);color:var(--onmint)}
 
-.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card2);padding:5px 11px;font:500 12px/1.3 var(--ui);letter-spacing:.05em;white-space:nowrap;border-radius:999px;color:var(--ink2)}
+.chip{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:34px;border:1px solid var(--line);background:var(--card2);padding:6px 12px;font:500 12px/1.3 var(--ui);letter-spacing:.05em;white-space:nowrap;border-radius:999px;color:var(--ink2)}
+/* el area de toque llega a 42 sin engordar el dibujo; 4 px arriba y abajo, que es la mitad
+   del hueco entre filas, asi nunca se roba el toque del chip de al lado */
+button.chip::after,[role=button].chip::after{content:'';position:absolute;left:0;right:0;top:-4px;bottom:-4px}
 .chip.red{border-color:rgba(255,82,87,.4);color:var(--red);background:rgba(255,82,87,.1)}
 .chip.fill{background:var(--grad);color:var(--onmint);border:none}
 .chip.dim{border-color:var(--line);color:var(--smoke);background:transparent}
@@ -228,7 +231,7 @@ input[type=time].in{text-align:left}
 .strike{text-decoration:line-through;color:var(--smoke)}
 
 /* toggle */
-.tgl{width:46px;height:27px;border:1.5px solid rgba(255,255,255,.16);border-radius:999px;position:relative;flex:none;background:var(--paper2);transition:background .18s,border-color .18s}
+.tgl{position:relative;width:46px;height:30px;flex:none;border:1.5px solid rgba(255,255,255,.16);border-radius:999px;position:relative;flex:none;background:var(--paper2);transition:background .18s,border-color .18s}
 .tgl i{position:absolute;top:2.5px;left:3px;width:19px;height:19px;border-radius:50%;background:var(--smoke);transition:transform .18s cubic-bezier(.32,.72,0,1),background .18s}
 .tgl.on{background:var(--grad);border-color:transparent}
 .tgl.on i{transform:translateX(18px);background:#fff}
@@ -732,10 +735,12 @@ img{-webkit-user-drag:none;user-select:none}
 .coachimg{position:absolute;right:2px;bottom:0;height:118px;object-fit:contain;filter:drop-shadow(0 8px 16px rgba(0,0,0,.5))}
 .linkbtn{display:flex;align-items:center;gap:6px;font:600 15px var(--ui);letter-spacing:.005em;color:var(--mint);padding:6px 0}
 .ckpath{display:flex;align-items:flex-start;margin-bottom:6px}
-.cknode{display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;flex:none;width:62px}
+.cknode{display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;
+  flex:1 1 0;min-width:0;max-width:72px}
 .ckcirc{width:46px;height:46px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--smoke)}
 .ckbadge{position:absolute;top:-5px;right:4px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:var(--paper2);border:1px solid var(--line);font:600 11px/16px var(--mono);text-align:center;color:var(--ink2);z-index:1}
-.cklbl{font:500 10.5px var(--ui);letter-spacing:.05em;color:var(--smoke)}
+.cklbl{font:500 10.5px var(--ui);letter-spacing:.03em;color:var(--smoke);max-width:100%;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cknode.on .ckcirc{border-color:var(--mint);color:var(--mint);background:rgba(var(--acc-rgb),.12);box-shadow:0 0 12px rgba(var(--acc-rgb),.35)}
 .cknode.on .cklbl{color:var(--mint)}
 .cknode.bonus .ckcirc{border-color:rgba(255,201,77,.5);color:var(--gold)}
@@ -923,7 +928,7 @@ img{-webkit-user-drag:none;user-select:none}
 .metaan summary:before{content:'+ ';font-weight:800}
 .metaan[open] summary:before{content:'− '}
 .mrot{display:flex;gap:6px;justify-content:center;margin:4px 0 2px}
-.mrotb{flex:none;padding:7px 15px;border-radius:999px;border:1px solid var(--line2);background:transparent;
+.mrotb{position:relative;flex:none;display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:7px 16px;border-radius:999px;border:1px solid var(--line2);background:transparent;
   color:var(--smoke);font:600 12px var(--ui);cursor:pointer;transition:.18s}
 .mrotb.on{background:var(--acc);border-color:var(--acc);color:#0B0D0F}
 .medbp{width:100%;height:auto;display:block;max-height:56vh;touch-action:pan-y;transition:max-height .25s}
@@ -1308,7 +1313,7 @@ img{-webkit-user-drag:none;user-select:none}
 .medcad:last-child{border-bottom:0}
 .medcad .cadn{width:52px;flex:none;text-align:center}
 .medcad .cadn b{display:block;font:800 17px var(--num);color:var(--acc);line-height:1}
-.medcad .cadn i{font:600 8.5px var(--ui);color:var(--smoke);font-style:normal;letter-spacing:.05em;text-transform:uppercase}
+.medcad .cadn i{font:600 10px var(--ui);color:var(--smoke);font-style:normal;letter-spacing:.04em;text-transform:uppercase}
 .medcad.key .cadn b{color:var(--gold)}
 .medcad .cadok{font:600 10px var(--ui);white-space:nowrap;color:var(--smoke)}
 .medcad .cadok.due{color:var(--gold)} .medcad .cadok.late{color:#FF6B6B}
@@ -1516,7 +1521,8 @@ img{-webkit-user-drag:none;user-select:none}
 .recmac{font:500 13px var(--ui);color:var(--ink2);margin-top:4px;display:flex;align-items:center;gap:7px;min-width:0}
 .recmac b{color:var(--ink)}
 .pdot{width:8px;height:8px;border-radius:50%;flex:none}
-.setdel{width:34px;height:34px;border-radius:11px;color:var(--smoke);display:flex;align-items:center;justify-content:center;border:1px solid var(--line2);flex:none}
+.tgl::after{content:'';position:absolute;left:-7px;right:-7px;top:-7px;bottom:-7px}
+.setdel{width:34px;height:34px;min-width:34px;min-height:34px;border-radius:11px;color:var(--smoke);display:flex;align-items:center;justify-content:center;border:1px solid var(--line2);flex:none}
 .cabhero{position:absolute;right:12px;bottom:76px;width:54px;height:54px;border-radius:50%;overflow:hidden;border:2px solid rgba(var(--acc-rgb),.55);box-shadow:0 4px 14px rgba(var(--acc-rgb),.35);padding:0;z-index:2;animation:cabfloat 3.4s ease-in-out infinite alternate}
 .cabhero img{width:100%;height:100%;object-fit:cover}
 .cabhero.boing{animation:cabboing .55s cubic-bezier(.32,.72,0,1)}
@@ -1556,7 +1562,8 @@ img{-webkit-user-drag:none;user-select:none}
 @media (max-width:380px){.pgoimg{width:40px;height:40px}.pgopt .pgolabel{font-size:10.5px;gap:3px}}
 /* chips de intervalo en la esquina de la tarjeta de Rendimiento (reusan UI.progRange) */
 .rrchips{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
-.rrc{border:1px solid var(--line);background:var(--card2);color:var(--smoke);border-radius:999px;padding:4px 8px;font:600 10.5px/1 var(--ui);letter-spacing:.02em;white-space:nowrap}
+.rrc{position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:32px;border:1px solid var(--line);background:var(--card2);color:var(--smoke);border-radius:999px;padding:4px 11px;font:600 11px/1 var(--ui);letter-spacing:.02em;white-space:nowrap}
+.rrc::after{content:'';position:absolute;left:0;right:0;top:-5px;bottom:-5px}
 .rrc.on{background:var(--grad);color:var(--onmint);border-color:transparent}
 .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .fitem{aspect-ratio:3/4;border-radius:14px;background:var(--card2) center/cover no-repeat;border:1px solid var(--line2);position:relative;overflow:hidden;padding:0}
@@ -1748,7 +1755,7 @@ img{-webkit-user-drag:none;user-select:none}
 .sugbox{margin-top:14px;padding:12px;border-radius:14px;background:var(--card2);border:1px solid var(--line2)}
 .sugbox .nfood{padding:9px 2px}
 .sugbox .nfood:first-of-type{border-top:1px solid var(--line2)}
-.sughead{width:100%;display:flex;align-items:center;gap:8px;background:none;border:0;color:var(--ink);cursor:pointer;text-align:left;padding:0}
+.sughead{width:100%;min-height:40px;display:flex;align-items:center;gap:8px;background:none;border:0;color:var(--ink);cursor:pointer;text-align:left;padding:0}
 .sughead .grow{flex:1 1 auto;min-width:0}
 .sughead .nfchev{transition:transform .2s;color:var(--smoke);flex:none}
 .sugbox.open .sughead .nfchev{transform:rotate(90deg)}
@@ -1896,7 +1903,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 189';
+const APPREV='REV 190';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",

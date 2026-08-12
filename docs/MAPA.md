@@ -942,3 +942,22 @@ semanal. La caja de abajo desapareció; `calSemana()` queda sin uso.
 que dice el vaso actual ("vaso de 600 ml") y al tocarlo despliega las opciones: 150, 200, 250,
 330, 500, 600, 750 y 1 L. Plegado por defecto, porque ocho chips en una columna de media
 pantalla se comían la casilla.
+
+### Medir un alimento en otra unidad (REV 201)
+
+Cada item del borrador guarda su cantidad en la **unidad base** del alimento (la del catálogo)
+y ahí es donde se calculan los macros. Eso no se toca nunca: así el número no se puede
+desalinear por cambiar de unidad. Lo que se elige es solo **cómo se cuenta**.
+
+- `it.uv` es la unidad de visualización: `g`, `cda`, `unid`, `porcion`, o nada (la del catálogo).
+- `equivFactor(item, u)` devuelve cuántas unidades base es **una** de la unidad elegida. Con
+  base en gramos (el catálogo cuenta de a 100 g): 1 g = 0,01 · 1 cucharada = `cdaWeight`/100 ·
+  1 porción = 1. Con base contable (taza, vaso, scoop…), unidad y porción son 1.
+- Cuando el factor **no se puede deducir** (nadie sabe cuántos gramos pesa una unidad de
+  pechuga sin decirlo) devuelve `null` y la app **pregunta una vez**, en gramos, y guarda la
+  respuesta en `S.cfg.equiv[id|unidad]`. El chip lleva un `?` mientras no se sepa.
+- `nlogQtyIn` y `nlogQty` traducen lo escrito y el paso de medio en medio a la base.
+
+Comprobado con pechuga (base 100 g): 1 base = 100 g = 6,67 cucharadas de 15 g = 1 porción, y
+los macros se quedan en 31 P / 153 kcal en las cuatro. Declarando que una unidad son 180 g,
+2 unidades dan 111 P / 551 kcal, que es exactamente 3,6 veces la base.

@@ -1804,6 +1804,8 @@ img{-webkit-user-drag:none;user-select:none}
    podia poner "media taza y algo" ni una cantidad suelta (queja del dueno) */
 .hval input{width:46px;text-align:center;background:none;border:0;color:var(--ink);font:600 15px var(--num);font-variant-numeric:tabular-nums;padding:0}
 .hval input:focus{outline:none}
+.nequiv{padding:10px 11px;border-radius:12px;border:1px solid rgba(var(--acc-rgb),.3);
+  background:rgba(var(--acc-rgb),.08)}
 .ngrams{display:flex;align-items:center;flex:none;gap:6px}
 .ngrams input{width:64px;text-align:center;background:var(--card2);border:1px solid var(--line);border-radius:12px;height:36px;padding:0 4px;font:700 16px var(--num);font-variant-numeric:tabular-nums}
 .festimate{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding:11px 13px;background:var(--card2);border-radius:12px}
@@ -1963,7 +1965,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 200';
+const APPREV='REV 201';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -11081,6 +11083,41 @@ function unidadLabel(u){
    significa "macros por 100 g" y q es un MULTIPLICADOR de esos 100 g (q=2.2
    son 220 g) para poder reusar sin cambios la multiplicacion pg*q de siempre.
    id es opcional, solo hace falta para modo 'cda' (busca el peso aprox). */
+/* ============ MEDIR EN OTRA UNIDAD ============
+   Cada item del borrador guarda su cantidad en la unidad BASE del alimento (la del catalogo)
+   y ahi es donde se calculan los macros: eso no se toca nunca, asi el numero no se puede
+   desalinear. Lo que se elige aqui es solo COMO se cuenta: en gramos, cucharadas, unidades
+   o porciones. Se convierte con un factor "cuantas unidades base es una de las tuyas".
+   Cuando el factor no se puede saber (nadie sabe cuantos gramos pesa una porcion de un plato
+   sin decirlo), se pregunta una vez y se recuerda por alimento. */
+const NLOG_UNIS=[['base','del catálogo'],['g','gramos'],['cda','cucharadas'],['unid','unidades'],['porcion','porciones']];
+function equivKey(it, u){ return (it.id||('n:'+it.n))+'|'+u; }
+function equivGuardada(it, u){ const e=(S.cfg&&S.cfg.equiv)||{}; return e[equivKey(it,u)]||null; }
+/* unidades base que equivalen a UNA de la unidad elegida; null = hay que preguntarla */
+function equivFactor(it, u){
+  if(u==='base' || !u) return 1;
+  const g=equivGuardada(it,u); if(g) return g;
+  const base=it.u||'';
+  if(base==='g'){                       /* el catalogo cuenta de a 100 g */
+    if(u==='g') return 0.01;
+    if(u==='cda') return cdaWeight(it.id)/100;
+    if(u==='porcion') return 1;         /* una porcion = los 100 g de referencia */
+  }
+  if(u==='unid' && base!=='g') return 1;      /* la unidad del catalogo YA es contable */
+  if(u==='porcion' && base!=='g') return 1;
+  if(u==='cda' && base==='cda') return 1;
+  return null;
+}
+function nlogUniDe(it){ return it.uv||'base'; }
+function nlogCantMostrada(it){
+  const f=equivFactor(it, nlogUniDe(it));
+  return f ? it.q/f : it.q;
+}
+function nlogUniLabel(it){
+  const u=nlogUniDe(it);
+  if(u==='base') return it.u||'unidades';
+  return {g:'g', cda:'cucharadas', unid:'unidades', porcion:'porciones'}[u]||u;
+}
 function medidaTxt(q,u,id){
   if(u==='g') return Math.round(q*100)+' g';
   if(u==='cda'){
@@ -11333,17 +11370,36 @@ function nlogPanel(slot){
     })()}
     ${draft.length?`<div class="ndraft mt12"><span class="lbl">EN ESTE LOGGEO · ${draft.length}</span>
       ${draft.map((i,ix)=>{
-        const esG = i.u==='g', esCda = i.u==='cda';
+        const uv=nlogUniDe(i);
+        const esG = (uv==='g') || (uv==='base' && i.u==='g');
+        const esCda = (uv==='cda') || (uv==='base' && i.u==='cda');
         const sub = (esG||esCda) ? ' · '+medidaTxt(i.q,i.u,i.id) : (i.u?' · '+i.u:'');
         const ctl = esG
           ? `<div class="ngrams">
               <input class="in" id="gramsQ${ix}" data-ch="nlogGrams" data-i="${ix}" type="text" inputmode="decimal" value="${Math.round(i.q*100)}" aria-label="gramos de ${esc(i.n)}">
               <span class="t-unit">g</span>
             </div>`
-          : `<div class="hstep"><button data-a="nlogQty" data-i="${ix}" data-d="-1" aria-label="menos">−</button><span class="hval"><input id="qtyQ${ix}" data-ch="nlogQtyIn" data-i="${ix}" type="text" inputmode="decimal" value="${fq(i.q)}" aria-label="cantidad de ${esc(i.n)} en ${esc(i.u||'unidades')}"></span><button data-a="nlogQty" data-i="${ix}" data-d="1" aria-label="más">+</button></div>`;
+          : `<div class="hstep"><button data-a="nlogQty" data-i="${ix}" data-d="-1" aria-label="menos">−</button><span class="hval"><input id="qtyQ${ix}" data-ch="nlogQtyIn" data-i="${ix}" type="text" inputmode="decimal" value="${fq(nlogCantMostrada(i))}" aria-label="cantidad de ${esc(i.n)} en ${esc(nlogUniLabel(i))}"></span><button data-a="nlogQty" data-i="${ix}" data-d="1" aria-label="más">+</button></div>`;
         return `<div class="ndrow">
         <div class="grow" style="min-width:0"><b style="font-size:16px">${esc(i.n)}</b><span class="nfsub" style="display:block"><b class="npro">${Math.round(i.pg*i.q)} P</b> · ${Math.round(i.kc*i.q)} kcal${sub}</span>
           ${esG?`<div class="flex wrapf mt4" style="gap:6px">${[100,150,200].map(v=>`<button class="chip" data-a="nlogGramsSet" data-i="${ix}" data-v="${v}">${v} g</button>`).join('')}</div>`:''}
+          ${(()=>{ const E=UI.nlogEq;
+            if(E && E.i===ix) return `<div class="nequiv mt8">
+              <span class="small dim" style="display:block;line-height:1.45">¿Cuántos <b>gramos</b> pesa ${E.u==='cda'?'una cucharada':E.u==='unid'?'una unidad':E.u==='porcion'?'una porción':'una'} de ${esc(i.n).toLowerCase()}?</span>
+              <div class="flex mt4" style="gap:6px">
+                <input class="in ctr" data-ch="nlogeq" type="text" inputmode="decimal" placeholder="g" style="flex:1">
+                <button class="btn sm primary" data-a="nlogEqGuardar" data-i="${ix}" style="flex:none">Listo</button>
+                <button class="btn sm ghost" data-a="nlogEqCancel" style="flex:none">${ic('x',12)}</button>
+              </div>
+              <span class="small dim" style="display:block;margin-top:4px">Se guarda y no te la vuelvo a preguntar.</span>
+            </div>`;
+            return `<div class="flex wrapf mt4" style="gap:4px">
+              <span class="small dim" style="margin-right:2px">Medir en</span>
+              ${NLOG_UNIS.filter(([u])=>u==='base'||equivFactor(i,u)!=null||['g','cda','unid','porcion'].includes(u)).map(([u,lb])=>{
+                const act=nlogUniDe(i)===u, sabe=equivFactor(i,u)!=null;
+                return `<button class="chip xs ${act?'fill':''}" data-a="nlogUni" data-i="${ix}" data-u="${u}"
+                  title="${sabe?'':'te pregunto la equivalencia una vez'}">${u==='base'?esc(i.u||'unidad'):lb}${sabe?'':' ?'}</button>`;}).join('')}
+            </div>`;})()}
         </div>
         ${ctl}
         <button class="chip red" data-a="nlogRm" data-i="${ix}" aria-label="quitar">${ic('x',10)}</button>
@@ -17624,6 +17680,30 @@ const ACTIONS = {
   nlogCat(d){ UI.nlogCat=UI.nlogCat===d.c?null:d.c; UI.nlogQ=''; render(); },
   /* barra de la semana de proteina: abre o cierra el detalle de ese dia */
   pwSel(d){ UI.pwSel = UI.pwSel===d.d ? null : d.d; render(); },
+  /* elegir en que se cuenta ese item. La cantidad se traduce para que el plato siga siendo
+     el mismo: cambiar de unidad no cambia lo que comiste. */
+  nlogUni(d, el){
+    const it=(UI.nlogDraft||[])[+d.i]; if(!it) return;
+    const u=d.u;
+    const f=equivFactor(it, u);
+    if(f==null){ UI.nlogEq={i:+d.i, u}; renderAnclado(el); return; }
+    it.uv = u==='base' ? null : u;
+    renderAnclado(el);
+  },
+  /* la equivalencia que no se puede deducir se declara una vez y queda guardada */
+  nlogEqGuardar(d, el){
+    const E=UI.nlogEq; if(!E) return;
+    const inp=document.querySelector('#view input[data-ch=nlogeq]');
+    const v=inp?parseFloat(String(inp.value).replace(',','.')):NaN;
+    if(!(v>0)){ toast('Escribe cuánto pesa una'); return; }
+    const it=(UI.nlogDraft||[])[E.i]; if(!it) return;
+    S.cfg.equiv=S.cfg.equiv||{};
+    /* la pregunta se hace en gramos y la base 'g' cuenta de a 100 */
+    S.cfg.equiv[equivKey(it,E.u)] = (it.u==='g') ? v/100 : v;
+    save('cfg');
+    it.uv=E.u; UI.nlogEq=null; renderAnclado(el);
+  },
+  nlogEqCancel(d, el){ UI.nlogEq=null; renderAnclado(el); },
   nlogPick(d){
     if(!UI.nlogDraft) UI.nlogDraft=[];
     if(d.r){
@@ -17669,7 +17749,10 @@ const ACTIONS = {
   sugMas(){ if(UI.sugTab==='grupos') UI.sugGIdx=(UI.sugGIdx||0)+3; else UI.sugIdx=(UI.sugIdx||0)+3; render(); },
   /* la caja "con que cerrar" arranca colapsada: tocar la cabecera la abre o la cierra */
   sugToggle(){ UI.sugOpen=!UI.sugOpen; render(); },
-  nlogQty(d){ const it=(UI.nlogDraft||[])[+d.i]; if(!it) return; it.q=clamp(it.q+(+d.d)*0.5,0.5,9); render(); },
+  nlogQty(d){ const it=(UI.nlogDraft||[])[+d.i]; if(!it) return;
+    /* el paso de medio en medio es de la unidad que se este usando, no de la base */
+    const f=equivFactor(it, nlogUniDe(it))||1;
+    it.q=clamp(it.q+(+d.d)*0.5*f, 0.01*f, 999); render(); },
   /* atajos 100/150/200 g del borrador: fijan la cantidad en gramos de una */
   nlogGramsSet(d){ const it=(UI.nlogDraft||[])[+d.i]; if(!it) return; it.q=clamp((+d.v)/100,0.1,20); render(); },
   nlogRm(d){ (UI.nlogDraft||[]).splice(+d.i,1); render(); },
@@ -18493,7 +18576,10 @@ const CHANGES = {
   nlogQtyIn(el){
     const i=+el.dataset.i; const it=(UI.nlogDraft||[])[i]; if(!it) return;
     const v=+String(el.value).replace(',','.').replace(/[^\d.]/g,'')||0;
-    it.q=clamp(v,0.05,99);
+    /* lo que se escribe esta en la unidad elegida: se traduce a la base, que es donde
+       viven los macros */
+    const f=equivFactor(it, nlogUniDe(it))||1;
+    it.q=clamp(v*f,0.01,999);
     render();
     const inp=document.getElementById('qtyQ'+i);
     if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; try{ inp.setSelectionRange(inp.value.length,inp.value.length); }catch(_){} }
@@ -18760,7 +18846,7 @@ document.addEventListener('click', e=>{
 /* los buscadores en vivo ya se repintan desde el listener de 'input': si ademas
    atendieran el 'change' que dispara el navegador al destruirse el campo, se repintaria
    dos veces por tecla (ver el guardia de render) */
-const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq','goalq','goalw','goalr','nlogQtyIn','pegarin','rutq','libreq','fzaq','imprevq']);
+const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq','goalq','goalw','goalr','nlogQtyIn','pegarin','rutq','libreq','fzaq','imprevq','nlogeq']);
 /* los dias de la semana son <details>: si no se recuerda cual quedo abierto, cada
    render los cierra, la pagina se encoge de golpe y el scroll cae al inicio (era el
    salto al tocar "ver ingredientes"). 'toggle' no burbujea: se escucha en captura. */

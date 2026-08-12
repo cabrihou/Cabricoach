@@ -950,14 +950,28 @@ y ahí es donde se calculan los macros. Eso no se toca nunca: así el número no
 desalinear por cambiar de unidad. Lo que se elige es solo **cómo se cuenta**.
 
 - `it.uv` es la unidad de visualización: `g`, `cda`, `unid`, `porcion`, o nada (la del catálogo).
-- `equivFactor(item, u)` devuelve cuántas unidades base es **una** de la unidad elegida. Con
-  base en gramos (el catálogo cuenta de a 100 g): 1 g = 0,01 · 1 cucharada = `cdaWeight`/100 ·
-  1 porción = 1. Con base contable (taza, vaso, scoop…), unidad y porción son 1.
-- Cuando el factor **no se puede deducir** (nadie sabe cuántos gramos pesa una unidad de
-  pechuga sin decirlo) devuelve `null` y la app **pregunta una vez**, en gramos, y guarda la
-  respuesta en `S.cfg.equiv[id|unidad]`. El chip lleva un `?` mientras no se sepa.
+**Todo se resuelve en gramos**, que es la única moneda común. Guardar "factores" contra la
+base fue el error de la primera versión: la pregunta decía gramos y lo guardado significaba
+otra cosa según el alimento, así que declarar que un plato pesa 350 g hacía que contara **350
+veces su porción**. Ahora hay un solo almacén, `S.cfg.gramos[clave] = GRAMOS`, y de ahí sale
+todo:
+
+- `gramosBase(item)`: cuánto pesa **una unidad base**. 100 g si el catálogo cuenta por peso,
+  `cdaWeight` si cuenta por cucharadas, y si cuenta por porción/taza/vaso hay que preguntarlo.
+- `gramosDeUnidad(item, u)`: cuánto pesa **una de la unidad elegida**.
+- `equivFactor` es el cociente de los dos. Si falta cualquiera de los dos pesos, `equivPide`
+  dice **cuál** falta y con qué texto preguntarlo, y la app pregunta eso y no otra cosa. Si
+  después de responder sigue faltando el otro, vuelve a preguntar en vez de asumir.
+- El chip lleva un `?` mientras no se sepa, y una vez sabido la fila dice la equivalencia en
+  claro ("1 unidad = 180 g · el catálogo cuenta de a 100 g") para poder auditarla.
 - `nlogQtyIn` y `nlogQty` traducen lo escrito y el paso de medio en medio a la base.
 
-Comprobado con pechuga (base 100 g): 1 base = 100 g = 6,67 cucharadas de 15 g = 1 porción, y
-los macros se quedan en 31 P / 153 kcal en las cuatro. Declarando que una unidad son 180 g,
-2 unidades dan 111 P / 551 kcal, que es exactamente 3,6 veces la base.
+Comprobado en los dos casos que fallaban:
+
+| Alimento | Medida | Resultado |
+|---|---|---|
+| Pechuga (base 100 g) | 1 base = 100 g = 6,67 cucharadas | 31 P / 153 kcal en las tres |
+| Pechuga, 1 unidad = 180 g | 2 unidades | 111 P / 551 kcal (3,6× la base) |
+| Plato (base porción) | 1 porción | 59 P / 640 kcal |
+| Plato, 1 porción = 350 g | 350 g | 59 P / 640 kcal |
+| Plato, 1 porción = 350 g | 175 g | 30 P / 320 kcal (la mitad exacta) |

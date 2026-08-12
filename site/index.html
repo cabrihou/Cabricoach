@@ -1965,7 +1965,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 201';
+const APPREV='REV 202';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -11091,22 +11091,46 @@ function unidadLabel(u){
    Cuando el factor no se puede saber (nadie sabe cuantos gramos pesa una porcion de un plato
    sin decirlo), se pregunta una vez y se recuerda por alimento. */
 const NLOG_UNIS=[['base','del catálogo'],['g','gramos'],['cda','cucharadas'],['unid','unidades'],['porcion','porciones']];
+/* TODO se resuelve en gramos, que es la unica moneda comun. Guardar "factores" contra la
+   base era el error: la pregunta decia gramos y lo guardado significaba otra cosa segun el
+   alimento, asi que un plato de 350 g terminaba contando 350 veces su porcion.
+   Ahora hay un solo almacen, S.cfg.gramos[clave] = GRAMOS, y de ahi sale todo. */
 function equivKey(it, u){ return (it.id||('n:'+it.n))+'|'+u; }
-function equivGuardada(it, u){ const e=(S.cfg&&S.cfg.equiv)||{}; return e[equivKey(it,u)]||null; }
-/* unidades base que equivalen a UNA de la unidad elegida; null = hay que preguntarla */
+function gramosGuardados(it, u){ const e=(S.cfg&&S.cfg.gramos)||{}; const v=e[equivKey(it,u)]; return v>0?v:null; }
+/* cuanto pesa UNA unidad base del alimento; null = no se sabe y hay que preguntarla */
+function gramosBase(it){
+  if(it.u==='g') return 100;                 /* el catalogo cuenta de a 100 g */
+  if(it.u==='cda') return cdaWeight(it.id);
+  return gramosGuardados(it,'base');
+}
+/* cuanto pesa UNA de la unidad elegida */
+function gramosDeUnidad(it, u){
+  if(u==='g') return 1;
+  if(u==='cda') return cdaWeight(it.id);
+  if(u==='unid'||u==='porcion'){
+    /* si el catalogo YA cuenta de esa forma, una es una: no hacen falta gramos */
+    if(it.u!=='g' && it.u!=='cda') return gramosBase(it);
+    return gramosGuardados(it,u);
+  }
+  return null;
+}
+/* unidades base que equivalen a UNA de la unidad elegida; null = falta un dato */
 function equivFactor(it, u){
   if(u==='base' || !u) return 1;
-  const g=equivGuardada(it,u); if(g) return g;
-  const base=it.u||'';
-  if(base==='g'){                       /* el catalogo cuenta de a 100 g */
-    if(u==='g') return 0.01;
-    if(u==='cda') return cdaWeight(it.id)/100;
-    if(u==='porcion') return 1;         /* una porcion = los 100 g de referencia */
-  }
-  if(u==='unid' && base!=='g') return 1;      /* la unidad del catalogo YA es contable */
-  if(u==='porcion' && base!=='g') return 1;
-  if(u==='cda' && base==='cda') return 1;
-  return null;
+  if((u==='unid'||u==='porcion') && it.u!=='g' && it.u!=='cda') return 1;
+  const gB=gramosBase(it), gU=gramosDeUnidad(it,u);
+  if(!gB || !gU) return null;
+  return gU/gB;
+}
+/* que hay que preguntar para poder usar esa unidad: la clave y el texto */
+function equivPide(it, u){
+  if(equivFactor(it,u)!=null) return null;
+  const NOM={g:'gramo', cda:'cucharada', unid:'unidad', porcion:'porción'};
+  /* "un porción" no; el articulo va a mano porque el genero no se adivina por la ultima letra */
+  const FEM=new Set(['porción','porcion','taza','unidad','cucharada','lata','copa','rebanada','rodaja','bola','barra','bolsa']);
+  if(!gramosBase(it)){ const b=it.u||'unidad';
+    return {clave:'base', txt:(FEM.has(b.toLowerCase())?'una ':'un ')+b}; }
+  return {clave:u, txt:'una '+(NOM[u]||u)};
 }
 function nlogUniDe(it){ return it.uv||'base'; }
 function nlogCantMostrada(it){
@@ -11385,7 +11409,7 @@ function nlogPanel(slot){
           ${esG?`<div class="flex wrapf mt4" style="gap:6px">${[100,150,200].map(v=>`<button class="chip" data-a="nlogGramsSet" data-i="${ix}" data-v="${v}">${v} g</button>`).join('')}</div>`:''}
           ${(()=>{ const E=UI.nlogEq;
             if(E && E.i===ix) return `<div class="nequiv mt8">
-              <span class="small dim" style="display:block;line-height:1.45">¿Cuántos <b>gramos</b> pesa ${E.u==='cda'?'una cucharada':E.u==='unid'?'una unidad':E.u==='porcion'?'una porción':'una'} de ${esc(i.n).toLowerCase()}?</span>
+              <span class="small dim" style="display:block;line-height:1.45">¿Cuántos <b>gramos</b> pesa <b>${esc(E.txt||'una')}</b> de ${esc(i.n).toLowerCase()}?</span>
               <div class="flex mt4" style="gap:6px">
                 <input class="in ctr" data-ch="nlogeq" type="text" inputmode="decimal" placeholder="g" style="flex:1">
                 <button class="btn sm primary" data-a="nlogEqGuardar" data-i="${ix}" style="flex:none">Listo</button>
@@ -11395,11 +11419,16 @@ function nlogPanel(slot){
             </div>`;
             return `<div class="flex wrapf mt4" style="gap:4px">
               <span class="small dim" style="margin-right:2px">Medir en</span>
-              ${NLOG_UNIS.filter(([u])=>u==='base'||equivFactor(i,u)!=null||['g','cda','unid','porcion'].includes(u)).map(([u,lb])=>{
-                const act=nlogUniDe(i)===u, sabe=equivFactor(i,u)!=null;
+              ${NLOG_UNIS.map(([u,lb])=>{
+                const act=nlogUniDe(i)===u, f=equivFactor(i,u);
+                const gU=u==='base'?gramosBase(i):gramosDeUnidad(i,u);
                 return `<button class="chip xs ${act?'fill':''}" data-a="nlogUni" data-i="${ix}" data-u="${u}"
-                  title="${sabe?'':'te pregunto la equivalencia una vez'}">${u==='base'?esc(i.u||'unidad'):lb}${sabe?'':' ?'}</button>`;}).join('')}
-            </div>`;})()}
+                  title="${f==null?'te pregunto cuánto pesa, una sola vez':(gU?'1 = '+Math.round(gU)+' g':'')}">${u==='base'?esc(i.u||'unidad'):lb}${f==null?' ?':''}</button>`;}).join('')}
+            </div>
+            ${(()=>{ const u=nlogUniDe(i); const gU=u==='base'?gramosBase(i):gramosDeUnidad(i,u);
+              const gB=gramosBase(i);
+              if(!gU||!gB||u==='base') return '';
+              return `<span class="small dim" style="display:block;margin-top:3px">1 ${nlogUniLabel(i).replace(/s$/,'')} = ${Math.round(gU)} g · el catálogo cuenta de a ${Math.round(gB)} g</span>`;})()}`;})()}
         </div>
         ${ctl}
         <button class="chip red" data-a="nlogRm" data-i="${ix}" aria-label="quitar">${ic('x',10)}</button>
@@ -17685,8 +17714,8 @@ const ACTIONS = {
   nlogUni(d, el){
     const it=(UI.nlogDraft||[])[+d.i]; if(!it) return;
     const u=d.u;
-    const f=equivFactor(it, u);
-    if(f==null){ UI.nlogEq={i:+d.i, u}; renderAnclado(el); return; }
+    const pide=equivPide(it, u);
+    if(pide){ UI.nlogEq={i:+d.i, u, clave:pide.clave, txt:pide.txt}; renderAnclado(el); return; }
     it.uv = u==='base' ? null : u;
     renderAnclado(el);
   },
@@ -17695,12 +17724,15 @@ const ACTIONS = {
     const E=UI.nlogEq; if(!E) return;
     const inp=document.querySelector('#view input[data-ch=nlogeq]');
     const v=inp?parseFloat(String(inp.value).replace(',','.')):NaN;
-    if(!(v>0)){ toast('Escribe cuánto pesa una'); return; }
+    if(!(v>0)){ toast('Escribe cuántos gramos pesa'); return; }
     const it=(UI.nlogDraft||[])[E.i]; if(!it) return;
-    S.cfg.equiv=S.cfg.equiv||{};
-    /* la pregunta se hace en gramos y la base 'g' cuenta de a 100 */
-    S.cfg.equiv[equivKey(it,E.u)] = (it.u==='g') ? v/100 : v;
+    S.cfg.gramos=S.cfg.gramos||{};
+    /* se guarda EN GRAMOS, tal cual se pregunto. La clave dice de que es ese peso. */
+    S.cfg.gramos[equivKey(it, E.clave)] = v;
     save('cfg');
+    /* si aun falta otro dato para esa unidad, se vuelve a preguntar en vez de asumir */
+    const pide=equivPide(it, E.u);
+    if(pide){ UI.nlogEq={i:E.i, u:E.u, clave:pide.clave, txt:pide.txt}; renderAnclado(el); return; }
     it.uv=E.u; UI.nlogEq=null; renderAnclado(el);
   },
   nlogEqCancel(d, el){ UI.nlogEq=null; renderAnclado(el); },

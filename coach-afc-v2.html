@@ -1895,7 +1895,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 187';
+const APPREV='REV 188';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3655,16 +3655,22 @@ function propComo(f){
 }
 const FZA_NIVELES=['Principiante','Novato','Intermedio','Avanzado','Élite'];
 /* ratios de 1RM/peso corporal para [novato, intermedio, avanzado, elite] */
+/* Baremos leidos de strengthlevel.com el 11/08/2026, fila de 90 kg en hombre y de 60 kg en
+   mujer, que son los pesos de Andres y Cami. Las tablas de la fuente NO son un ratio puro
+   (el ratio exigido baja conforme sube el peso corporal), asi que estos numeros son exactos
+   a esos pesos y una aproximacion fuera de ahi. Antes estaban a ojo y se notaba: el peso
+   muerto pedia 1,25x para Novato cuando la fuente pide 1,49x, y la banca pedia 2,00x para
+   Elite cuando pide 1,83x. */
 const FZA_STD={
-  bench:   {n:'Press banca',      a:[1.00,1.25,1.50,2.00], c:[0.50,0.75,1.10,1.45], f:'sl'},
-  squat:   {n:'Sentadilla',       a:[1.25,1.75,2.25,2.75], c:[0.75,1.25,1.75,2.25], f:'sl'},
-  dead:    {n:'Peso muerto',      a:[1.25,1.75,2.50,3.00], c:[0.75,1.15,1.65,2.15], f:'sl'},
-  ohp:     {n:'Press de hombro',  a:[0.55,0.80,1.05,1.35], c:[0.35,0.50,0.70,0.95], f:'sl'},
-  row:     {n:'Remo',             a:[0.75,1.00,1.50,1.75], c:[0.45,0.70,0.95,1.25], f:'sl'},
-  pulldown:{n:'Jalón / dominada', a:[0.75,1.00,1.50,1.75], c:[0.50,0.75,0.95,1.25], f:'sl'},
-  hip:     {n:'Hip thrust',       a:[1.25,1.75,2.75,3.75], c:[1.00,1.75,2.50,3.25], f:'sl'},
-  legpress:{n:'Prensa',           a:[2.00,2.75,4.00,5.25], c:[1.50,2.25,3.25,4.50], f:'sl'},
-  curl:    {n:'Curl de bíceps',   a:[0.40,0.60,0.80,1.05], c:[0.25,0.40,0.55,0.75], f:'sl'},
+  bench:   {n:'Press banca',      a:[0.94,1.21,1.52,1.83], c:[0.40,0.63,0.90,1.20], f:'sl', ver:'2026-08-11'},
+  squat:   {n:'Sentadilla',       a:[1.28,1.64,2.07,2.51], c:[0.63,0.95,1.30,1.72], f:'sl', ver:'2026-08-11'},
+  dead:    {n:'Peso muerto',      a:[1.49,1.91,2.39,2.89], c:[1.00,1.43,1.93,2.48], f:'sl', ver:'2026-08-11'},
+  ohp:     {n:'Press de hombro',  a:[0.59,0.78,1.00,1.23], c:[0.33,0.52,0.72,0.95], f:'sl', ver:'2026-08-11'},
+  row:     {n:'Remo',             a:[0.83,1.10,1.39,1.71], c:[0.37,0.55,0.77,1.02], f:'sl', ver:'2026-08-11'},
+  pulldown:{n:'Jalón / dominada', a:[0.78,1.02,1.29,1.58], c:[0.55,0.77,1.00,1.27], f:'sl', ver:'2026-08-11'},
+  hip:     {n:'Hip thrust',       a:[1.23,1.87,2.62,3.46], c:[1.05,1.67,2.45,3.32], f:'sl', ver:'2026-08-11'},
+  legpress:{n:'Prensa',           a:[2.04,2.83,3.76,4.77], c:[1.45,2.33,3.40,4.62], f:'sl', ver:'2026-08-11'},
+  curl:    {n:'Curl de bíceps',   a:[0.40,0.57,0.76,0.97], c:[0.18,0.30,0.45,0.62], f:'sl', ver:'2026-08-11'},
 };
 /* De donde sale cada baremo y cuanto hay que fiarse. Se muestra en pantalla porque un
    "eres avanzado" sin respaldo no vale nada:
@@ -3869,7 +3875,7 @@ function exPesoReal(id, w, fecha){
    marcar si un peso es por lado. Se excluyeron a proposito flexiones, remo invertido y
    muscle up: se registran sin kilos y el ratio no se podria calcular.
    Se llega a ellos por PATRON de movimiento, asi cubren tambien los importados. */
-const FZA_STD2={"press_inclinado":{"n":"Press inclinado","a":[0.55,0.9,1.25,1.65],"c":[0.25,0.55,0.8,1.1]},"press_banca_db":{"n":"Press banca con mancuerna","a":[0.4,1.0,1.4,1.85],"c":[0.2,0.6,0.95,1.35]},"press_militar_db":{"n":"Press de hombro con mancuerna","a":[0.5,0.8,1.1,1.4],"c":[0.3,0.5,0.7,0.9],"f":"sl"},"elevacion_lateral":{"n":"Elevación lateral","a":[0.12,0.4,0.6,0.85],"c":[0.1,0.28,0.42,0.6]},"pajaro_posterior":{"n":"Pájaro posterior","a":[0.05,0.45,0.7,0.95],"c":[0.08,0.3,0.5,0.7]},"remo_mancuerna":{"n":"Remo con mancuerna","a":[0.35,1.0,1.4,1.8],"c":[0.25,0.65,0.9,1.25]},"remo_polea":{"n":"Remo sentado en polea","a":[0.4,1.05,1.5,1.95],"c":[0.3,0.75,1.0,1.35]},"encogimiento":{"n":"Encogimiento","a":[0.65,1.6,2.25,3.0],"c":[0.25,1.0,1.6,2.25]},"curl_martillo":{"n":"Curl martillo","a":[0.18,0.58,0.88,1.28],"c":[0.12,0.4,0.62,0.9]},"triceps_polea":{"n":"Tríceps en polea","a":[0.4,0.7,1.05,1.45],"c":[0.3,0.48,0.72,1.0]},"press_frances":{"n":"Press francés","a":[0.35,0.6,0.9,1.25],"c":[0.15,0.3,0.5,0.75],"f":"sl"},"sentadilla_frontal":{"n":"Sentadilla frontal","a":[0.75,1.3,1.65,2.0],"c":[0.5,0.9,1.2,1.5]},"hack":{"n":"Hack squat","a":[1.28,1.87,2.58,3.36],"c":[0.77,1.4,2.11,2.69],"f":"sl","ver":"2026-08-11"},"ext_cuadriceps":{"n":"Extensión de cuádriceps","a":[0.5,1.2,1.7,2.3],"c":[0.35,0.9,1.28,1.7]},"curl_femoral":{"n":"Curl femoral","a":[0.4,1.0,1.43,1.9],"c":[0.3,0.73,1.05,1.47]},"rdl":{"n":"Peso muerto rumano","a":[0.95,1.52,1.97,2.4],"c":[0.65,1.04,1.42,1.85]},"zancada":{"n":"Zancada","a":[0.28,0.6,0.88,1.2],"c":[0.18,0.4,0.6,0.8]},"bulgara":{"n":"Sentadilla búlgara","a":[0.5,0.81,1.25,1.65],"c":[0.32,0.55,0.85,1.15]},"gemelo":{"n":"Gemelo de pie","a":[0.4,0.75,1.2,1.65],"c":[0.25,0.5,0.8,1.1]},"abductor":{"n":"Abductor en máquina","a":[0.7,1.3,1.92,2.5],"c":[0.6,1.15,1.7,2.25]},"aductor":{"n":"Aductor en máquina","a":[0.75,1.39,2.07,2.75],"c":[0.65,1.1,1.65,2.3]},"dominada_lastrada":{"n":"Dominada lastrada","a":[1.17,1.41,1.67,1.95],"c":[0.92,1.14,1.38,1.65],"f":"est"},"fondos":{"n":"Fondos lastrados","a":[1.31,1.64,2.01,2.41],"c":[0.98,1.28,1.63,2.0],"f":"est"},"peso_muerto_sumo":{"n":"Peso muerto sumo","a":[1.25,1.8,2.55,3.05],"c":[0.75,1.2,1.7,2.2]},"trap_bar":{"n":"Peso muerto trap bar","a":[1.3,1.85,2.6,3.15],"c":[0.8,1.25,1.75,2.25]},"face_pull":{"n":"Face pull","a":[0.1,0.2,0.31,0.45],"c":[0.06,0.12,0.2,0.3]},"dominada_anillas":{"n":"Dominada en anillas","a":[1.17,1.41,1.67,1.95],"c":[0.92,1.14,1.38,1.65],"f":"ext"},"fondos_anillas":{"n":"Fondos en anillas","a":[1.31,1.64,2.01,2.41],"c":[0.98,1.28,1.63,2.0],"f":"ext"}};
+const FZA_STD2={"press_inclinado":{"n":"Press inclinado","a":[0.55,0.9,1.25,1.65],"c":[0.25,0.55,0.8,1.1]},"press_banca_db":{"n":"Press banca con mancuerna","a":[0.4,1.0,1.4,1.85],"c":[0.2,0.6,0.95,1.35]},"press_militar_db":{"n":"Press de hombro con mancuerna","a":[0.5,0.8,1.1,1.4],"c":[0.3,0.5,0.7,0.9],"f":"sl"},"elevacion_lateral":{"n":"Elevación lateral","a":[0.12,0.4,0.6,0.85],"c":[0.1,0.28,0.42,0.6]},"pajaro_posterior":{"n":"Pájaro posterior","a":[0.05,0.45,0.7,0.95],"c":[0.08,0.3,0.5,0.7]},"remo_mancuerna":{"n":"Remo con mancuerna","a":[0.35,1.0,1.4,1.8],"c":[0.25,0.65,0.9,1.25]},"remo_polea":{"n":"Remo sentado en polea","a":[0.4,1.05,1.5,1.95],"c":[0.3,0.75,1.0,1.35]},"encogimiento":{"n":"Encogimiento","a":[0.65,1.6,2.25,3.0],"c":[0.25,1.0,1.6,2.25]},"curl_martillo":{"n":"Curl martillo","a":[0.18,0.58,0.88,1.28],"c":[0.12,0.4,0.62,0.9]},"triceps_polea":{"n":"Tríceps en polea","a":[0.4,0.7,1.05,1.45],"c":[0.3,0.48,0.72,1.0]},"press_frances":{"n":"Press francés","a":[0.35,0.6,0.9,1.25],"c":[0.15,0.3,0.5,0.75],"f":"sl"},"sentadilla_frontal":{"n":"Sentadilla frontal","a":[0.75,1.3,1.65,2.0],"c":[0.5,0.9,1.2,1.5]},"hack":{"n":"Hack squat","a":[1.28,1.87,2.58,3.36],"c":[0.77,1.4,2.11,2.69],"f":"sl","ver":"2026-08-11"},"ext_cuadriceps":{"n":"Extensión de cuádriceps","a":[0.5,1.2,1.7,2.3],"c":[0.35,0.9,1.28,1.7]},"curl_femoral":{"n":"Curl femoral","a":[0.4,1.0,1.43,1.9],"c":[0.3,0.73,1.05,1.47]},"rdl":{"n":"Peso muerto rumano","a":[0.95,1.52,1.97,2.4],"c":[0.65,1.04,1.42,1.85]},"zancada":{"n":"Zancada","a":[0.28,0.6,0.88,1.2],"c":[0.18,0.4,0.6,0.8]},"bulgara":{"n":"Sentadilla búlgara","a":[0.5,0.81,1.25,1.65],"c":[0.32,0.55,0.85,1.15]},"gemelo":{"n":"Gemelo de pie","a":[0.4,0.75,1.2,1.65],"c":[0.25,0.5,0.8,1.1]},"abductor":{"n":"Abductor en máquina","a":[0.7,1.3,1.92,2.5],"c":[0.6,1.15,1.7,2.25]},"aductor":{"n":"Aductor en máquina","a":[0.75,1.39,2.07,2.75],"c":[0.65,1.1,1.65,2.3]},"dominada_lastrada":{"n":"Dominada lastrada","a":[1.17,1.39,1.63,1.88],"c":[0.68,0.85,1.03,1.22],"f":"sl","ver":"2026-08-11"},"fondos":{"n":"Fondos lastrados","a":[1.33,1.63,1.97,2.31],"c":[1.0,1.28,1.62,1.97],"f":"sl","ver":"2026-08-11"},"peso_muerto_sumo":{"n":"Peso muerto sumo","a":[1.25,1.8,2.55,3.05],"c":[0.75,1.2,1.7,2.2]},"trap_bar":{"n":"Peso muerto trap bar","a":[1.3,1.85,2.6,3.15],"c":[0.8,1.25,1.75,2.25]},"face_pull":{"n":"Face pull","a":[0.1,0.2,0.31,0.45],"c":[0.06,0.12,0.2,0.3]},"dominada_anillas":{"n":"Dominada en anillas","a":[1.17,1.41,1.67,1.95],"c":[0.92,1.14,1.38,1.65],"f":"ext"},"fondos_anillas":{"n":"Fondos en anillas","a":[1.31,1.64,2.01,2.41],"c":[0.98,1.28,1.63,2.0],"f":"ext"}};
 const FZA_PAT2={"press_inclinado":"press_inclinado","press_vertical":"press_militar_db","elevacion_lateral":"elevacion_lateral","pajaro_posterior":"pajaro_posterior","remo_unilateral":"remo_mancuerna","remo_horizontal":"remo_polea","encogimiento_trapecio":"encogimiento","curl_martillo":"curl_martillo","extension_triceps":"triceps_polea","extension_cuadriceps":"ext_cuadriceps","curl_femoral":"curl_femoral","peso_muerto_rumano":"rdl","zancada":"zancada","gemelo_de_pie":"gemelo","gemelo_sentado":"gemelo","abduccion_cadera":"abductor","aduccion_cadera":"aductor","apertura_pecho":"press_banca_db","press_horizontal":"press_banca_db","extension_lumbar":"rdl"};
 /* nivel de un ejercicio que no esta entre los basicos, si tenemos baremo de su patron */
 /* algunos ejercicios comparten patron pero tienen tabla propia y muy distinta: el face
@@ -12313,8 +12319,31 @@ function normEx(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u
 /* el texto de Strong viene en ingles y los nombres del plan mezclan espanol:
    para el match EXACTO se compara tambien una variante traducida token a token */
 const IMPORT_TOK={machine:'maquina', barbell:'barra', dumbbell:'mancuerna', band:'banda', bodyweight:'peso corporal'};
+/* El implemento del parentesis manda: "Lateral Raise (Cable)" NO es "Lateral Raise
+   (mancuerna)". El match por sinonimos y por similitud borraba el parentesis antes de
+   comparar, asi que cualquier variante servia y Strong entraba con el implemento cambiado. */
+const IMPORT_EQ={cable:'polea', polea:'polea', 'plate loaded':'maquina', machine:'maquina',
+  maquina:'maquina', barbell:'barra', barra:'barra', dumbbell:'mancuerna', mancuerna:'mancuerna',
+  smith:'smith', band:'banda', banda:'banda', bodyweight:'peso_corporal',
+  kettlebell:'kettlebell', rings:'anillas', ring:'anillas', anillas:'anillas'};
+function equipDeNombre(name){
+  const s=normEx(name);
+  let hit=null, len=0;
+  for(const k of Object.keys(IMPORT_EQ)) if(s.indexOf(k)>-1 && k.length>len){ hit=IMPORT_EQ[k]; len=k.length; }
+  return hit;
+}
+/* un candidato solo vale si su implemento no CONTRADICE el pedido; si no se le conoce
+   implemento se deja pasar, que es mejor que no importar nada */
+function equipCompatible(id, eq){
+  if(!eq) return true;
+  const x=EXCAT.find(e=>e.id===id);
+  if(x && x.equip) return x.equip===eq;
+  const nom=equipDeNombre(exNombre(id));
+  return !nom || nom===eq;
+}
 function matchExId(name){
   const qFull=normEx(name);
+  const eqPide=equipDeNombre(name);
   const qTrad=qFull.split(' ').map(w=>IMPORT_TOK[w]||w).join(' ');
   /* 1. nombre EXACTO contra los ejercicios del plan del usuario (lo mas correcto:
         la sesion importada alimenta el historial que la app ya usa) */
@@ -12333,7 +12362,12 @@ function matchExId(name){
   const haveCat=id=>EXCAT.some(e=>e.id===id);
   let best=null,bl=0;
   for(const row of IMPORT_SYN){ const key=row[0];
-    if(q.indexOf(key)>-1 && key.length>bl){ const cand=row.slice(1).find(have)||row.slice(1).find(haveCat); if(cand){ best=cand; bl=key.length; } } }
+    if(q.indexOf(key)>-1 && key.length>bl){
+      const ok=x=>equipCompatible(x, eqPide);
+      /* primero un candidato del implemento pedido; si ninguno encaja, se deja el que haya */
+      const cand=row.slice(1).find(x=>have(x)&&ok(x)) || row.slice(1).find(x=>haveCat(x)&&ok(x))
+              || row.slice(1).find(have) || row.slice(1).find(haveCat);
+      if(cand){ best=cand; bl=key.length; } } }
   if(best) return best;
   /* 3. nombre exacto contra el catalogo EXCAT completo */
   const cat=EXCAT.find(e=>{ const n=normEx(e.name); return n===qFull||n===qTrad; });
@@ -12341,13 +12375,17 @@ function matchExId(name){
   /* 4. similitud por palabras: primero el plan (1 palabra basta), luego el
         catalogo (exige 2 para no emparejar basura) */
   const qt=q.split(/\s+/).filter(w=>w.length>2);
+  /* el implemento suma un punto y su contrario descalifica: asi "Lateral Raise (Cable)"
+     prefiere la version en polea del catalogo antes que la mancuerna del plan */
+  const punt=(nm,id)=>{ let sc=0; qt.forEach(w=>{ if(nm.indexOf(w)>-1) sc++; });
+    if(!sc) return 0;
+    if(!equipCompatible(id, eqPide)) return 0;
+    return sc + (eqPide && equipDeNombre(nm)===eqPide ? 1 : 0); };
   let bId=null,bs=0;
-  Object.keys(EXMAP).forEach(id=>{ const nm=normEx(EXMAP[id].name);
-    let sc=0; qt.forEach(w=>{ if(nm.indexOf(w)>-1) sc++; }); if(sc>bs){ bs=sc; bId=id; } });
+  Object.keys(EXMAP).forEach(id=>{ const sc=punt(normEx(EXMAP[id].name), id); if(sc>bs){ bs=sc; bId=id; } });
   if(bs>=1) return bId;
   bId=null; bs=0;
-  EXCAT.forEach(x=>{ const nm=normEx(x.name);
-    let sc=0; qt.forEach(w=>{ if(nm.indexOf(w)>-1) sc++; }); if(sc>bs){ bs=sc; bId=x.id; } });
+  EXCAT.forEach(x=>{ const sc=punt(normEx(x.name), x.id); if(sc>bs){ bs=sc; bId=x.id; } });
   return bs>=2?bId:null;
 }
 function parseWorkoutText(text){

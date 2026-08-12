@@ -377,7 +377,20 @@ serie de 15 la estimación no es fiable de todos modos.
 Strength Level a 90 kg son 115 / 168 / 232 / 302, o sea `[1.28, 1.87, 2.58, 3.36]`. La app era
 más dura de Intermedio hacia arriba. Corregida y marcada con `ver:'2026-08-11'`.
 
-**Pendiente y hay que decirlo**: solo se verificó el hack squat, que es del que hay captura. El
-resto de tablas siguen como estaban. La corrección de fórmula sí aplica a todas, así que todos
-los 1RM estimados bajaron un poco. Para validar otra tabla hace falta la captura de Strength
-Level de ese ejercicio al peso de quien la use.
+**Todas las tablas se releyeron de la fuente el 11/08/2026** (REV 188), fila de 90 kg en hombre
+y de 60 kg en mujer, que son los pesos de Andrés y Cami. Las tablas de Strength Level **no son
+un ratio puro**: el ratio exigido baja conforme sube el peso corporal, así que estos números son
+exactos a esos pesos y una aproximación fuera de ahí. Lo que estaba a ojo se notaba:
+
+| Ejercicio | Teníamos (hombre) | Real |
+|---|---|---|
+| Press banca | 1,00 / 1,25 / 1,50 / 2,00 | 0,94 / 1,21 / 1,52 / **1,83** |
+| Sentadilla | 1,25 / 1,75 / 2,25 / 2,75 | 1,28 / **1,64** / **2,07** / **2,51** |
+| Peso muerto | 1,25 / 1,75 / 2,50 / 3,00 | **1,49** / **1,91** / 2,39 / 2,89 |
+| Remo | 0,75 / 1,00 / 1,50 / 1,75 | **0,83** / **1,10** / 1,39 / 1,71 |
+| Prensa | 2,00 / 2,75 / 4,00 / 5,25 | 2,04 / 2,83 / 3,76 / **4,77** |
+| Dominada lastrada (mujer) | 0,92 / 1,14 / 1,38 / 1,65 | **0,68 / 0,85 / 1,03 / 1,22** |
+
+La de dominada lastrada en mujer era la más torcida: pedía casi el doble de lastre del real.
+En los lastrados el estándar de la fuente es **el lastre**, no el total, así que se convierte a
+`(peso corporal + lastre) / peso corporal`, que es lo que usa la app.

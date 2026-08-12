@@ -1965,7 +1965,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 202';
+const APPREV='REV 203';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -11142,8 +11142,8 @@ function nlogUniLabel(it){
   if(u==='base') return it.u||'unidades';
   return {g:'g', cda:'cucharadas', unid:'unidades', porcion:'porciones'}[u]||u;
 }
-function medidaTxt(q,u,id){
-  if(u==='g') return Math.round(q*100)+' g';
+function medidaTxt(q,u,id,gBase){
+  if(u==='g') return Math.round(q*(gBase||100))+' g';
   if(u==='cda'){
     const gr=Math.round(q*cdaWeight(id));
     return (q%1?fmt1(q):q)+(q===1?' cucharada':' cucharadas')+' ≈ '+gr+' g';
@@ -11397,16 +11397,19 @@ function nlogPanel(slot){
         const uv=nlogUniDe(i);
         const esG = (uv==='g') || (uv==='base' && i.u==='g');
         const esCda = (uv==='cda') || (uv==='base' && i.u==='cda');
-        const sub = (esG||esCda) ? ' · '+medidaTxt(i.q,i.u,i.id) : (i.u?' · '+i.u:'');
+        const sub = (esG||esCda) ? ' · '+medidaTxt(i.q, esG?'g':'cda', i.id, gramosBase(i)) : (i.u?' · '+i.u:'');
         const ctl = esG
           ? `<div class="ngrams">
-              <input class="in" id="gramsQ${ix}" data-ch="nlogGrams" data-i="${ix}" type="text" inputmode="decimal" value="${Math.round(i.q*100)}" aria-label="gramos de ${esc(i.n)}">
+              <input class="in" id="gramsQ${ix}" data-ch="nlogGrams" data-i="${ix}" type="text" inputmode="decimal" value="${Math.round(i.q*(gramosBase(i)||100))}" aria-label="gramos de ${esc(i.n)}">
               <span class="t-unit">g</span>
             </div>`
           : `<div class="hstep"><button data-a="nlogQty" data-i="${ix}" data-d="-1" aria-label="menos">−</button><span class="hval"><input id="qtyQ${ix}" data-ch="nlogQtyIn" data-i="${ix}" type="text" inputmode="decimal" value="${fq(nlogCantMostrada(i))}" aria-label="cantidad de ${esc(i.n)} en ${esc(nlogUniLabel(i))}"></span><button data-a="nlogQty" data-i="${ix}" data-d="1" aria-label="más">+</button></div>`;
         return `<div class="ndrow">
         <div class="grow" style="min-width:0"><b style="font-size:16px">${esc(i.n)}</b><span class="nfsub" style="display:block"><b class="npro">${Math.round(i.pg*i.q)} P</b> · ${Math.round(i.kc*i.q)} kcal${sub}</span>
-          ${esG?`<div class="flex wrapf mt4" style="gap:6px">${[100,150,200].map(v=>`<button class="chip" data-a="nlogGramsSet" data-i="${ix}" data-v="${v}">${v} g</button>`).join('')}</div>`:''}
+          ${esG?(()=>{ const gB=gramosBase(i)||100;
+            /* atajos utiles: medias y enteras de lo que de verdad pesa una porcion */
+            const vs = gB>=200 ? [Math.round(gB/2), gB, Math.round(gB*1.5)] : [100,150,200];
+            return `<div class="flex wrapf mt4" style="gap:6px">${vs.map(v=>`<button class="chip" data-a="nlogGramsSet" data-i="${ix}" data-v="${v}">${fmtInt(v)} g</button>`).join('')}</div>`;})():''}
           ${(()=>{ const E=UI.nlogEq;
             if(E && E.i===ix) return `<div class="nequiv mt8">
               <span class="small dim" style="display:block;line-height:1.45">¿Cuántos <b>gramos</b> pesa <b>${esc(E.txt||'una')}</b> de ${esc(i.n).toLowerCase()}?</span>
@@ -11427,8 +11430,11 @@ function nlogPanel(slot){
             </div>
             ${(()=>{ const u=nlogUniDe(i); const gU=u==='base'?gramosBase(i):gramosDeUnidad(i,u);
               const gB=gramosBase(i);
-              if(!gU||!gB||u==='base') return '';
-              return `<span class="small dim" style="display:block;margin-top:3px">1 ${nlogUniLabel(i).replace(/s$/,'')} = ${Math.round(gU)} g · el catálogo cuenta de a ${Math.round(gB)} g</span>`;})()}`;})()}
+              if(!gB||u==='base') return '';
+              const base1=`1 ${esc(i.u||'unidad')} = ${fmtInt(Math.round(gB))} g`;
+              if(u==='g') return `<span class="small dim" style="display:block;margin-top:3px">${base1}, y los macros de arriba son los de esa cantidad.</span>`;
+              if(!gU) return '';
+              return `<span class="small dim" style="display:block;margin-top:3px">1 ${nlogUniLabel(i).replace(/s$/,'')} = ${fmtInt(Math.round(gU))} g · ${base1}</span>`;})()}`;})()}
         </div>
         ${ctl}
         <button class="chip red" data-a="nlogRm" data-i="${ix}" aria-label="quitar">${ic('x',10)}</button>
@@ -17786,7 +17792,8 @@ const ACTIONS = {
     const f=equivFactor(it, nlogUniDe(it))||1;
     it.q=clamp(it.q+(+d.d)*0.5*f, 0.01*f, 999); render(); },
   /* atajos 100/150/200 g del borrador: fijan la cantidad en gramos de una */
-  nlogGramsSet(d){ const it=(UI.nlogDraft||[])[+d.i]; if(!it) return; it.q=clamp((+d.v)/100,0.1,20); render(); },
+  nlogGramsSet(d){ const it=(UI.nlogDraft||[])[+d.i]; if(!it) return;
+    const gB=gramosBase(it)||100; it.q=clamp((+d.v)/gB,0.005,50); render(); },
   nlogRm(d){ (UI.nlogDraft||[]).splice(+d.i,1); render(); },
   /* pedido del dueno: "ayer comi algo especifico con cantidades y alimentos que ya
      tengo, pero no pude ingresarlo". El borrador del loggeo ES el plato: se guarda
@@ -18597,8 +18604,11 @@ const CHANGES = {
      los buscadores de arriba que son unicos en la pantalla. */
   nlogGrams(el){
     const i=+el.dataset.i; const it=(UI.nlogDraft||[])[i]; if(!it) return;
-    const g=Math.max(0,Math.min(2000,+String(el.value).replace(',','.').replace(/[^\d.]/g,'')||0));
-    it.q=clamp(g/100,0.01,20);
+    const g=Math.max(0,Math.min(5000,+String(el.value).replace(',','.').replace(/[^\d.]/g,'')||0));
+    /* el catalogo no siempre cuenta de a 100 g: un plato cuenta por porcion y esa porcion
+       puede pesar 350. Dividir siempre entre 100 hacia que 100 g contaran como una porcion. */
+    const gB=gramosBase(it)||100;
+    it.q=clamp(g/gB,0.005,50);
     render();
     const inp=document.getElementById('gramsQ'+i);
     if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); }

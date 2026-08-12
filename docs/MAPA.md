@@ -975,3 +975,17 @@ Comprobado en los dos casos que fallaban:
 | Plato (base porción) | 1 porción | 59 P / 640 kcal |
 | Plato, 1 porción = 350 g | 350 g | 59 P / 640 kcal |
 | Plato, 1 porción = 350 g | 175 g | 30 P / 320 kcal (la mitad exacta) |
+
+
+**El campo de gramos también daba por hecho los 100** (REV 203). `nlogGrams`, `nlogGramsSet`,
+`medidaTxt` y el `value` del input dividían y multiplicaban por 100 fijo, así que al elegir
+gramos en un plato de 350 g por porción el campo mostraba 100 y escribir 350 contaba tres
+porciones y media. Ahora todos usan `gramosBase(item)`. Los atajos también: en un alimento de
+100 g siguen siendo 100/150/200, y en un plato de 350 pasan a 175/350/525, que es media, una y
+una y media.
+
+| Escribo | Plato de 350 g/porción |
+|---|---|
+| 350 g | 59 P / 640 kcal (una porción) |
+| 175 g | 30 P / 320 kcal (la mitad) |
+| 700 g | 118 P / 1.280 kcal (dos) |

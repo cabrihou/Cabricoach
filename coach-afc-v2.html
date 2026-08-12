@@ -118,7 +118,9 @@ a{color:inherit}
 .mod.inv .lbl{color:var(--mint)}
 .mod.inv .dim{color:var(--ink2)}
 .mod-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
-.mod-head .ttl{display:flex;align-items:center;gap:8px;font:500 20px/1.2 var(--ttl);letter-spacing:0;color:var(--ink)}
+.mod-head .ttl{display:flex;align-items:center;gap:8px;min-width:0;font:500 20px/1.2 var(--ttl);letter-spacing:0;color:var(--ink);overflow-wrap:anywhere}
+.mod-head{flex-wrap:wrap}
+.mod-head.hero .ttl{max-width:100%}
 .mod-head .ttl svg{color:var(--mint)}
 /* Cabecera de capa: el titulo manda. Antes era del mismo tamaño que cualquier subtitulo
    y las tres capas se leian como una lista de cajas iguales. */
@@ -735,7 +737,7 @@ img{-webkit-user-drag:none;user-select:none}
 .coachimg{position:absolute;right:2px;bottom:0;height:118px;object-fit:contain;filter:drop-shadow(0 8px 16px rgba(0,0,0,.5))}
 .linkbtn{display:flex;align-items:center;gap:6px;font:600 15px var(--ui);letter-spacing:.005em;color:var(--mint);padding:6px 0}
 .ckpath{display:flex;align-items:flex-start;margin-bottom:6px}
-.cknode{display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;
+.cknode{background:transparent;border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;
   flex:1 1 0;min-width:0;max-width:72px}
 .ckcirc{width:46px;height:46px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--smoke)}
 .ckbadge{position:absolute;top:-5px;right:4px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:var(--paper2);border:1px solid var(--line);font:600 11px/16px var(--mono);text-align:center;color:var(--ink2);z-index:1}
@@ -1910,7 +1912,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 191';
+const APPREV='REV 192';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2191,7 +2193,9 @@ const PLANS = {
        el peso entre 1 y 2 kg en las primeras 2 a 4 semanas. No es grasa y no es retencion
        subcutanea. Si no se avisa, ese salto se lee como "dejaste de bajar" y se toman
        decisiones equivocadas sobre el deficit. */
-    creatina:{dosis:5, kgAgua:[1,2], semanas:4},
+    /* 3 g diarios desde el 07/08/2026. Con 3 g la saturacion tarda un poco mas y el agua
+       que retiene es algo menor que con 5: 0,8 a 1,6 kg en unas 5 semanas. */
+    creatina:{dosis:3, kgAgua:[0.8,1.6], semanas:5, desde:'2026-08-07'},
     trainDesc:'PPL × 2 · un día libre',
     phases:{1:'PROGRESIÓN',2:'PROGRESIÓN',3:'PROGRESIÓN',4:'DESCARGA',5:'EMPUJE FINAL',6:'EMPUJE FINAL'},
   },
@@ -4652,8 +4656,15 @@ function ejPatron(id, nombre){
   return null;
 }
 /* series efectivas por musculo en los ultimos N dias */
+/* La ventana arranca SIEMPRE en lunes. Con una ventana movil de 7 dias, el domingo entraba
+   el lunes anterior y el lunes siguiente volvia a entrar: los dias se pisaban y una semana
+   floja parecia buena. Ademas MEV/MAV/MRV son series POR SEMANA, asi que a 14 y 28 dias el
+   total crudo se comparaba contra un umbral semanal y todo salia en "exceso". Ahora .series
+   ya viene dividido entre las semanas de la ventana y .total guarda el crudo. */
 function cargaMuscular(dias){
-  const hoy=TODAY(), desde=addDays(hoy,-((dias||7)-1));
+  const hoy=TODAY();
+  const semanas=Math.max(1, Math.round((dias||7)/7));
+  const desde=addDays(mondayOf(hoy), -(semanas-1)*7);
   const out={}, ejer={}, det={}, sinMapear=[];
   Object.entries(S.logs||{}).forEach(([id,hist])=>{
     const enRango=hist.filter(h=>h.d>=desde && h.d<=hoy);
@@ -4696,9 +4707,11 @@ function cargaMuscular(dias){
     });
   }
   const res={};
-  Object.keys(out).forEach(m=>{ res[m]={series:Math.round(out[m]*10)/10, ejercicios:[...(ejer[m]||[])],
-    detalle:(det[m]||[]).sort((a,b)=>a.d<b.d?1:-1)}; });
-  return {musc:res, sinMapear:[...new Set(sinMapear)], dias:dias||7, corrMin, corrKm};
+  /* series POR SEMANA, que es la unidad de MEV/MAV/MRV; el crudo queda en .total */
+  Object.keys(out).forEach(m=>{ res[m]={
+    series:Math.round(out[m]/semanas*10)/10, total:Math.round(out[m]*10)/10,
+    ejercicios:[...(ejer[m]||[])], detalle:(det[m]||[]).sort((a,b)=>a.d<b.d?1:-1)}; });
+  return {musc:res, sinMapear:[...new Set(sinMapear)], dias:dias||7, semanas, desde, hasta:hoy, corrMin, corrKm};
 }
 /* en que nivel esta ese musculo frente a las referencias de volumen semanal */
 function cargaNivel(m, series){
@@ -5193,7 +5206,7 @@ function cargaPop(zona, vista, carga, dias){
       <span class="${s>=v.mev?'zpok':'zpf down'}">${s>=v.mev?ic('check',10)+' ok':'▼ '+fmt1(Math.max(0,v.mev-s))}</span>
     </div>`:''}
     ${ej.length?`<p class="zps">${esc(ej.slice(0,2).join(' · '))}${ej.length>2?' +'+(ej.length-2):''}</p>`
-      :`<p class="zps">Nada en ${dias} días.</p>`}
+      :`<p class="zps">Nada ${dias===7?'esta semana':'en '+Math.round(dias/7)+' semanas'}.</p>`}
     ${ms.length>1?`<div class="zpm">${ms.map(mm=>`<button class="${mm===m?'on':''}" data-a="cargaMusc" data-m="${mm}">${esc(MUSC_NOM[mm]||mm)}</button>`).join('')}</div>`:''}
   </div>`;
 }
@@ -5489,8 +5502,8 @@ function cruceDatos(){
   const vista='frente';
   const out=[];
   Object.keys(MUSC_VOL).forEach(m=>{
-    const ser=((carga.musc[m]||{}).series)||0;
-    const semanas=28/7, porSem=ser/semanas;
+    const porSem=((carga.musc[m]||{}).series)||0;   /* ya viene por semana */
+    const ser=((carga.musc[m]||{}).total)||0;
     const v=MUSC_VOL[m], nv=cargaNivel(m, porSem);
     /* fuerza: el mejor basico que cargue este musculo al menos un 25% */
     let fza=null;
@@ -5851,19 +5864,20 @@ function vCarga(){
       : pasados.length ? 'Vas pasado en algún músculo. Bajar una serie ahí no te quita nada.'
       : 'Todos los músculos con referencia están dentro de su rango.',
     num: fmt1(totalSeries), uni:'series',
-    lbl:'series efectivas en '+dias+' días',
+    lbl: dias===7 ? 'series efectivas por semana, contando desde el lunes'
+       : 'series efectivas por semana, promedio de '+Math.round(dias/7)+' semanas',
     chips:[...flojos.slice(0,2).map(f=>(MUSC_NOM[f.m]||f.m)+' flojo'),
            ...pasados.slice(0,1).map(f=>(MUSC_NOM[f.m]||f.m)+' pasado')]})}
   <section class="mod">
     <div class="mod-head hero"><span class="ttl"><span class="heroic">${ic('flame',18)}</span>Carga por músculo</span>
-      <div class="flex" style="gap:5px">${[[7,'7 d'],[14,'14 d'],[28,'28 d']].map(([d,l])=>
+      <div class="flex" style="gap:5px">${[[7,'1 sem'],[14,'2 sem'],[28,'4 sem']].map(([d,l])=>
         `<button class="chip ${dias===d?'fill':''}" data-a="cargaDias" data-d="${d}">${l}</button>`).join('')}</div></div>
     <p class="small dim" style="margin:0 0 4px;line-height:1.5">Cada serie se reparte entre los músculos que de verdad trabajan: un press de banca no es solo pecho, también suma tríceps y deltoide. Eso son <b>series efectivas</b>.</p>
     <div class="medwrap">${medMapa(sel, {calor:cargaMusculos(vista, carga), paths:MED_MUSC2[vista], cotas:false})}${cargaPop(sel, vista, carga, dias)}</div>
     <div class="cargaleg">${[['#FF6B6B','sin trabajo'],['#FF9F45','por debajo'],['#58DFA3','creciendo'],['#FFC94D','alto'],['#FF6B6B','pasado']].map(([c,l],i)=>
       `<span><i style="background:${c}"></i>${l}</span>`).join('')}</div>
     ${selF?`<div class="medpanel">
-      <div class="medph">${ic('barbell',13)} <b>${esc(MUSC_NOM[selF.m]||selF.m)}</b><span class="small dim">en ${dias} días</span></div>
+      <div class="medph">${ic('barbell',13)} <b>${esc(MUSC_NOM[selF.m]||selF.m)}</b><span class="small dim">${dias===7?'esta semana':'en '+Math.round(dias/7)+' semanas'}</span></div>
       ${selMs.length>1?`<div class="flex wrapf" style="gap:6px;margin-bottom:10px">${selMs.map(mm=>{
         const s=((carga.musc[mm]||{}).series)||0, nv=cargaNivel(mm,s);
         return `<button class="chip ${mm===selM?'fill':''}" data-a="cargaMusc" data-m="${mm}">
@@ -5899,7 +5913,7 @@ function vCarga(){
     <div class="small dim mt8" style="line-height:1.5">${flojos.length?`Los de arriba son los que <b>menos atención reciben</b>. ${dias===7?'Una semana suelta no dice mucho: mira también 14 y 28 días antes de rehacer la rutina.':''}`:''}</div>
   </section>`:''}
   <section class="mod">
-    <div class="mod-head"><span class="ttl">${ic('chart',16)} Todo el cuerpo · ${dias} días</span></div>
+    <div class="mod-head"><span class="ttl">${ic('chart',16)} Todo el cuerpo · ${dias===7?'esta semana':'en '+Math.round(dias/7)+' semanas'}</span></div>
     <div class="small dim" style="margin-bottom:6px">${totalSeries} series efectivas repartidas.</div>
     ${filas.map(f=>{const v=MUSC_VOL[f.m];
       return `<div class="cargarow ${selM===f.m?'on':''}" data-a="cargaFila" data-m="${f.m}" role="button" tabindex="0"
@@ -5933,9 +5947,10 @@ function vCarga(){
   </section>`;
 }
 function cargaConsejo(f, dias){
-  const v=MUSC_VOL[f.m], n=MUSC_NOM[f.m]||f.m, sem=dias/7;
-  const porSem=f.s/sem;
-  if(f.nv.k==='cero') return `No trabajaste <b>${esc(n)}</b> en ${dias} días. Con ${v.mev} series a la semana ya alcanza para no perderlo: son dos ejercicios de tres series.`;
+  const v=MUSC_VOL[f.m], n=MUSC_NOM[f.m]||f.m;
+  const sem=Math.max(1, Math.round(dias/7));
+  const porSem=f.s;   /* ya viene por semana desde cargaMuscular */
+  if(f.nv.k==='cero') return `No trabajaste <b>${esc(n)}</b> en ${sem===1?'lo que va de semana':'las últimas '+sem+' semanas'}. Con ${v.mev} series a la semana ya alcanza para no perderlo: son dos ejercicios de tres series.`;
   if(f.nv.k==='bajo') return `Vas en <b>${fmt1(porSem)} series por semana</b> y el mínimo para que crezca son <b>${v.mev}</b>. Súbele ${Math.ceil(v.mev-porSem)} series: un ejercicio más al final de la sesión donde ya lo tocas.`;
   if(f.nv.k==='ok') return `<b>${fmt1(porSem)} series por semana</b> es zona de crecer. Aquí no toca añadir volumen sino subir peso o repeticiones sobre lo que ya haces.`;
   if(f.nv.k==='alto') return `<b>${fmt1(porSem)} series por semana</b> es volumen alto: funciona un tiempo, pero si el rendimiento se estanca o duermes mal, es lo primero que hay que recortar.`;
@@ -8797,7 +8812,9 @@ function clearDayCache(){ _dsCache={}; _eoCache={}; }
    Eso no es grasa. Durante esa ventana la app lo dice en vez de dejar que parezca un
    estancamiento, y no dispara la alerta de "no estas bajando". */
 function creatCfg(uid){ return (PLANS[uid||UID]||{}).creatina || null; }
-function creatDesde(){ return (S.cfg&&S.cfg.creatDesde)||null; }
+/* la fecha del plan manda: es el dato que dio el dueno. S.cfg.creatDesde solo entra cuando
+   el plan no trae fecha (asi el primer toque sigue arrancando el conteo) */
+function creatDesde(){ const c=creatCfg(); return (c&&c.desde) || (S.cfg&&S.cfg.creatDesde) || null; }
 function creatHoy(d){ return !!S.creat[d||TODAY()]; }
 function creatDias(){
   const d0=creatDesde(); if(!d0) return null;
@@ -10463,10 +10480,14 @@ function ring(pct,main,sub,size=138,sw=11){
 function waterGoalDay(dISO){
   const cfg=S.cfg||{};
   if(cfg.waterAuto===false) return cfg.waterGoal;
-  const base=Math.round(currentWeight()*35/50)*50;
+  /* 35 ml/kg mas 500 de entreno daban 3,7 L a 92 kg, medio litro por encima de lo que pide
+     el propio plan (2,5 L) y una meta que nadie cumple deja de ser meta. 30 ml/kg es el
+     extremo bajo de la recomendacion habitual y ademas el agua de la comida no se cuenta
+     aqui, asi que la ingesta real es mayor. Tope a 3,5 L. */
+  const base=Math.round(currentWeight()*30/50)*50;
   const act=S.acts[dISO];
   const entrena=S.sessions.some(s=>s.d===dISO) || act?.t==='gym' || !!routineOn(fromISO(dISO).getDay());
-  return clamp(base+(entrena?500:0), 1500, 5000);
+  return clamp(base+(entrena?350:0), 1500, 3500);
 }
 function waterUI(dISO,act){
   const n=S.water[dISO]||0, goal=waterGoalDay(dISO), pct=clamp(n/goal*100,0,100);
@@ -11274,7 +11295,13 @@ function ckSection(){
     <div class="mod-head"><span class="ttl">${ic('target',16)} Checkpoint del día</span><span class="chip ${stk>0?'fill':'dim'}">${stk>0?'<span class="flick">'+ic('flame',12)+'</span>':ic('flame',12)} Racha ${stk}</span></div>
     ${(()=>{const done=[st.pasos,st.prote,st.agua].filter(Boolean).length, full=done===3;
       const heroImg=UID==='andres'?CAB.andBuff:CAB.camCheck;
-      const node=(on,icn,val,lb,bonus)=>`<div class="cknode ${on?'on':''} ${bonus?'bonus':''}"><span class="ckbadge">${val}</span><span class="ckcirc">${ic(icn,16)}</span><span class="cklbl">${lb}</span></div>`;
+      /* cada nodo lleva a su historico en Progreso: mirar el numero de hoy y no poder ver la
+   semana era el paso que faltaba */
+const CK_DEST={AGUA:'general', PASOS:'pasos', COMIDA:'nutri', ENTRENO:'volumen', BONUS:'volumen'};
+const node=(on,icn,val,lb,bonus)=>{
+  const dest=CK_DEST[lb]||null;
+  return `<${dest?'button':'div'} class="cknode ${on?'on':''} ${bonus?'bonus':''}"${dest?` data-a="progIr" data-s="${dest}" aria-label="Ver el histórico de ${lb.toLowerCase()}"`:''}><span class="ckbadge">${val}</span><span class="ckcirc">${ic(icn,16)}</span><span class="cklbl">${lb}</span></${dest?'button':'div'}>`;
+};
       return `<div class="ck2col">
         <img loading="lazy" class="ckheroimg" src="${heroImg}" alt="" decoding="async">
         <div class="ck2b">
@@ -15091,11 +15118,11 @@ function vProgreso(){
       : UI.cuerpoSub==='cruce' ? vCruce()
       : vMedidasCuerpo()}
     <section class="mod tight">${medCapaBar()}</section>` : grp==='act'?`
-  ${metasCard()}
-  ${rendimientoCard(sub)}
   <section class="mod tight">
     ${xtabs(PROG_ACT.map(([k,n,i])=>({k,n,i})), sub, 'progSub')}
   </section>
+  ${rendimientoCard(sub)}
+  ${metasCard()}
   ${sub==='peso'?vPeso():sub==='volumen'?vVolumen():sub==='tiempo'?vTiempo():sub==='ejercicios'?vEjercicios():sub==='pasos'?vPasos():''}`
   :`
   <section class="mod tight">
@@ -16658,9 +16685,14 @@ const ACTIONS = {
     /* primero se emparejan TODOS los nombres, para poder avisar de duplicados
        ANTES de escribir nada (el dueno importo dos veces y el registro quedo
        doble sin que la app dijera ni mu) */
+    /* Se empareja con la linea COMPLETA (it.raw), no con el nombre ya pelado: el
+       parentesis es el implemento y sin el "Seated Row (Machine)" y "Seated Row (Cable)"
+       colapsan en el mismo ejercicio y uno pisa al otro. El id de respaldo tambien sale
+       del raw, por lo mismo. */
     const plan=items.map(it=>{
-      let id=matchExId(it.name); let alt=null;
-      if(!id){ id='imp_'+normEx(it.name).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,24)||'imp_ej'; alt=it.name; }
+      const nom=it.raw||it.name;
+      let id=matchExId(nom); let alt=null;
+      if(!id){ id='imp_'+normEx(nom).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,24)||'imp_ej'; alt=nom; }
       return {it, id, alt};
     });
     const repetidos=plan.filter(p=>(S.logs[p.id]||[]).some(h=>h.d===d));
@@ -17197,6 +17229,8 @@ const ACTIONS = {
     render(); window.scrollTo({top:0}); },
   ckGo(){ UI.backTo=(UI.tab==='checkin'||UI.tab==='fotos')?(UI.backTo||'inicio'):UI.tab; UI.tab='checkin'; UI.session=null; render(); window.scrollTo({top:0}); },
   volver(){ const t=UI.backTo||'inicio'; UI.backTo=null; UI.tab=VIEWS[t]?t:'inicio'; UI.session=null; render(); window.scrollTo({top:0}); },
+  progIr(d){ UI.tab='progreso'; UI.sub.prog=d.s; if(d.s!=='nutri') UI.progAct=d.s;
+    UI.session=null; render(); window.scrollTo({top:0}); },
   progGo(){ UI.tab='progreso'; UI.sub.prog=UI.progAct||'general'; UI.session=null; render(); window.scrollTo({top:0}); },
   /* "Recordatorio semanal": aterriza en la caja de recordatorios y senala el del
      repaso semanal (check-in), que es el que promete la tarjeta. */

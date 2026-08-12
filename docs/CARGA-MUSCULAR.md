@@ -411,3 +411,16 @@ el ejercicio está marcado por lado), así que hay que multiplicar por dos. No s
 Con la tabla vieja, alguien con 18 kg por mancuerna en press de banca ya salía Novato cuando el
 umbral real son 32. Verificadas también: press inclinado, remo en polea, sentadilla frontal y
 peso muerto rumano. Quedan 18 tablas sin contrastar, todas de aislados.
+
+
+## La ventana de carga arranca en lunes (REV 192)
+
+Dos errores que se tapaban entre sí:
+
+1. **La ventana era móvil.** `hoy − 6 días` significa que el domingo entra el lunes anterior y
+   el lunes siguiente vuelve a entrar: los días se pisan y una semana floja parece buena. Ahora
+   arranca en el lunes de esta semana (`mondayOf`) y hacia atrás en semanas completas.
+2. **MEV/MAV/MRV son series POR SEMANA** y se comparaban contra el total crudo de la ventana. A
+   14 días todo salía al doble y a 28 al cuádruple, así que casi todo aparecía "por encima de
+   lo recuperable". Ahora `cargaMuscular` devuelve `.series` ya dividido entre las semanas y
+   deja el crudo en `.total`. Los botones dicen 1 sem / 2 sem / 4 sem, no 7 d / 14 d / 28 d.

@@ -144,11 +144,12 @@ cantidades salen por plato: la carne es el 70% de la mezcla, la cebolla el 21% y
 
 ## Creatina (agosto 2026, solo Andrés)
 
-5 g diarios de monohidrato, sin fase de carga: cargar con 20 g acelera la saturación una o dos
+**3 g diarios** de monohidrato desde el **7 de agosto de 2026**, sin fase de carga: cargar con 20 g acelera la saturación una o dos
 semanas y no cambia el resultado a los dos meses.
 
 Lo que hay que saber, y es lo que la app dice en pantalla: **la creatina satura el músculo de
-agua intracelular y sube el peso entre 1 y 2 kg en las primeras 4 semanas**. No es grasa ni es
+agua intracelular y sube el peso entre 0,8 y 1,6 kg en unas 5 semanas (con 3 g la saturación tarda un poco más y
+retiene algo menos que con 5)**. No es grasa ni es
 retención subcutánea. Si nadie lo avisa, ese salto se lee como "dejé de bajar" y lleva a
 recortar calorías sin motivo.
 
@@ -167,3 +168,11 @@ Cómo quedó:
 
 No entra en la racha ni en los puntos de los retos: cambiar la fórmula de puntaje a mitad de
 camino invalidaría las semanas ya jugadas. Cami no la usa y no le aparece nada.
+
+
+### La meta de agua bajó
+
+Estaba en 35 ml/kg más 500 ml los días de entreno: 3,7 L a 92 kg, medio litro por encima de lo
+que pide el propio plan (2,5 L). Una meta que nadie cumple deja de ser meta. Ahora **30 ml/kg
+más 350 de entreno, con tope de 3,5 L**: 3,2 L en día de gym a 94 kg. El agua de la comida no se
+cuenta aquí, así que la ingesta real es mayor que el número.

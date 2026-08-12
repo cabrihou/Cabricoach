@@ -1951,7 +1951,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 196';
+const APPREV='REV 197';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2217,7 +2217,12 @@ const PLANS = {
        fijo: al bajar de 94,4 a 86,6 kg el gasto cae ~117 kcal y el deficit se encogia solo
        de 250 a 133, o sea el plan se frenaba justo al final. Ahora se ancla el deficit y las
        kcal bajan con el peso (ver metasDe). */
-    metasBase:{peso:94.4, kcal:2400, deficit:250},
+    /* Deficit en RAMPA: 500 kcal a 94,4 kg y va aflojando hasta 250 en la meta. La logica:
+       arriba de peso hay mas grasa que ceder y mas margen; abajo, cerca del 15%, un deficit
+       grande se come masa magra. Efecto raro pero correcto: las calorias SUBEN conforme se
+       acerca a la meta (2.150 hoy, 2.283 en 86,6), porque el gasto baja menos de lo que
+       afloja el deficit. */
+    metasBase:{peso:94.4, gasto:2650, defIni:500, defFin:250},
     metasFijas:{prot:150, fat:75}, protPiso:140,
     /* 2 scoops de whey al dia. Es el componente que hace viable llegar a 150 g comiendo
        lo que de verdad le cabe. Se descuenta del reparto por comidas (comidasDe). */
@@ -2228,8 +2233,10 @@ const PLANS = {
        mitad y la meta de 86,6 kg pasa de mediados a finales de septiembre. La proyeccion
        que se muestra sale de la regresion real del peso (pesoRecta), no de estos numeros:
        esto es solo contra que se juzga la semana. */
-    rateGoal:0.35, rateLabel:'0,25-0,45', lossAlert:0.7,
-    lossAdvice:'Pérdida >0,7 kg/sem sostenida: el déficit se agrandó solo, sube las calorías un 10% (≈2.640 kcal).',
+    /* rateGoal y rateLabel se derivan del deficit de hoy (ver ritmoObjetivo), no se escriben
+       a mano: con la rampa cambian solos conforme baja el peso. */
+    lossAlert:0.9,
+    lossAdvice:'Pérdida sostenida por encima de lo esperado: el déficit se agrandó solo, sube las calorías un 10%.',
     injectDay:3,
     /* Creatina monohidrato, 5 g diarios, sin fase de carga: cargar con 20 g acelera la
        saturacion una o dos semanas y no cambia el resultado a los dos meses.
@@ -2253,9 +2260,11 @@ const PLANS = {
     /* mismo modelo que Andres. El kcalKg plano (28,6 kcal por kg) recortaba 28,6 kcal por
        cada kilo perdido cuando el gasto real solo baja ~15: el deficit crecia solo de 330 a
        371 sin que nadie lo decidiera, justo cuando menos margen hay. */
-    metasBase:{peso:59.5, kcal:1700, deficit:330},
+    /* Sin rampa por ahora: el deficit se queda en 330 en todo el recorrido. Subirselo
+       cambiaria lo que come HOY y eso no se hace sin decirlo. */
+    metasBase:{peso:59.5, gasto:2030, defIni:330, defFin:330},
     kcalKg:1700/59.5, waterGoal:2000,
-    rateGoal:0.3, rateLabel:'0,2-0,4', lossAlert:0.7,
+    lossAlert:0.7,
     lossAdvice:'Pérdida >0,7 kg/sem sostenida: sube a 1.850 kcal para no perder músculo.',
     injectDay:3,
     trainDesc:'Tren inferior 2-3× · torso en mantenimiento',
@@ -2292,6 +2301,27 @@ function pesoSemanaDe(uid){
    un factor de actividad de ~1,5 quedan ~15 kcal/kg. Un "kcal por kg" plano de 28 recorta
    casi el doble de lo que de verdad se deja de gastar. */
 const KCAL_POR_KG=15;
+/* gasto diario estimado a ese peso, anclado en el peso y el gasto de referencia del plan */
+/* ritmo esperado con el deficit de hoy: 7700 kcal por kilo de grasa */
+function ritmoObjetivo(uid){
+  const M=metasDe(uid||UID);
+  return M.ritmo!=null ? M.ritmo : (PLANS[uid||UID].rateGoal||0.5);
+}
+function gastoDe(plan, peso){
+  const B=plan.metasBase; if(!B) return null;
+  return Math.round(B.gasto + KCAL_POR_KG*(peso-B.peso));
+}
+/* El deficit no tiene por que ser el mismo todo el camino. Arriba de peso hay mas grasa que
+   ceder y mas margen; cerca del objetivo, un deficit grande se come masa magra justo cuando
+   menos sobra. Se interpola lineal entre el peso de arranque y la meta, y se acota en los
+   dos extremos para que un peso fuera de rango no lo dispare. */
+function deficitDe(plan, peso){
+  const B=plan.metasBase; if(!B) return 0;
+  if(B.defIni==null) return B.deficit||0;
+  const wg=plan.wGoal, span=B.peso-wg;
+  if(!span) return B.defFin;
+  return Math.round(B.defFin + (B.defIni-B.defFin)*clamp((peso-wg)/span, 0, 1));
+}
 /* metas del uid: prot = peso×1,8, grasa = peso×0,8, kcal = peso×kcalKg (el nivel
    de siempre de cada quien), carbo = lo que sobra de esas kcal (minimo 0).
    Recalculo semanal (clave = lunes de hoy), cacheado para no recalcular en cada
@@ -2322,15 +2352,16 @@ function metasDe(uid){
      factor de actividad de ~1,5 eso son ~15 kcal por kg. Se ancla en el peso y las kcal de
      hoy, asi que no hace falta ni estatura ni edad: la pendiente es lo que importa. */
   const B=plan.metasBase;
-  const kcal = B ? Math.max(1200, Math.round(B.kcal + KCAL_POR_KG*(pesoBase-B.peso)))
-    : (f.kcal || Math.round(pesoBase*plan.kcalKg));
+  const gasto = B ? gastoDe(plan, pesoBase) : null;
+  const deficit = B ? deficitDe(plan, pesoBase) : null;
+  const kcal = B ? Math.max(1200, gasto-deficit) : (f.kcal || Math.round(pesoBase*plan.kcalKg));
   const carb=f.carb||Math.max(0, Math.round((kcal-prot*4-fat*9)/4));
-  const gasto = B ? Math.round(kcal + B.deficit) : null;
   const fijos=plan.fijos||[];
   const fijo=fijos.length ? fijos.reduce((a,x)=>({pg:a.pg+x.pg, cg:a.cg+x.cg, fg:a.fg+x.fg, kc:a.kc+x.kc}),
     {pg:0,cg:0,fg:0,kc:0}) : null;
   const val={kcal, prot, fat, carb, pesoBase, fijo, fijos, protPiso: plan.protPiso||null,
-    gasto, deficit: B?B.deficit:null};
+    gasto, deficit, defIni:B?B.defIni:null, defFin:B?B.defFin:null,
+    ritmo: deficit? Math.round(deficit*7/7700*100)/100 : null};
   _metasCache[uid]={mon, val};
   return val;
 }
@@ -11420,7 +11451,7 @@ function vInicio(){
     <div class="bar knob mt16" style="max-width:280px;margin-left:auto;margin-right:auto"><i style="width:${pct.toFixed(1)}%"></i></div>
     <div class="statrow">
       <div><div class="sv" data-cnt="${Math.max(0,lost)}" data-dec="1">${fmt1(Math.max(0,lost))}</div><div class="su">kg perdidos</div><div class="mini"><i style="width:${pct.toFixed(0)}%"></i></div></div>
-      <div><div class="sv">${slope===null?'·':fmt1(-slope)}</div><div class="su">kg/sem · meta ${fmt1(PLAN.rateGoal)}</div><div class="mini"><i style="width:${slope===null?0:clamp(-slope/PLAN.rateGoal*100,0,100).toFixed(0)}%"></i></div></div>
+      <div><div class="sv">${slope===null?'·':fmt1(-slope)}</div><div class="su">kg/sem · meta ${fmt1(ritmoObjetivo())}</div><div class="mini"><i style="width:${slope===null?0:clamp(-slope/ritmoObjetivo()*100,0,100).toFixed(0)}%"></i></div></div>
       <div><div class="sv" style="${stk>0?'':'color:var(--smoke)'}">${stk}</div><div class="su">días de racha</div><div class="mini"><i style="width:${clamp(stk/7*100,0,100).toFixed(0)}%"></i></div></div>
     </div>
     ${daystrip()}
@@ -14395,13 +14426,16 @@ function metasComoHTML(uid){
   return `<div class="fijocard mb12">
     <div class="flex between" style="align-items:center;gap:8px">
       <b class="crucen">${ic('zap',14)} De dónde salen tus ${fmtInt(M.kcal)} kcal</b>
-      <span class="crucetag">déficit ${M.deficit}</span></div>
+      <span class="crucetag">déficit ${M.deficit}${M.defIni!==M.defFin?' de '+M.defIni:''}</span></div>
     <div class="metascomo mt8">
       <span><i>GASTO ESTIMADO</i><b>${fmtInt(M.gasto)}<em>kcal</em></b></span>
       <span><i>MENOS EL DÉFICIT</i><b>−${M.deficit}<em>kcal</em></b></span>
       <span class="on"><i>TU META</i><b>${fmtInt(M.kcal)}<em>kcal</em></b></span>
     </div>
-    <div class="small dim mt8" style="line-height:1.55">Con tus <b>${fmt1(M.pesoBase)} kg</b> de esta semana. Lo que se fijó es el <b>déficit</b>, no las calorías: conforme bajes de peso, el gasto baja unas ${KCAL_POR_KG} kcal por kilo y la meta baja con él, así que el déficit se mantiene en ${M.deficit} en vez de encogerse solo.</div>
+    <div class="small dim mt8" style="line-height:1.55">Con tus <b>${fmt1(M.pesoBase)} kg</b> de esta semana, a un ritmo esperado de <b>${fmt1(M.ritmo)} kg por semana</b>.${
+      M.defIni!==M.defFin
+        ? ` El déficit va en rampa: <b>${M.defIni}</b> arriba de peso y <b>${M.defFin}</b> al llegar a la meta. Arriba hay más grasa que ceder; cerca del objetivo un déficit grande se come músculo. Por eso las calorías <b>suben</b> conforme te acercas, aunque el gasto baje.`
+        : ` Lo que se fijó es el déficit, no las calorías: el gasto baja unas ${KCAL_POR_KG} kcal por kilo y la meta baja con él, así que el déficit se mantiene en ${M.deficit}.`}</div>
   </div>`;
 }
 function fijoDelDiaHTML(uid){
@@ -15980,7 +16014,7 @@ function vMas(){
       <tr><td>Usuario</td><td class="r">${CU().name}</td></tr>
       <tr><td>Objetivo calórico</td><td class="r">~${PLAN.kcal} kcal (piso)</td></tr>
       <tr><td>Macros</td><td class="r">${PLAN.prot}P / ${PLAN.fat}G / ${PLAN.carb}C</td></tr>
-      <tr><td>Ritmo objetivo</td><td class="r">${PLAN.rateLabel} kg/sem</td></tr>
+      <tr><td>Ritmo objetivo</td><td class="r">${fmt1(ritmoObjetivo())} kg/sem</td></tr>
       <tr><td>Meta</td><td class="r">${UID==='andres'?'89-90 kg @ 14-15% grasa':'26-27% grasa (~56-57 kg)'}</td></tr>
       ${UID==='cami'?`<tr><td>Grasa corporal</td><td class="r">30,4% (dic 25: 31,5%)</td></tr>
       <tr><td>Masa magra</td><td class="r">37,8 kg (dic 25: 36,8)</td></tr>`:''}

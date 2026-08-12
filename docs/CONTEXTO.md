@@ -213,10 +213,30 @@ verdad se deja de gastar.
 Se ancla en el peso y las kcal de hoy, así que **no hace falta ni estatura ni edad**: lo que
 importa es la pendiente, no el valor absoluto.
 
-| | Hoy | A mitad de camino | En la meta | Déficit |
+### El déficit va en rampa (Andrés)
+
+Decisión del 12/08: **500 kcal a 94,4 kg, aflojando hasta 250 en la meta**. Arriba de peso hay
+más grasa que ceder y más margen; cerca del 15% un déficit grande se come masa magra justo
+cuando menos sobra. Se interpola lineal entre el peso de arranque y `wGoal`, acotado en los
+dos extremos.
+
+Efecto que parece raro y es correcto: **las calorías suben conforme se acerca a la meta**,
+porque el gasto baja 15 kcal por kilo pero el déficit afloja 32 por kilo.
+
+| Peso | Gasto | Déficit | Meta | Ritmo esperado |
 |---|---|---|---|---|
-| Andrés | 2.400 @ 94,4 kg | 2.342 @ 90,5 | 2.283 @ 86,6 | 250 siempre |
-| Cami | 1.700 @ 59,5 kg | 1.678 @ 58,0 | 1.655 @ 56,5 | 330 siempre |
+| 94,4 kg | 2.650 | 500 | **2.150 kcal** | 0,45 kg/sem |
+| 92,5 | 2.621 | 438 | 2.183 | 0,40 |
+| 90,5 | 2.592 | 375 | 2.217 | 0,34 |
+| 88,5 | 2.562 | 313 | 2.249 | 0,28 |
+| 86,6 (meta) | 2.533 | 250 | **2.283 kcal** | 0,23 |
+
+**Cami se queda sin rampa**: 330 en todo el recorrido (1.700 kcal a 59,5 kg, 1.655 en la meta).
+Subirle el déficit cambiaría lo que come hoy y eso no se hace sin decirlo.
+
+`rateGoal` y `rateLabel` salieron de los planes: el ritmo objetivo se deriva del déficit de hoy
+(`ritmoObjetivo()`, 7.700 kcal por kilo de grasa), así que con la rampa cambia solo. `lossAlert`
+de Andrés subió a 0,9 porque con 500 de déficit un 0,7 ya no es señal de alarma.
 
 En Gestión → La semana comida por comida sale la caja **"De dónde salen tus N kcal"** con el
 gasto, el déficit y la meta, para que se vea que el número se mueve y por qué.

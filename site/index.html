@@ -1934,7 +1934,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 194';
+const APPREV='REV 195';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -10637,7 +10637,11 @@ function waterGoalDay(dISO){
      cuerpo. El "+500 ml" que se repite por ahi no tiene respaldo firme; lo que si esta
      documentado es que hay que mantenerse bien hidratado. +250 mientras satura y +150 en
      mantenimiento: suficiente para cubrirlo sin volver a una meta que nadie cumple. */
-  const base=Math.round(currentWeight()*30/50)*50;
+  /* el peso de ESE dia, no el ultimo que haya en el historial: la meta de un martes se
+     calcula con lo que marcaba la bascula el martes, y la de hoy con lo de hoy en cuanto
+     te peses. pesoDeDia cae al ultimo registro anterior si ese dia no hubo pesaje. */
+  const pc=pesoDeDia(dISO) || currentWeight() || PLAN.wStart;
+  const base=Math.round(pc*30/50)*50;
   const act=S.acts[dISO];
   const entrena=S.sessions.some(s=>s.d===dISO) || act?.t==='gym' || !!routineOn(fromISO(dISO).getDay());
   const creat=creatDesde() ? (creatSaturando()?250:150) : 0;
@@ -15965,10 +15969,12 @@ function vMas(){
       ? `<div class="flex between mt8"><span class="small dim">Meta fija que pusiste tú</span>
          <button class="chip" data-a="waterAuto">Volver a automática</button></div>`
       : `<div class="small dim mt8" style="line-height:1.55">${(()=>{
-          const pc=Math.round(currentWeight()*10)/10;
-          const b=Math.round(currentWeight()*30/50)*50;
+          const pd=pesoDeDia(TODAY())||currentWeight()||PLAN.wStart;
+          const hoyHay=(S.weights||[]).some(w=>w.d===TODAY()&&w.kg>0);
+          const pc=Math.round(pd*10)/10;
+          const b=Math.round(pd*30/50)*50;
           const cr=creatDesde()?(creatSaturando()?250:150):0;
-          return `Automática, y baja sola conforme bajes de peso. Hoy son <b>${fmtInt(waterGoalDay(TODAY()))} ml</b>: ${fmtInt(b)} por tus ${fmt1(pc)} kg (30 ml por kilo)${cr?', +'+cr+' por la creatina'+(creatSaturando()?' mientras satura':''):''}, y +300 los días que entrenas. El agua de la comida no entra en la cuenta, así que tomas más de lo que dice el número. Si la ajustas con − o +, queda fija.`;})()}</div>`}
+          return `Automática y con el peso del día: hoy son <b>${fmtInt(waterGoalDay(TODAY()))} ml</b>. ${fmtInt(b)} por tus ${fmt1(pc)} kg (30 ml por kilo)${cr?', +'+cr+' por la creatina'+(creatSaturando()?' mientras satura':''):''}, y +300 los días que entrenas. ${hoyHay?'Sale de lo que te pesaste hoy.':'Todavía no te pesas hoy, así que uso el último registro; en cuanto lo hagas se recalcula.'} El agua de la comida no entra en la cuenta. Si la ajustas con − o +, queda fija.`;})()}</div>`}
     <div class="small dim mt8 mb8">Horas límite de cada comida (si no la registras a esa hora, sus macros se reparten en las que quedan). Solo las comidas con hora límite definida se pueden ajustar aquí:</div>
     ${comidasDe(UID).slice(0,-1).map(md=>{const cuts={...MEAL_CUTOFF[UID],...(S.cfg.cut||{})}; if(cuts[md.k]===undefined) return '';
       return `<div class="row"><div class="grow"><b style="font-size:16px">${md.label}</b></div>

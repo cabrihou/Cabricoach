@@ -179,8 +179,10 @@ camino invalidaría las semanas ya jugadas.
 Estaba en 35 ml/kg más 500 ml los días de entreno: 3,7 L a 92 kg, medio litro por encima de lo
 que pide el propio plan (2,5 L). Una meta que nadie cumple deja de ser meta. Ahora **30 ml/kg del peso de hoy, +300 los días de entreno y +250 por la creatina mientras
 satura (+150 después), con tope de 3,5 L**. A 94,4 kg en día de gym: 2.850 + 300 + 250 =
-**3.400 ml**. Cami a 59,5 kg: 1.800 + 300 + 250 = **2.350 ml**. Baja sola conforme baje el
-peso, y el desglose sale escrito en MÁS para que el número no salga de la nada.
+**3.400 ml**. Cami a 59,5 kg: 1.800 + 300 + 250 = **2.350 ml**. **Usa el peso de ESE día** (`pesoDeDia`), no el último del historial: la meta de un martes se
+calcula con lo que marcaba la báscula el martes, y la de hoy se recalcula en cuanto te peses.
+Si ese día no hubo pesaje, cae al último registro anterior y lo dice. El desglose sale escrito
+en MÁS para que el número no salga de la nada.
 El "+500 ml por creatina" que se repite por ahí no tiene respaldo firme; lo documentado es que
 hay que mantenerse bien hidratado, y +250 lo cubre sin volver a una meta que nadie cumple. El agua de la comida no se
 cuenta aquí, así que la ingesta real es mayor que el número.

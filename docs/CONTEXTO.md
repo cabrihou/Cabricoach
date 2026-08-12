@@ -142,7 +142,7 @@ Ingredientes de la mezcla: 1.500 g de molida de res 90/10 (molida especial), 450
 roja, 150 ml de Malbec, un ramo de cilantro, sal, ajo y pimienta. En la receta de la app las
 cantidades salen por plato: la carne es el 70% de la mezcla, la cebolla el 21% y el vino el 7%.
 
-## Creatina (agosto 2026, solo Andrés)
+## Creatina (agosto 2026, los dos)
 
 **3 g diarios** de monohidrato desde el **7 de agosto de 2026**, sin fase de carga: cargar con 20 g acelera la saturación una o dos
 semanas y no cambia el resultado a los dos meses.
@@ -166,13 +166,21 @@ Cómo quedó:
 - En Peso sale el **peso comparable** (el de la báscula menos el agua) y la **meta corrida**:
   los 86,6 kg se fijaron sin creatina, así que el mismo cuerpo con creatina marca 88,1.
 
+**Cami también, desde el 7 de agosto y también 3 g.** La dosis no escala con el peso corporal
+sino con la masa muscular, y 3 g saturan igual solo que más despacio. El agua que retiene sí
+escala con el músculo y ella tiene menos: 0,6 a 1,2 kg contra los 0,8 a 1,6 de él.
+
 No entra en la racha ni en los puntos de los retos: cambiar la fórmula de puntaje a mitad de
-camino invalidaría las semanas ya jugadas. Cami no la usa y no le aparece nada.
+camino invalidaría las semanas ya jugadas.
 
 
 ### La meta de agua bajó
 
 Estaba en 35 ml/kg más 500 ml los días de entreno: 3,7 L a 92 kg, medio litro por encima de lo
-que pide el propio plan (2,5 L). Una meta que nadie cumple deja de ser meta. Ahora **30 ml/kg
-más 350 de entreno, con tope de 3,5 L**: 3,2 L en día de gym a 94 kg. El agua de la comida no se
+que pide el propio plan (2,5 L). Una meta que nadie cumple deja de ser meta. Ahora **30 ml/kg del peso de hoy, +300 los días de entreno y +250 por la creatina mientras
+satura (+150 después), con tope de 3,5 L**. A 94,4 kg en día de gym: 2.850 + 300 + 250 =
+**3.400 ml**. Cami a 59,5 kg: 1.800 + 300 + 250 = **2.350 ml**. Baja sola conforme baje el
+peso, y el desglose sale escrito en MÁS para que el número no salga de la nada.
+El "+500 ml por creatina" que se repite por ahí no tiene respaldo firme; lo documentado es que
+hay que mantenerse bien hidratado, y +250 lo cubre sin volver a una meta que nadie cumple. El agua de la comida no se
 cuenta aquí, así que la ingesta real es mayor que el número.

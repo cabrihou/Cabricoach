@@ -401,3 +401,25 @@ capas se pinta dos veces, arriba y al final de la página.
 Conmutadores que pasaron a `renderAnclado`: `progSub`, `progRange`, `cuerpoSub`,
 `cargaDias`, `cargaMusc`, `wAvgTgl`, `medVista`, `excatEquip`, `excatEquipClear`,
 `foodFilter`, `trainSub`.
+
+## El import pregunta en vez de asumir (REV 194)
+
+`matchExDetalle(nombre)` devuelve `{id, conf, via}` con cuatro niveles de confianza:
+
+- **exacta**: el nombre completo coincide con uno del plan o del catálogo. Se acepta solo.
+- **sinonimo**: una clave de `IMPORT_SYN` aparece en el nombre **y cubre al menos el 60% de
+  él**. Se acepta solo. El 60% es lo que arregla el caso feo: la tabla empareja por subcadena,
+  así que "Zercher Squat" y "Sissy Squat" caían en Squat (Barbell) y se daban por buenos.
+- **parecido**: coincidencia por palabras sueltas, o un sinónimo que cubre poco. **Va a
+  revisión.**
+- **null**: nada. **Va a revisión.**
+
+Cuando algo va a revisión, `importWorkout` **no escribe nada todavía** y devuelve `false`.
+Sube `impRevHTML()`, una isla por encima de la caja de importar, con una fila por dudoso: el
+nombre tal como vino, sus series y, si hay propuesta, "se parece a X (por qué)". Cuatro
+salidas: **aceptar**, **buscar el correcto** (busca en todo el catálogo), **crear nuevo** u
+**omitir**. El botón de guardar está deshabilitado hasta que no quede ninguno sin decidir.
+
+Contrastado con 23 nombres: 15 entran solos y 8 van a revisión, entre ellos los que antes se
+asumían mal (Zercher Squat, Sissy Squat, Jefferson Curl, Hip Abduction que caía en Hip
+Adductor, y Landmine Press que caía en Bench Press).

@@ -1071,6 +1071,10 @@ img{-webkit-user-drag:none;user-select:none}
   background:var(--paper2);border:1px solid var(--line);border-bottom:0;
   box-shadow:0 -12px 40px rgba(0,0,0,.5);animation:islaUp .28s cubic-bezier(.32,.72,0,1)}
 @keyframes islaUp{from{transform:translateY(40px)}to{transform:none}}
+.impisla{z-index:260}
+.improw{padding:12px;border-radius:15px;margin-bottom:9px;border:1px solid var(--line2);background:var(--card)}
+.improw.ok{border-color:rgba(var(--acc-rgb),.4);background:linear-gradient(150deg, rgba(var(--acc-rgb),.1) 0%, transparent 58%), var(--card)}
+.improw>div>div>b{font:700 13.5px var(--ui)}
 .infgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .infdato{padding:10px 11px;border-radius:13px;border:1px solid var(--line2);background:var(--card)}
 .infdato i{display:block;font:600 8.5px var(--ui);font-style:normal;letter-spacing:.06em;
@@ -1930,7 +1934,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 193';
+const APPREV='REV 194';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2220,6 +2224,10 @@ const PLANS = {
   cami:{
     title:'Recomposición', start:'2026-07-27', end:'2027-12-31', weeks:156, block:true,
     wStart:59.5, wGoal:56.5, metaNote:'meta real: 26-27% de grasa manteniendo músculo (~56-57 kg, 4-6 meses)',
+    /* misma fecha de arranque que Andres. 3 g diarios: la dosis de creatina no escala con el
+       peso, escala con la masa muscular, y 3 g saturan igual solo que mas despacio.
+       El agua que retiene si escala con el musculo, y ella tiene menos: 0,6 a 1,2 kg. */
+    creatina:{dosis:3, kgAgua:[0.6,1.2], semanas:5, desde:'2026-08-07'},
     kcalKg:1700/59.5, waterGoal:2000,
     rateGoal:0.3, rateLabel:'0,2-0,4', lossAlert:0.7,
     lossAdvice:'Pérdida >0,7 kg/sem sostenida: sube a 1.850 kcal para no perder músculo.',
@@ -10621,14 +10629,19 @@ function ring(pct,main,sub,size=138,sw=11){
 function waterGoalDay(dISO){
   const cfg=S.cfg||{};
   if(cfg.waterAuto===false) return cfg.waterGoal;
-  /* 35 ml/kg mas 500 de entreno daban 3,7 L a 92 kg, medio litro por encima de lo que pide
-     el propio plan (2,5 L) y una meta que nadie cumple deja de ser meta. 30 ml/kg es el
-     extremo bajo de la recomendacion habitual y ademas el agua de la comida no se cuenta
-     aqui, asi que la ingesta real es mayor. Tope a 3,5 L. */
+  /* 30 ml/kg del peso de HOY (se recalcula solo conforme baja), mas 350 los dias de entreno.
+     Antes eran 35 ml/kg mas 500 y daban 3,7 L a 92 kg: medio litro por encima de lo que pide
+     el propio plan, y una meta que nadie cumple deja de ser meta. El agua de la comida no se
+     cuenta aqui, asi que la ingesta real es mayor que el numero.
+     La creatina suma aparte: mete agua DENTRO del musculo y esa agua sale del resto del
+     cuerpo. El "+500 ml" que se repite por ahi no tiene respaldo firme; lo que si esta
+     documentado es que hay que mantenerse bien hidratado. +250 mientras satura y +150 en
+     mantenimiento: suficiente para cubrirlo sin volver a una meta que nadie cumple. */
   const base=Math.round(currentWeight()*30/50)*50;
   const act=S.acts[dISO];
   const entrena=S.sessions.some(s=>s.d===dISO) || act?.t==='gym' || !!routineOn(fromISO(dISO).getDay());
-  return clamp(base+(entrena?350:0), 1500, 3500);
+  const creat=creatDesde() ? (creatSaturando()?250:150) : 0;
+  return clamp(base+(entrena?300:0)+creat, 1500, 3500);
 }
 function waterUI(dISO,act){
   const n=S.water[dISO]||0, goal=waterGoalDay(dISO), pct=clamp(n/goal*100,0,100);
@@ -10714,6 +10727,55 @@ function pesoWindow(){
   box.onclick=e=>{ if(e.target===box) box.remove(); };
 }
 /* ventana flotante: Importar entreno (T2, antes vivia siempre desplegada en Entrenar) */
+/* Revision del import: lo que no encaja con seguridad se pregunta en vez de asumirse.
+   Para cada dudoso: aceptar lo propuesto, buscar otro, crearlo nuevo u omitirlo. */
+function impRevHTML(){
+  const R=UI.impRev; if(!R) return '';
+  const dec=UI.impDec||{}, qs=UI.impRevQ||{};
+  const listos=R.dudas.filter(x=>dec[x.nom]).length;
+  return `<div class="fzaisla impisla" data-a="nada">
+    <div class="fzaislain" data-a="nada" role="dialog" aria-label="Revisar el import">
+      <div class="flex between" style="align-items:flex-start;gap:10px;margin-bottom:8px">
+        <div style="min-width:0"><span class="lbl">REVISAR ANTES DE GUARDAR</span>
+          <div class="fzaglobn" style="color:var(--ink);margin-top:2px">${R.dudas.length} sin coincidencia clara</div></div>
+        <button class="chip" data-a="impRevCancel" aria-label="Cancelar">${ic('x',10)}</button>
+      </div>
+      <div class="small dim mb12" style="line-height:1.55">El resto del entreno del <b>${fmtD(R.d)}</b> ya está listo. Estos no los doy por buenos solos: dime qué son y los guardo bien. Antes los asumía y por eso una elevación en polea entraba como mancuerna.</div>
+      ${R.dudas.map(x=>{
+        const el=dec[x.nom], q=(qs[x.nom]||'').trim().toLowerCase();
+        const cands=q ? EXCAT.filter(e=>normEx(e.name).includes(normEx(q))).slice(0,8) : [];
+        return `<div class="improw ${el?'ok':''}">
+          <div class="flex between" style="align-items:flex-start;gap:8px">
+            <div style="min-width:0"><b>${esc(x.nom)}</b>
+              <i class="small dim" style="display:block">${x.sets.map(s=>fmt1(s.w)+'×'+s.r).join('  ')}</i></div>
+            ${el?`<span class="crucetag">${el==='omitir'?'se omite':el==='nuevo'?'nuevo':'resuelto'}</span>`:''}
+          </div>
+          ${el ? `<div class="small mt8" style="line-height:1.5">${el==='omitir'?'No se guarda.'
+                  : el==='nuevo'?'Se guarda como ejercicio nuevo con ese nombre.'
+                  : 'Se guarda como <b>'+esc(exNombre(el))+'</b>.'}
+                <button class="chip xs" data-a="impDec" data-n="${esc(x.nom)}" data-v="">cambiar</button></div>`
+            : `${x.id?`<div class="small mt8" style="line-height:1.5">Se parece a <b>${esc(exNombre(x.id))}</b> ${x.via?'('+esc(x.via)+')':''}.</div>
+                <div class="flex wrapf mt8" style="gap:5px">
+                  <button class="chip fill" data-a="impDec" data-n="${esc(x.nom)}" data-v="${esc(x.id)}">${ic('check',10)} Sí, es ese</button>`
+              :`<div class="small mt8" style="line-height:1.5">No encontré nada parecido.</div>
+                <div class="flex wrapf mt8" style="gap:5px">`}
+                <button class="chip" data-a="impDec" data-n="${esc(x.nom)}" data-v="nuevo">${ic('plus',10)} Crear nuevo</button>
+                <button class="chip" data-a="impDec" data-n="${esc(x.nom)}" data-v="omitir">${ic('x',10)} Omitir</button>
+              </div>
+              <div class="inwrap mt8">${ic('search',14)}<input class="in has-ic" placeholder="Buscar el correcto…" value="${esc(qs[x.nom]||'')}" data-ch="imprevq" data-n="${esc(x.nom)}"></div>
+              ${cands.length?`<div class="flex wrapf mt8" style="gap:5px">${cands.map(e=>
+                `<button class="chip" data-a="impDec" data-n="${esc(x.nom)}" data-v="${e.id}">${esc(e.name)}</button>`).join('')}</div>`
+                : (q?'<div class="small dim mt8">Nada con esa búsqueda.</div>':'')}`}
+        </div>`;}).join('')}
+      <div class="flex mt12" style="gap:8px">
+        <button class="btn ghost" data-a="impRevCancel" style="flex:1">Cancelar</button>
+        <button class="btn primary" data-a="impRevGo" style="flex:2" ${listos<R.dudas.length?'disabled':''}>
+          ${ic('check',13)} Guardar (${listos} de ${R.dudas.length})</button>
+      </div>
+    </div>
+  </div>`;
+}
+function impIdNuevo(nom){ return 'imp_'+(normEx(nom).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,24)||'ej'); }
 function impBox(){
   const box=document.createElement('div'); box.className='fbox small';
   box.innerHTML=`<div class="fboxin"><div class="mod glowtop" style="margin:0">
@@ -12602,14 +12664,18 @@ function equipCompatible(id, eq){
   const nom=equipDeNombre(exNombre(id));
   return !nom || nom===eq;
 }
-function matchExId(name){
+function matchExId(name){ const r=matchExDetalle(name); return r.id; }
+/* Igual que matchExId pero contando de donde salio el emparejamiento. La confianza importa:
+   un nombre exacto es un hecho, un parecido por palabras sueltas es una apuesta, y apostar
+   sin preguntar fue lo que metio "Lateral Raise (Cable)" como mancuerna. */
+function matchExDetalle(name){
   const qFull=normEx(name);
   const eqPide=equipDeNombre(name);
   const qTrad=qFull.split(' ').map(w=>IMPORT_TOK[w]||w).join(' ');
   /* 1. nombre EXACTO contra los ejercicios del plan del usuario (lo mas correcto:
         la sesion importada alimenta el historial que la app ya usa) */
   let hit=Object.keys(EXMAP).find(id=>{ const n=normEx(EXMAP[id].name); return n===qFull||n===qTrad; });
-  if(hit) return hit;
+  if(hit) return {id:hit, conf:'exacta', via:'tu plan'};
   /* 2. sinonimos EN/ES; los candidatos se resuelven primero contra el plan y, si
         ninguno existe ahi, contra el catalogo EXCAT (antes solo miraba el plan y
         "Squat (Barbell)" caia por similitud en Hack Squat, que es otro ejercicio:
@@ -12617,22 +12683,32 @@ function matchExId(name){
   /* nombre exacto en el catalogo ANTES que los sinonimos: "Bayesian Curl" existe tal cual
      y por sinonimo caia en el curl de cable, que es otro ejercicio */
   const catEx=EXCAT.find(e=>{ const n=normEx(e.name); return n===qFull||n===qTrad; });
-  if(catEx) return catEx.id;
+  if(catEx) return {id:catEx.id, conf:'exacta', via:'el catálogo'};
   const q=normEx(name.replace(/\([^)]*\)/g,''));
   const have=id=>!!EXMAP[id];
   const haveCat=id=>EXCAT.some(e=>e.id===id);
-  let best=null,bl=0;
+  let best=null,bl=0,mejorKey='';
   for(const row of IMPORT_SYN){ const key=row[0];
     if(q.indexOf(key)>-1 && key.length>bl){
+      mejorKey=key;
       const ok=x=>equipCompatible(x, eqPide);
       /* primero un candidato del implemento pedido; si ninguno encaja, se deja el que haya */
       const cand=row.slice(1).find(x=>have(x)&&ok(x)) || row.slice(1).find(x=>haveCat(x)&&ok(x))
               || row.slice(1).find(have) || row.slice(1).find(haveCat);
       if(cand){ best=cand; bl=key.length; } } }
-  if(best) return best;
+  /* Un sinonimo solo es fiable si CUBRE casi todo el nombre. La tabla empareja por
+     subcadena, asi que "Zercher Squat" y "Sissy Squat" caian en Squat (Barbell) y se daban
+     por buenos. Si la clave cubre menos del 60% del nombre, hay palabras que nadie miro:
+     eso es una apuesta y se manda a revision. */
+  if(best){
+    const cubre = q.length ? bl/q.length : 0;
+    return cubre>=0.6
+      ? {id:best, conf:'sinonimo', via:'un sinónimo conocido'}
+      : {id:best, conf:'parecido', via:'solo coincide "'+q.slice(q.indexOf(mejorKey)||0).slice(0,bl)+'" del nombre'};
+  }
   /* 3. nombre exacto contra el catalogo EXCAT completo */
   const cat=EXCAT.find(e=>{ const n=normEx(e.name); return n===qFull||n===qTrad; });
-  if(cat) return cat.id;
+  if(cat) return {id:cat.id, conf:'exacta', via:'el catálogo'};
   /* 4. similitud por palabras: primero el plan (1 palabra basta), luego el
         catalogo (exige 2 para no emparejar basura) */
   const qt=q.split(/\s+/).filter(w=>w.length>2);
@@ -12644,10 +12720,10 @@ function matchExId(name){
     return sc + (eqPide && equipDeNombre(nm)===eqPide ? 1 : 0); };
   let bId=null,bs=0;
   Object.keys(EXMAP).forEach(id=>{ const sc=punt(normEx(EXMAP[id].name), id); if(sc>bs){ bs=sc; bId=id; } });
-  if(bs>=1) return bId;
+  if(bs>=1) return {id:bId, conf:'parecido', via:'palabras parecidas en tu plan'};
   bId=null; bs=0;
   EXCAT.forEach(x=>{ const sc=punt(normEx(x.name), x.id); if(sc>bs){ bs=sc; bId=x.id; } });
-  return bs>=2?bId:null;
+  return bs>=2 ? {id:bId, conf:'parecido', via:'palabras parecidas en el catálogo'} : {id:null, conf:null, via:null};
 }
 function parseWorkoutText(text){
   const d=parseWorkoutDate(text)||TODAY();
@@ -15888,7 +15964,11 @@ function vMas(){
     ${S.cfg.waterAuto===false
       ? `<div class="flex between mt8"><span class="small dim">Meta fija que pusiste tú</span>
          <button class="chip" data-a="waterAuto">Volver a automática</button></div>`
-      : `<div class="small dim mt8">Automática: 35 ml por kg de tu peso (${fmt1(currentWeight())} kg) y +500 ml los días de entreno. Si la ajustas con − o +, queda fija en el número que elijas.</div>`}
+      : `<div class="small dim mt8" style="line-height:1.55">${(()=>{
+          const pc=Math.round(currentWeight()*10)/10;
+          const b=Math.round(currentWeight()*30/50)*50;
+          const cr=creatDesde()?(creatSaturando()?250:150):0;
+          return `Automática, y baja sola conforme bajes de peso. Hoy son <b>${fmtInt(waterGoalDay(TODAY()))} ml</b>: ${fmtInt(b)} por tus ${fmt1(pc)} kg (30 ml por kilo)${cr?', +'+cr+' por la creatina'+(creatSaturando()?' mientras satura':''):''}, y +300 los días que entrenas. El agua de la comida no entra en la cuenta, así que tomas más de lo que dice el número. Si la ajustas con − o +, queda fija.`;})()}</div>`}
     <div class="small dim mt8 mb8">Horas límite de cada comida (si no la registras a esa hora, sus macros se reparten en las que quedan). Solo las comidas con hora límite definida se pueden ajustar aquí:</div>
     ${comidasDe(UID).slice(0,-1).map(md=>{const cuts={...MEAL_CUTOFF[UID],...(S.cfg.cut||{})}; if(cuts[md.k]===undefined) return '';
       return `<div class="row"><div class="grow"><b style="font-size:16px">${md.label}</b></div>
@@ -16176,7 +16256,7 @@ function renderReal(){
      empieza de cero arriba. Si el morph falla, cae al reemplazo de siempre. */
   /* la isla del nivel global es una capa flotante: viaja con el HTML de la vista */
   const htmlNuevo = VIEWS[UI.tab]() + (UI.fzaIsla ? fzaIslaHTML() : '') + (UI.prIsla ? fzaPRIslaHTML() : '')
-    + (UI.exInf ? exInformeHTML() : '');
+    + (UI.exInf ? exInformeHTML() : '') + (UI.impRev ? impRevHTML() : '');
   const puedeMorph = keep && MORPH_VISTAS.has(UI.tab);
   /* De donde viene este render decide a que anclarse. Si el despachador de clicks
      dejo UI._ancla, viene de un TAP: hay que quedarse donde esta la pantalla, no
@@ -16833,21 +16913,32 @@ const ACTIONS = {
        parentesis es el implemento y sin el "Seated Row (Machine)" y "Seated Row (Cable)"
        colapsan en el mismo ejercicio y uno pisa al otro. El id de respaldo tambien sale
        del raw, por lo mismo. */
+    /* Se empareja con la linea COMPLETA (it.raw), no con el nombre ya pelado. Y lo que no
+       encaja con seguridad NO se asume: se manda a revision para que el dueno decida. */
     const plan=items.map(it=>{
       const nom=it.raw||it.name;
-      let id=matchExId(nom); let alt=null;
-      if(!id){ id='imp_'+normEx(nom).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,24)||'imp_ej'; alt=nom; }
-      return {it, id, alt};
+      const m=matchExDetalle(nom);
+      const forz=(UI.impDec||{})[nom];        /* decision tomada en la revision */
+      if(forz==='nuevo') return {it, nom, id:impIdNuevo(nom), alt:nom, conf:'nuevo'};
+      if(forz==='omitir') return {it, nom, id:null, alt:null, conf:'omitir'};
+      if(forz) return {it, nom, id:forz, alt:null, conf:'manual'};
+      if(m.id && (m.conf==='exacta'||m.conf==='sinonimo')) return {it, nom, id:m.id, alt:null, conf:m.conf, via:m.via};
+      return {it, nom, id:m.id, alt:null, conf:m.conf||'ninguna', via:m.via, dudoso:true};
     });
-    const repetidos=plan.filter(p=>(S.logs[p.id]||[]).some(h=>h.d===d));
+    /* si queda alguna duda, no se escribe nada todavia: primero se resuelve */
+    const dudas=plan.filter(p=>p.dudoso);
+    if(dudas.length){ UI.impRev={d, items, dudas:dudas.map(p=>({nom:p.nom, id:p.id, conf:p.conf, via:p.via, sets:p.it.sets}))};
+      render(); return false; }
+    const usable=plan.filter(p=>p.id);
+    const repetidos=usable.filter(p=>(S.logs[p.id]||[]).some(h=>h.d===d));
     if(repetidos.length){
       const rep=confirm('El '+fmtD(d)+' ya tiene registros de '+repetidos.length+' de estos ejercicios.\n\nAceptar: REEMPLAZAR lo de ese día con lo que estás pegando.\nCancelar: sumarlo encima como series adicionales.');
       if(rep){
-        plan.forEach(p=>{ if(S.logs[p.id]){ S.logs[p.id]=S.logs[p.id].filter(h=>h.d!==d); if(!S.logs[p.id].length) delete S.logs[p.id]; } });
+        usable.forEach(p=>{ if(S.logs[p.id]){ S.logs[p.id]=S.logs[p.id].filter(h=>h.d!==d); if(!S.logs[p.id].length) delete S.logs[p.id]; } });
       }
     }
     let matched=0; const unmatched=[], trainedIds=[]; let totalSeries=0, totalEj=0;
-    plan.forEach(({it,id,alt})=>{
+    usable.forEach(({it,id,alt})=>{
       const entry={d, sets:it.sets.map(s=>({w:s.w, r:s.r}))};
       if(alt){ entry.alt=alt; unmatched.push(it.name); }
       else matched++;
@@ -16864,7 +16955,10 @@ const ACTIONS = {
     /* N1: XP proporcional a lo importado (10/serie + 25/ejercicio + 50 de sesion,
        tope 250), anti-duplicado por fecha+rutina: reimportar el mismo dia no repaga */
     const xpGain = rid ? xpEntrenoExterno('import', {d, clave:rid, series:totalSeries, ejercicios:totalEj}) : 0;
-    toast(matched+' ejercicio'+(matched!==1?'s':'')+' importado'+(matched!==1?'s':'')+' al '+fmtD(d)+(unmatched.length?' · '+unmatched.length+' sin emparejar':'')+(xpGain?' · +'+xpGain+' XP':''));
+    /* las decisiones de la revision son de ESTE import: el siguiente empieza limpio */
+    UI.impRev=null; UI.impDec=null; UI.impRevQ=null;
+    const omitidos=plan.filter(p=>p.conf==='omitir').length;
+    toast(matched+' ejercicio'+(matched!==1?'s':'')+' importado'+(matched!==1?'s':'')+' al '+fmtD(d)+(omitidos?' · '+omitidos+' omitido'+(omitidos!==1?'s':''):'')+(unmatched.length?' · '+unmatched.length+' sin emparejar':'')+(xpGain?' · +'+xpGain+' XP':''));
     return true;
   },
   exProg(d){ UI.ex=d.ex; UI.tab='progreso'; UI.sub.prog='ejercicios'; UI.progAct='ejercicios'; UI.session=null; render(); },
@@ -17339,6 +17433,18 @@ const ACTIONS = {
   fzaPRIslaCerrar(){ UI.prIsla=null; render(); },
   fzaIslaCerrar(){ UI.fzaIsla=false; render(); },
   secPlegTgl(d, el){ UI.secAb=UI.secAb||{}; UI.secAb[d.s]=!UI.secAb[d.s]; renderAnclado(el); },
+  /* revision del import: aceptar lo propuesto, elegir otro, crear nuevo u omitir */
+  impDec(d){ UI.impDec=UI.impDec||{}; if(d.v) UI.impDec[d.n]=d.v; else delete UI.impDec[d.n]; render(); },
+  impRevQ(d){ UI.impRevQ=UI.impRevQ||{}; UI.impRevQ[d.n]=''; render(); },
+  impRevCancel(){ UI.impRev=null; UI.impDec=null; UI.impRevQ=null; render(); },
+  impRevGo(){
+    const R=UI.impRev; if(!R) return;
+    const pend=R.dudas.filter(x=>!((UI.impDec||{})[x.nom]));
+    if(pend.length){ toast('Falta decidir '+pend.length+': acepta, elige otro, crea nuevo u omite'); return; }
+    UI.impRev=null;
+    const ta=$('#impText');
+    if(ta) ACTIONS.importWorkout(); else { toast('Vuelve a pegar el texto'); }
+  },
   cruceGrupo(d, el){ UI.cruceGrupo = (UI.cruceGrupo||'ojo')===d.s ? '' : d.s; renderAnclado(el); },
   fzaEjTgl(d, el){ UI.fzaEj = UI.fzaEj===d.k ? null : d.k; renderAnclado(el); },
   /* accion vacia: sirve para que closest('[data-a]') se detenga en un contenedor y no
@@ -18269,6 +18375,9 @@ const CHANGES = {
   exnote(el){ const t=el.value.trim(); if(t) S.exnotes[el.dataset.ex]=t; else delete S.exnotes[el.dataset.ex]; save('exnotes'); },
   exq(el){ UI.exQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=exq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
   excatq(el){ UI.excatQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=excatq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length,inp.value.length); } },
+  imprevq(el){ UI.impRevQ=UI.impRevQ||{}; UI.impRevQ[el.dataset.n]=el.value; render();
+    const inp=document.querySelector('#view input[data-ch=imprevq][data-n="'+CSS.escape(el.dataset.n)+'"]');
+    if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length, inp.value.length); } },
   fzaq(el){ UI.fzaQ=el.value; render(); const inp=document.querySelector('#view input[data-ch=fzaq]'); if(inp){ SEARCHFOCUS=true; inp.focus({preventScroll:true}); SEARCHFOCUS=false; inp.setSelectionRange(inp.value.length, inp.value.length); } },
   pegarin(el){ UI.pegarTxt=el.value; render();
     const inp=document.getElementById('pegarIn');
@@ -18524,7 +18633,7 @@ document.addEventListener('click', e=>{
 /* los buscadores en vivo ya se repintan desde el listener de 'input': si ademas
    atendieran el 'change' que dispara el navegador al destruirse el campo, se repintaria
    dos veces por tecla (ver el guardia de render) */
-const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq','goalq','goalw','goalr','nlogQtyIn','pegarin','rutq','libreq','fzaq']);
+const CH_ENVIVO=new Set(['nlogq','exq','excatq','addexq','recq','goalq','goalw','goalr','nlogQtyIn','pegarin','rutq','libreq','fzaq','imprevq']);
 /* los dias de la semana son <details>: si no se recuerda cual quedo abierto, cada
    render los cierra, la pagina se encoge de golpe y el scroll cae al inicio (era el
    salto al tocar "ver ingredientes"). 'toggle' no burbujea: se escucha en captura. */
@@ -18581,7 +18690,7 @@ document.addEventListener('input', e=>{
   const el=e.target.closest('[data-ch]'); if(!el) return;
   const ch=el.dataset.ch;
   if(ch==='recq'){ UI.recQ=el.value; }
-  else if((ch==='nlogq'||ch==='exq'||ch==='excatq'||ch==='addexq'||ch==='nlogGrams'||ch==='nlogQtyIn'||ch==='pegarin'||ch==='goalq'||ch==='goalw'||ch==='goalr'||ch==='rutq'||ch==='libreq'||ch==='fzaq') && CHANGES[ch]){ CHANGES[ch](el); }  /* la estabilidad la pone el ancla de renderReal; devolver el scroll aqui la peleaba */
+  else if((ch==='nlogq'||ch==='exq'||ch==='excatq'||ch==='addexq'||ch==='nlogGrams'||ch==='nlogQtyIn'||ch==='pegarin'||ch==='goalq'||ch==='goalw'||ch==='goalr'||ch==='rutq'||ch==='libreq'||ch==='fzaq'||ch==='imprevq') && CHANGES[ch]){ CHANGES[ch](el); }  /* la estabilidad la pone el ancla de renderReal; devolver el scroll aqui la peleaba */
   /* la calculadora solo escuchaba 'change', que en un campo de texto salta al salir del
      campo: el numero se quedaba congelado mientras se escribia. Ahora recalcula por tecla. */
   else if(ch==='pcal' && CHANGES.pcal){ CHANGES.pcal(el); }

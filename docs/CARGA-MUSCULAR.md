@@ -460,3 +460,22 @@ referencia, se arma uno propio de un solo músculo en vez de mentir sobre a qué
 
 Se elige desde el panel de opciones del ejercicio en la sesión y desde el informe, en "Qué
 mueve", que es donde se nota que algo no está sumando.
+
+### Los tríceps en la base (REV 205)
+
+Andy agregó "Triceps Extension Single Arm" y no sumaba a nada. Dos causas:
+
+1. **El patrón exigía la `s`.** El regex era `/tr[ií]ceps|pushdown/i`, así que "Tricep Extension"
+   en singular (como lo escriben Strong y media internet) no entraba. Ahora es `tr[ií]ceps?`.
+2. **"Overhead" ganaba sobre "tríceps".** La regla de press vertical matchea `overhead` y va
+   antes en la lista, así que "Overhead Tricep Extension" contaba como deltoide anterior. Se le
+   puso un negativo global al principio de la alternancia (`^(?!.*(tr[ií]ceps?|copa|skull))`),
+   que es lo que hay que hacer para que cubra todas las alternativas y no solo la primera.
+
+De paso: **"kickback" suelto era de glúteo** y se tragaba el de tríceps; ahora pide contexto
+(`glute kickback`, `kickback de glúteo`). Y se agregaron `abduction` y `adduction` en inglés,
+que no matcheaban con los regex en español.
+
+Los dieciséis ids de tríceps del catálogo quedaron atados en `EJ_PATRON_ID`, así que no dependen
+de cómo esté escrito el nombre. Cobertura del catálogo: **275 de 301** con patrón; los 26 sin él
+son movilidad y cardio, que no tienen reparto de hipertrofia y así debe ser.

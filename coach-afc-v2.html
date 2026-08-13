@@ -1965,7 +1965,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 203';
+const APPREV='REV 204';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -4178,7 +4178,7 @@ function exInforme(id){
   if(ult.length>1){ let s=0; for(let i=1;i<ult.length;i++) s+=(fromISO(ult[i].d)-fromISO(ult[i-1].d))/864e5;
     cada=Math.round(s/(ult.length-1)); }
   const pat=ejPatron(id, exNombre(id));
-  const musc=pat?Object.entries(EJ_PATRONES[pat]||{}).sort((a,b)=>b[1]-a[1]):[];
+  const musc=pat?Object.entries(repartoDe(pat)||{}).sort((a,b)=>b[1]-a[1]):[];
   const rm=goalHistRM(id)||[];
   return {id, ex, hist, L, hw, hwd, b1, b1d, bvol, bvold, breps, brepsd,
     ton:Math.round(ton), series, sesiones:hist.length, dias, cada, musc, rm,
@@ -4258,10 +4258,17 @@ function exInformeHTML(){
         ${dato('Tonelaje', fmtInt(I.ton)+' kg', 'levantados en total')}
         ${dato('Última', I.dias===0?'hoy':'hace '+I.dias+' d', fmtD(I.hist[I.hist.length-1].d))}
       </div>
-      ${I.musc.length?`<div class="lbl" style="display:block">QUÉ MUEVE</div>
-        <div class="infmusc mt4 mb12">${I.musc.map(([m,pc])=>`
+      <div class="lbl" style="display:block">QUÉ MUEVE</div>
+      ${I.musc.length?`<div class="infmusc mt4">${I.musc.map(([m,pc])=>`
           <div class="infm"><span>${esc(MUSC_NOM[m]||m)}</span>
-            <i><em style="width:${clamp(pc,4,100)}%"></em></i><b>${pc}%</b></div>`).join('')}</div>`:''}
+            <i><em style="width:${clamp(pc,4,100)}%"></em></i><b>${fmt1(pc/100)}</b></div>`).join('')}</div>
+        <div class="small dim mt4" style="line-height:1.5">Cada serie cuenta así de completa para cada músculo. El principal siempre vale 1.</div>`
+        :'<div class="small mt4" style="color:var(--gold);line-height:1.5">Este ejercicio no suma a ningún músculo todavía: dime cuál es y empieza a contar.</div>'}
+      <div class="flex wrapf mt8 mb12" style="gap:5px">
+        <span class="small dim" style="margin-right:2px">${exMuscElegido(id)?'Lo pusiste en':'Cámbialo a'}</span>
+        ${Object.keys(MUSC_PATRON).map(m=>`<button class="chip xs ${exMuscElegido(id)===m?'fill':''}" data-a="exMusc" data-id="${esc(id)}" data-m="${m}">${esc(MUSC_NOM[m]||m)}</button>`).join('')}
+        ${exMuscElegido(id)?`<button class="chip xs" data-a="exMusc" data-id="${esc(id)}" data-m="">${ic('x',9)} automático</button>`:''}
+      </div>
       ${(I.L.max&&I.L.recio)?`<div class="lbl" style="display:block">LAS TRES LECTURAS</div>
         <div class="fzadosw mt4 mb12">${Object.keys(FZA_BASES).filter(k=>I.L[k]).map(k=>`
           <div class="fzados ${k===fzaBaseModo()?'on':''}"><i>${FZA_BASES[k].n}</i>
@@ -4881,7 +4888,55 @@ const EJ_PATRON_NOM=[
   [/wrist|mu[nñ]eca|roller|agarre|grip|dead hang|colgarse/i,'agarre_antebrazo'],
   [/side bend|lateral de tronco|inclinaci[oó]n lateral/i,'rotacion_core'], [/muscle.?up/i,'muscle_up'],
 ];
+/* ============ CUANTO CUENTA UNA SERIE ============
+   EJ_PATRONES reparte el 100% de la activacion entre los musculos que participan, que sirve
+   para compararlos entre si pero NO para contar volumen: los estandares de MEV/MAV/MRV
+   cuentan una serie ENTERA para el musculo principal y una fraccion para los ayudantes. Con
+   el reparto crudo, una serie de press de banca dejaba 0,62 de pecho y todo el cuerpo salia
+   por debajo del minimo aunque se entrenara bien.
+   Se reescala cada patron para que el principal valga 100 y los demas suban en la misma
+   proporcion. En banca eso da pecho 100, deltoide anterior 32 y triceps 24, que es
+   practicamente la convencion aceptada (1 de pecho, ~0,5 de los ayudantes). */
+const _repCache={};
+function repartoDe(pat){
+  if(!pat) return null;
+  if(_repCache[pat]) return _repCache[pat];
+  /* "_m_<musculo>": el dueno dijo a que va y no hay patron de referencia para ese musculo.
+     Cuenta una serie entera para el, sin ayudantes inventados. */
+  if(String(pat).startsWith('_m_')) return (_repCache[pat]={[pat.slice(3)]:100});
+  const r=EJ_PATRONES[pat]; if(!r) return null;
+  const mx=Math.max(...Object.values(r));
+  const f=mx>0 ? 100/mx : 1;
+  const out={};
+  Object.entries(r).forEach(([m,pc])=>{ out[m]=Math.round(pc*f); });
+  return (_repCache[pat]=out);
+}
+/* ============ A QUE MUSCULO VA UN EJERCICIO ============
+   El patron se adivina por id o por nombre y eso falla con los ejercicios que uno agrega a
+   mano ("Triceps Extension Single Arm" no estaba en ninguna lista y no sumaba a nada).
+   S.cfg.exMusc[id] guarda el musculo elegido por el dueno y MANDA sobre lo adivinado.
+   De ahi sale un patron real, con sus ayudantes, no un 100% suelto. */
+const MUSC_PATRON={
+  pectoral:'press_horizontal', dorsal:'jalon_vertical', trapecio:'encogimiento_trapecio',
+  romboides:'remo_horizontal', deltoide_anterior:'press_vertical',
+  deltoide_lateral:'elevacion_lateral', deltoide_posterior:'pajaro_posterior',
+  triceps:'extension_triceps', biceps:'curl_biceps', antebrazo:'agarre_antebrazo',
+  abdomen:'crunch_abdominal', oblicuos:'rotacion_core', lumbar:'extension_lumbar',
+  cuadriceps:'extension_cuadriceps', isquiotibial:'curl_femoral', gluteo:'hip_thrust',
+  aductor:'aduccion_cadera', pantorrilla:'gemelo_de_pie',
+};
+function exMuscElegido(id){ return ((S.cfg&&S.cfg.exMusc)||{})[id]||null; }
+/* patron del musculo elegido; si ese musculo no es el principal del patron de referencia,
+   se arma uno propio para no mentir sobre a que va la serie */
+function patronDeMusculo(m){
+  const pat=MUSC_PATRON[m]; if(!pat) return null;
+  const r=repartoDe(pat); if(!r) return null;
+  const top=Object.entries(r).sort((a,b)=>b[1]-a[1])[0];
+  return (top && top[0]===m) ? pat : null;
+}
 function ejPatron(id, nombre){
+  const m=exMuscElegido(id);
+  if(m){ const p=patronDeMusculo(m); if(p) return p; return '_m_'+m; }
   const f=ejFicha(id); if(f && f.p) return f.p;
   if(id && EJ_PATRON_ID[id]) return EJ_PATRON_ID[id];
   const n=nombre||exNombre(id)||'';
@@ -4904,7 +4959,7 @@ function cargaMuscular(dias){
     const enRango=hist.filter(h=>h.d>=desde && h.d<=hoy);
     if(!enRango.length) return;
     const nom=exNombre(id);
-    const pat=ejPatron(id, nom), rep=pat?EJ_PATRONES[pat]:null;
+    const pat=ejPatron(id, nom), rep=pat?repartoDe(pat):null;
     const series=enRango.reduce((a,h)=>a+(h.sets||[]).length,0);
     if(!rep){ if(series) sinMapear.push(nom); return; }
     Object.entries(rep).forEach(([m,pc])=>{
@@ -4929,7 +4984,7 @@ function cargaMuscular(dias){
   });
   if(corrMin>0){
     const serEq=corrMin/10;
-    Object.entries(EJ_PATRONES.correr).forEach(([m,pc])=>{
+    Object.entries(repartoDe('correr')||EJ_PATRONES.correr).forEach(([m,pc])=>{
       out[m]=(out[m]||0)+serEq*pc/100;
       (ejer[m]=ejer[m]||new Set()).add('Correr'+(corrKm?' ('+fmt1(corrKm)+' km)':''));
       det[m]=det[m]||[];
@@ -4948,14 +5003,22 @@ function cargaMuscular(dias){
   return {musc:res, sinMapear:[...new Set(sinMapear)], dias:dias||7, semanas, desde, hasta:hoy, corrMin, corrKm};
 }
 /* en que nivel esta ese musculo frente a las referencias de volumen semanal */
+/* El color dice a que distancia estas, no solo de que lado de la linea. Antes cualquier
+   cosa por debajo del minimo salia del mismo naranja: 7 de 8 series se veia igual de mal
+   que 1 de 8, y con medio cuerpo asi la pantalla era una mancha naranja sin informacion. */
 function cargaNivel(m, series){
   const v=MUSC_VOL[m];
   if(!v) return {k:'na', n:'sin referencia', c:'var(--smoke)', pc:0};
-  if(series<=0) return {k:'cero', n:'sin trabajo', c:'#FF6B6B', pc:0};
-  if(series<v.mev) return {k:'bajo', n:'por debajo del mínimo', c:'#FF9F45', pc:series/v.mrv};
+  if(series<=0) return {k:'cero', n:'sin trabajo', c:'#FF5257', pc:0};
+  if(series<v.mev){
+    const r=v.mev>0 ? series/v.mev : 0;
+    return r>=0.7
+      ? {k:'bajo', n:'a un paso del mínimo', c:'#FFC94D', pc:series/v.mrv, cerca:true}
+      : {k:'bajo', n:'por debajo del mínimo', c:'#FF8A3D', pc:series/v.mrv};
+  }
   if(series<v.mav) return {k:'ok', n:'en zona de crecer', c:'#58DFA3', pc:series/v.mrv};
-  if(series<=v.mrv) return {k:'alto', n:'volumen alto', c:'#FFC94D', pc:series/v.mrv};
-  return {k:'exceso', n:'por encima de lo recuperable', c:'#FF6B6B', pc:1};
+  if(series<=v.mrv) return {k:'alto', n:'volumen alto', c:'#8FD98F', pc:series/v.mrv};
+  return {k:'exceso', n:'por encima de lo recuperable', c:'#FF5257', pc:1};
 }
 const MED_EJGRUPO={
   cuello:'hombros', hombros:'hombros', pecho:'pecho', cintura:'core', cadera:'pierna',
@@ -4972,7 +5035,7 @@ function ejerciciosDe(musculo, equip){
     if(equip && x.equip!==equip) return;
     if(x.cat==='movilidad'||x.cat==='cardio') return;
     const pat=ejPatron(x.id,x.name); if(!pat) return;
-    const pc=(EJ_PATRONES[pat]||{})[musculo];
+    const pc=(repartoDe(pat)||{})[musculo];
     if(!pc) return;
     out.push({x, pc, pat});
   });
@@ -5614,8 +5677,8 @@ function fzaDeMusculo(m){
   const lista=[];
   tb.forEach(x=>{
     const pat=ejPatron(x.ex, exNombre(x.ex)); if(!pat) return;
-    const pc=(EJ_PATRONES[pat]||{})[m]||0;
-    if(pc>=15) lista.push({...x, aporte:pc});
+    const pc=(repartoDe(pat)||{})[m]||0;
+    if(pc>=25) lista.push({...x, aporte:pc});
   });
   if(!lista.length) return null;
   lista.sort((a,b)=> b.aporte-a.aporte || b.score-a.score);
@@ -6108,7 +6171,7 @@ function vCarga(){
         `<button class="chip ${dias===d?'fill':''}" data-a="cargaDias" data-d="${d}">${l}</button>`).join('')}</div></div>
     <p class="small dim" style="margin:0 0 4px;line-height:1.5">Cada serie se reparte entre los músculos que de verdad trabajan: un press de banca no es solo pecho, también suma tríceps y deltoide. Eso son <b>series efectivas</b>.</p>
     <div class="medwrap">${medMapa(sel, {calor:cargaMusculos(vista, carga), paths:MED_MUSC2[vista], cotas:false})}${cargaPop(sel, vista, carga, dias)}</div>
-    <div class="cargaleg">${[['#FF6B6B','sin trabajo'],['#FF9F45','por debajo'],['#58DFA3','creciendo'],['#FFC94D','alto'],['#FF6B6B','pasado']].map(([c,l],i)=>
+    <div class="cargaleg">${[['#FF5257','sin trabajo'],['#FF8A3D','por debajo'],['#FFC94D','a un paso'],['#58DFA3','creciendo'],['#8FD98F','alto'],['#FF5257','pasado']].map(([c,l],i)=>
       `<span><i style="background:${c}"></i>${l}</span>`).join('')}</div>
     ${selF?`<div class="medpanel">
       <div class="medph">${ic('barbell',13)} <b>${esc(MUSC_NOM[selF.m]||selF.m)}</b><span class="small dim">${dias===7?'esta semana':'en '+Math.round(dias/7)+' semanas'}</span></div>
@@ -12238,7 +12301,7 @@ function excatDesc(x){
    la app pueda repartir tus series entre musculos en el mapa de carga. */
 function muscReparto(id, nombre){
   const pat=ejPatron(id, nombre); if(!pat) return '';
-  const rep=EJ_PATRONES[pat]; if(!rep) return '';
+  const rep=repartoDe(pat); if(!rep) return '';
   const orden=Object.entries(rep).sort((a,b)=>b[1]-a[1]);
   const COL=['var(--acc)','#58DFA3','#FFC94D','#FF9F45','#8FA0FF'];
   return `<div class="muscrep mt12">
@@ -13243,6 +13306,17 @@ function exRow(e,idx,N,done){
         aria-pressed="${exPorLado(e.id)?'true':'false'}">${ic('eqMancuerna',12)} ${exPorLado(e.id)?'Por lado':'Total'}</button>
       ${exEsMaquina(e.id)?`<button class="chip ${UI.taraOpen?'fill':''}" data-a="exOptPick" data-ex="${e.id}" data-o="tara">${ic('eqMaquina',12)} Carro ${exTara(e.id)?fmt1(exTara(e.id))+' kg':'sin poner'}</button>`:''}
       <button class="chip" data-a="exInf" data-id="${e.id}">${ic('clip',12)} Informe</button>
+      <button class="chip ${exMuscElegido(e.id)?'fill':''}" data-a="exMuscTgl" data-id="${e.id}">${ic('target',12)} ${exMuscElegido(e.id)?esc(MUSC_NOM[exMuscElegido(e.id)]||exMuscElegido(e.id)):'¿Qué músculo?'}</button>
+    </div>`:''}
+    ${UI.exMuscOpen===e.id?`<div class="escaj mt8">
+      <span class="small dim" style="display:block;line-height:1.5">¿A qué músculo va este ejercicio? Lo que elijas manda sobre lo que la app deduzca del nombre, y de ahí sale la carga por músculo.</span>
+      <div class="flex wrapf mt8" style="gap:5px">
+        ${Object.keys(MUSC_PATRON).map(m=>`<button class="chip xs ${exMuscElegido(e.id)===m?'fill':''}" data-a="exMusc" data-id="${e.id}" data-m="${m}">${esc(MUSC_NOM[m]||m)}</button>`).join('')}
+        ${exMuscElegido(e.id)?`<button class="chip xs" data-a="exMusc" data-id="${e.id}" data-m="">${ic('x',9)} automático</button>`:''}
+      </div>
+      ${(()=>{ const pat=ejPatron(e.id, exNombre(e.id)), r=pat?repartoDe(pat):null;
+        if(!r) return '<div class="small mt8" style="color:var(--gold)">Ahora mismo no suma a ningún músculo: elige uno.</div>';
+        return `<div class="small dim mt8" style="line-height:1.5">Cada serie cuenta: ${Object.entries(r).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([m,pc])=>`<b>${fmt1(pc/100)}</b> de ${esc(MUSC_NOM[m]||m)}`).join(' · ')}.</div>`;})()}
     </div>`:''}
     ${open?setTable(e)+exExtras(e):''}
   </div>`;
@@ -17646,6 +17720,11 @@ const ACTIONS = {
   fzaTodas(d, el){ UI.fzaTodas=!UI.fzaTodas; renderAnclado(el); },
   fzaPRIsla(d){ UI.prIsla=d.k; render(); },
   exInf(d){ UI.exInf=d.id; render(); },
+  exMusc(d, el){ S.cfg.exMusc=S.cfg.exMusc||{};
+    if(d.m) S.cfg.exMusc[d.id]=d.m; else delete S.cfg.exMusc[d.id];
+    save('cfg'); clearDayCache(); renderAnclado(el);
+    toast(d.m ? 'Cuenta como '+(MUSC_NOM[d.m]||d.m) : 'Vuelve a deducirse por el nombre'); },
+  exMuscTgl(d, el){ UI.exMuscOpen = UI.exMuscOpen===d.id ? null : d.id; renderAnclado(el); },
   exInfCerrar(){ UI.exInf=null; render(); },
   fzaPRIslaCerrar(){ UI.prIsla=null; render(); },
   fzaIslaCerrar(){ UI.fzaIsla=false; render(); },

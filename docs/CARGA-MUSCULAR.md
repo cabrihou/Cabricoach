@@ -424,3 +424,39 @@ Dos errores que se tapaban entre sí:
    14 días todo salía al doble y a 28 al cuádruple, así que casi todo aparecía "por encima de
    lo recuperable". Ahora `cargaMuscular` devuelve `.series` ya dividido entre las semanas y
    deja el crudo en `.total`. Los botones dicen 1 sem / 2 sem / 4 sem, no 7 d / 14 d / 28 d.
+
+## Una serie del principal cuenta 1, no 0,6 (REV 204)
+
+`EJ_PATRONES` reparte el **100% de la activación** entre los músculos que participan: press de
+banca era pecho 62, deltoide anterior 20, tríceps 15. Eso sirve para comparar músculos entre
+sí, pero **no para contar volumen**: los estándares de MEV/MAV/MRV cuentan una serie entera
+para el músculo principal y una fracción para los ayudantes. Con el reparto crudo, cuatro
+series de banca dejaban 2,5 de pecho y medio cuerpo salía "por debajo del mínimo" aunque se
+entrenara bien. De ahí la pantalla naranja.
+
+`repartoDe(patron)` reescala cada patrón para que **el principal valga 100** y los demás suban
+en la misma proporción. En banca: pecho 100, deltoide anterior 32, tríceps 24, que es
+prácticamente la convención aceptada (1 de pecho, ~0,5 de los ayudantes). En elevación
+lateral: deltoide lateral 100 y 33 a cada una de las otras dos cabezas.
+
+Contrastado con una semana PPL normal: pectoral pasa de 4,3 a **7** series, deltoide anterior
+de 0 a **4**, tríceps de 3 a **4,8**.
+
+## El color dice a qué distancia estás
+
+Cualquier cosa por debajo del mínimo salía del mismo naranja: 7 de 8 series se veía igual de
+mal que 1 de 8. Ahora hay seis estados: sin trabajo (rojo), por debajo del mínimo (naranja),
+**a un paso del mínimo** (ámbar, desde el 70% del MEV), en zona de crecer (verde), volumen alto
+(verde claro) y pasado (rojo). Con la semana de prueba: 3 rojos, 4 naranjas, 5 ámbar, 5 verdes
+y 1 verde claro, en vez de una mancha.
+
+## Decirle a qué músculo va un ejercicio
+
+El patrón se adivinaba por id o por nombre, y eso falla con lo que uno agrega a mano: "Triceps
+Extension Single Arm" no estaba en ninguna lista y no sumaba a nada. `S.cfg.exMusc[id]` guarda
+el músculo elegido y **manda** sobre lo deducido. De ahí sale un patrón real con sus ayudantes
+(`MUSC_PATRON`), no un 100% suelto; y si ese músculo no es el principal de ningún patrón de
+referencia, se arma uno propio de un solo músculo en vez de mentir sobre a qué va la serie.
+
+Se elige desde el panel de opciones del ejercicio en la sesión y desde el informe, en "Qué
+mueve", que es donde se nota que algo no está sumando.

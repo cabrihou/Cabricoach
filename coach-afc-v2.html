@@ -1965,7 +1965,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 205';
+const APPREV='REV 206';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3056,8 +3056,49 @@ const ROUTINES_ANDRES = [
       {id:'calfse',name:'Pantorrilla sentado',sets:3,reps:[15,15],rest:60,inc:2.5} ]},
 ];
 /* Cami: énfasis tren inferior 2-3×/sem, torso en mantenimiento (4 días + 1 opcional) */
+/* ============ RUTINAS DE CAMI (agosto 2026) ============
+   Las cinco que entrena de verdad. Las anteriores no se borran: pasan a
+   ROUTINES_CAMI_ARCHIVO con oculta:true, asi el historial sigue resolviendo nombres y fotos
+   de esos ejercicios pero no aparecen en Entrenar ni se pueden asignar a un dia. */
 const ROUTINES_CAMI = [
-  { id:'cGlut', name:'Glúteo', tag:'Glúteo · Femoral', day:1, ph:'c-lower',
+  { id:'cIsq', name:'Isquio y glúteo', tag:'Dominante de cadera', day:1, ph:'c-lower',
+    ex:[ {id:'hipthrust_bb',name:'Hip thrust con barra',sets:3,reps:[8,10],rest:150,inc:5,rir:2},
+      {id:'rdl_bb',name:'Peso muerto rumano',sets:4,reps:[8,10],rest:150,inc:2.5,rir:2},
+      {id:'stepup',name:'Step up',sets:3,reps:[8,8],rest:120,inc:2.5,rir:2},
+      {id:'legcurl_lying',name:'Curl femoral tumbada',sets:3,reps:[10,12],rest:90,inc:2.5,rir:1},
+      {id:'calf_st_bb',name:'Elevación de talón de pie',sets:3,reps:[12,15],rest:60,inc:2.5,rir:1} ]},
+  { id:'cTorso', name:'Espalda, pecho y hombro', tag:'Tren superior', day:2, ph:'c-upper',
+    ex:[ {id:'latpull_cbl',name:'Jalón al pecho',sets:4,reps:[8,10],rest:120,inc:2.5,rir:2},
+      {id:'row_seat_cbl',name:'Remo sentado en polea',sets:3,reps:[10,12],rest:90,inc:2.5,rir:2},
+      {id:'bench_db',name:'Press banca con mancuernas',sets:4,reps:[8,10],rest:120,inc:2,rir:2},
+      {id:'incline_db',name:'Press inclinado con mancuernas',sets:3,reps:[10,12],rest:90,inc:2,rir:2},
+      {id:'ohp_db',name:'Press militar con mancuernas',sets:3,reps:[10,12],rest:90,inc:2,rir:2},
+      {id:'latraise_db',name:'Elevaciones laterales',sets:3,reps:[12,15],rest:60,inc:1,rir:1},
+      {id:'facepull',name:'Face pull',sets:3,reps:[15,15],rest:60,inc:2.5,rir:1} ]},
+  { id:'cCuad', name:'Cuádriceps', tag:'Dominante de rodilla', day:3, ph:'c-lower',
+    ex:[ {id:'squat_bb',name:'Sentadilla con barra',sets:4,reps:[8,10],rest:150,inc:2.5,rir:2},
+      {id:'hacksquat',name:'Hack squat o pendular',sets:3,reps:[10,12],rest:120,inc:5,rir:2},
+      {id:'legpress',name:'Prensa 45° · pies bajos y juntos',sets:3,reps:[10,12],rest:120,inc:5,rir:2},
+      {id:'legext',name:'Extensión de cuádriceps',sets:3,reps:[12,15],rest:60,inc:2.5,rir:1},
+      {id:'calf_se_m',name:'Elevación de talón sentada',sets:3,reps:[15,15],rest:60,inc:2.5,rir:1} ]},
+  { id:'cGluU', name:'Glúteo unilateral', tag:'Unilateral e isquio', day:5, ph:'c-lower',
+    ex:[ {id:'bulg_split',name:'Búlgara · sesgo glúteo',sets:3,reps:[8,10],rest:120,inc:2.5,rir:2},
+      {id:'legcurl_seat',name:'Curl femoral sentada',sets:4,reps:[10,12],rest:90,inc:2.5,rir:1},
+      {id:'kickback_glute',name:'Patada de glúteo en polea',sets:3,reps:[12,12],rest:60,inc:2.5,rir:1},
+      {id:'backext',name:'Extensión 45° o buenos días',sets:3,reps:[12,15],rest:90,inc:2.5,rir:2},
+      {id:'hip_abd',name:'Abducción inclinada al frente',sets:3,reps:[15,20],rest:60,inc:2.5,rir:1} ]},
+  { id:'cBrazo', name:'Brazos y abdomen', tag:'Brazos y core', day:6, ph:'c-upper',
+    ex:[ {id:'curl_bb',name:'Curl con barra Z',sets:3,reps:[10,12],rest:75,inc:2.5,rir:1},
+      {id:'tricep_ext_cbl',name:'Extensión de tríceps en polea',sets:3,reps:[10,12],rest:75,inc:2.5,rir:1},
+      {id:'hammer_db',name:'Curl martillo',sets:3,reps:[12,12],rest:60,inc:2,rir:1},
+      {id:'skull_bb',name:'Press francés',sets:3,reps:[12,12],rest:60,inc:2.5,rir:1},
+      {id:'legraise_hang',name:'Elevación de piernas',sets:3,reps:[12,15],rest:60,inc:0,rir:1},
+      {id:'c2_pallof',name:'Pallof press · antirrotación',sets:3,reps:[12,12],rest:45,inc:2.5},
+      {id:'plank',name:'Plancha · 30 a 45 segundos',sets:3,reps:[30,45],rest:45,inc:0} ]},
+];
+
+const ROUTINES_CAMI_ARCHIVO = [
+  { id:'cGlut', name:'Glúteo', oculta:true, tag:'Glúteo · Femoral', day:-1, ph:'c-lower',
     ex:[ {id:'c_abd',name:'Hip Abductor (máquina)',sets:2,reps:[8,12],rest:120,inc:2.5},
       {id:'c_fcurl',name:'Seated Leg Curl (máquina)',sets:2,reps:[7,10],rest:120,inc:2.5},
       {id:'c_hip',name:'Hip Thrust (barra)',sets:3,reps:[5,8],rest:120,inc:5},
@@ -3066,20 +3107,24 @@ const ROUTINES_CAMI = [
       {id:'c_kick',name:'Glute Kickback (máquina)',sets:3,reps:[7,10],rest:120,inc:2.5},
       {id:'c_backext',name:'Back Extension',sets:2,reps:[10,15],rest:120,inc:0},
       {id:'c_step',name:'Step-up',sets:3,reps:[8,10],rest:120,inc:0} ]},
-  { id:'cQuad', name:'Pierna · Quads', tag:'Cuádriceps', day:3, ph:'c-lower',
+  { id:'cQuad', name:'Pierna · Quads', oculta:true, tag:'Cuádriceps', day:-1, ph:'c-lower',
     ex:[ {id:'c_adduct',name:'Hip Adductor (máquina)',sets:2,reps:[10,12],rest:120,inc:2.5},
       {id:'c_lying',name:'Lying Leg Curl (máquina)',sets:2,reps:[7,10],rest:120,inc:2.5},
       {id:'c_lext',name:'Leg Extension (máquina)',sets:2,reps:[10,12],rest:120,inc:2.5},
       {id:'c_smith',name:'Squat (Smith)',sets:2,reps:[7,10],rest:120,inc:2.5},
       {id:'c_prensa',name:'Leg Press',sets:2,reps:[8,10],rest:120,inc:5} ]},
-  { id:'cUpper', name:'Tren superior', tag:'Mantenimiento', day:5, ph:'c-upper',
+  { id:'cUpper', name:'Tren superior', oculta:true, tag:'Mantenimiento', day:-1, ph:'c-upper',
     ex:[ {id:'c_jalon',name:'Lat Pulldown (cable)',sets:3,reps:[8,10],rest:120,inc:2.5},
       {id:'c_chest',name:'Chest Press (máquina)',sets:3,reps:[8,10],rest:120,inc:2.5},
       {id:'c_rowp',name:'Seated Row (cable)',sets:3,reps:[7,10],rest:120,inc:2.5},
       {id:'c_fly',name:'Chest Fly',sets:3,reps:[7,10],rest:120,inc:2.5},
       {id:'c_rfly',name:'Reverse Fly (máquina)',sets:3,reps:[7,10],rest:120,inc:2.5} ]},
 ];
-const ROUTINES_BY = {andres:ROUTINES_ANDRES, cami:ROUTINES_CAMI};
+/* el archivo va detras: findRoutine y EXMAP siguen resolviendo el historial viejo, pero
+   las listas de la UI filtran por oculta (ver ROUTINES_VIS) */
+const ROUTINES_BY = {andres:ROUTINES_ANDRES, cami:ROUTINES_CAMI.concat(ROUTINES_CAMI_ARCHIVO)};
+/* las rutinas que se pueden elegir: sin las archivadas */
+function ROUTINES_VIS(){ return ROUTINES.filter(r=>!r.oculta); }
 /* ============ RUTINAS EDITADAS ============
    Las rutinas del plan son constantes: el mismo plan para todo el mundo. Pero uno quiere
    quitar un ejercicio que no puede hacer, cambiar el numero de series o meter otro que le
@@ -12174,7 +12219,7 @@ function vRutinas(){
   return `
   ${isDeload()?`<section class="mod tight inv"><div class="flex">${ic('alert',18)}<div class="small">Descarga: mismos pesos de la semana pasada, <b>2 series</b> por ejercicio.</div></div></section>`:''}
   <div class="rgrid">
-  ${ROUTINES.map(r=>{
+  ${ROUTINES_VIS().map(r=>{
     const dates=r.ex.map(e=>(S.logs[e.id]||[]).map(h=>h.d)).flat().sort();
     const last=dates[dates.length-1];
     const today=daysOf(r).includes(fromISO(TODAY()).getDay());
@@ -12443,7 +12488,7 @@ function persoPreviewHtml(list){
   return `<div class="mt12" style="border-top:1px solid var(--line2);padding-top:12px">
     <span class="lbl">TU RUTINA · ${list.length} EJERCICIO${list.length===1?'':'S'}</span>
     ${list.map(x=>`<div class="row"><span class="exthumb">${excatThumbInner(x)}</span>
-      <div class="grow tl" style="min-width:0"><b style="font-size:15px">${esc(x.name)}</b><span class="small dim block">${x.sets}×${x.reps[0]}–${x.reps[1]} · desc ${x.rest>=120?x.rest/60+' min':x.rest+' s'}</span></div>
+      <div class="grow tl" style="min-width:0"><b style="font-size:15px">${esc(x.name)}</b><span class="small dim block">${x.sets}×${x.reps[0]}–${x.reps[1]}${x.rir!=null?' · RIR '+x.rir:''} · desc ${x.rest>=120?x.rest/60+' min':x.rest+' s'}</span></div>
     </div>`).join('')}
     <div class="flex mt12" style="gap:8px">
       <button class="btn ghost grow" data-a="persoRoll">${ic('repeat',14)} Otra propuesta</button>
@@ -12559,7 +12604,7 @@ function schedPlanHTML(){
           <span class="nfchev">${ic('chevR',14)}</span>
         </button>
         ${UI.wkPick===dow?`<div class="wkopts">
-          ${ROUTINES.map(r=>`<button class="wkopt ${tok===r.id?'on':''}" data-a="wkSet" data-d="${dow}" data-v="${r.id}"><img loading="lazy" src="${entrenoImg(r)}" alt="" decoding="async">${r.name}</button>`).join('')}
+          ${ROUTINES_VIS().map(r=>`<button class="wkopt ${tok===r.id?'on':''}" data-a="wkSet" data-d="${dow}" data-v="${r.id}"><img loading="lazy" src="${entrenoImg(r)}" alt="" decoding="async">${r.name}</button>`).join('')}
           <button class="wkopt movopt ${mov?'on':''}" data-a="wkSet" data-d="${dow}" data-v="mov"><span class="wkoic">${ic('heart',15)}</span>Movilidad</button>
           <button class="wkopt restopt ${tok==='rest'?'on':''}" data-a="wkSet" data-d="${dow}" data-v="rest"><span class="wkoic">${ic('moon',15)}</span>Descanso</button>
         </div>`:''}
@@ -12800,7 +12845,7 @@ function calEditor(){
       ${splan?`<span class="chip dim">${splan.name}</span>`:'<span class="chip dim">Libre</span>'}</div>
     ${sessionLogged?`<span class="lbl" style="display:block;margin-bottom:8px">${ic('check',12)} Lo que hiciste este día</span>${daySummary(sel)}`:''}
     ${!sessionLogged && sel<=TODAY() ? `<div class="mb12"><span class="lbl">¿Entrenaste? regístralo con series</span>
-      <div class="flex wrapf mt8">${ROUTINES.map(r=>`<button class="chip ${splan&&r.id===splan.id?'fill':''}" data-a="pastSession" data-rid="${r.id}">${ic('barbell',11)} ${r.name}</button>`).join('')}
+      <div class="flex wrapf mt8">${ROUTINES_VIS().map(r=>`<button class="chip ${splan&&r.id===splan.id?'fill':''}" data-a="pastSession" data-rid="${r.id}">${ic('barbell',11)} ${r.name}</button>`).join('')}
         <button class="chip ${UI.libre&&UI.libre.d===sel?'fill':''}" data-a="libreAbrir" data-d="${sel}">${ic('plus',11)} Personalizado</button></div>
       ${UI.libre&&UI.libre.d===sel?libreForm(sel):`<div class="small dim mt8">Se abre la sesión apuntando al ${fmtD(sel)}: los kg y reps entran al historial y a las gráficas de fuerza de cada ejercicio. Si ese día hiciste algo que no es ninguna rutina, usa <b>Personalizado</b>.</div>`}</div>`
     : (sessionLogged && sel<=TODAY() ? `<div class="mb12">
@@ -13264,7 +13309,7 @@ function exCard(e,idx,focus,N){
     ${UI.platesOpen?`<div class="mb8">${(S.draft.data[e.id].map(s=>Number(s.w)).filter((v,i,a)=>v>20&&a.indexOf(v)===i).map(w=>`<div class="flex mb8" style="gap:10px;align-items:center"><span class="mono" style="font:500 13px var(--num);min-width:56px">${fmt1(w)} kg</span>${plateViz(w)}</div>`).join(''))||'<div class="small dim">Escribe un peso mayor a 20 kg (la barra) y te dibujo los discos por lado.</div>'}<div class="small dim">discos por lado · barra de 20 kg</div></div>`:''}`:''}
     <div class="flex between" style="align-items:flex-start">
       <div class="grow"><b style="font-size:${focus?'18px':'16px'}${focus?'':';color:var(--mint)'}">${alt?esc(alt):e.name}</b>${alt?' <span class="chip dim">Sustituto</span>':''}
-        <div class="small dim">${S.draft.data[e.id].length} × ${e.reps[0]}–${e.reps[1]} · desc ${e.rest>=120?e.rest/60+' min':e.rest+' s'}${last&&!alt?' · última: '+fmt1(Math.max(...last.sets.map(s=>s.w)))+' kg':''}</div>
+        <div class="small dim">${S.draft.data[e.id].length} × ${e.reps[0]}–${e.reps[1]}${e.rir!=null?' · RIR '+e.rir:''} · desc ${e.rest>=120?e.rest/60+' min':e.rest+' s'}${last&&!alt?' · última: '+fmt1(Math.max(...last.sets.map(s=>s.w)))+' kg':''}</div>
         ${sug?`<div class="chip ${sug.type==='down'?'red':'fill'} mt8">${sug.text}</div>`:''}
         ${focus&&last&&!alt?`<div class="small dim mt8">Precargado con tu última sesión${sug&&sug.apply?' · carga ya subida a '+fmt1(sug.apply)+' kg':''}. Solo Marcar si repites.</div>`:''}
         ${(()=>{if(!focus||alt) return '';
@@ -13302,7 +13347,7 @@ function exRow(e,idx,N,done){
     <div class="exrowhead" data-a="exToggle" data-ex="${e.id}" role="button" aria-expanded="${open?'true':'false'}">
       <span class="exrn">${imgSrc?`<img src="${imgSrc}" decoding="async" loading="lazy" alt="" onerror="this.remove()">`:''}<i>${idx+1}</i></span>
       <span class="grow tl" style="min-width:0"><b>${esc(nm)}</b>${alt?' <span class="chip dim">Sust.</span>':''}
-        <span class="small dim block">${nsets}×${e.reps[0]}–${e.reps[1]}${last&&!alt?' · última '+fmt1(Math.max(...last.sets.map(s=>s.w)))+' kg':''}</span>
+        <span class="small dim block">${nsets}×${e.reps[0]}–${e.reps[1]}${e.rir!=null?' · RIR '+e.rir:''}${last&&!alt?' · última '+fmt1(Math.max(...last.sets.map(s=>s.w)))+' kg':''}</span>
         ${exDots(e, alt)}</span>
       <span class="exrpk" data-a="exPeek" data-ex="${e.id}" aria-label="progreso">${ic('trend',15)}</span>
       <span class="exrpk exropt ${UI.exOpts===e.id?'on':''}" data-a="exOptsTgl" data-ex="${e.id}" aria-label="opciones">${ic('more',16)}</span>
@@ -14139,7 +14184,7 @@ function islaSemanaHTML(){
       return `<div class="row" style="align-items:center${dow===hoyDow?';border-left:3px solid var(--mint);padding-left:9px':''}">
         <b style="min-width:44px${dow===hoyDow?';color:var(--mint)':''}">${lb}</b>
         <select class="in grow" data-ch="islaDia" data-d="${dow}" aria-label="Entreno del ${lb}">
-          ${ROUTINES.map(r=>`<option value="${r.id}" ${tok===r.id?'selected':''}>${esc(r.name)}</option>`).join('')}
+          ${ROUTINES_VIS().map(r=>`<option value="${r.id}" ${tok===r.id?'selected':''}>${esc(r.name)}</option>`).join('')}
           <option value="mov" ${tok==='mov'?'selected':''}>Movilidad</option>
           <option value="rest" ${tok==='rest'?'selected':''}>Descanso</option>
         </select>
@@ -15823,9 +15868,9 @@ function vEjercicios(){
     <div class="mod-head"><span class="ttl">${ic('trend',16)} Progreso por ejercicio</span>
       <button class="chip" data-a="exInf" data-id="${ex.id}">${ic('clip',11)} Informe</button></div>
     <div class="inwrap mb8">${ic('search',16)}<input class="in has-ic" placeholder="¿Qué vas a entrenar hoy?" value="${esc(UI.exQ)}" data-ch="exq"></div>
-    ${UI.exQ?`<div class="flex wrapf mb8">${ROUTINES.flatMap(r=>r.ex).filter(e=>e.name.toLowerCase().includes(UI.exQ.toLowerCase())).slice(0,8).map(e=>`<button class="chip ${e.id===UI.ex?'fill':''}" data-a="exPick" data-ex="${e.id}">${shortEx(e.name)}</button>`).join('')||'<span class="small dim">Nada con esa búsqueda</span>'}</div>`:''}
+    ${UI.exQ?`<div class="flex wrapf mb8">${ROUTINES_VIS().flatMap(r=>r.ex).filter(e=>e.name.toLowerCase().includes(UI.exQ.toLowerCase())).slice(0,8).map(e=>`<button class="chip ${e.id===UI.ex?'fill':''}" data-a="exPick" data-ex="${e.id}">${shortEx(e.name)}</button>`).join('')||'<span class="small dim">Nada con esa búsqueda</span>'}</div>`:''}
     <select class="in mb8" data-ch="exsel">
-      ${ROUTINES.map(r=>`<optgroup label="${r.name}">${r.ex.filter(e=>!UI.exQ||e.name.toLowerCase().includes(UI.exQ.toLowerCase())).map(e=>`<option value="${e.id}" ${e.id===UI.ex?'selected':''}>${e.name}</option>`).join('')}</optgroup>`).join('')}
+      ${ROUTINES_VIS().map(r=>`<optgroup label="${r.name}">${r.ex.filter(e=>!UI.exQ||e.name.toLowerCase().includes(UI.exQ.toLowerCase())).map(e=>`<option value="${e.id}" ${e.id===UI.ex?'selected':''}>${e.name}</option>`).join('')}</optgroup>`).join('')}
       ${(()=>{ /* ejercicios con historial FUERA del plan (importados de Strong, ids del
         catalogo): antes no salian en este selector y sus registros quedaban invisibles */
         const extra=Object.keys(S.logs).filter(id=>!EXMAP[id] && (S.logs[id]||[]).length)

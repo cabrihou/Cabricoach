@@ -241,3 +241,28 @@ de Andrés subió a 0,9 porque con 500 de déficit un 0,7 ya no es señal de ala
 
 En Gestión → La semana comida por comida sale la caja **"De dónde salen tus N kcal"** con el
 gasto, el déficit y la meta, para que se vea que el número se mueve y por qué.
+
+## Las rutinas de Cami (12/08/2026)
+
+Cinco rutinas nuevas, sustituyen a las tres que tenía (Glúteo, Pierna · Quads, Tren superior):
+
+| Día | Rutina | Ejercicios |
+|---|---|---|
+| Lunes | **Isquio y glúteo** | hip thrust 3×8-10, RDL 4×8-10, step up 3×8, curl femoral tumbada 3×10-12, talón de pie 3×12-15 |
+| Martes | **Espalda, pecho y hombro** | jalón 4×8-10, remo polea 3×10-12, banca mancuernas 4×8-10, inclinado 3×10-12, militar 3×10-12, laterales 3×12-15, face pull 3×15 |
+| Miércoles | **Cuádriceps** | sentadilla 4×8-10, hack 3×10-12, prensa 3×10-12, extensión 3×12-15, talón sentada 3×15 |
+| Viernes | **Glúteo unilateral** | búlgara 3×8-10, curl femoral sentada 4×10-12, patada en polea 3×12, extensión 45° 3×12-15, abducción 3×15-20 |
+| Sábado | **Brazos y abdomen** | curl Z 3×10-12, tríceps polea 3×10-12, martillo 3×12, francés 3×12, elevación piernas 3×12-15, pallof 3×12, plancha 3×30-45 s |
+
+Jueves y domingo, descanso.
+
+**Las viejas no se borraron.** Pasaron a `ROUTINES_CAMI_ARCHIVO` con `oculta:true` y `day:-1`.
+`ROUTINES_BY.cami` las concatena, así que `findRoutine` y `EXMAP` siguen resolviendo nombres y
+fotos de las sesiones ya registradas; pero todas las listas de la interfaz usan
+`ROUTINES_VIS()`, que filtra las ocultas, así que no aparecen en Entrenar, ni en el
+planificador de la semana, ni al registrar un día pasado, ni en el selector de Progreso.
+
+Cada ejercicio guarda su **RIR objetivo** (`rir`), que sale en la fila junto a series y reps.
+Los ids salen del catálogo (`hipthrust_bb`, `rdl_bb`, `legcurl_lying`…), así que traen foto,
+patrón muscular y baremo de fuerza sin configurar nada. El único sin id de catálogo es el
+pallof press, que va como `c2_pallof`.

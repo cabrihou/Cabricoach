@@ -104,6 +104,8 @@ Cuatro familias embebidas como data-URI (nunca por link externo), cuatro variabl
 - **Superficie tocable completa**: si una caja lleva a algún lado, se toca entera (`role="button"` + `data-a` en el contenedor), no solo una flecha de 12 px en la esquina.
 - **Borrar por fila (swipe + ×)**: el swipe volvió (F6/F7): deslizar la fila de una serie la borra, deslizar la cabecera de un ejercicio lo saca de la sesión de hoy, con fondo rojo revelado detrás (`.swdslot`/`.swdbg`) y un umbral de arrastre antes de confirmar (con Deshacer). El `×` discreto al final de la fila queda como alternativa siempre visible y descubrible (oculto con `visibility:hidden` solo cuando borrar dejaría la lista vacía), para quien no descubra el gesto o esté en una fila llena de inputs donde el swipe no se dispara.
 - **Micro-animaciones canónicas**: tanque de agua con ola (`.wtank/.wfill`, sube al marcar vasos), shimmer en barra de pasos mientras no se cumple la meta (`.bar.run`) y glow al cumplirla, count-up de números héroe (620 ms, ease-out), llama de racha viva (`.flick`), pulso del anillo al completar el día (`.ringdone`). Todas se apagan con `prefers-reduced-motion`.
+- **Número rodante (`.nrod`, REV 208)**: cifras que ruedan dígito a dígito tipo odómetro (650 ms) al cambiar de valor, adaptado de la biblioteca de componentes. Vive en: peso del Inicio (ahí reemplaza al count-up con una rodada de entrada desde el 82%), % del anillo de proteína (número en HTML superpuesto al SVG, `.ringrod`), agua del checkpoint y XP de la sesión (`.sesxp`). Integración: host con `data-nrod` + `data-morph-skip` en el template y `nrodPass()` tras cada render; para una cifra nueva se usa el helper `nrod(v,dec)`. Se apaga con `prefers-reduced-motion` (el valor cambia sin rodar).
+- **Despliegue exacto de pestañas (`xtabs`/`mcapas`, REV 208)**: el rótulo de la pestaña activa se abre animando `max-width` hacia `--xw`, el ancho real del texto medido una vez y cacheado (`xtwDe`); en vistas sin morph (Hyrox, Medidas) la apertura se reproduce a mano solo cuando la pestaña activa cambió (`xtabsPaso`).
 - **Fotos de comida** (mismo set navy): tuppers (`ph-prep`, Plan día), shaker+avena (`ph-shake`, resumen de rotación), bolsa de mercado (`ph-market`, cabecera del Mercado con el costo encima).
 - **Más imágenes del set**: caminadora (`ph-tread`, Progreso→Pasos), báscula+metro (`ph-tape`, Check-in), ícono de app 180px (mancuerna glow, apple-touch-icon).
 - **Logo (REV 3.4)**: monograma "A" con travesaño de barra de pesas (placas en gradiente, punto de acento central) en insignia squircle rx14 con borde `--grad` y glow; wordmark "Coach AFC" con AFC en texto-gradiente. Es SVG inline en el topbar; reusar el mismo dibujo si se necesita en splash o marketing.
@@ -176,7 +178,7 @@ leyendo, con la Biblia, con idea, tomándose una foto, dormida, con el reloj.
 
 ## 6. Movimiento
 
-- Entradas: fade + translateY 10 px, 280 ms, curva `cubic-bezier(.32,.72,0,1)`.
+- Entradas de vista (REV 208): solo al CAMBIAR de vista, 200 ms, curva `cubic-bezier(.32,.72,0,1)`. Entre pestañas del nav el deslizamiento es horizontal según la dirección (`vgo-r`/`vgo-l`, 16 px); al llegar desde fuera del nav es vertical (`vgo-u`, 10 px). Un re-render de la misma vista no re-anima (antes `.view-in` animaba en todo reemplazo y era un parpadeo).
 - Barras y anillos animan su relleno (500–700 ms). Respetar `prefers-reduced-motion`.
 - Nada debe deslizarse en el primer pintado: los indicadores que se mueven (el de la nav) nacen en su posición final y habilitan la transición dos frames después.
 

@@ -126,6 +126,9 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
     `ACTIONS.mark`) (`exDots`)
   - E2f Ventana "Series sin marcar" al finalizar con pendientes: completar todas y
     finalizar, finalizar solo con lo hecho, o seguir entrenando (`finishPendBox`)
+  - E2g Contador de XP de la sesión en la cabecera, junto al progreso de ejercicios
+    (`.sesxp`, número rodante que sube al marcar series; lee el registro `xpPaid`
+    del draft: 10 por serie y 25 por ejercicio, solo presentación, REV 208)
 - **E3** Importar entreno pegando texto (Strong, etc.) (`impTgl`). Desde REV 131 el
   emparejador (`matchExId`) va: nombre exacto del plan > sinónimos > nombre exacto
   del catálogo EXCAT > similitud; si el día ya tiene registros de esos ejercicios

@@ -189,3 +189,47 @@ commit "REV N: ..." (sin push hasta que Andy apruebe el deploy).
 
 Notas de ejecución (agrega aquí decisiones, hallazgos y lo que quede a medias):
 
+### Fase 1 · ejecutada 24/08/2026 (commit REV 208, sin push: falta la revisión de Andy en local)
+
+Implementado completo: número rodante, despliegue de xtabs/mcapas con `--w` medido,
+transición direccional entre pestañas del nav y B1. Verificador sin regresiones
+(0 fallos, 51 avisos heredados), suite CDP completa en verde, 0 errores de consola,
+dos usuarios, reduced-motion emulado OK, sin desborde a 320 px.
+
+Decisiones tomadas donde el plan era ambiguo (los códigos de zona del punto 1 venían
+corridos respecto a MAPA.md):
+
+- "Peso del Inicio (I2)" se leyó como el bignum del hero (I1 en MAPA). Ahí el rodante
+  REEMPLAZA al count-up de entrada: al entrar a la vista rueda desde el 82% (mismo
+  arranque que el count-up viejo) y al registrar un peso rueda al valor nuevo.
+- "El número del anillo" de I4a es `<text>` de SVG y no se puede partir en columnas:
+  quedó como número HTML superpuesto (`.ringrod`) centrado donde ring() pintaba main.
+  Alineación verificada con capturas contra el anillo de pasos (sigue en SVG).
+- "XP al marcar series (E2)": no existía cifra de XP visible en la sesión, así que se
+  agregó un contador pequeño `.sesxp` (rayo + número + "XP") junto al progreso de
+  ejercicios en la cabecera. Es solo presentación: lee el registro anti-farmeo
+  `xpPaid` que ya existía en el draft. Documentado como E2g en MAPA.md.
+- "El acumulado del checkpoint (I3)": se aplicó al contador de agua (`.wml`), el
+  acumulador que más se toca. Los pasos NO ruedan: su formato cambia de forma
+  ("1,9k") y el rodante formatea números puros.
+- El cambio "seco" de xtabs se debía a que Hyrox y Medidas no están en MORPH_VISTAS
+  (el reemplazo entero mata la transición CSS). No se metieron al morph (riesgo fuera
+  de alcance): además del `--xw` medido, `xtabsPaso()` reproduce la apertura a mano
+  solo cuando la pestaña activa cambió en un render sin morph.
+- B1 ya estaba implementado en REV 207 (6→18 px con transición): solo se ajustó la
+  duración a 200 ms según el informe. Verificado vivo (los puntos siguen el scroll).
+- Transición de vistas: 200 ms, horizontal según el orden del nav (`vgo-r`/`vgo-l`),
+  vertical (`vgo-u`) al llegar desde fuera del nav; los re-renders de la misma vista
+  y los cambios de sub-pestaña ya no re-animan. morphView pasó de comparar
+  `className==='view-in'` a `classList.contains` para tolerar la clase de dirección.
+
+Hallazgo colateral corregido: la barra de progreso de la cabecera de sesión
+(`.bar.thin.grow` en vSession) llevaba colapsada a 0 px desde antes: todas las
+reglas CSS `.grow` son de ámbito (`.row .grow`, `.schedhead .grow`...) y ninguna
+aplicaba ahí. Se arregló con estilo inline en esa fila; NO se creó una utilidad
+global `.grow` porque hay decenas de usos de la clase que hoy no crecen y un cambio
+global podía mover layouts que ya están bien.
+
+Cifras de fuentes embebidas: `xtwDe` cachea por texto y se invalida con
+`document.fonts.ready` por si midió antes de cargar la fuente.
+

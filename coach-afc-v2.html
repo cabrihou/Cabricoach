@@ -1020,7 +1020,7 @@ img{-webkit-user-drag:none;user-select:none}
   transition:max-width .42s cubic-bezier(.32,.72,0,1),opacity .26s ease .06s}
 .mcapa.on,.xtab.on{gap:6px;padding:8px 13px;background:var(--grad);color:var(--onmint);
   box-shadow:0 2px 10px rgba(0,0,0,.22)}
-.mcapa.on>span,.xtab.on>span{max-width:120px;opacity:1}
+.mcapa.on>span,.xtab.on>span{max-width:var(--xw,120px);opacity:1}
 .xtab.on.plano{background:var(--card2);color:var(--ink);box-shadow:none}
 .mcapa:active,.xtab:active{transform:scale(.94)}
 .xtsep{width:1.2px;height:20px;margin:0 3px;background:var(--line2);flex:none;border-radius:1px}
@@ -1484,12 +1484,19 @@ img{-webkit-user-drag:none;user-select:none}
 .calcell .inj{position:absolute;top:3px;right:4px;width:6px;height:6px;border-radius:50%;border:1.5px solid var(--mint);background:transparent}
 
 /* animacion de entrada */
-.view-in{animation:vin .28s cubic-bezier(.32,.72,0,1)}
+/* Fase 1: la entrada anima solo al CAMBIAR de vista (el render pone la clase de
+   direccion segun el orden del nav); un re-render de la misma vista no re-anima.
+   Antes .view-in animaba en TODO reemplazo, incluido el fallback del morph. */
+.view-in.vgo-u{animation:vin .2s cubic-bezier(.32,.72,0,1)}
+.view-in.vgo-r{animation:vinr .2s cubic-bezier(.32,.72,0,1)}
+.view-in.vgo-l{animation:vinl .2s cubic-bezier(.32,.72,0,1)}
 @keyframes vin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes vinr{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+@keyframes vinl{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
 /* resalte breve de la caja a la que acaba de saltar la navegacion */
 .jumphl{animation:jumphl 1.5s ease-out}
 @keyframes jumphl{0%,70%{box-shadow:0 0 0 2px rgba(var(--acc-rgb),.55),0 0 22px rgba(var(--acc-rgb),.28)}100%{box-shadow:none}}
-@media(prefers-reduced-motion:reduce){.view-in{animation:none}.bar>i,.tgl i,.btn{transition:none}.wfill::before,.flick,.bar.run>i::after,.ringdone{animation:none}.jumphl{animation:none}}
+@media(prefers-reduced-motion:reduce){.view-in.vgo-u,.view-in.vgo-r,.view-in.vgo-l{animation:none}.bar>i,.tgl i,.btn{transition:none}.wfill::before,.flick,.bar.run>i::after,.ringdone{animation:none}.jumphl{animation:none}}
 
 /* utilidades */
 .mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}
@@ -2138,9 +2145,36 @@ b,strong{font-weight:600}
 .carr>*{scroll-snap-align:start;flex:0 0 auto}
 .carrdots{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:4px;min-height:14px}
 .carrdots i{width:6px;height:6px;border-radius:99px;background:var(--line);
-  transition:width .28s cubic-bezier(.32,.72,0,1),background .28s}
+  transition:width .2s cubic-bezier(.32,.72,0,1),background .2s}
 .carrdots i.on{width:18px;background:rgb(var(--acc-rgb))}
 @media (prefers-reduced-motion:reduce){.carrdots i{transition:none}}
+/* ---- Numero rodante (Fase 1): cifras que ruedan digito a digito, como un odometro.
+   Puerto del componente de Recursos/componentes/numero-rodante. Cada caracter vive en
+   una columna; los digitos son una tira 0-9 desplazada con transform (compone en GPU,
+   no hace layout). Con tabular-nums todo digito mide exactamente 1ch, asi que las
+   columnas que entran o salen animan max-width entre 0 y 1ch sin medir nada. El alto
+   de linea 1 es obligatorio: la tira mide 10 lineas y el recorte es 1. */
+.nrod{display:inline-flex;overflow:hidden;font-variant-numeric:tabular-nums}
+.nrod-col{display:inline-block;max-width:1ch;transition:max-width .3s ease,opacity .3s ease}
+.nrod-dig{position:relative;height:1em;line-height:1;overflow:hidden}
+.nrod-tira{display:block;transition:transform .65s cubic-bezier(.22,1,.36,1)}
+.nrod-tira span{display:block;height:1em;line-height:1}
+.nrod-sym{overflow:hidden}
+.nrod-sale{max-width:0;opacity:0}
+@media (prefers-reduced-motion:reduce){.nrod-tira,.nrod-col{transition:none}}
+/* dentro del bignum, la regla .bignum span pintaria el degradado sobre la tira 0-9
+   entera (10em de alto): se apaga en los nodos estructurales del rodante y queda
+   solo en los caracteres visibles */
+.bignum .nrod,.bignum .nrod-tira{background:none!important}
+/* I4a: el numero del anillo de proteina va en HTML encima del SVG para poder rodarlo
+   (un <text> de SVG no se puede partir en columnas). Centrado donde ring() pinta main. */
+.ringrodwrap{position:relative}
+.ringrod{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  transform:translateY(-8px);pointer-events:none;font:700 21px var(--num);letter-spacing:-.01em;color:var(--ink)}
+.ringrod i{font-style:normal}
+/* E2: XP acumulada de la sesion, junto al progreso de ejercicios */
+.sesxp{display:inline-flex;align-items:center;gap:4px;font:700 14px/1 var(--num);color:var(--gold);flex:none;font-variant-numeric:tabular-nums}
+.sesxp i{font:600 10px var(--ui);letter-spacing:.06em;color:var(--ink2);font-style:normal}
 /* tarjeta de carrusel: ancho fijo en % para que la siguiente siempre se asome */
 .ccard{width:76%;max-width:300px;min-width:214px;background:var(--card2);border:1px solid var(--line2);
   border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:7px;color:var(--ink);text-align:left}
@@ -2226,7 +2260,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 207';
+const APPREV='REV 208';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -5500,7 +5534,7 @@ function xtabs(items, act, accion, cls, attr){
   attr=attr||'s';
   return `<div class="xtabs ${cls||''}" role="tablist">${items.map(x=> x==='|' ? '<i class="xtsep" aria-hidden="true"></i>' :
     `<button class="xtab ${x.k===act?'on':''}" data-a="${accion}" data-${attr}="${esc(x.k)}" role="tab"
-      aria-selected="${x.k===act?'true':'false'}" aria-label="${esc(x.n)}" title="${esc(x.n)}">${ic(x.i,17)}<span>${esc(x.n)}</span></button>`).join('')}</div>`;
+      aria-selected="${x.k===act?'true':'false'}" aria-label="${esc(x.n)}" title="${esc(x.n)}" style="--xw:${xtwDe(x.n)}px">${ic(x.i,17)}<span>${esc(x.n)}</span></button>`).join('')}</div>`;
 }
 /* Tarjeta destacada: degradado con trama, marcador con icono, una cifra grande y su accion. */
 function hlCard(o){
@@ -5546,6 +5580,138 @@ document.addEventListener('scroll', e=>{
   const c=e.target;
   if(c && c.classList && c.classList.contains('carr')) carrDots(c);
 }, true);
+/* ---- Numero rodante (Fase 1) ----
+   Integracion con el morph: el host lleva data-morph-skip (morphNodo actualiza sus
+   atributos pero no entra a sus hijos, que los construye el componente) y data-nrod
+   con el valor vigente; nrodPass() corre tras cada render y hace rodar la instancia
+   hacia ese valor. Con la vista reemplazada entera el host es nuevo: se construye
+   quieto, o con la rodada de entrada si trae data-nrod-in (reemplaza al count-up
+   en esas cifras, mismo arranque al 82%). */
+const NRODS=new WeakMap();
+const NROD_DUR=650;
+function nrodCrea(el){
+  const dec=+(el.dataset.dec||0);
+  const fmt=v=> dec? fmt1(v) : fmtInt(v);
+  let actual=null;
+  const colDe=ch=>{
+    const col=document.createElement('span');
+    if(/\d/.test(ch)){
+      col.className='nrod-col nrod-dig';
+      const tira=document.createElement('span'); tira.className='nrod-tira';
+      for(let d=0;d<=9;d++){ const s=document.createElement('span'); s.textContent=String(d); tira.appendChild(s); }
+      col.appendChild(tira); col.dataset.d=ch;
+      tira.style.transform='translateY(-'+(+ch*10)+'%)';
+    } else { col.className='nrod-col nrod-sym'; col.textContent=ch; }
+    return col;
+  };
+  function set(v, directo){
+    const txt=fmt(v);
+    el.setAttribute('aria-label', txt);
+    if(actual===null || directo || matchMedia('(prefers-reduced-motion: reduce)').matches){
+      el.textContent='';
+      for(const ch of txt) el.appendChild(colDe(ch));
+      actual=txt; return;
+    }
+    if(txt===actual) return;
+    /* las columnas que van saliendo se marcan nrod-out y dejan de contar para el
+       mapeo: una salida a mitad de animacion no corre los indices de las demas */
+    const cols=Array.from(el.children).filter(c=>!c.classList.contains('nrod-out'));
+    const nuevo=Array.from(txt);
+    /* alineadas por la DERECHA: en un numero las unidades siguen siendo las
+       unidades aunque aparezca una cifra nueva a la izquierda */
+    const extra=nuevo.length-cols.length;
+    if(extra>0){
+      for(let i=0;i<extra;i++){
+        const col=colDe(nuevo[i]);
+        col.classList.add('nrod-sale');            /* nace plegada... */
+        el.insertBefore(col, el.firstChild);
+        void col.offsetWidth;                      /* reflow: fija el estado plegado */
+        col.classList.remove('nrod-sale');         /* ...y abre ya mismo */
+        cols.unshift(col);
+      }
+    } else if(extra<0){
+      for(let i=0;i<-extra;i++){
+        const col=cols.shift();
+        col.classList.add('nrod-sale','nrod-out');
+        setTimeout(()=>col.remove(), NROD_DUR);
+      }
+    }
+    cols.forEach((col,i)=>{
+      const ch=nuevo[i];
+      const esDig=col.classList.contains('nrod-dig');
+      if(esDig && /\d/.test(ch)){
+        if(col.dataset.d!==ch){ col.dataset.d=ch; col.querySelector('.nrod-tira').style.transform='translateY(-'+(+ch*10)+'%)'; }
+      } else if(esDig!==/\d/.test(ch)){
+        el.replaceChild(colDe(ch), col);           /* cambio digito <-> simbolo */
+      } else if(col.textContent!==ch){
+        col.textContent=ch;
+      }
+    });
+    actual=txt;
+  }
+  return {set};
+}
+function nrodPass(){
+  document.querySelectorAll('#view [data-nrod]').forEach(el=>{
+    const v=parseFloat(el.dataset.nrod); if(!isFinite(v)) return;
+    let inst=NRODS.get(el);
+    if(!inst){
+      inst=nrodCrea(el); NRODS.set(el, inst);
+      if(el.dataset.nrodIn!==undefined && v>0 && !matchMedia('(prefers-reduced-motion: reduce)').matches){
+        inst.set(v*0.82, true);
+        requestAnimationFrame(()=>inst.set(v));
+      } else inst.set(v, true);
+      return;
+    }
+    inst.set(v);
+  });
+}
+/* helper de plantilla: el host trae el texto plano de respaldo y nrodPass lo monta */
+function nrod(v, dec, cls, extra){
+  const txt=dec?fmt1(v):fmtInt(v);
+  return `<span class="nrod ${cls||''}" data-nrod="${v}" data-dec="${dec||0}" data-morph-skip aria-label="${txt}"${extra||''}>${txt}</span>`;
+}
+/* ---- Despliegue exacto de xtabs/mcapas (Fase 1) ----
+   El rotulo de la pestaña activa se abre animando max-width hacia --xw, el ancho REAL
+   del texto (tecnica del port tabs-expandibles). Antes animaba hacia 120px fijos y en
+   rotulos cortos la curva moria antes de tiempo. Se mide una vez por texto y se
+   cachea; el template emite --xw inline, asi el morph nunca lo pisa. */
+const XTW=new Map();
+let _xtwEl=null;
+function xtwDe(txt){
+  if(XTW.has(txt)) return XTW.get(txt);
+  if(!_xtwEl){
+    _xtwEl=document.createElement('span');
+    _xtwEl.style.cssText='position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap;font:600 12px var(--ui)';
+    document.body.appendChild(_xtwEl);
+  }
+  _xtwEl.textContent=txt;
+  const w=Math.ceil(_xtwEl.getBoundingClientRect().width)+1;
+  XTW.set(txt, w);
+  return w;
+}
+/* si se midio antes de que la fuente embebida terminara de cargar, las medidas
+   quedaron con la del sistema: se invalida el cache y el proximo render re-mide */
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>XTW.clear());
+/* En vistas sin morph (Hyrox, Medidas) el cambio de pestaña reemplaza el DOM entero
+   y la transicion del rotulo nunca corre: se reproduce a mano, solo cuando la
+   pestaña activa CAMBIO (no en cada re-render, que seria un parpadeo constante). */
+const XTABS_ACT=new Map();
+function xtabsPaso(morphed){
+  document.querySelectorAll('#view .xtabs,#view .mcapas').forEach((tl,ix)=>{
+    const on=tl.querySelector('.xtab.on,.mcapa.on');
+    const k=(on&&(on.dataset.s||on.dataset.eq||on.getAttribute('aria-label')))||'';
+    const btns=[...tl.children].filter(b=>b.tagName==='BUTTON');
+    const clave=ix+'|'+btns.map(b=>b.getAttribute('aria-label')).join(',');
+    const antes=XTABS_ACT.get(clave);
+    XTABS_ACT.set(clave, k);
+    if(morphed || antes===undefined || antes===k || !on) return;
+    const sp=on.querySelector(':scope>span'); if(!sp) return;
+    sp.style.transition='none'; sp.style.maxWidth='0'; sp.style.opacity='0';
+    void sp.offsetWidth;
+    sp.style.transition=''; sp.style.maxWidth=''; sp.style.opacity='';
+  });
+}
 /* ---- Nivel 3: la explicacion larga vive en una ventana, no en la pagina ----
    Regla del sistema: ningun modulo de una vista muestra mas de ~4 lineas de texto corrido
    sin que el usuario lo pida. Los parrafos, las formulas y las cajas de fuente/fiabilidad
@@ -5578,7 +5744,7 @@ function medCapaBar(){
   const act=['carga','fuerza','cruce','grasa','meta'].includes(UI.cuerpoSub)?UI.cuerpoSub:'medidas';
   return `<div class="mcapas" role="tablist" aria-label="Qué mirar del cuerpo">
     ${MED_CAPAS.map(([k,lb,icn])=>`<button class="mcapa ${k===act?'on':''}" data-a="cuerpoSub" data-s="${k}"
-      role="tab" aria-selected="${k===act?'true':'false'}" aria-label="${lb}" title="${lb}">${ic(icn,17)}<span>${lb}</span></button>`).join('')}
+      role="tab" aria-selected="${k===act?'true':'false'}" aria-label="${lb}" title="${lb}" style="--xw:${xtwDe(lb)}px">${ic(icn,17)}<span>${lb}</span></button>`).join('')}
   </div>`;
 }
 function medMapa(sel, o){
@@ -6810,7 +6976,7 @@ function vMedidasCuerpo(){
       const items=[{k:'grasa',n:'Grasa',i:'drop'},{k:'meta',n:'Meta',i:'scale'},{k:'medir',n:'Tomar medidas',i:'ruler'}];
       return `<div class="xtabs" role="tablist">${items.map(x=>`
         <button class="xtab ${x.k==='medir'&&abre?'on':''}" data-a="medNavAb" data-s="${x.k}"
-          aria-label="${x.n}" title="${x.n}" aria-expanded="${x.k==='medir'?(abre?'true':'false'):'false'}">
+          aria-label="${x.n}" title="${x.n}" aria-expanded="${x.k==='medir'?(abre?'true':'false'):'false'}" style="--xw:${xtwDe(x.n)}px">
           ${ic(x.i,17)}<span>${x.n}</span></button>`).join('')}</div>
       ${abre?`<div class="flex wrapf mt10" style="gap:6px;justify-content:center">
         ${Object.keys(MED_GRUPOS).map(g=>`<button class="chip ${UI.medForm===g?'fill':''}" data-a="medAbrir" data-g="${g}">${MED_GRUPOS[g].n}</button>`).join('')}
@@ -11954,7 +12120,7 @@ function waterUI(dISO,act){
   const paso=Math.max(50, +((S.cfg&&S.cfg.waterStep)||250));
   return `<div class="wbox">
     <div class="wglass ${n>=goal?'full':''}"><i><div class="wfill" style="height:${pct}%"></div></i></div>
-    <div style="min-width:0"><span class="wml">${fmtInt(n)}</span>
+    <div style="min-width:0">${nrod(n,0,'wml')}
       <div class="small dim">de ${fmtInt(goal)} ml</div>
       <div class="small ${n>=goal?'mint':'dim'}">${n>=goal?'meta cumplida':'faltan '+fmtInt(goal-n)}</div></div>
     <div class="wbtns">
@@ -12513,7 +12679,7 @@ function nutriDay(t, opts){
     <div class="nuthero">
       <img loading="lazy" class="nutgoat" src="${face}" alt="" decoding="async">
       <div class="nuthrow">
-        <div style="flex:none">${ring(pct, Math.round(pct)+'%', 'PROTEÍNA', 110, 11)}</div>
+        <div class="ringrodwrap" style="flex:none">${ring(pct, '', 'PROTEÍNA', 110, 11)}<span class="ringrod">${nrod(Math.round(pct),0)}<i>%</i></span></div>
         <div style="min-width:0">
           <div class="t-metric-md" style="line-height:1">${eat.pg}<span class="t-unit"> / ${goal} g</span></div>
           ${(()=>{ /* g de proteina por KG de peso: es la cifra con la que se lee de
@@ -12768,7 +12934,7 @@ function vInicio(){
       const yaHoy=(S.weights||[]).some(w=>w.d===t);
       return `<button class="wtap" data-a="pesoModal" aria-label="${yaHoy?'Peso de hoy registrado, toca para corregirlo':'Registrar el peso de hoy'}">
     <div class="lbl mt16">${yaHoy?'Peso de hoy · registrado':'Peso actual · toca para registrar'}</div>
-    <div class="bignum mt8 wline"><span class="wchk ${yaHoy?'on':''}" aria-hidden="true">${ic(yaHoy?'check':'plus',10)}</span><span><span data-cnt="${cur}" data-dec="1">${fmt1(cur)}</span><small> kg</small></span></div>
+    <div class="bignum mt8 wline"><span class="wchk ${yaHoy?'on':''}" aria-hidden="true">${ic(yaHoy?'check':'plus',10)}</span><span>${nrod(cur,1,'',' data-nrod-in')}<small> kg</small></span></div>
     <div class="mint mt8" style="font:500 14.5px var(--ui)">${togo>0?'Faltan '+fmt1(togo)+' kg para '+fmt1(PLAN.wGoal):'Meta alcanzada'}</div>
     </button>`;})()}
     ${PLAN.metaNote?`<div class="small dim mt8">${PLAN.metaNote}</div>`:''}
@@ -14532,6 +14698,9 @@ function vSession(){
   const N=EX.length, nDone=EX.filter(exDone).length;
   const ban=routineBanner(r)||entrenoImg(r);
   const rs=S.draft.restSec, restLbl=(!rs||rs==='auto')?'AUTO':(Math.floor(rs/60)+':'+String(rs%60).padStart(2,'0'));
+  /* XP acumulada de la sesion: 10 por serie y 25 por ejercicio ya pagados. Es solo
+     presentacion: la fuente es el mismo registro anti-farmeo del draft (xpPaid) */
+  let xpSes=0; Object.values(S.draft.xpPaid||{}).forEach(a=>(a||[]).forEach(i=>xpSes+= i==='all'?25:10));
   return `
   <div class="photocard" style="min-height:160px">
     <img loading="lazy" class="phimg" src="${ban}" alt="" decoding="async">
@@ -14541,7 +14710,7 @@ function vSession(){
         <div><span class="lbl mint">${S.draft&&S.draft.d&&S.draft.d!==TODAY()?'Registro del '+fmtD(S.draft.d):'Sesión de hoy'}</span><h1 class="t-h1" style="margin-top:4px">${esc(r.name)}</h1></div>
         <span class="chip fill">${r.tag}</span>
       </div>
-      <div class="flex mt12" style="gap:10px"><div class="bar thin grow"><i style="width:${(nDone/N*100).toFixed(0)}%"></i></div><span class="lbl" style="color:var(--ink2)">${nDone}/${N}</span></div>
+      <div class="flex mt12" style="gap:10px"><div class="bar thin grow" style="flex:1 1 auto;min-width:0"><i style="width:${(nDone/N*100).toFixed(0)}%"></i></div><span class="lbl" style="color:var(--ink2)">${nDone}/${N}</span><span class="sesxp">${ic('zap',12)} ${nrod(xpSes,0)}<i>XP</i></span></div>
     </div>
   </div>
   <section class="mod tight">
@@ -18168,7 +18337,7 @@ function anclaVisualAplicar(av){
 function morphView(html){
   const cont=$('#view');
   const vieja=cont.firstElementChild;
-  if(!vieja || vieja.className!=='view-in') return false;
+  if(!vieja || !vieja.classList.contains('view-in')) return false;
   try{
     const tmp=document.createElement('div');
     tmp.innerHTML='<div class="view-in">'+html+'</div>';
@@ -18240,11 +18409,25 @@ function renderReal(){
   const vieneDeTap = !!UI._ancla;
   const av = puedeMorph ? anclaVisualTomar(!vieneDeTap) : null;   /* se toma ANTES de tocar el DOM */
   const morphed = puedeMorph && morphView(htmlNuevo);
-  if(!morphed) $('#view').innerHTML = '<div class="view-in">'+htmlNuevo+'</div>';
+  if(!morphed){
+    /* Fase 1: el cambio de pestaña principal entra con fundido + deslizamiento corto
+       (~200 ms) en la direccion del nav; un re-render de la misma vista entra sin
+       animar. El morph no se entera: sigue exigiendo la clase .view-in. */
+    const NAVORD={inicio:0,entrenar:1,agenda:2,comida:3};
+    let vcls='view-in';
+    if(render._tab!==UI.tab){
+      const a=NAVORD[render._tab], b=NAVORD[UI.tab];
+      vcls+= (a!==undefined&&b!==undefined) ? (b>a?' vgo-r':' vgo-l') : ' vgo-u';
+    }
+    $('#view').innerHTML = '<div class="'+vcls+'">'+htmlNuevo+'</div>';
+  }
   else anclaVisualAplicar(av);
+  render._tab=UI.tab;
   /* los contadores animan al ENTRAR a una vista. Con morph los nodos siguen vivos con
      su cifra puesta: re-animarlos en cada cambio seria un parpadeo constante. */
   countUp(escribiendo || morphed);
+  nrodPass();
+  xtabsPaso(morphed);
 document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.t===UI.tab));
   navIndicator();
   updateIsland();

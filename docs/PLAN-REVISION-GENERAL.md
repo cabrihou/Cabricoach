@@ -181,8 +181,8 @@ Marca al cerrar cada punto. Una fase se cierra con: verificador sin regresiones 
 pase CDP completo + revisión de producto en capturas + revisión de Andy en local +
 commit "REV N: ..." (sin push hasta que Andy apruebe el deploy).
 
-- [ ] Fase 1 · Movimiento y cifras vivas
-- [ ] Fase 2 · Sistema de 3 niveles + injertos A
+- [x] Fase 1 · Movimiento y cifras vivas (REV 208, falta revisión de Andy)
+- [x] Fase 2 · Sistema de 3 niveles + injertos A (REV 209, falta revisión de Andy)
 - [ ] Fase 3 · Flujos de registro + injertos M
 - [ ] Fase 4 · Consistencia y deuda
 - [ ] Fase 5 · Tema claro
@@ -232,4 +232,47 @@ global podía mover layouts que ya están bien.
 
 Cifras de fuentes embebidas: `xtwDe` cachea por texto y se invalida con
 `document.fonts.ready` por si midió antes de cargar la fuente.
+
+### Fase 2 · ejecutada 24/08/2026 (commit REV 209, sin push: falta la revisión de Andy)
+
+Implementado: A1 (`calcBox` en INFO3 nuevas: `fza-calc` P7a, `mc-series` MC3,
+`goal-calc` P10 con `i3(k,txt,extra)` para pasar la meta, `gkg-calc` I4h), A2
+(`hitosBar` en P10, MD8 y HX1b), A3 (P6 con agregado por día, FT3d con fotos +
+delta de peso del mes), A4 (series E2a punteadas+atenuadas+aria, C5d con borde
+punteado y palabra cumple/cerca/corta, chips A4b `.chip.pend` + check), A5 (I2d
+tomas esperando, K1 entrenos/series esperando el check-in, C5a porciones que
+siguen valiendo), M2 (`filaExplica` en tour, mas-notif, mas-pin, mas-nube y
+hx-carrera), M4 (`avatarIni` estándar + inicial de persona en miniaturas FT3d
+mientras cargan), C5 (recetas de la rotación en carrusel `carr()`, la rampa del
+déficit a nivel 3 `metas-deficit`), A4-agenda (nutrición y registro del día en
+cajas plegadas `uiCaja` con dato clave), K2 plegado (abre solo el domingo sin
+check-in) y R1 (reglas a nivel 3, vitrina y reinicio plegados).
+
+Decisiones donde el plan/informe era ambiguo:
+
+- A3 en I4d y E4 se dio por ya cumplido: las franjas llevan su chip de proteína
+  desde REV 137 y "Actividad reciente" del perfil ya trae serie/tiempo/kcal por
+  fila. Lo nuevo fue P6 (agregado por día) y FT3d (delta de peso del mes).
+- M4 en C2c no aplica: las recetas no llevan foto en ninguna parte (usan icono de
+  categoría, que siempre existe). El estándar quedó definido en `avatarIni`.
+- MC3: la tabla inline "De dónde salieron esas series" se movió a la ventana de
+  nivel 3 (regla del sistema: los desgloses largos no viven en la página).
+- MD8: la fase 2 (recomposición) se posiciona por su valor real de peso, así
+  quede a la IZQUIERDA de la fase 1 en la barra (89 kg se cruza bajando hacia
+  86,6 y luego se vuelve a él subiendo); solo se pinta si `PLAN.wGoalFase2`
+  existe explícito (Cami no lo tiene).
+- HX1b: `.steps` se reemplazó por la pista continua SOLO ahí (el componente
+  `.steps` sigue vivo en HX4 y donde ya estaba); se muestran máximo 3 hitos
+  (último superado, siguiente, tope) para que las etiquetas no choquen a 320 px.
+- A4 en E2a: la "palabra" de la serie pendiente va en el aria-label del check
+  (antes ese botón ni siquiera tenía nombre accesible); visualmente quedan el
+  punteado y la cifra atenuada, más los círculos de progreso que ya existían.
+
+Hallazgo para la Fase 4: `recPersonRow` y las tarjetas del carrusel muestran
+decimales con punto ("39.8P", "13.3G"), contra la regla de coma decimal.
+
+Verificación: verificador sin regresiones (50 avisos, uno MENOS que la base por
+el aria nuevo del check de series), suite CDP de 27 pasos en verde con datos
+sembrados (metas, medidas, hyrox, logs), 0 errores de consola, dos usuarios.
+
 

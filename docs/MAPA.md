@@ -156,7 +156,10 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
     fijado por `calEditor()`)
   - A4b Chips "Comidas del plan" para marcar sin detallar (no duplican macro si esa
     franja ya tiene loggeo detallado, ver `eatenOn`) (`mealAt`)
-  - A4c Agua, peso, inyección y foto de ese día
+  - A4c Agua, peso, inyección y foto de ese día. Desde REV 209 la nutrición del
+    día (A4a + chips A4b) y este registro viven en dos cajas plegadas (`uiCaja`)
+    con el dato clave en la cabecera; los chips A4b sin marcar van punteados y
+    los marcados llevan check (tres señales, no solo color)
   - A4d **Correr**: al marcar "Salí a correr" aparece la caja de la carrera con
     distancia y duración; el ritmo se calcula solo (`runBox`, `paceTxt`,
     `runKm`/`runMin`, datos en `S.acts[dia].run`)
@@ -211,7 +214,7 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
     `S.meal.selected` (recetas + porciones `{a,c}`) con `comidasDe(uid)` (comidas al día
     según meta y reparto de cada uno). Tres bloques:
     - "Qué elegiste": cada receta de la rotación con su ícono de categoría, porciones de
-      cada uno y macros por porción
+      cada uno y macros por porción. Desde REV 209 va en carrusel (`carr()`), no apilada
     - "Cómo se distribuye": por persona, anillo de proteína/día promedio si lo cocinado
       se reparte en la semana, cuántos de los 7 días alcanza y cuál es la comida más
       grande de su día (`comidasDe` ordenado por `pg`)
@@ -298,7 +301,10 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   marca hoy, barra, escalones y proyección de fecha por regresión
   (`metasCard`, `goalCardHTML`, `goalProy`, `rmAReps`; datos en `S.goals`).
   El formulario pide peso × reps y muestra un caption en vivo con el 1RM
-  equivalente y la fecha en que se lograría (`goalw`/`goalr`). Cada meta con 2+
+  equivalente y la fecha en que se lograría (`goalw`/`goalr`). Desde REV 209 la
+  barra es de hitos etiquetados (`hitosBar`: escalón intermedio + meta, por valor
+  real) y "Cómo se calculó" abre la ventana de nivel 3 con el desglose
+  (`INFO3['goal-calc']` + `calcBox`). Cada meta con 2+
   registros trae su gráfica: historial a las reps de la meta, línea de meta y
   tendencia extendida con el punto "≈ fecha" del cruce (mismo `lineChart`).
   Las gráficas de rango corto (SEM) marcan el eje con letras L M X J V S D en
@@ -432,7 +438,10 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 ## K · Check-in (vista propia, `vCheckin`)
 
 - **K1** Resumen de la semana que cierra (peso promedio, días, entrenos)
-- **K2** Formulario: peso, grasa %, medidas, adherencia, energía, sueño, notas, foto
+- **K2** Formulario: peso, grasa %, medidas, adherencia, energía, sueño, notas, foto.
+  Desde REV 209 vive plegado (`uiCaja` "Registrar check-in", abre solo el domingo
+  sin check-in de la semana); K1 además cuantifica lo que espera el check-in
+  (entrenos y series de la semana) cuando aún no se cierra
 - **K3** Gráficas de cintura y grasa corporal
 - **K4** Tabla de evolución completa
 
@@ -440,7 +449,9 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 
 - **R1** Hero del versus con las dos cabritas y el marcador
 - **R2** Puntos de la semana y desglose
-- **R3** Premios: proponer, votar, reto de la semana/mes/trimestre
+- **R3** Premios: proponer, votar, reto de la semana/mes/trimestre. Desde REV 209
+  las reglas de puntuación viven en nivel 3 (`INFO3['retos-reglas']`) y la vitrina
+  y el reinicio van plegados (`uiCaja`)
 - **R4** Vitrina de trofeos y palmarés
 
 ## PF · Perfil (se llega tocando el avatar del nav, `vPerfil`)
@@ -494,8 +505,9 @@ muestra más de ~4 líneas de texto corrido sin que el usuario lo pida.
   - HX1a "De dónde sale ese tiempo" (`INFO3['hx-proy']`, nivel 3): se busca en `HX_PACING`
     la columna de meta que más se parece a las marcas reales y de ahí se prestan los 8 km,
     la RoxZone y las estaciones sin marca. Dice cuántas faltan y cuáles (`hxProyeccion`)
-  - HX1b La escalera: barra de 5 escalones (`.steps`) + dos celdas `.ncell` (proyección y
-    minutos que faltan para el escalón de arriba). La tabla completa de cortes en minutos
+  - HX1b La escalera: desde REV 209 es una pista continua de hitos (`hitosBar`) con
+    los cortes reales en minutos (máximo 3: último superado, siguiente y tope) + dos
+    celdas `.ncell` (proyección y minutos que faltan para el escalón de arriba). La tabla completa de cortes en minutos
     de la fila de edad que aplique (`HX_META`) vive en `INFO3['hx-escalera']`
   - HX1c Campo de edad (el mismo de M11) y el formato de la carrera en una línea, con su
     detalle en `INFO3['hx-carrera']`

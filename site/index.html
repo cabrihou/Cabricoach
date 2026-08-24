@@ -2175,6 +2175,43 @@ b,strong{font-weight:600}
 /* E2: XP acumulada de la sesion, junto al progreso de ejercicios */
 .sesxp{display:inline-flex;align-items:center;gap:4px;font:700 14px/1 var(--num);color:var(--gold);flex:none;font-variant-numeric:tabular-nums}
 .sesxp i{font:600 10px var(--ui);letter-spacing:.06em;color:var(--ink2);font-style:normal}
+/* ---- Fase 2: componentes de los injertos del informe ---- */
+/* A1 · "como se calculo": filas clave-valor y el total resaltado con el acento */
+.calcbox{border:1px solid var(--line2);border-radius:14px;padding:4px 12px;margin:10px 0}
+.calcbox .cbrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:8px 0}
+.calcbox .cbrow span{font:400 14px var(--ui);color:var(--ink2);min-width:0}
+.calcbox .cbrow b{font:600 14px var(--num);font-variant-numeric:tabular-nums;color:var(--ink);flex:none;text-align:right}
+.calcbox .cbtot{border-top:1px solid var(--line);margin-top:2px}
+.calcbox .cbtot b{color:var(--mint);font-size:15px}
+/* A2 · barra de hitos etiquetados: pista continua con hitos posicionados por valor real */
+.hbarwrap{margin:14px 0 4px}
+.hbar{position:relative;height:9px;border-radius:99px;background:rgba(255,255,255,.09)}
+.hbar>i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--grad);transition:width .6s cubic-bezier(.32,.72,0,1)}
+.hmark{position:absolute;top:-3px;width:3px;height:15px;border-radius:2px;background:rgba(255,255,255,.55);transform:translateX(-50%)}
+.hmark.done{width:16px;height:16px;top:-4px;border-radius:99px;background:var(--mint);color:var(--onmint);display:flex;align-items:center;justify-content:center}
+.hlabs{position:relative;height:32px;margin-top:7px}
+.hlab{position:absolute;top:0;transform:translateX(-50%);text-align:center;white-space:nowrap}
+.hlab b{display:block;font:700 12.5px var(--num);font-variant-numeric:tabular-nums;color:var(--ink)}
+.hlab i{display:block;font:500 10.5px var(--ui);letter-spacing:.04em;color:var(--smoke);font-style:normal;text-transform:uppercase}
+.hlab.done b{color:var(--mint)}
+.hlab.ed-l{transform:none;text-align:left}
+.hlab.ed-r{transform:translateX(-100%);text-align:right}
+/* M2 · filas de negrita inicial + resto atenuado: se leen solo las negritas y se entiende */
+.fexp{display:flex;gap:11px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--line)}
+.fexp.f1{border-top:none;padding-top:2px}
+.fexpic{width:36px;height:36px;border-radius:12px;background:rgba(var(--acc-rgb),.12);color:rgb(var(--acc-rgb));display:flex;align-items:center;justify-content:center;flex:none}
+.fexp p{margin:0;font:400 14.5px/1.5 var(--ui);color:var(--ink2)}
+.fexp p strong{color:var(--ink);font-weight:600}
+/* M4 · respaldo estandar de imagen: inicial en capsula tintada, nunca un hueco */
+.avini{width:36px;height:36px;border-radius:12px;background:rgba(var(--acc-rgb),.12);color:rgb(var(--acc-rgb));display:inline-flex;align-items:center;justify-content:center;font:600 16px var(--ttl);flex:none}
+/* A4 · estado pendiente con tres señales: borde punteado + cifra atenuada + palabras */
+.settbl.srow:not(.done) .okbtn2{border-style:dashed}
+.settbl.srow:not(.done) .sprev,.settbl.srow:not(.done) .sidx{opacity:.7}
+.chip.pend{border-style:dashed;color:var(--smoke)}
+/* FT3d · mientras la miniatura no cargue, inicial tintada de la persona (M4) */
+.fitem:not(.loaded)::before{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 22px var(--ttl);border-radius:inherit}
+.fitem.fu-andres:not(.loaded)::before{content:'A';color:rgba(92,141,255,.5);background:rgba(92,141,255,.07)}
+.fitem.fu-cami:not(.loaded)::before{content:'C';color:rgba(255,201,77,.5);background:rgba(255,201,77,.07)}
 /* tarjeta de carrusel: ancho fijo en % para que la siguiente siempre se asome */
 .ccard{width:76%;max-width:300px;min-width:214px;background:var(--card2);border:1px solid var(--line2);
   border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:7px;color:var(--ink);text-align:left}
@@ -2260,7 +2297,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 208';
+const APPREV='REV 209';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -4067,11 +4104,19 @@ function metaCard(){
     <div class="mod-head"><span class="ttl">${ic('scale',16)} Tu meta</span>
       <span class="chip ${m.cumplida?'fill':'dim'}">${m.cumplida?'lograda ✓':fmt1(m.objetivo)+' kg'}</span></div>
     ${g?`<div class="nkcalert mb12">${ic('alert',14)}<div><b>Ojo con la magra.</b> Entre las dos últimas mediciones bajó ${fmt1(Math.abs(g.dMagra))} kg de masa magra y la grasa no bajó. Antes de asustarte: ¿estabas bien hidratado y sin entrenar justo antes de medirte? La deshidratación se lee igual que perder músculo. Si se repite, el déficit está comiendo músculo y hay que subir proteína y bajar el recorte.</div></div>`:''}
-    <div class="goalbar"><i style="width:${avance}%"></i></div>
-    <div class="flex between mt8" style="align-items:baseline">
-      <span class="small dim">${fmt1(ini)} kg</span>
+    ${(()=>{ /* A2 (Fase 2): las dos fases sobre una sola pista, cada hito en su valor
+       real de peso. La Fase 2 (recomposicion) solo existe si el plan la define. */
+      const span=Math.max(0.1, ini-m.objetivo);
+      const pos=v=>clamp((ini-v)/span*100,0,100);
+      const hs=[];
+      if(PLAN.wGoalFase2 && m.fase2>m.objetivo && m.fase2<ini)
+        hs.push({pos:pos(m.fase2), lbl:'fase 2', cifra:fmt1(m.fase2)+' kg', done:false});
+      hs.push({pos:100, lbl:'fase 1 · definición', cifra:fmt1(m.objetivo)+' kg', done:m.cumplida});
+      return hitosBar(avance, hs);
+    })()}
+    <div class="flex between mt4" style="align-items:baseline">
+      <span class="small dim">arrancaste en ${fmt1(ini)} kg</span>
       <span class="small"><b class="numi" style="color:var(--ink);font-size:16px">${avance}%</b> <span class="dim">recorrido</span></span>
-      <span class="small dim">${fmt1(m.objetivo)} kg</span>
     </div>
     ${m.cumplida
       ? `<div class="small mt12" style="line-height:1.5">Estás en <b class="numi" style="color:var(--ink)">${fmt1(m.peso)} kg</b> y llegaste. De aquí en adelante la composición cambia con fuerza y proteína, no con menos comida.</div>`
@@ -5013,6 +5058,7 @@ function fzaCard(){
   }, `<section class="mod">
     <div class="mod-head hero"><span class="ttl"><span class="heroic">${ic('trend',18)}</span>Tu nivel de fuerza</span>
       <div class="flex" style="gap:6px"><span class="chip dim">vs ${fmt1(Math.round(pc*10)/10)} kg</span>${secCerrar('fza')}</div></div>
+    <div class="mb8">${i3('fza-calc','Cómo se calculó')}</div>
     ${fzaGlobalHTML(fzaGlobal(tb, pc), pc)}
     ${(()=>{const dg=fzaDeficitGanancia(tb, pc); if(!dg) return '';
       return `<div class="propfoco ok mb12">${ic('check',15)}<div>
@@ -5717,10 +5763,59 @@ function xtabsPaso(morphed){
    sin que el usuario lo pida. Los parrafos, las formulas y las cajas de fuente/fiabilidad
    se registran en INFO3 (h puede ser funcion, para que lea datos vivos) y se abren desde
    un boton .i3. Se cierra tocando fuera, con la X, o al cambiar de vista. */
+/* ---- Fase 2: helpers de los injertos del informe ---- */
+/* A1 · "Como se calculo": filas clave-valor + fila de total con el valor en acento.
+   Es el patron que MD4 (Navy) ya hacia bien, vuelto componente para las demas
+   cifras opinadas (nivel de fuerza, series efectivas, fecha proyectada, g/kg). */
+function calcBox(filas, total){
+  return `<div class="calcbox">
+    ${filas.map(([k,v])=>`<div class="cbrow"><span>${k}</span><b>${v}</b></div>`).join('')}
+    ${total?`<div class="cbrow cbtot"><span>${total[0]}</span><b>${total[1]}</b></div>`:''}
+  </div>`;
+}
+/* A2 · Barra de hitos etiquetados: pista continua con el relleno al pct y 2-3 hitos
+   posicionados por su VALOR real (no escalones iguales), cada uno con nombre y
+   cifra; el superado se vuelve un check sobre el relleno. Convive con .steps, que
+   sigue siendo la de escalones discretos. hitos: [{pos 0-100, lbl, cifra, done}] */
+function hitosBar(pct, hitos){
+  const ed=p=>p<12?' ed-l':p>88?' ed-r':'';
+  return `<div class="hbarwrap">
+    <div class="hbar"><i style="width:${clamp(pct,0,100).toFixed(1)}%"></i>
+      ${hitos.map(h=>`<span class="hmark ${h.done?'done':''}" style="left:${clamp(h.pos,0,100).toFixed(1)}%">${h.done?ic('check',10):''}</span>`).join('')}
+    </div>
+    <div class="hlabs">${hitos.map(h=>`<span class="hlab ${h.done?'done':''}${ed(clamp(h.pos,0,100))}" style="left:${clamp(h.pos,0,100).toFixed(1)}%"><b>${h.cifra}</b><i>${h.lbl}</i></span>`).join('')}</div>
+  </div>`;
+}
+/* M2 · fila de negrita inicial + resto atenuado: leyendo solo las negritas se
+   entiende la pantalla completa. f1 marca la primera fila (sin borde arriba). */
+function filaExplica(icono, negrita, resto, primera){
+  return `<div class="fexp${primera?' f1':''}"><span class="fexpic">${ic(icono,16)}</span>
+    <p><strong>${negrita}</strong> ${resto}</p></div>`;
+}
+/* Caja plegable generica con memoria de sesion (UI.cajas, no persiste): cabecera
+   tipo schedhead con el dato clave visible cerrada. Es el mismo patron de gestCaja
+   pero sin escribir en S.cfg: para vistas donde el plegado es de la visita, no una
+   preferencia (dia pasado de Agenda, formulario del check-in, colas de Retos). */
+function uiCaja(id, titulo, dato, fnInner, defecto){
+  const abierto=(UI.cajas && UI.cajas[id]!==undefined) ? !!UI.cajas[id] : !!defecto;
+  return `<section class="mod tight">
+    <button class="schedhead ${abierto?'open':''}" data-a="uiCajaTgl" data-k="${id}" aria-expanded="${abierto?'true':'false'}">
+      <span class="grow tl" style="min-width:0"><b class="schedt" style="display:block">${titulo}</b>
+        <span class="small dim" style="display:block">${dato}</span></span>
+      <span class="nfchev">${ic('chevR',16)}</span>
+    </button>
+  </section>` + (abierto ? fnInner() : '');
+}
+/* M4 · el respaldo estandar cuando falta una imagen: inicial en capsula tintada */
+function avatarIni(nombre, cls){
+  return `<span class="avini ${cls||''}" aria-hidden="true">${esc(String(nombre||'?').trim().charAt(0).toUpperCase())}</span>`;
+}
 const INFO3={};
-function i3(k, txt){
+function i3(k, txt, extra){
   const I=INFO3[k]; if(!I) return '';
-  return `<button class="i3" data-a="info3" data-k="${esc(k)}" aria-label="${esc(I.t)}">${ic('info',12)} ${esc(txt||'Por qué')}</button>`;
+  /* extra: atributos data-* adicionales que ACTIONS.info3 deja en UI._i3d, para que
+     la ventana sepa DE QUE dato se abrio (ej. la meta concreta en P10) */
+  return `<button class="i3" data-a="info3" data-k="${esc(k)}"${extra||''} aria-label="${esc(I.t)}">${ic('info',12)} ${esc(txt||'Por qué')}</button>`;
 }
 function i3Open(k){
   const I=INFO3[k]; if(!I) return;
@@ -6849,12 +6944,7 @@ function vCarga(){
       ${MUSC_VOL[selF.m]?(()=>{const v=MUSC_VOL[selF.m];
         return `<div class="medbar mt8"><i style="width:${clamp(selF.s/v.mrv*100,2,100)}%;background:${selF.nv.c};box-shadow:none"></i></div>
         <div class="flex between small dim mt4"><span>mínimo ${v.mev}</span><span>óptimo ${v.mav}</span><span>tope ${v.mrv}</span></div>`;})():''}
-      ${selF.det.length?`<details class="medhist mt8" ${UI.cargaDet?'open':''}><summary data-a="cargaDetTgl">De dónde salieron esas ${fmt1(selF.s)} series</summary>
-        <table class="medtab"><thead><tr><th>Día</th><th>Ejercicio</th><th>Series</th><th>Aporta</th></tr></thead><tbody>
-        ${selF.det.map(x=>`<tr><td>${fmtD(x.d)}</td><td style="text-align:left">${esc(shortEx(x.ej))}<i class="small dim"> ${x.pc}%</i></td>
-          <td>${x.run?fmt1(x.series)+' eq':x.series}</td><td><b>${fmt1(x.aporta)}</b></td></tr>`).join('')}</tbody></table>
-        <div class="small dim mt8" style="line-height:1.5">Cada ejercicio reparte sus series entre los músculos que trabaja: la columna del porcentaje es cuánto le toca a <b>${esc(MUSC_NOM[selF.m]||selF.m)}</b>.${selF.det.some(x=>x.run)?' Los minutos de carrera entran como series equivalentes (10 min ≈ 1).':''}</div>
-      </details>`:''}
+      ${selF.det.length?`<div class="mt8">${i3('mc-series','De dónde salieron esas '+fmt1(selF.s)+' series')}</div>`:''}
       <div class="medsug">${ic('zap',12)}<div>${cargaConsejo(selF, dias)}</div></div>
     </div>`:`<div class="small dim tc mt8">Toca un músculo para ver sus series, su nivel y qué hacer.</div>`}
   </section>
@@ -11118,7 +11208,15 @@ function fotoFill(force){
       const nom=it.uid==='andres'?'Andrés':'Cami';
       return `<button class="fitem fu-${it.uid}${it.locked?' locked':''}" data-t="${it.locked?'x':it.t}" data-uid="${it.uid}" data-d="${it.d}"${it.k?` data-k="${esc(it.k)}"`:''}${it.locked?'':(it.t==='r'?` data-bg="${it.url}"`:` data-lk="${esc(it.k)}"`)} aria-label="Foto de ${nom} del ${fmtLong(it.d)}${it.locked?', privada':''}">${st&&st.trained?'<span class="fdot" aria-hidden="true"></span>':''}${it.shared?`<span class="fshr" aria-hidden="true">${ic('heart',11)}</span>`:''}<span class="fmeta"><b>${marca}${fmtD(it.d)}</b>${(st&&st.kg!=null)?`<i>${fmt1(st.kg)}</i>`:''}</span>${it.locked?ic('lock',18):''}</button>`;
     };
-    g2.innerHTML=grupos.map(gr=>(conCab?`<div class="fmonth"><b>${MESES[+gr.m.slice(5,7)-1].toLowerCase()} ${gr.m.slice(0,4)}</b><span>${gr.its.length}</span></div>`:'')+gr.its.map(cel).join('')).join('');
+    g2.innerHTML=grupos.map(gr=>{
+      /* A3 (Fase 2): la cabecera del mes lleva el agregado (fotos y delta de peso
+         del usuario en ese mes), no solo el conteo */
+      let agg=gr.its.length+(gr.its.length===1?' foto':' fotos');
+      const ws=(S.weights||[]).filter(w=>w.d.slice(0,7)===gr.m);
+      if(ws.length>1){ const dw=ws[ws.length-1].kg-ws[0].kg;
+        if(Math.abs(dw)>=0.1) agg+=' · '+(dw<0?'−':'+')+fmt1(Math.abs(dw))+' kg'; }
+      return (conCab?`<div class="fmonth"><b>${MESES[+gr.m.slice(5,7)-1].toLowerCase()} ${gr.m.slice(0,4)}</b><span>${agg}</span></div>`:'')+gr.its.map(cel).join('');
+    }).join('');
     lazyLoadGrid(g2);
     fotoSelPaint();
     /* un solo oyente para toda la parrilla en vez de uno por miniatura */
@@ -12688,7 +12786,7 @@ function nutriDay(t, opts){
             const kg=PLAN.pesoBase||0; if(!kg) return '';
             const gk=Math.round(eat.pg/kg*100)/100, meta=1.8;
             const col=gk>=meta?'var(--mint)':gk>=meta*0.8?'var(--gold)':'var(--red)';
-            return `<div class="gkg mt4"><b style="color:${col}">${fmt1(gk)}</b><span>g/kg</span><i>meta 1,8</i></div>`;
+            return `<div class="gkg mt4"><b style="color:${col}">${fmt1(gk)}</b><span>g/kg</span><i>meta 1,8</i> ${i3('gkg-calc','Cómo')}</div>`;
           })()}
           <div class="small dim" style="margin-top:5px">≈ ${eat.kc} <span style="opacity:.6">/ ${PLAN.kcal} kcal</span></div>
           <div class="nutnudge mt8 ${alerta?'alert':''}">${nudge}</div>
@@ -13142,7 +13240,7 @@ const node=(on,icn,val,lb,bonus)=>{
       return `<div class="cktile ${ciDone&&!mp.length?'on':''}" data-a="medGo" role="button" style="cursor:pointer;position:relative;overflow:hidden">
         <b style="position:relative;z-index:1">${ic('ruler',16)} Medidas${ciDone&&!mp.length?`<span class="tick">${ic('check',11)}</span>`:''}</b>
         <span class="small dim" style="max-width:46%;position:relative;z-index:1">${mp.length
-          ?`Hoy toca: ${mp.map(x=>x.n.toLowerCase()).join(' y ')}${mTarde?' (con retraso)':''}`
+          ?`Hoy toca: ${mp.map(x=>x.n.toLowerCase()).join(' y ')} · ${mp.length} toma${mp.length>1?'s':''} esperando${mTarde?' (con retraso)':''}, nada se pierde`
           :'Al día · toca en '+medFaltanDias()+' días'}</span>
         <span class="chip ${mp.length?'fill':'dim'} mt8" style="position:relative;z-index:1">${mp.length?'MEDIR':'VER'}</span>
         <img loading="lazy" src="${UID==='andres'?CAB.tileCheckA:CAB.tileCheckC}" alt="" decoding="async" style="position:absolute;right:-16px;bottom:-6px;height:186px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.5));pointer-events:none">
@@ -14168,14 +14266,25 @@ function calEditor(){
       <div style="width:104px"><input class="in ctr" inputmode="numeric" placeholder="pasos" value="${S.steps[sel]||''}" data-ch="stepsAt"></div>
     </div>
   </section>
-  ${nutriDay(sel, {compacto:true})}
+  ${(()=>{ /* Fase 2 · A4: menos cajas abiertas a la vez. La nutricion del dia y las
+     comidas del plan viven en una caja plegada con el dato clave en la cabecera;
+     un dia pasado se consulta, no exige ver todo el aparato de una */
+    const eatSel=eatenOn(sel);
+    const nMarc=Object.values(S.meals[sel]||{}).filter(Boolean).length, nPlan=comidasDe(UID).length;
+    return uiCaja('caldia-nutri', ic('food',15)+' Nutrición de ese día',
+      `${eatSel.pg} g de proteína · ~${eatSel.kc} kcal · ${nMarc}/${nPlan} comidas del plan`,
+      ()=>`${nutriDay(sel, {compacto:true})}
   <section class="mod tight">
     <span class="lbl">Comidas del plan · márcalas sin detallar</span>
     <div class="flex mt8 wrapf">
-      ${comidasDe(UID).map(md=>`<button class="chip ${(S.meals[sel]||{})[md.k]?'fill':''}" data-a="mealAt" data-m="${md.k}">${md.label}</button>`).join('')}
+      ${comidasDe(UID).map(md=>{ const on=(S.meals[sel]||{})[md.k];
+        return `<button class="chip ${on?'fill':'pend'}" data-a="mealAt" data-m="${md.k}" aria-label="${esc(md.label)}${on?', marcada':', sin marcar'}">${on?ic('check',10)+' ':''}${md.label}</button>`;}).join('')}
     </div>
-  </section>
-  <section class="mod">
+  </section>`, false);
+  })()}
+  ${(()=>{ const datos=[sst.agua?'agua ✓':'agua ·', sw?'peso '+fmt1(sw.kg):'sin peso',
+      S.inject.includes(sel)?'inyección ✓':null].filter(Boolean).join(' · ');
+    return uiCaja('caldia-reg', ic('check',15)+' Registro de ese día', datos, ()=>`<section class="mod">
     <div class="row" style="flex-direction:column;align-items:stretch;gap:9px">
       <div class="flex"><div class="ck ${sst.agua?'on':''}">${sst.agua?ic('check',14):''}</div>
       <div class="grow"><b style="font-size:16px">Agua</b></div></div>
@@ -14197,7 +14306,8 @@ function calEditor(){
       <button class="btn sm ghost" data-a="fotoShotAt">${ic('camera',13)} ${FOTODAYS.has(sel)?'Cambiar':'Agregar'}</button>
     </div>`:''}
     <div class="small dim mt8">Todo lo que marques aquí entra a la racha, la adherencia y las gráficas.</div>
-  </section>`;
+  </section>`, false);
+  })()}`;
 }
 /* ejercicios de la sesión: los de la rutina + los agregados a mano */
 /* ===== IMPORTAR ENTRENO desde texto (estilo Strong) ===== */
@@ -14470,7 +14580,7 @@ function setTable(e){
         <span class="sprev">${pv}</span>
         <input class="in ctr" inputmode="decimal" ${e.um?'disabled':''} placeholder="${e.um?'&middot;':(exPesoCorporal(e.id)?'lastre':'kg')}" value="${s.w}" data-ch="set" data-ex="${e.id}" data-i="${i}" data-f="w" aria-label="${e.um?'este ejercicio se mide en '+e.um+', no en kilos':(exPesoCorporal(e.id)?'lastre en kilos, vacío es peso limpio':'peso en kilos')}">
         <input class="in ctr" inputmode="numeric" placeholder="${e.reps[0]}" value="${s.r}" data-ch="set" data-ex="${e.id}" data-i="${i}" data-f="r">
-        <button class="okbtn2" data-a="mark" data-ex="${e.id}" data-i="${i}" data-rest="${e.rest}" data-n="${esc(alt||e.name)}">${ic('check',15)}</button>
+        <button class="okbtn2" data-a="mark" data-ex="${e.id}" data-i="${i}" data-rest="${e.rest}" data-n="${esc(alt||e.name)}" aria-label="${s.done?'Serie '+(i+1)+' hecha, toca para desmarcar':'Serie '+(i+1)+' pendiente, toca para marcarla'}">${ic('check',15)}</button>
         <button class="delset" data-a="delSet" data-ex="${e.id}" data-i="${i}" aria-label="Borrar serie ${i+1}" ${data.length>1?'':'disabled'}>${ic('x',14)}</button>
       </div>${i<data.length-1?`<div class="restdiv"><i></i><span>${rf}</span><i></i></div>`:''}`;}).join('')}
     <button class="btn sm ghost full mt8" data-a="addSet" data-ex="${e.id}">${ic('plus',13)} Agregar serie · ${rf}</button>
@@ -15920,24 +16030,29 @@ function gestSemanaHTML(){
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('book',16)} Qué elegiste · ${g.recetas.length} receta${g.recetas.length>1?'s':''}</span>
       <button class="chip" data-a="presetPractico">Semana práctica</button></div>
-    ${g.recetas.map(x=>`<div class="row" style="align-items:flex-start;flex-wrap:wrap">
-      <span class="badge cat-${x.r.cat}">${catIco(x.r.cat,22)}</span>
-      <div class="grow" style="min-width:200px">
-        <div class="flex between" style="gap:8px"><b style="font-size:15px">${esc(x.r.name)}</b>
-          <button class="chip" style="flex:none" data-a="recSwapOpen" data-id="${x.id}" aria-label="Cambiar receta ${esc(x.r.name)}">${ic('repeat',11)} Cambiar</button>
-        </div>
+    ${''/* Fase 2 · C5: las recetas de la rotacion en carrusel (carr, scroll-snap del
+       navegador) en vez de apiladas: se hojean de lado y la vista respira */}
+    ${carr(g.recetas.map(x=>{
+      const v=vecesEnSemana(x.id);
+      const linea=(quien,por,n)=>{ if(!por) return '';
+        if(!n) return `<div class="small mt4" style="color:var(--gold)">${quien}: esta semana no aparece (franjas ocupadas)</div>`;
+        return `<div class="small dim mt4">${quien}: la sirve ${n} ${n>1?'veces':'vez'} esta semana</div>`; };
+      return `<div class="ccard">
+      <div class="flex" style="gap:8px;align-items:center">
+        <span class="badge cat-${x.r.cat}">${catIco(x.r.cat,22)}</span>
+        <b class="grow" style="font-size:15px;min-width:0">${esc(x.r.name)}</b>
+        <button class="chip" style="flex:none" data-a="recSwapOpen" data-id="${x.id}" aria-label="Cambiar receta ${esc(x.r.name)}">${ic('repeat',11)}</button>
+      </div>
+      <div class="mt8">
         ${recPersonRow('Andrés',col.andres,null,x.r.a)}
-        <div class="flex between mt4" style="max-width:210px"><span class="small dim">porciones/semana</span>
+        <div class="flex between mt4"><span class="small dim">porciones/sem</span>
           <div class="qty"><button data-a="port" data-r="${x.id}" data-w="a" data-n="-1" aria-label="menos porciones Andrés">−</button><input class="n qtyin" inputmode="numeric" data-ch="portIn" data-r="${x.id}" data-w="a" value="${x.p.a||0}" aria-label="porciones de Andrés por semana"><button data-a="port" data-r="${x.id}" data-w="a" data-n="1" aria-label="más porciones Andrés">+</button></div></div>
-        ${(()=>{ const v=vecesEnSemana(x.id);
-          const linea=(quien,por,n)=>{ if(!por) return '';
-            if(!n) return `<div class="small mt4" style="color:var(--gold)">${quien}: esta semana no aparece (sus franjas ya están ocupadas por otras recetas)</div>`;
-            return `<div class="small dim mt4">${quien}: la semana la sirve ${n} ${n>1?'veces':'vez'} · el mercado compra eso</div>`; };
-          return linea('Andrés', x.p.a, v.a) + linea('Cami', x.p.c, v.c); })()}
+        ${linea('Andrés', x.p.a, v.a)}
         ${recPersonRow('Cami',col.cami,null,x.r.c)}
-        <div class="flex between mt4" style="max-width:210px"><span class="small dim">porciones/semana</span>
+        <div class="flex between mt4"><span class="small dim">porciones/sem</span>
           <div class="qty"><button data-a="port" data-r="${x.id}" data-w="c" data-n="-1" aria-label="menos porciones Cami">−</button><input class="n qtyin" inputmode="numeric" data-ch="portIn" data-r="${x.id}" data-w="c" value="${x.p.c||0}" aria-label="porciones de Cami por semana"><button data-a="port" data-r="${x.id}" data-w="c" data-n="1" aria-label="más porciones Cami">+</button></div></div>
-      </div></div>`).join('')}
+        ${linea('Cami', x.p.c, v.c)}
+      </div></div>`;}), {lbl:'Recetas de la rotación, desliza para ver más'})}
     <button class="btn ghost full mt8" data-a="foodSub" data-s="recetas">${ic('plus',13)} Agregar otra receta</button>
   </section>
   <section class="mod">
@@ -15952,6 +16067,8 @@ function gestSemanaHTML(){
       <div class="grow" style="min-width:180px">${h.txt}</div>
       <button class="btn sm primary" style="flex:none" data-a="${h.action}"${h.data?Object.entries(h.data).map(([k,v])=>` data-${k}="${esc(String(v))}"`).join(''):''}>${h.label}</button>
     </div>`).join('')}
+    ${''/* A5 (Fase 2): junto a lo que falta, lo que YA vale y no se pierde */}
+    ${(g.andres.porciones+g.cami.porciones)>0?`<div class="small dim mt8" style="line-height:1.5">Mientras tanto: <b style="color:var(--ink)">${g.andres.porciones+g.cami.porciones} porciones</b> cocinadas siguen valiendo tal cual. Nada se pierde por ajustar de a poco.</div>`:''}
   </section>`:`<section class="mod tight"><div class="flex">${ic('check',18)}<div class="small"><b>Tu semana está cubierta.</b> Las porciones alcanzan para los 7 días y, ya escalado, la proteína cumple la meta los 7 días.</div></div></section>`}`;
 }
 /* vista principal de Comida > Gestion: la semana con lo elegido (Tarea 2), el registro
@@ -15983,10 +16100,8 @@ function metasComoHTML(uid){
       <span><i>MENOS EL DÉFICIT</i><b>−${M.deficit}<em>kcal</em></b></span>
       <span class="on"><i>TU META</i><b>${fmtInt(M.kcal)}<em>kcal</em></b></span>
     </div>
-    <div class="small dim mt8" style="line-height:1.55">Con tus <b>${fmt1(M.pesoBase)} kg</b> de esta semana, a un ritmo esperado de <b>${fmt1(M.ritmo)} kg por semana</b>.${
-      M.defIni!==M.defFin
-        ? ` El déficit va en rampa: <b>${M.defIni}</b> arriba de peso y <b>${M.defFin}</b> al llegar a la meta. Arriba hay más grasa que ceder; cerca del objetivo un déficit grande se come músculo. Por eso las calorías <b>suben</b> conforme te acercas, aunque el gasto baje.`
-        : ` Lo que se fijó es el déficit, no las calorías: el gasto baja unas ${KCAL_POR_KG} kcal por kilo y la meta baja con él, así que el déficit se mantiene en ${M.deficit}.`}</div>
+    ${''/* Fase 2: el parrafo largo de la rampa se fue a nivel 3; aqui una linea */}
+    <div class="small dim mt8" style="line-height:1.5">Con tus <b>${fmt1(M.pesoBase)} kg</b> de esta semana · ritmo esperado <b>${fmt1(M.ritmo)} kg/sem</b> ${i3('metas-deficit','Por qué se mueve')}</div>
   </div>`;
 }
 function fijoDelDiaHTML(uid){
@@ -16065,10 +16180,12 @@ function gestPlanHTML(){
        vive en toda la tarjeta (fondo sutil + borde), asi se lee de reojo sin
        tener que leer la cifra. Ver nota de ESTCOL arriba: colores fijos, no
        dependen de --mint/--gold porque esos cambian de significado por tema. */
-    return `<div class="mealrow" style="background:${ec.bg};border:1px solid ${ec.bd};border-radius:14px;padding:12px 14px;margin:10px 0">
+    return `<div class="mealrow" style="background:${ec.bg};border:1px ${eP.txt==='mint'?'solid':'dashed'} ${ec.bd};border-radius:14px;padding:12px 14px;margin:10px 0">
       <div class="flex between" style="align-items:baseline;gap:8px">
         <b class="t-body" style="font-size:16px;color:var(--ink)">${ca.m.label}${isExtra?' <span class="t-label" style="letter-spacing:0">extra</span>':''}</b>
-        <span class="t-metric-md" style="font-size:24px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;color:${ec.c}">${ic(eP.txt==='mint'?'check':'alert',13)}${ca.totalMac.pg}<span class="t-unit"> / ${ca.m.pg} g</span></span>
+        ${''/* A4 (Fase 2): tres señales a la vez: borde punteado si falta, cifra con
+           su icono, y el estado EN PALABRAS junto al numero, nunca solo el color */}
+        <span class="t-metric-md" style="font-size:24px;white-space:nowrap;display:inline-flex;align-items:baseline;gap:4px;color:${ec.c}">${ic(eP.txt==='mint'?'check':'alert',13)}${ca.totalMac.pg}<span class="t-unit"> / ${ca.m.pg} g</span><em class="t-label" style="font-style:normal;letter-spacing:.03em;color:${ec.c}">${eP.txt==='mint'?'cumple':eP.txt==='gold'?'cerca':'corta'}</em></span>
       </div>
       <div class="flex between" style="align-items:center;gap:8px;margin-top:4px">
         ${opciones.length?`<select class="in" style="flex:1;min-width:0;padding:8px 10px" data-ch="planRec" data-u="${uid}" data-d="${dl}" ${mAttr}>
@@ -16547,7 +16664,8 @@ function vRetos(){
     </div>
     <img loading="lazy" class="rhface" src="${CAB.faceC}" alt="Cami" decoding="async">
   </section>
-  <section class="mod tight"><div class="flex">${ic('flame',18)}<div class="small grow"><b>Así se puntúa cada día:</b> agua 1 · comidas 1 · pasos 1 al llegar a la meta, <b>+1 por cada 5.000 pasos extra (máx +2)</b> · entrenar <b>+1</b> · movilidad diaria <b>+1</b>. Máximo 7 al día. La racha solo pide los 3 diarios; caminar de más y estirar es donde se abre la brecha.</div></div></section>
+  ${''/* Fase 2: la letra menuda de las reglas se fue a nivel 3; queda una linea */}
+  <section class="mod tight"><div class="flex between" style="gap:10px"><span class="small dim">Máximo 7 puntos al día: hábitos, entreno y movilidad.</span>${i3('retos-reglas','Cómo se puntúa')}</div></section>
   ${retoCard('sem','Reto de la semana')}
   ${retoCard('mes','Reto del mes')}
   ${retoCard('tri','Reto del trimestre')}
@@ -16555,16 +16673,21 @@ function vRetos(){
     const me=CU().name, ot=UID==='andres'?'Cami':'Andrés';
     if(!pal.length) return '';
     const img=k=>k==='tri'?CAB.troOro:k==='mes'?CAB.troPlata:CAB.troBronce;
-    return `<section class="mod">
+    /* Fase 2: plegada con el marcador total en la cabecera; el detalle al tocarla */
+    const totA=pal.reduce((a,p)=>a+p.a,0), totB=pal.reduce((a,p)=>a+p.b,0);
+    return uiCaja('retos-vitrina', ic('star',15)+' Vitrina de trofeos',
+      `${me} ${totA} · ${ot} ${totB}`, ()=>`<section class="mod">
     <div class="mod-head"><span class="ttl">${ic('star',16)} Vitrina de trofeos</span><span class="cross">+</span></div>
     ${pal.map(p=>`<div class="row"><img loading="lazy" src="${img(p.k)}" width="44" height="44" decoding="async" alt="" style="flex:none"><div class="grow"><b style="font-size:16px">${p.lb}</b><div class="small dim">${p.k==='sem'?'bronce':p.k==='mes'?'plata':'oro'}${p.e?' · empates '+p.e:''}</div></div>
       <span class="mono small">${me} ${p.a} · ${ot} ${p.b}</span></div>`).join('')}
     <div class="small dim mt8">Semanal = bronce · mensual = plata · trimestral = oro.</div>
-  </section>`})()}
+  </section>`, false)})()}
   ${(()=>{
     const mine=(S.retoreset||{}).d||'', other=(partnerState('retoreset')||{}).d||'', acc=agreedReset();
     const otherN=UID==='andres'?'Cami':'Andrés';
-    return `<section class="mod">
+    return uiCaja('retos-reset', ic('repeat',15)+' Reiniciar retos',
+      acc?'reiniciados desde '+fmtD(acc):(mine||other?'hay una propuesta en la mesa':'borrón y cuenta nueva, si los dos quieren'),
+      ()=>`<section class="mod">
     <div class="mod-head"><span class="ttl">${ic('repeat',16)} Reiniciar retos</span><span class="cross">+</span></div>
     ${acc?`<div class="small" style="color:var(--mint)"><b>Retos reiniciados desde ${fmtD(acc)}.</b> Los marcadores de los períodos actuales cuentan desde ahí.</div>
       <button class="chip mt8 red" data-a="resetClear">Cancelar el reinicio</button>`
@@ -16575,7 +16698,7 @@ function vRetos(){
         ${mine?'<button class="btn sm ghost" data-a="resetClear" style="flex:none">Quitar</button>':''}
       </div>
       <div class="small dim mt8">${mine?'Tu propuesta: '+fmtD(mine)+'. ':''}${other?otherN+' propone: '+fmtD(other)+(mine&&other!==mine?'. Aún no coinciden.':''):otherN+' no ha propuesto.'}${other&&!mine?` <button class="chip" data-a="resetAccept">Aceptar la de ${otherN}</button>`:''}</div>`}
-  </section>`})()}
+  </section>`, false)})()}
   ${hasPartner?'':`<section class="mod tight"><div class="flex">${ic('info',16)}<div class="small dim">Cuando ${otherN} sincronice su teléfono aquí aparece su marcador y arranca el versus. Mientras tanto, acumula días tú.</div></div></section>`}`;
 }
 /* ============ TARJETA DE RENDIMIENTO (grafica unica de Progreso > Actividad fisica) ============
@@ -16851,14 +16974,18 @@ function goalCardHTML(g){
       <span class="t-metric-md" style="line-height:1">${hoyW?fmt1(hoyW):'–'}</span><span class="t-unit">kg × ${reps} hoy${hoyW?' (est.)':''}</span>
       <span class="small dim" style="margin-left:auto">${pct}%</span>
     </div>
-    <div class="goalbar mt4"><i style="width:${pct}%"></i></div>
+    ${(()=>{ /* A2 (Fase 2): pista continua con el escalon intermedio y la meta
+       posicionados por su valor real, en vez de la barra muda + chips iguales */
+      const startW=rmAReps(baseRM,reps), spanW=Math.max(0.1, g.target-startW);
+      const mid=steps.length?steps[Math.floor(steps.length/2)]:null;
+      const hs=[];
+      if(mid!=null && mid>startW) hs.push({pos:(mid-startW)/spanW*100, lbl:'escalón', cifra:fmt1(mid), done:hoyW>=mid});
+      hs.push({pos:100, lbl:'meta ×'+reps, cifra:fmt1(g.target)+' kg', done});
+      return hitosBar(pct, hs);
+    })()}
     ${(()=>{const px=goalProxima(g); if(!px) return '';
       return `<div class="goalprox ${px.hecho?'ok':''}">${ic(px.hecho?'check':'zap',14)}
         <div class="small" style="line-height:1.55">${px.txt}</div></div>`;})()}
-    ${steps.length?`<div class="flex wrapf mt8" style="gap:6px">
-      ${steps.map(v=>`<span class="chip ${hoyW>=v?'fill':'dim'}" style="pointer-events:none">${hoyW>=v?'✓ ':''}${fmt1(v)}</span>`).join('')}
-      <span class="chip ${done?'fill':'dim'}" style="pointer-events:none">${done?'✓ ':''}${fmt1(g.target)} kg</span>
-    </div>`:''}
     ${(()=>{ /* grafica de proyeccion (pedido del dueno): el historial convertido a
       las reps de la meta + la tendencia extendida hasta cruzar la linea de la meta;
       lineChart ya pinta el punto de cruce con su fecha estimada (≈ dd/mm) */
@@ -16869,6 +16996,7 @@ function goalCardHTML(g){
       return `<div class="mt8">${lineChart({pts, fmt:v=>fmt1(v)+' kg', trend:!done, horizonte:horiz, goal:g.target, goalLabel:fmt1(g.target)+' kg', h:104})}</div>`;
     })()}
     <div class="small dim mt8" style="line-height:1.5">${proyTxt}</div>
+    <div class="mt8">${i3('goal-calc','Cómo se calculó', ` data-id="${g.id}"`)}</div>
   </div>`;
 }
 function metasCard(){
@@ -17284,7 +17412,12 @@ function vTiempo(){
     ${days.length?days.map(d=>{
       const names=byDay[d].map(rid=>{const rr=findRoutine(rid); return rr?rr.name:rid;}).join(' + ');
       const open=UI.histDay===d;
-      return `<button class="mrow" data-a="histDay" data-d="${d}"><span class="mck ${open?'on':''}">${open?ic('check',12):''}</span><span class="grow tl">${fmtD(d)} · ${DAYNAMES[fromISO(d).getDay()].slice(0,3)}</span><span class="small dim">${esc(names)}</span></button>
+      /* A3 (Fase 2): la cabecera del dia lleva su agregado a la derecha (series, minutos
+         y tonelaje), asi se lee el dia completo antes de abrir las filas */
+      let ns=0, ton=0; Object.values(S.logs).forEach(h=>h.filter(x=>x.d===d).forEach(x=>x.sets.forEach(z=>{ ns+=1; ton+=(+z.w||0)*(+z.r||0); })));
+      const mins=S.sessions.filter(s=>s.d===d).reduce((a,s)=>a+(+s.min||0),0);
+      const agg=[ns?ns+' series':null, mins?mins+' min':null, ton?(ton>=1000?fmt1(ton/1000)+' t':fmtInt(ton)+' kg'):null].filter(Boolean).join(' · ');
+      return `<button class="mrow" data-a="histDay" data-d="${d}"><span class="mck ${open?'on':''}">${open?ic('check',12):''}</span><span class="grow tl" style="min-width:0"><span style="display:block">${fmtD(d)} · ${DAYNAMES[fromISO(d).getDay()].slice(0,3)}</span><span class="small dim" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(names)}</span></span><span class="t-label" style="flex:none;color:var(--smoke)">${agg}</span></button>
       ${open?daySummary(d):''}`;
     }).join(''):'<div class="small dim">Sin entrenos en este rango. Cambia el filtro o registra uno retro desde la Agenda.</div>'}
     <div class="small dim mt8">Toca un día para ver ejercicio por ejercicio lo que hiciste. Para corregir un día, ve a AGENDA y ábrelo.</div>
@@ -17391,9 +17524,9 @@ Object.assign(INFO3, {
     ${hxFuenteTxt('pctl')}`;}},
   'hx-carrera':{t:'La carrera, en corto', h:()=>{
     const divis = hxSx()==='a' ? 'Open masculino' : 'Open femenino';
-    return `<p>8 km de carrera repartidos en 8 tramos de 1 km, y una estación después de cada tramo. El reloj no para en las transiciones: son 16 pasos por la RoxZone y ahí se va entre el 5 y el 7% del tiempo total. Tu división es <b>${divis}</b>.</p>
-    <p>Lo que más pesa: cerca del <b>59% del tiempo es corriendo</b>. El VO2max es el predictor más fuerte del tiempo final, y la masa muscular y la fuerza de agarre no mostraron relación con el rendimiento. Traducido: la preparación no es más gimnasio con prisa.</p>
-    ${hxFuenteTxt('evid')}`;}},
+    return filaExplica('timer','8 km en 8 tramos, y el reloj no para.','Una estación después de cada kilómetro; en las 16 pasadas por la RoxZone se va entre el 5 y el 7% del tiempo total. Tu división es <b>'+divis+'</b>.', true)
+    +filaExplica('heart','Cerca del 59% del tiempo es corriendo.','El VO2max es el predictor más fuerte del tiempo final; la masa muscular y el agarre no mostraron relación. Traducido: la preparación no es más gimnasio con prisa.')
+    +hxFuenteTxt('evid');}},
   'hx-ski':{t:'En el gimnasio no hay SkiErg', h:()=>`<p>Es la estación con más riesgo de sorpresa el día de la carrera, porque la técnica no se sustituye.</p>
     <p>El plan mete <b>slams de balón</b> y <b>jalón recto en polea</b> como aproximación. Si algún día hay fecha de carrera, vale la pena buscar 1 sesión semanal de SkiErg real en otro gimnasio durante las últimas 8 semanas.</p>`},
   'hx-est':{t:'Cómo se compara esta estación', h:()=>{
@@ -17435,20 +17568,22 @@ Object.assign(INFO3, {
     <li>Y de última, <b>nunca</b>, la de correr en fatiga.</li></ol>`},
 });
 Object.assign(INFO3, {
-  'tour':{t:'Cómo funciona la app', h:()=>`<p><b>Entrenar.</b> ${UID==='cami'?'Tus 3 rutinas reales (Glúteo y femoral, Pierna con cuádriceps y Tren superior) ya vienen con tus pesos del gym. Abre la del día, escribe kg y reps, y Marcar arranca el descanso solo.':'Abre la rutina del día, escribe kg y reps, y Marcar arranca el descanso solo. Puedes quitar o sumar series: la app las recuerda.'}</p>
-    <p><b>Checkpoint.</b> La racha se gana con agua, pasos y comidas, aquí en Inicio. El entreno suma como bonus (y desempata los retos).</p>
-    <p><b>Comida.</b> ${UID==='cami'?'Tu scoop va en el desayuno y el snack rota entre fruta y yogur. "Ármame la semana" arma el mercado de los dos con tus porciones (C).':'"Ármame la semana" elige las recetas y te deja el mercado listo con las porciones de cada uno.'}</p>`},
+  'tour':{t:'Cómo funciona la app', h:()=>
+    filaExplica('barbell','Entrenar.', UID==='cami'?'Tus 3 rutinas reales (Glúteo y femoral, Pierna con cuádriceps y Tren superior) ya vienen con tus pesos del gym. Abre la del día, escribe kg y reps, y Marcar arranca el descanso solo.':'Abre la rutina del día, escribe kg y reps, y Marcar arranca el descanso solo. Puedes quitar o sumar series: la app las recuerda.', true)
+    +filaExplica('target','Checkpoint.','La racha se gana con agua, pasos y comidas, aquí en Inicio. El entreno suma como bonus (y desempata los retos).')
+    +filaExplica('food','Comida.', UID==='cami'?'Tu scoop va en el desayuno y el snack rota entre fruta y yogur. "Ármame la semana" arma el mercado de los dos con tus porciones (C).':'"Ármame la semana" elige las recetas y te deja el mercado listo con las porciones de cada uno.')},
   'prog-foot':{t:'Cómo se calcula', h:()=>`<p>${REND_FOOT||'Sin detalle para este modo.'}</p>`},
-  'mas-notif':{t:'Por qué a veces no llegan los avisos', h:()=>`<p>El iPhone solo deja que una web avise <b>mientras está abierta</b>; con la app cerrada, Apple exige un servidor de push que esta app no usa.</p>
-    <p>Las dos rutas que sí suenan con la app cerrada:</p>
-    <ol><li><b>Exportar al calendario (.ics)</b> una sola vez: el Calendario avisa nativo a las horas configuradas.</li>
-    <li>Una automatización de <b>Atajos</b> ("Hora del día") que abra la app cuando quieras el empujón.</li></ol>`},
+  'mas-notif':{t:'Por qué a veces no llegan los avisos', h:()=>
+    filaExplica('bell','Con la app cerrada, Apple no deja avisar.','El iPhone solo permite que una web avise mientras está abierta; con la app cerrada exige un servidor de push que esta app no usa.', true)
+    +filaExplica('cal','El calendario sí suena.','Exporta la alerta (.ics) una sola vez y el Calendario avisa nativo a las horas configuradas.')
+    +filaExplica('zap','Atajos también.','Una automatización de "Hora del día" abre la app cuando quieras el empujón.')},
   'mas-inyec':{t:'Sobre la inyección', h:()=>`<p>Retatrutida 1 mg por semana, dosis inicial conservadora.</p>
     <p>Rotar el sitio evita nódulos, por eso la app te sugiere el siguiente.</p>
     <p>Esta app <b>no da consejo médico</b>: ante náuseas severas o mareo, consulta a tu médico.</p>`},
-  'mas-pin':{t:'Qué protege el PIN', h:()=>`<p>El PIN se guarda cifrado (hash SHA-256, nunca el número).</p>
-    <p>Igual es un candado entre ustedes dos: quien tenga acceso técnico al teléfono o a la nube puede ver los datos.</p>
-    <p>Tus fotos son privadas por defecto y se comparten una a una.</p>`},
+  'mas-pin':{t:'Qué protege el PIN', h:()=>
+    filaExplica('lock','Se guarda cifrado.','Hash SHA-256, nunca el número tal cual.', true)
+    +filaExplica('alert','Es un candado entre ustedes dos.','Quien tenga acceso técnico al teléfono o a la nube puede ver los datos.')
+    +filaExplica('camera','Tus fotos son privadas por defecto.','Se comparten una a una, cuando tú quieras.')},
   'mas-agua':{t:'Cómo se calcula tu meta de agua', h:()=>{
     const pd=pesoDeDia(TODAY())||currentWeight()||PLAN.wStart;
     const hoyHay=(S.weights||[]).some(w=>w.d===TODAY()&&w.kg>0);
@@ -17457,11 +17592,75 @@ Object.assign(INFO3, {
     return `<p>Automática y con el peso del día: hoy son <b>${fmtInt(waterGoalDay(TODAY()))} ml</b>. ${fmtInt(b)} por tus ${fmt1(Math.round(pd*10)/10)} kg (30 ml por kilo)${cr?', +'+cr+' por la creatina'+(creatSaturando()?' mientras satura':''):''}, y +300 los días que entrenas.</p>
     <p>${hoyHay?'Sale de lo que te pesaste hoy.':'Todavía no te pesas hoy, así que uso el último registro; en cuanto lo hagas se recalcula.'} El agua de la comida no entra en la cuenta.</p>
     <p>Si la ajustas con − o +, queda fija.</p>`;}},
-  'mas-nube':{t:'Cómo conectar la nube', h:()=>`<p>Sirve para compartir datos entre los dos teléfonos.</p>
-    <ol><li>Crea un proyecto gratis en <b>supabase.com</b>.</li>
-    <li>Corre el esquema en <b>SQL Editor</b>.</li>
-    <li>Pega aquí la <b>URL</b> (Project Settings → Data API) y la <b>llave pública</b> (Project Settings → API Keys: empieza por <span class="mono">sb_publishable_</span> en proyectos nuevos, o <span class="mono">eyJ…</span> "anon public" en los viejos).</li></ol>
-    <p>El <b>código de casa</b> debe ser el mismo en los dos teléfonos.</p>`},
+  'mas-nube':{t:'Cómo conectar la nube', h:()=>
+    filaExplica('share','Sirve para compartir entre los dos teléfonos.','Marcadores, semana y mercado viajan solos una vez conectada.', true)
+    +filaExplica('up','Crea el proyecto.','Gratis en <b>supabase.com</b>, y corre el esquema en <b>SQL Editor</b>.')
+    +filaExplica('lock','Pega la URL y la llave pública.','URL en Project Settings → Data API; la llave empieza por <span class="mono">sb_publishable_</span> en proyectos nuevos, o <span class="mono">eyJ…</span> "anon public" en los viejos.')
+    +filaExplica('heart','El código de casa va igual en los dos.','Es lo que junta sus datos sin necesidad de login.')},
+});
+/* ---- Fase 2 · A1: "como se calculo" con calcBox en las cifras opinadas ---- */
+Object.assign(INFO3, {
+  'fza-calc':{t:'Cómo se calculó tu nivel', h:()=>{
+    const tb=fzaTabla(); if(!tb.length) return '<p>Sin registros de los básicos todavía.</p>';
+    const x=tb[0], pc=fzaPesoCorporal(), m=fzaMejor1RM(x.ex)||{};
+    return `<p>El 1RM estimado sale de tu mejor serie con la fórmula de Epley: peso × (1 + reps/30). El nivel compara ese 1RM contra tu peso corporal con los baremos de fuerza relativa (${UID==='cami'?'tabla femenina':'tabla masculina'}).</p>
+    ${calcBox([
+      ['Tu mejor serie'+(m.d?' · '+fmtD(m.d):''), fmt1(m.w||0)+' kg × '+(m.r||0)],
+      ['Epley: '+fmt1(m.w||0)+' × (1 + '+(m.r||0)+'/30)', fmt1(x.rm)+' kg de 1RM'],
+      ['Entre tu peso corporal ('+fmt1(Math.round(pc*10)/10)+' kg)', x.ratio+'×'],
+    ], ['Tu nivel en '+esc(x.n).toLowerCase(), esc(FZA_NIVELES[x.nivel])])}
+    <p class="small dim">La misma cuenta aplica a cada ejercicio de la lista; esta es la de tu mejor levantamiento. Al abrir una fila ves la suya.</p>`;}},
+  'mc-series':{t:'Cómo se contaron las series', h:()=>{
+    const dias=UI.cargaDias||7;
+    const carga=cargaMuscular(dias);
+    const vista=MED_ZONAS[UI.medVista]?UI.medVista:'frente';
+    const selMs=UI.medZona?((ZONA_MUSC[vista]||{})[UI.medZona]||[]):[];
+    const m=selMs.includes(UI.cargaMusc)?UI.cargaMusc:selMs[0];
+    const f=m?{s:(carga.musc[m]||{}).series||0, det:(carga.musc[m]||{}).detalle||[]}:null;
+    if(!f||!f.det.length) return '<p>Toca un músculo del mapa y aquí te muestro de dónde salieron sus series.</p>';
+    return `<p>Cada ejercicio reparte sus series entre los músculos que trabaja de verdad; el porcentaje es cuánto le toca a <b>${esc(MUSC_NOM[m]||m)}</b>.${f.det.some(x=>x.run)?' Los minutos de carrera entran como series equivalentes (10 min ≈ 1).':''}</p>
+    ${calcBox(f.det.map(x=>[fmtD(x.d)+' · '+esc(shortEx(x.ej))+' ('+x.pc+'%)', (x.run?fmt1(x.series)+' eq':x.series)+' → '+fmt1(x.aporta)]),
+      ['Series efectivas'+(dias===7?' de la semana':' por semana'), fmt1(f.s)])}`;}},
+  'goal-calc':{t:'De dónde sale la fecha', h:()=>{
+    const id=(UI._i3d||{}).id;
+    const g=(S.goals||[]).find(x=>x.id===id)||(S.goals||[])[0];
+    if(!g) return '<p>Sin metas todavía.</p>';
+    const B=g.base||null, reps=g.reps||1;
+    const targetRM=e1rm(exPesoReal(g.ex, g.target, TODAY()), reps);
+    const bestRM=goalBestRM(g.ex, B);
+    const py=goalProy(g.ex, targetRM, B);
+    const hh=goalHistRM(g.ex, B);
+    const filas=[
+      ['Tu meta', fmt1(g.target)+' kg × '+reps+' = '+fmt1(targetRM)+' kg de 1RM'],
+      ['Tu mejor marca hoy', fmt1(bestRM)+' kg de 1RM'],
+      ['Te falta', fmt1(Math.max(0,targetRM-bestRM))+' kg'],
+    ];
+    if(py&&py.sube&&!py.ya) filas.push(['Ritmo real ('+Math.min(12,hh.length)+' sesiones)', '+'+fmt1(py.porSem)+' kg/sem']);
+    const tot=(py&&py.sube&&py.fecha&&!py.ya)?['Fecha proyectada', '≈ '+fmtD(py.fecha)]
+      :(py&&py.ya)?['Fecha proyectada','tu tendencia ya la toca']
+      :['Fecha proyectada','sin tendencia que suba'];
+    return `<p>La fecha no es una promesa: es una <b>recta de tendencia</b> sobre tus últimas sesiones de este ejercicio, todo convertido a 1RM estimado (Epley) para comparar marcas a distintas repeticiones.</p>
+    ${calcBox(filas, tot)}
+    <p class="small dim">Si bajaste el peso a propósito, ajusta el punto de partida de la meta y la curva arranca de ahí.</p>`;}},
+  'retos-reglas':{t:'Así se puntúa cada día', h:()=>
+    filaExplica('target','Los 3 diarios valen 1 punto cada uno.','Agua, comidas y pasos al llegar a la meta. La racha solo pide estos tres.', true)
+    +filaExplica('steps','Caminar de más abre la brecha.','+1 por cada 5.000 pasos extra sobre la meta, máximo +2.')
+    +filaExplica('barbell','Entrenar y estirar suman aparte.','Entreno +1 y movilidad diaria +1. Máximo 7 puntos al día.')},
+  'metas-deficit':{t:'Por qué tu meta de kcal se mueve', h:()=>{
+    const M=metasDe(UID); if(!M.gasto) return '<p>Sin gasto estimado todavía.</p>';
+    return M.defIni!==M.defFin
+      ? filaExplica('trend','El déficit va en rampa.','<b>'+M.defIni+'</b> kcal arriba de peso y <b>'+M.defFin+'</b> al llegar a la meta. Arriba hay más grasa que ceder; cerca del objetivo un déficit grande se come músculo.', true)
+        +filaExplica('zap','Por eso las calorías suben al acercarte.','Aunque el gasto baje con el peso, el déficit se relaja más rápido y la meta diaria crece.')
+      : filaExplica('target','Lo que se fijó es el déficit, no las calorías.','El gasto baja unas '+KCAL_POR_KG+' kcal por kilo perdido y la meta baja con él: el déficit se mantiene en '+M.deficit+'.', true);}},
+  'gkg-calc':{t:'Tu proteína por kilo', h:()=>{
+    const eat=eatenOn(TODAY()), kg=PLAN.pesoBase||0;
+    const gk=kg?Math.round(eat.pg/kg*100)/100:0;
+    return `<p>Los gramos por kilo son la vara real de si comiste suficiente proteína, sin depender de cuánto peses.</p>
+    ${calcBox([
+      ['Proteína registrada hoy', eat.pg+' g'],
+      ['Entre tu peso promedio de 7 días', fmt1(kg)+' kg'],
+    ], ['Hoy vas en', fmt1(gk)+' g/kg · meta 1,8'])}
+    <p class="small dim">La meta de 1,8 g/kg es la misma con la que se calcula tu meta diaria de proteína.</p>`;}},
 });
 /* ---- pestana NIVEL ---- */
 function hxVNivel(){
@@ -17485,7 +17684,20 @@ function hxVNivel(){
   ${cab}
   ${!g.sin?`<section class="mod">
     <div class="mod-head"><span class="ttl">${ic('trend',16)} La escalera</span><span class="chip dim">${rg?'edad '+rg:'todas las edades'}</span></div>
-    <div class="steps">${FZA_NIVELES.map((n,i)=>`<i class="${i<=g.nivel?'on':''}"></i>`).join('')}</div>
+    ${(()=>{ /* A2 (Fase 2): la escalera como pista continua con los cortes reales en
+       minutos. Se muestran maximo 3 hitos: el ultimo superado, el siguiente y el tope. */
+      const tb=g.tabla, min=g.p.seg/60;
+      const maxT=tb[0]*1.12, minT=tb[3]*0.92, span=Math.max(1,maxT-minT);
+      const pos=t=>clamp((maxT-t)/span*100,0,100);
+      const cortes=tb.map((t,i)=>({t, i, done:min<=t}));
+      const pasados=cortes.filter(c=>c.done), faltan=cortes.filter(c=>!c.done);
+      const hs=[];
+      if(pasados.length) hs.push(pasados[pasados.length-1]);
+      if(faltan.length) hs.push(faltan[0]);
+      const tope=cortes[3];
+      if(hs.indexOf(tope)<0) hs.push(tope);
+      return hitosBar(pos(min), hs.map(c=>({pos:pos(c.t), lbl:esc(FZA_NIVELES[c.i+1]), cifra:c.t+' min', done:c.done})));
+    })()}
     <div class="flex between mt8" style="gap:10px"><b style="font:600 18px var(--ttl);min-width:0">${esc(g.nombre)}</b>
       <span class="small dim" style="flex:none">${g.sigNombre?'sigue '+esc(g.sigNombre):'tope de la tabla'}</span></div>
     <div class="ngrid mt12">
@@ -17914,8 +18126,21 @@ function vCheckin(){
     </div>
     <div class="flex mt12"><img loading="lazy" class="cabimg" src="${UID==='andres'?CAB.faceA:CAB.faceC}" width="46" height="46" decoding="async" alt="">
     <div class="small grow" style="line-height:1.5">${linea1}${stk>=3?' Racha de '+stk+' días.':''}${lineaNutri?'<br>'+lineaNutri:''}</div></div>
+    ${''/* A5 (Fase 2): mientras el check-in no se cierre, se dice QUE se esta
+       acumulando y que nada se pierde por esperar, con la cifra a la vista */}
+    ${(S.checkins.some(c=>c.d>=mon)||(!sess&&!totSets))?'':`<div class="mt12" style="border-top:1px solid var(--line2);padding-top:10px">
+      <div class="flex between" style="align-items:baseline"><span class="small">Esperando tu check-in</span>
+        <span class="medval"><b>${sess}</b><em>entreno${sess===1?'':'s'} · ${totSets} series</em></span></div>
+      <div class="small dim mt4" style="line-height:1.5">Nada se pierde por esperar: ya están guardados y entran al resumen cuando cierres el domingo.</div>
+    </div>`}
   </section>
-  <section class="mod" style="position:relative">
+  ${(()=>{ /* Fase 2: el formulario del check-in vive plegado con su dato clave en la
+     cabecera; abre solo el domingo (el dia que toca) o al tocarlo */
+    const ciSem=S.checkins.some(c=>c.d>=mon);
+    return uiCaja('ck-form', ic('clip',15)+' Registrar check-in',
+      ciSem?'el de esta semana ya quedó · toca para corregirlo'
+        :(lastCi?'el último fue el '+fmtD(lastCi.d)+' · toca cada domingo':'el primero: peso, medidas y cómo te sentiste'),
+      ()=>`<section class="mod" style="position:relative">
     <img loading="lazy" class="cicab" src="${UID==='andres'?CAB.medidasA:CAB.medidasC}" alt="" decoding="async">
     <div class="mod-head"><span class="ttl">${ic('clip',16)} Check-in · ${CU().name}</span></div>
     <div style="max-width:calc(100% - 126px)">
@@ -17955,7 +18180,8 @@ function vCheckin(){
       <button class="btn sm ghost" data-a="fotoShot">${ic('camera',13)} ${FOTODAYS.has(t)?'Cambiar':'Agregar'}</button>
     </div>`:''}
     <button class="btn primary full" data-a="saveCheckin">Guardar check-in</button>
-  </section>
+  </section>`, fromISO(TODAY()).getDay()===0 && !ciSem);
+  })()}
   ${(()=>{const cs=S.checkins.filter(c=>c.cint); if(cs.length<2) return '';
     return `<section class="mod"><div class="mod-head"><span class="ttl">${ic('ruler',16)} Cintura</span><span class="cross">+</span></div>
     ${lineChart({pts:cs.map(c=>({x:fmtD(c.d), d:c.d, v:c.cint, tip:fmtD(c.d)+' · '+fmt1(c.cint)+' cm'})), fmt:v=>fmt1(v)+' cm', trend:true, h:150})}</section>`})()}
@@ -19009,7 +19235,8 @@ const ACTIONS = {
   hxSub(d, el){ UI.hxSub=d.s; render(); window.scrollTo({top:0}); },
   hxAbrir(d, el){ UI.hxAbre=UI.hxAbre||{}; UI.hxAbre[d.k]=!UI.hxAbre[d.k]; renderAnclado(el); },
   /* nivel 3: abre la ventana con la explicacion larga. No re-renderiza la vista. */
-  info3(d){ i3Open(d.k); },
+  info3(d){ UI._i3d=d; i3Open(d.k); },
+  uiCajaTgl(d, el){ UI.cajas=UI.cajas||{}; UI.cajas[d.k]=!(UI.cajas[d.k]!==undefined?UI.cajas[d.k]:el.classList.contains('open')); renderAnclado(el); },
   /* nivel 2 en MAS: las recetas largas (Atajos de Salud, atajo pro) viven plegadas */
   masTgl(d, el){ UI.mas=UI.mas||{}; UI.mas[d.k]=!UI.mas[d.k]; renderAnclado(el); },
   hxEstSel(d, el){ hxForm().est=d.est; renderAnclado(el); },

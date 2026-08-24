@@ -2212,6 +2212,18 @@ b,strong{font-weight:600}
 .fitem:not(.loaded)::before{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 22px var(--ttl);border-radius:inherit}
 .fitem.fu-andres:not(.loaded)::before{content:'A';color:rgba(92,141,255,.5);background:rgba(92,141,255,.07)}
 .fitem.fu-cami:not(.loaded)::before{content:'C';color:rgba(255,201,77,.5);background:rgba(255,201,77,.07)}
+/* ---- Fase 3 · M1: hoja inferior, variante de presentacion de la fbox ----
+   Para el detalle de un item de lista: el contenido y el cierre quedan en la zona
+   del pulgar. Entra deslizando desde abajo con la curva del sistema y el velo funde
+   a la vez (mejor que el prototipo, que aparecia de golpe). */
+.fbox.sheet{align-items:flex-end;padding:0;animation:sheetveil .28s ease}
+.fbox.sheet .fboxin{max-width:none;width:100%;background:var(--card);border:1px solid var(--line2);border-bottom:none;
+  border-radius:20px 20px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom));
+  max-height:88vh;overflow-y:auto;animation:sheetin .28s cubic-bezier(.32,.72,0,1)}
+.fbox.sheet .fboxin::before{content:'';display:block;width:44px;height:4px;border-radius:99px;background:var(--line);margin:0 auto 12px}
+@keyframes sheetin{from{transform:translateY(100%)}to{transform:none}}
+@keyframes sheetveil{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.fbox.sheet,.fbox.sheet .fboxin{animation:none}}
 /* tarjeta de carrusel: ancho fijo en % para que la siguiente siempre se asome */
 .ccard{width:76%;max-width:300px;min-width:214px;background:var(--card2);border:1px solid var(--line2);
   border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:7px;color:var(--ink);text-align:left}
@@ -2297,7 +2309,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 209';
+const APPREV='REV 210';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -7032,10 +7044,20 @@ function vMedidasCuerpo(){
         <div class="small dim mt4">${pend.map(p=>p.ult?`${p.n}: hace ${p.dias} día${p.dias===1?'':'s'}${p.tarde?' (con retraso)':''}`:`${p.n}: nunca`).join(' · ')}</div></div></div>
     ${fase&&fase.aplazar?`<div class="nkcalert mt8">${ic('alert',14)}<div>${esc(fase.txt)}</div></div>`:''}
     <button class="btn primary full mt12" data-a="medAbrir" data-g="pend">${ic('ruler',14)} Registrar lo de hoy</button>
-  </section>`:`<section class="mod tight">
-    <div class="flex between"><span class="small dim">Todo al día. La próxima toca ${(()=>{const e=medEstado().filter(x=>x.ult).sort((a,b)=>(a.cada-a.dias)-(b.cada-b.dias))[0];
-      return e? e.n.toLowerCase()+' en '+Math.max(0,e.cada-e.dias)+' días' : 'cuando quieras';})()}.</span></div>
-  </section>`}
+  </section>`:(()=>{ /* B3 (Fase 3): a 2 dias o menos de una toma, el aviso se adelanta en vez
+     de esperar a que venza: nudge proactivo con accion directa */
+    const e=medEstado().filter(x=>x.ult).sort((a,b)=>(a.cada-a.dias)-(b.cada-b.dias))[0];
+    const faltan=e?Math.max(0,e.cada-e.dias):null;
+    if(e && faltan!=null && faltan<=2) return `<section class="mod tight glowtop">
+      <div class="flex between" style="gap:10px;align-items:center">
+        <div class="grow" style="min-width:0"><b>Te acercas: ${esc(e.n.toLowerCase())} en ${faltan===0?'hoy mismo':faltan+' día'+(faltan===1?'':'s')}</b>
+          <div class="small dim mt4">Puedes adelantarla ya: se registra cuando sea.</div></div>
+        <button class="btn sm primary" style="flex:none" data-a="medAbrir" data-g="${esc(e.g)}">${ic('ruler',13)} Medir</button>
+      </div>
+    </section>`;
+    return `<section class="mod tight">
+    <div class="flex between"><span class="small dim">Todo al día. La próxima toca ${e? e.n.toLowerCase()+' en '+faltan+' días' : 'cuando quieras'}.</span></div>
+  </section>`;})()}
   
   ${box==='grasa'?metaGrasaCard():''}
   ${box==='cuerpo'?`
@@ -10101,7 +10123,10 @@ function xpHabitos(dISO){
   if(st.agua && st.pasos && st.prote && !hecho.dia){ hecho.dia=1; suma+=XP_HAB.dia; nuevos.push('dia'); }
   /* limpieza: solo se conservan los ultimos 60 dias de registro */
   const claves=Object.keys(S.cfg.xpHab); if(claves.length>60) claves.sort().slice(0,claves.length-60).forEach(k=>delete S.cfg.xpHab[k]);
-  if(suma){ addXP(suma); toast('+'+suma+' XP · '+nuevos.map(k=>XP_HAB_LB[k]).join(' y ')); }
+  if(suma){ addXP(suma);
+    /* Fase 3: patron unico de confirmacion: que paso + efecto */
+    const lb = nuevos.includes('dia') ? 'Día completo' : (nuevos.map(k=>XP_HAB_LB[k]).join(' y ')+' al día');
+    toast(lb+' · +'+suma+' XP'); }
   return suma;
 }
 /* XP de actividades marcadas en el calendario (sin series, solo el tipo). El descanso
@@ -11117,9 +11142,17 @@ function fotoCountPaint(vis, total, q){
   const el=document.querySelector('#fcount'); if(!el) return;
   if(!total){ el.textContent=''; return; }
   const f=n=>n+(n===1?' foto':' fotos');
-  el.textContent = q ? 'Encontré '+f(vis)+' en todo el historial de '+total
+  /* M3 (Fase 3): el filtro no solo resta, explica el subconjunto: con filtros o
+     busqueda activa el contador dice ademas de cuando a cuando van las fotos */
+  let rango='';
+  const conFiltro = q || (UI.fotoFil||[]).length || (UI.fotoWho&&UI.fotoWho!=='all');
+  if(conFiltro && Array.isArray(fotoCountPaint._vis) && fotoCountPaint._vis.length>1){
+    const ds=fotoCountPaint._vis.map(x=>x.d).sort();
+    rango=' · del '+fmtD(ds[0])+' al '+fmtD(ds[ds.length-1]);
+  }
+  el.textContent = (q ? 'Encontré '+f(vis)+' en todo el historial de '+total
     : vis===total ? f(total)+' en total'
-    : f(vis)+' de '+total;
+    : f(vis)+' de '+total) + rango;
 }
 /* marca en la parrilla las que van en la comparacion, sin volver a pintar nada */
 function fotoSelPaint(){
@@ -11188,6 +11221,7 @@ function fotoFill(force){
        "julio" estando en "Esta semana" no devolveria nada y parece que no sirve */
     const vis=q? base : base.filter(fotoEnRango);
     fotoMesPaint(base, idx.length);
+    fotoCountPaint._vis=vis;   /* para el rango de fechas del contador (M3) */
     fotoCountPaint(vis.length, idx.length, q);
     if(!idx.length){
       g2.innerHTML=`<div class="tc" style="grid-column:1/-1;padding:14px 0"><img loading="lazy" decoding="async" class="cabimg" src="${CAB.vacio}" width="110" height="110" alt=""><div class="small dim mt8">Sin fotos todavía. La primera es la que más cuenta.</div></div>`;
@@ -11226,7 +11260,7 @@ function fotoFill(force){
 /* cmpIt (opcional): si viene, la ventana ofrece llevar ESTA foto a la comparacion.
    Antes, para comparar tocaba salir, entrar al modo y buscar las dos a ciegas. */
 function fotoBox(imgSrc, label, canDel, onDel, shareD, curDate, onDate, cmpIt){
-  const box=document.createElement('div'); box.className='fbox';
+  const box=document.createElement('div'); box.className='fbox sheet';
   const shared=shareD&&S.fotopub[shareD];
   box.innerHTML=`<div class="fboxin"><img loading="lazy" decoding="async" src="${imgSrc}" alt="">
     ${(curDate&&onDate)?`<div class="fdedit mt8">${ic('cal',13)} <span class="small dim">Fecha de la foto</span><input type="date" class="in" id="fdate" value="${curDate}" max="${TODAY()}"><button class="btn sm primary" id="fdsave">Cambiar</button></div>`:''}
@@ -11694,6 +11728,8 @@ function loteRevisionHTML(){
       <button class="btn ghost grow" data-a="loteCancelar">Cancelar</button>
       <button class="btn primary grow" data-a="loteConfirmar" ${n?'':'disabled'}>${ic('check',14)} Guardar ${n} foto${n===1?'':'s'}</button>
     </div>
+    ${''/* M5 (Fase 3): pie de espera que tranquiliza */}
+    <div class="small dim tc mt8" style="line-height:1.5">Tus fotos actuales no se tocan hasta que guardes, y el último lote siempre se puede deshacer.</div>
   </div>`;
 }
 function loteGuardandoHTML(){
@@ -12929,6 +12965,26 @@ function nlogPanel(slot){
         return `<button class="chip catchip" data-a="nlogPickMP" data-r="${id}" aria-label="Registrar ${esc(rr.name)}">${ic('book',12)} ${esc(rr.name.split(' ').slice(0,3).join(' '))}</button>`; }).join('')}</div>`;
     })()}
     <input class="in mt8" data-ch="nlogq" placeholder="busca: hamburguesa, huevos, arepa, café…" value="${esc(UI.nlogQ||'')}">
+    ${(!q && !cat)?(()=>{ /* Fase 3: lo frecuente y lo reciente del usuario primero,
+      antes de escribir. Sale de S.nlog de los ultimos 14 dias; el catalogo no se
+      toca, solo se resuelve cada item contra el para poder re-agregarlo igual. */
+      const allFoods=NFOODS.concat(S.customFoods||[]);
+      const hoy=nutriT(), desde=addDays(hoy,-13), idx={};
+      Object.entries(S.nlog||{}).forEach(([d,es])=>{ if(d<desde||d>hoy) return;
+        (es||[]).forEach(e=>(e.items||[]).forEach(it=>{
+          const k=it.id||nrmTxt(it.n); const o=idx[k]=idx[k]||{n:it.n, id:it.id, veces:0, ult:d};
+          o.veces++; if(d>o.ult) o.ult=d; })); });
+      const cand=Object.values(idx).map(o=>{
+        const f=o.id? allFoods.find(x=>x[0]===o.id) : allFoods.find(x=>nrmTxt(x[1])===nrmTxt(o.n));
+        return f? {f, veces:o.veces, ult:o.ult} : null; }).filter(Boolean);
+      if(!cand.length) return '';
+      cand.sort((a,b)=> b.veces-a.veces || (a.ult<b.ult?1:-1));
+      return `<span class="lbl" style="display:block;margin-top:12px">Lo tuyo · lo que más registras</span>
+      <div class="nfoodlist mt4">${cand.slice(0,6).map(({f,veces})=>{ const m=foodMac(f);
+        return `<button class="nfood" data-a="nlogPick" data-f="${f[0]}">
+          <span class="grow tl"><b>${esc(f[1])}</b><span class="nfsub"><b class="npro">${m.pg} g prot</b> · ${m.kc} kcal · ${veces>1? veces+' veces en 14 días':'reciente'}</span></span>
+          <span class="nfadd">${ic('plus',14)}</span></button>`;}).join('')}</div>`;
+    })():''}
     ${(()=>{ /* las categorias ocupaban 8 chips fijos entre el buscador y los
       resultados; ahora viven en una caja que se abre solo si la quieres (pedido del
       dueno). Si hay una categoria activa, la caja se muestra abierta sola. */
@@ -13780,7 +13836,7 @@ function excatDetailBox(id){
   const lastTop=last?Math.max(...last.sets.map(s=>+s.w||0)):0;
   const tipoLbl={compuesto:'Compuesto', aislado:'Aislado', cardio:'Cardio'}[x.tipo]||x.tipo;
   const canAdd=!!(S.draft && S.draft.rid);
-  const box=document.createElement('div'); box.className='fbox';
+  const box=document.createElement('div'); box.className='fbox sheet';
   box.innerHTML=`<div class="fboxin">
     <div class="flex between mb8"><b class="t-h2" style="min-width:0">${esc(x.name)}</b><button class="btn sm" id="fcls" aria-label="cerrar">${ic('x',14)}</button></div>
     <div class="exdet2">
@@ -14596,7 +14652,7 @@ function exStats(exId){
   let hw=0,bsv=0,bss=0,hwD=null,bsvD=null,bssD=null; hist.forEach(h=>{ let sv=0; h.sets.forEach(s=>{ const w=+s.w||0,r=+s.r||0; if(w>hw){hw=w;hwD=h.d;} const v=w*r; if(v>bsv){bsv=v;bsvD=h.d;} sv+=v; }); if(sv>bss){bss=sv;bssD=h.d;} });
   const sug=suggestion(ex), tops=hist.slice(-8).map(h=>Math.max(...h.sets.map(s=>+s.w||0)));
   const pr=(icn,lb,v,dd)=>`<div class="prrow${dd?' tap':''}" ${dd?`data-a="recDay" data-d="${dd}"`:''}><span class="prl">${ic(icn,15)} ${lb}</span><span class="prv">${v}${dd?' <span class="prd">'+fmtD(dd)+'</span>'+ic('chevR',11):''}</span></div>`;
-  const box=document.createElement('div'); box.className='fbox';
+  const box=document.createElement('div'); box.className='fbox sheet';
   box.innerHTML=`<div class="fboxin exstats">
     <div class="flex between mb8"><b class="t-h2" style="min-width:0">${esc(ex.name)}</b><button class="btn sm" id="fcls">${ic('x',14)}</button></div>
     ${hist.length?`
@@ -15141,6 +15197,8 @@ function weekFormHTML(){
     })():''}
 
     <button class="btn primary full mt8" data-a="wkGen">${ic('zap',14)} Ármame la semana</button>
+    ${''/* M5 (Fase 3): pie de espera que tranquiliza */}
+    <div class="small dim tc mt8" style="line-height:1.5">Nada cambia hasta que confirmes: tu rotación y tu mercado actuales siguen igual.</div>
   </div>`;
 }
 function weekSummaryHTML(res){
@@ -16983,6 +17041,13 @@ function goalCardHTML(g){
       hs.push({pos:100, lbl:'meta ×'+reps, cifra:fmt1(g.target)+' kg', done});
       return hitosBar(pct, hs);
     })()}
+    ${(()=>{ /* B3 (Fase 3): nudge de "te acercas" cuando el 1RM esta a menos de un
+       escalon de la meta: aviso proactivo ANTES del hito, no despues */
+      if(done) return '';
+      const gap=targetRM-bestRM, esc1=Math.max(1,(targetRM-baseRM)/5);
+      if(gap<=0 || gap>esc1) return '';
+      return `<div class="chip fill mt8" style="white-space:normal;pointer-events:none">${ic('zap',12)} Te acercas: a ${fmt1(gap)} kg de 1RM de la meta</div>`;
+    })()}
     ${(()=>{const px=goalProxima(g); if(!px) return '';
       return `<div class="goalprox ${px.hecho?'ok':''}">${ic(px.hecho?'check':'zap',14)}
         <div class="small" style="line-height:1.55">${px.txt}</div></div>`;})()}
@@ -18353,12 +18418,16 @@ function vMas(){
     <span class="lbl">Llave pública (publishable / ANON)</span><input class="in mt8 mb8" id="sbKey" placeholder="sb_publishable_… o eyJ…">
     <span class="lbl">Código de casa</span><input class="in mt8 mb8" id="sbHouse" value="cabritos">
     <button class="btn primary full" data-a="sbConnect">Conectar</button>`}
+    ${''/* M5 (Fase 3): pie de espera que tranquiliza */}
+    <div class="small dim mt8" style="line-height:1.5">Mientras sincroniza, lo local queda completo: si se corta la conexión no se pierde nada.</div>
   </section>
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('share',16)} Datos</span><span class="cross">+</span></div>
     <div class="flex"><button class="btn grow" style="flex:1" data-a="export">${ic('down',15)} Exportar</button>
     <button class="btn" style="flex:1" data-a="importBtn">${ic('up',15)} Importar</button></div>
     <button class="btn full red mt8" data-a="wipe">Borrar todo (${CU().name})</button>
+    ${''/* M5 (Fase 3): pie de espera que tranquiliza */}
+    <div class="small dim mt8" style="line-height:1.5">Exportar es una copia: lo de aquí queda intacto. Importar pisa lo local, por eso conviene exportar antes.</div>
     ${BACKEND==='ls'
       ?'<div class="small dim mt8">Guardado activo en este dispositivo ✓ (datos separados por usuario, mercado compartido). Exporta un respaldo antes de migrar a la versión con cuenta (Supabase).</div>'
       :`<div class="small mt8" style="color:var(--red)">${ic('alert',13)} Este entorno NO permite guardar: lo que registres vive solo mientras la app esté abierta. Exporta el respaldo antes de cerrar y usa la versión local para el día a día.</div>`}
@@ -19501,7 +19570,9 @@ const ACTIONS = {
     arr[i].done=!was;
     const paid=xpPaidArr(d.ex);
     if(!was){
-      if(!paid.includes(i)){ paid.push(i); addXP(10); xpFloat(el, '+10 XP'); }
+      if(!paid.includes(i)){ paid.push(i); addXP(10); xpFloat(el, '+10 XP');
+        /* Fase 3: micro-confirmacion consistente: que paso + efecto */
+        toast('Serie '+(i+1)+(arr[i].r?' · '+arr[i].r+' reps':'')+' · +10 XP'); }
       if(navigator.vibrate) navigator.vibrate(15);
     }
     save('draft');
@@ -20074,7 +20145,10 @@ const ACTIONS = {
   wStepTgl(d, el){ UI.wStepOpen=!UI.wStepOpen; renderAnclado(el); },
   waterStep(d, el){ S.cfg.waterStep=Math.max(50, +d.n||250); UI.wStepOpen=false; save('cfg'); renderAnclado(el);
       toast('Cada toque suma '+fmtInt(S.cfg.waterStep)+' ml'); },
-  water(d){ const t=TODAY(); S.water[t]=Math.max(0,(S.water[t]||0)+(+d.n)); save('water'); clearDayCache(); xpHabitos(t); render(); },
+  water(d){ const t=TODAY(); S.water[t]=Math.max(0,(S.water[t]||0)+(+d.n)); save('water'); clearDayCache();
+    /* Fase 3: micro-confirmacion consistente (el toast de xpHabitos manda si cierra la meta) */
+    if(+d.n>0) toast('Agua +'+fmtInt(+d.n)+' ml · vas '+fmtInt(S.water[t])+' de '+fmtInt(waterGoalDay(t)));
+    xpHabitos(t); render(); },
   inject(){ const t=TODAY(); if(!S.inject.includes(t)){ S.inject.push(t); save('inject'); toast('Inyección registrada'); } render(); },
   foodSub(d){ UI.sub.food=d.s; UI.foodCat=null; render(); },
   foodCat(d){ UI.foodCat=d.c||null; UI.foodFilter=false; render(); window.scrollTo({top:0}); },

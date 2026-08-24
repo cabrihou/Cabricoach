@@ -11,7 +11,8 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 - **G1** Barra superior con logo y REV (`#topbar`)
 - **G2** Barra de navegación inferior de 5 iconos (`#nav`)
 - **G3** Tira de días de la semana bajo el topbar (`daystrip`)
-- **G4** Toasts (avisos flotantes de confirmación)
+- **G4** Toasts (avisos flotantes de confirmación). Desde REV 210 con patrón único
+  "qué pasó + efecto": serie marcada, agua sumada y hábitos cerrados confirman igual
 - **G5** Ventana flotante genérica (overlays de PIN, stats de ejercicio, fotos) (`.fbox`)
 - **G6** Isla dinámica de descanso/cronómetro (`#island`)
 
@@ -44,7 +45,9 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - I4a Anillo de proteína + mensaje del día
   - I4b Caja "Con qué cerrar" (sugerencias sueltas y combinaciones) (`sugBox`)
   - I4c Fila de macros: Carbo / Grasa / Proteína (`.macrow`)
-  - I4d Franjas Mañana/Tarde/Noche + buscador de loggeo (`nlogPanel`). Desde REV 137:
+  - I4d Franjas Mañana/Tarde/Noche + buscador de loggeo (`nlogPanel`). Desde REV 210
+    el panel arranca con "Lo tuyo": lo más registrado en 14 días (de `S.nlog`, resuelto
+    contra el catálogo sin tocarlo), antes de escribir. Desde REV 137:
     el BORRADOR va arriba (se ve lo que llevas sin bajar), las categorías viven en una
     caja colapsable (`nlogCatTgl`), la cantidad se escribe a mano en cualquier unidad
     (`nlogQtyIn`, antes solo gramos), se puede **Corregir** un registro ya guardado
@@ -138,7 +141,7 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 - **E5** Sub-pestaña Ejercicios: catálogo EXCAT completo (`vExcat`)
   - E5a Buscador en vivo, sin acentos ni mayúsculas (`excatq`)
   - E5b Cajas colapsadas por categoría con conteo, tocables enteras (`excatRow`, patrón `schedhead`)
-  - E5c Ventana flotante de detalle: foto, categoría, equipo, tipo, último peso y "Agregar a la sesión de hoy" si hay sesión activa (`excatDetailBox`)
+  - E5c Detalle en hoja inferior (`.fbox.sheet` desde REV 210): foto, categoría, equipo, tipo, último peso y "Agregar a la sesión de hoy" si hay sesión activa (`excatDetailBox`)
 
 ## A · Agenda (`vAgenda` / `vCalendario`)
 

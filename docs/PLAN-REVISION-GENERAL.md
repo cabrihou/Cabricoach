@@ -183,7 +183,7 @@ commit "REV N: ..." (sin push hasta que Andy apruebe el deploy).
 
 - [x] Fase 1 · Movimiento y cifras vivas (REV 208, falta revisión de Andy)
 - [x] Fase 2 · Sistema de 3 niveles + injertos A (REV 209, falta revisión de Andy)
-- [ ] Fase 3 · Flujos de registro + injertos M
+- [x] Fase 3 · Flujos de registro + injertos M (REV 210, falta revisión de Andy)
 - [ ] Fase 4 · Consistencia y deuda
 - [ ] Fase 5 · Tema claro
 
@@ -274,5 +274,40 @@ decimales con punto ("39.8P", "13.3G"), contra la regla de coma decimal.
 Verificación: verificador sin regresiones (50 avisos, uno MENOS que la base por
 el aria nuevo del check de series), suite CDP de 27 pasos en verde con datos
 sembrados (metas, medidas, hyrox, logs), 0 errores de consola, dos usuarios.
+
+### Fase 3 · ejecutada 24/08/2026 (commit REV 210, sin push: falta la revisión de Andy)
+
+Implementado: buscador de comida con "Lo tuyo · lo que más registras" (top 6 de
+`S.nlog` en 14 días resuelto contra el catálogo, visible sin escribir y sin
+categoría activa; un toque agrega al borrador); micro-confirmaciones con patrón
+único "qué pasó + efecto" (serie: "Serie 3 · 12 reps · +10 XP"; agua: "Agua
++250 ml · vas X de Y"; hábitos: "Agua y pasos al día · +16 XP" / "Día
+completo · +N XP"); M1 hoja inferior `.fbox.sheet` (anclada abajo, manija,
+translateY 280 ms + velo en fundido, reduce-motion la apaga) aplicada a E5c
+(`excatDetailBox`), FT4 (`fotoBox`) y la ficha rápida `exStats`; M5 pies de
+espera en C2g (formulario de la semana), FT1a (revisión del lote), M9 (nube) y
+M10 (datos); B3 nudges de "te acercas" en P10 (a menos de un escalón de la meta,
+sobre el 1RM ya calculado) y MD1 (a 2 días o menos de una toma, con botón para
+adelantarla); M3 en FT3c (con filtros o búsqueda el contador agrega el rango de
+fechas del subconjunto).
+
+Decisiones donde el plan/informe era ambiguo:
+
+- M1 pedía también MD3, pero el panel de zona NO es una fbox (es una tarjeta
+  posicionada sobre el mapa, `medZonaPop`/`medPanelZona`): convertirla en hoja
+  rompería la relación visual con la zona tocada. En su lugar la hoja se aplicó
+  a `exStats` (la ficha rápida de un ejercicio en sesión), que es exactamente
+  "el detalle de un ítem de lista".
+- M3 en P3 y MC2 se dio por ya cumplido por REV 207: al elegir categoría en
+  Progreso, la tarjeta de rendimiento ya muestra número grande + delta del
+  periodo (P2b), y la vista de Carga ya trae el hlCard con el total y su
+  etiqueta de promedio semanal. Lo nuevo fue FT3c.
+- El toast del agua cede ante el de xpHabitos cuando el mismo toque cierra la
+  meta (el segundo pisa al primero, y es el más importante).
+
+Verificación: verificador sin regresiones, suite CDP en verde (lo tuyo, toasts,
+hojas ancladas al borde inferior, pies, nudges), 0 errores de consola, dos
+usuarios, capturas revisadas (hoja con manija y fondo card, "Lo tuyo" con
+conteo de veces).
 
 

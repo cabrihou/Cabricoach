@@ -108,6 +108,9 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   temporizador que avanza solo, pausa y saltos (`movPlayerOpen`/`movPlayerRedraw`,
   estado en `MOVP`). Al terminar marca la movilidad del día. Los 10 ejercicios
   también están en el catálogo E5 bajo la categoría Movilidad (ids `mov_*`)
+- **E7** Tarjeta "Hyrox" en el grid de rutinas, junto a Movilidad y Personalizado
+  (`ACTIONS.hxGo`). El chip muestra cuántas de las 8 estaciones tienen marca. Solo
+  aparece con `S.cfg.hyrox` encendida (`hxOn()`). Lleva a la vista propia HX
 - **E1b** Mapa muscular de cabra en Personalizado: dos siluetas (frente y espalda)
   con zonas tocables que seleccionan los mismos grupos que los chips
   (`cabraMapa`, mismo `ACTIONS.persoGrupo`)
@@ -387,14 +390,41 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   - FT1b Botón "Deshacer el último lote": visible solo si hay un lote reversible
     (`S.fotoLote`), pide confirmación y restaura byte a byte lo que el lote tocó
     (`loteDeshacer`, IndexedDB `cabritos-fotos` store `loteBak`)
-- **FT2** Antes y después: presets 7/30/365 días, primera vs última, comparar 2 a mano.
-  La ventana de comparación (`fotoCompare`) tiene desde REV 135 un **deslizador sobre
-  la foto**: se arrastra la imagen misma (Pointer Events, dedo o ratón), con línea de
-  degradado, halo lateral y manija; la fecha del lado que casi no se ve se atenúa.
-  Al abrir hace un barrido corto de bienvenida (se detiene al primer toque; no corre
-  con `prefers-reduced-motion`). Accesible por teclado (flechas, Home/End) con
-  `role="slider"`. Reemplaza al `input type=range` que estaba debajo de la foto
-- **FT3** Galería: filtro por persona + Esta semana / Ver todas (`fotoFill`)
+- **FT2** Antes y después: presets 7/30/365 días, primera vs última y "Elegir dos a mano".
+  - FT2a **Bandeja de comparar** (`#cmptray`, `fotoTrayPaint`): barra fija sobre el nav
+    con los dos huecos (Antes / Después), miniatura de lo elegido y × para quitar. La
+    selección ya NO se dispara sola al tocar la segunda: con dos puestas, la tercera
+    reemplaza a la más antigua y se puede cambiar sin salir del modo (`cmpAdd`, `cmpGo`,
+    `cmpDrop`). Se borra sola al cambiar de pestaña
+  - FT2b Ventana de comparación (`fotoCompare`): **tres modos** (cortinilla, lado a lado
+    y fundido, `UI.cmpView`) y **encuadre** llenar/foto completa (`UI.cmpFit`). La
+    cortinilla se arrastra sobre la imagen desde REV 135 (Pointer Events, dedo o ratón),
+    con línea de degradado, halo lateral y manija; la fecha del lado que casi no se ve se
+    atenúa. Barrido de bienvenida al abrir (muere al primer toque, no corre con
+    `prefers-reduced-motion` ni en lado a lado) y teclado (flechas, Home/End) con
+    `role="slider"`
+  - FT2c Pie de datos (`.cmpinfo`): una columna por lado con fecha, peso en grande y
+    detalles, delta de peso + días transcurridos + delta de cintura al centro, y flechas
+    para saltar a la foto anterior o siguiente de cada lado sin cerrar la ventana
+  - FT2d `exportCompare` arma el lienzo 1080 px para compartir con el mismo recorte que
+    la pantalla (cover o contain según el encuadre elegido) y los días transcurridos
+- **FT3** Galería (`fotoFill` sobre el índice único `fotoIndex`)
+  - FT3a Buscador (`#fotoQ`, `CHANGES.fotoq`): busca por mes, año, día, nombre del día,
+    fecha, persona, peso y palabras de los datos del día ("entreno", "medidas",
+    "carrete"). Mira SIEMPRE todo el historial, aunque el rango sea "Esta semana", y
+    repinta solo la parrilla (nunca `render()`), así el campo no pierde el foco
+  - FT3b Tira de meses (`#fmeses`, `fotoMesPaint`): "Esta semana", "Todo · N" y un chip
+    por mes con su conteo, incluidos los meses SIN fotos (apagados), que son los huecos
+  - FT3c Panel de filtros (`#ffilt`, `FOTOFIL`): persona + con peso / día de entreno /
+    con medidas / de rutina / del carrete. Dentro de un grupo suman (O), entre grupos se
+    cruzan (Y). Contador en vivo en `#fcount` (`aria-live`)
+  - FT3d Parrilla agrupada por mes con cabecera y conteo; la miniatura muestra fecha,
+    peso del día y un punto de acento si hubo entreno. Carga perezosa también para las
+    fotos locales (`data-lk` en `lazyLoadGrid`): antes "Ver todas" leía de IndexedDB el
+    blob de todo el histórico de golpe
+- **FT4** Ventana de una foto (`fotoBox`): zoom al tocar, cambio de fecha, compartir con
+  la pareja, borrar con deshacer y "Comparar esta con otra", que la deja elegida y
+  enciende la bandeja
 
 ## K · Check-in (vista propia, `vCheckin`)
 
@@ -430,12 +460,85 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 - **M6** Ciclo · configuración
 - **M7** Privacidad · PIN
 - **M8** Preferencias (meta de agua, meta de pasos)
+- **M11** Hyrox: interruptor de la sección (`S.cfg.hyrox`, `ACTIONS.hxTgl`, encendida
+  por defecto para los dos) y campo opcional de edad (`S.cfg.edad`, `CHANGES.hxEdad`),
+  que es lo que decide qué fila de percentiles se usa. Al apagar, las rutinas Hyrox que
+  estuvieran asignadas a un día de la semana vuelven a descanso, para que no quede rastro
+  en Inicio ni en el calendario. Las marcas y las progresiones NO se borran
 - **M9** Nube (Supabase)
 - **M10** Datos (respaldos, exportar, borrar)
 
 ---
 Si una zona cambia de lugar, el código se queda con la zona, no con la posición.
 Al agregar cajas nuevas se les asigna el siguiente número libre de su pantalla.
+
+## HX · Hyrox (vista propia, `vHyrox`; se entra desde E7 y se sale con `volver`)
+
+Cinco pestañas (`xtabs`, `UI.hxSub`, `ACTIONS.hxSub`), envueltas en `data-swnav="hxsub"`:
+deslizar en horizontal cambia de pestaña. Toda la sección se apaga con M11.
+
+**Sistema de niveles (REV 207)**: nivel 1 = la cifra o el estado y una línea de apoyo;
+nivel 2 = el desglose, plegado (`schedhead`, la rejilla de estaciones); nivel 3 = los
+párrafos largos, los baremos completos y las cajas de fuente/fiabilidad, en la ventana
+flotante `.fbox.i3box` (`INFO3` + `i3()` + `ACTIONS.info3`). Ningún módulo de la vista
+muestra más de ~4 líneas de texto corrido sin que el usuario lo pida.
+
+- **HX0** Aviso de que **en el gimnasio no hay SkiErg**: una línea al final de la pestaña
+  Nivel con su botón de nivel 3 (`INFO3['hx-ski']`). Antes era un párrafo fijo arriba
+- **HX1** Nivel estimado (`hxVNivel`): tarjeta destacada (`hlCard`) con el tiempo total
+  proyectado y el nivel en la escala de `FZA_NIVELES`, la misma de fuerza, porque los
+  percentiles de HYROX traen exactamente esos cinco escalones y la misma definición
+  - HX1a "De dónde sale ese tiempo" (`INFO3['hx-proy']`, nivel 3): se busca en `HX_PACING`
+    la columna de meta que más se parece a las marcas reales y de ahí se prestan los 8 km,
+    la RoxZone y las estaciones sin marca. Dice cuántas faltan y cuáles (`hxProyeccion`)
+  - HX1b La escalera: barra de 5 escalones (`.steps`) + dos celdas `.ncell` (proyección y
+    minutos que faltan para el escalón de arriba). La tabla completa de cortes en minutos
+    de la fila de edad que aplique (`HX_META`) vive en `INFO3['hx-escalera']`
+  - HX1c Campo de edad (el mismo de M11) y el formato de la carrera en una línea, con su
+    detalle en `INFO3['hx-carrera']`
+  - HX1d La fuente y la fiabilidad de cada dato (`hxFuenteTxt`, `HX_FUENTE`) ya no se
+    pliegan en la vista: van SIEMPRE al pie de la ventana de nivel 3 que corresponda
+- **HX2** Marcas (`hxVMarcas`): las 8 estaciones como rejilla de celdas compactas
+  (`hxEstCell` / `.ngrid` / `.ncell`): nombre, tu marca o "sin marca" y el baremo como chip
+  de color (acento = bien, naranja = bajo el promedio). Tocar una la selecciona (`hxEstSel`,
+  reusa `hxForm().est`) y abre debajo su panel con los tres números y el botón de registrar.
+  El formulario es nivel 2: aparece solo al pulsarlo (`UI.hxFormAbre`, `hxNueva`,
+  `hxFormCerrar`). La lista completa de mediciones va plegada (`UI.hxHist`, `hxHist`) con
+  corregir (`hxEdit`) y borrar (`hxDel`). La comparación contra baremo y promedio, la tabla
+  de la estación y su nota viven en `INFO3['hx-est']`
+  - HX2a **Solo SkiErg y Sled Push tienen tabla de nivel publicada** (`HX_EST[].niv`). Las
+    otras seis dicen en pantalla que no hay baremo y se comparan contra el promedio general
+    y contra el propio historial. Las bandas del SkiErg dejan huecos entre sí y ahí se
+    responde "entre X y Y" en vez de inventar un corte (`hxBanda`)
+  - HX2b Las marcas viven en `S.hyrox` = `[{d, est, seg, reps?}]`, NO en `S.logs`: una
+    estación se mide en tiempo y metería ruido en el 1RM estimado y en el tonelaje
+- **HX3** Rutinas (`hxVRutinas`): las 6 sesiones tipo (`HX_RUT()`, ids `hxA` a `hxF`, con
+  cargas distintas para él y para ella) en un **carrusel horizontal** (`carr()`, `.carr` +
+  `.ccard` + `.carrdots`): scroll-snap del navegador y puntos de página. El detalle de cómo
+  entran en la semana y cómo se miden está en `INFO3['hx-rut']`.
+  Se abren y se entrenan como cualquier otra, pero
+  no salen en la lista principal de Entrenar (`ROUTINES_VIS` las excluye por `hx:true`) ni
+  se auto-asignan a un día (`day:-1`). Para ponerlas en la semana están en el picker del
+  planificador y en el registro retrospectivo, vía `ROUTINES_ASIG()`
+  - HX3a Los elementos de tiempo o distancia llevan `um` ('m', 's', 'min'): eso solo cambia
+    la etiqueta de la segunda columna de `setTable` y **apaga la casilla de kilos**, así el
+    tonelaje y el 1RM no se enteran. La carga va escrita en el nombre del ejercicio
+- **HX4** Progresiones (`hxVProg`, `HX_PROG`): las 4 del método, cada una como tarjeta con
+  **barra de escalones** (`.steps`), el escalón actual y qué se hace hoy (3 líneas máximo).
+  El criterio de paso y los 4 escalones completos están en el acordeón de nivel 2
+  (`hxAbrir`, clave `prog-<id>`). Botones para marcar el hito (`hxProgUp` / `hxProgDown`,
+  estado en `S.hxprog`)
+- **HX5** Plan de 12 semanas (`hxVPlan`, `HX_PLAN12`): tres fases y media, se arranca y se
+  para (`S.hxplan = {start}`), dice en qué semana y fase va. Sin fecha de carrera: todo es
+  relativo al arranque. Cada fase es una fila plegable (`hxAbrir`, clave `fase-<i>`): el
+  detalle largo solo aparece al tocarla
+  - HX5a Aviso de déficit calórico: dos `.stat` con proteína objetivo y ritmo de bajada, y
+    una línea con el gasto extra. Los números del plan de cada uno y la evidencia
+    (`hxDeficit`) están en `INFO3['hx-def']`
+  - HX5b Orden de sacrificio si la semana se pone imposible: una línea + `INFO3['hx-corte']`
+- **P11** Tarjeta Hyrox en Progreso (`hxProgresoCard`, debajo de las metas de fuerza): solo
+  si la sección está encendida y hay al menos una marca. Tiempo proyectado, última marca y
+  cuántas estaciones van
 
 ## E8 · Elegir ejercicios por músculo (`vExcat`, botón "Elegir por músculo")
 
@@ -989,3 +1092,35 @@ una y media.
 | 350 g | 59 P / 640 kcal (una porción) |
 | 175 g | 30 P / 320 kcal (la mitad) |
 | 700 g | 118 P / 1.280 kcal (dos) |
+
+## Componentes compartidos del sistema de niveles (REV 207)
+
+Viven junto a `xtabs` / `hlCard` / `medCapaBar` y se usan en toda la app:
+
+- `carr(cards, {lbl})` + CSS `.carr` / `.ccard` / `.carrdots`: **carrusel horizontal**.
+  Sin JS de arrastre (scroll-snap del navegador); los puntos de página los actualiza
+  `carrDots` desde UN listener de `scroll` en fase de captura para toda la app. `.carr`
+  está excluido del gesto SWN para que deslizar la tira no cambie de pestaña.
+- `INFO3` + `i3(clave, texto)` + `i3Open` + `ACTIONS.info3`: **ventana de nivel 3**
+  (`.fbox.i3box`). El cuerpo puede ser función, así lee datos vivos. Se cierra tocando
+  fuera, con la X, y sola al cambiar de vista (`UI._i3v` en `renderReal`).
+- `.ngrid` / `.ncell`: rejilla de dos columnas con UNA métrica por celda (icono + etiqueta,
+  número héroe, chip de estado). Es el nivel 1 de las 8 estaciones de Hyrox.
+- `.steps`: barra de escalones discretos, para progresiones y escalas de nivel.
+- `.clamp2` / `.clamp3`: recorte por líneas de las descripciones dentro de tarjetas.
+
+Dónde más se aplicó el sistema (fuera de Hyrox):
+
+- **I1b** La guía de bienvenida de Inicio pasó de tres párrafos numerados a una línea con
+  su ventana (`INFO3['tour']`). El aviso de respaldo semanal se acortó a una línea.
+- **P2** El pie explicativo de la tarjeta Rendimiento (7 versiones según el modo) salió de
+  la vista a `INFO3['prog-foot']`, alimentado por `REND_FOOT`.
+- **M1** Recordatorios: la explicación de por qué no llegan los avisos en iPhone pasó a
+  `INFO3['mas-notif']`; las filas se compactaron a una sola línea de nota.
+- **M2/M3** Las recetas de Atajos (Salud y atajo pro) quedaron plegadas (`ACTIONS.masTgl`,
+  `UI.mas.salud` / `UI.mas.atajo`).
+- **M4/M8/M9/M10** El disclaimer de la inyección, el alcance del PIN, el cálculo de la meta
+  de agua y el instructivo de la nube pasaron a `INFO3['mas-inyec' | 'mas-pin' | 'mas-agua'
+  | 'mas-nube']`.
+- **X1** Medidas: se borró la tarjeta *Historial* que estaba duplicada y el trozo de código
+  (`})()}`) que se estaba imprimiendo como texto entre ella y el nav de abajo.

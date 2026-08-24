@@ -15,6 +15,16 @@ comer de menos, la app empuja a alcanzar la proteína). Metas de macros DINÁMIC
 por peso desde REV 111 (1,8 g/kg de proteína, promedio semanal de pesajes): el
 "195 g" que aparece en documentos viejos ya no es fijo.
 
+## Plan vigente
+
+**[PLAN-REVISION-GENERAL.md](PLAN-REVISION-GENERAL.md)**, aprobado por Andy el
+24/08/2026: 5 fases para llevar toda la app al nivel del rediseño de la REV 207
+(movimiento, sistema de 3 niveles en Comida/Agenda/Check-in, flujos de registro,
+deuda, tema claro), con los injertos del análisis del prototipo de Bink (ese informe
+vive en `archivo/informe-prototipo-bink/`, fuera de git a propósito). El documento es
+autocontenido: una sesión nueva puede ejecutarlo sin más contexto. Lleva registro de
+avance al final.
+
 ## Mapa de documentos
 
 | Doc | Para qué |

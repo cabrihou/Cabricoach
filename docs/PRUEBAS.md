@@ -61,6 +61,13 @@ Guion python típico (websocket-client): conectar al target `page` de
   `window.confirm=()=>true` antes del click.
 - Los `sleep` del guion importan: renders + expansión de content-visibility toman
   0,5-1,5 s. Mediciones a destiempo dan falsos rojos.
+- **Las transiciones CSS y los requestAnimationFrame se CONGELAN en headless**: una
+  página que nadie "mira" no produce frames, así que una transición se queda en su
+  tiempo 0 para siempre (getComputedStyle devuelve el valor inicial y getAnimations
+  las muestra vivas eternamente). Antes de medir el resultado de una transición,
+  fuerza frames tomando 4-6 `Page.captureScreenshot` seguidos (cada captura avanza
+  un frame). Nos mordió el 24/08 probando componentes: parecía un bug del CSS y era
+  el arnés.
 
 ### Cómo se mide un "salto"
 

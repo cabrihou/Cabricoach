@@ -184,7 +184,7 @@ commit "REV N: ..." (sin push hasta que Andy apruebe el deploy).
 - [x] Fase 1 · Movimiento y cifras vivas (REV 208, falta revisión de Andy)
 - [x] Fase 2 · Sistema de 3 niveles + injertos A (REV 209, falta revisión de Andy)
 - [x] Fase 3 · Flujos de registro + injertos M (REV 210, falta revisión de Andy)
-- [ ] Fase 4 · Consistencia y deuda
+- [x] Fase 4 · Consistencia y deuda (REV 211, falta revisión de Andy)
 - [ ] Fase 5 · Tema claro
 
 Notas de ejecución (agrega aquí decisiones, hallazgos y lo que quede a medias):
@@ -309,5 +309,32 @@ Verificación: verificador sin regresiones, suite CDP en verde (lo tuyo, toasts,
 hojas ancladas al borde inferior, pies, nudges), 0 errores de consola, dos
 usuarios, capturas revisadas (hoja con manija y fondo card, "Lo tuyo" con
 conteo de veces).
+
+### Fase 4 · ejecutada 24/08/2026 (commit REV 211, sin push: falta la revisión de Andy)
+
+1. Botones sin nombre accesible: de 87 a CERO (el conteo del verificador). Los de
+   texto dinámico llevan aria-label espejo de su expresión; los solo-icono llevan
+   etiqueta manual (Cancelar, Anterior/Siguiente, Agregar al mercado, etc.). Las
+   cabeceras plegables uiCaja/gestCaja usan el título sin etiquetas HTML
+   (String(titulo).replace de tags). Auditoría runtime por las 10 vistas y los dos
+   usuarios: 0 botones anónimos en el DOM.
+2. Tabla de evolución del check-in: cabe a 320 px sin scroll (.tb.tbfit compacta,
+   encabezados abreviados Fecha/Peso/Cint./Grasa/Adh./E-S y las unidades en una
+   nota al pie). De paso: la celda de cintura pintaba el número crudo sin fmt1
+   (un float largo reventaba el ancho).
+3. "Leche" duplicada: addIng del mercado normaliza L a ml al agregar (precio por L
+   pasa a precio por ml: mismo costo, una sola fila; fmtQty ya pinta 1000+ ml
+   como L). Vale para cualquier ingrediente futuro en las dos unidades.
+4. Avisos heredados: de 51 a 35. Los 16 textos en mayúscula sostenida pasaron a
+   caja de oración SIN cambio visual (todos viven bajo clases con
+   text-transform:uppercase). Los 35 restantes son las reglas CSS uppercase del
+   sistema de labels: intencionales, documentadas como excepción en el agente.
+5. Los 3 nodos de imagen del space "Character Model Sheet Development" siguen
+   pendientes de que ANDY los corra (cuestan créditos): hx_ski y hx_row con
+   "unbranded machine, no logos" en el prompt, hx_zercher_carry con la barra en
+   los codos (no pose de peso muerto). Al estar listos: sips -z 480 480 -s format
+   jpeg -s formatOptions 62, a assets/ej/ y site/assets/ej/.
+
+Extra: recPersonRow ahora usa coma decimal (39,8P; hallazgo de la Fase 2).
 
 

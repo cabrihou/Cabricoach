@@ -382,6 +382,10 @@ table.tb th{font:500 12px var(--ui);letter-spacing:.06em;text-transform:uppercas
 table.tb td{padding:8px 6px;border-bottom:1px solid var(--line2);vertical-align:top}
 table.tb .r{text-align:right}
 .tbwrap{overflow-x:auto}
+/* Fase 4: variante compacta para que la tabla de evolucion quepa a 320 px */
+.tb.tbfit th{padding:7px 3px;letter-spacing:.02em;font-size:11px;white-space:nowrap}
+.tb.tbfit td{padding:8px 3px;white-space:nowrap}
+.tb.tbfit td.r{font-size:13px}
 /* filas con hora: en pantallas angostas el reloj baja de linea y el texto respira */
 #rembox .row,#cutbox .row{flex-wrap:wrap;row-gap:8px}
 #rembox .row>.grow,#cutbox .row>.grow{flex:1 1 150px;min-width:0}
@@ -2309,7 +2313,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 210';
+const APPREV='REV 211';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -4251,7 +4255,7 @@ function propCard(){
       ${medidas.length?`<span class="chip ${hechas===medidas.length?'fill':'dim'}">${hechas} de ${medidas.length}</span>`:''}</div>
     <p class="small dim" style="margin:0 0 10px;line-height:1.55">Un cuerpo se ve equilibrado cuando sus medidas guardan cierta relación entre sí. Aquí comparo las tuyas con esa relación, tomando tu <b>${P.ancla.n} (${fmt1(P.ancla.v)} cm)</b> como referencia, que es hueso y no cambia.</p>
     ${foco?`<div class="propfoco">
-      <span class="lbl">EN LO QUE ESTÁS MÁS LEJOS</span>
+      <span class="lbl">En lo que estás más lejos</span>
       ${fila(foco)}
       <div class="small dim mt8" style="line-height:1.5">${esc(propComo(foco))}</div>
     </div>`:`<div class="propfoco ok">${ic('check',15)}<div><b>Estás en rango en todo lo medido.</b>
@@ -4646,7 +4650,7 @@ function fzaPRHTML(x, pc){
       : 'El siguiente nivel está lejos para una sola sesión. Este intento es un récord tuyo, que es lo que de verdad mueve la aguja.'}</div>
     <div class="printentos mt8">
       <div class="printento on"><i>EL INTENTO</i><b>${fmt1(P.single)}<em>kg × 1</em></b>${lado}</div>
-      <div class="printento"><i>SI NO QUIERES UN SINGLE</i><b>${fmt1(P.triple)}<em>kg × 3</em></b></div>
+      <div class="printento"><i>Si no quieres un single</i><b>${fmt1(P.triple)}<em>kg × 3</em></b></div>
     </div>
     <div class="lbl mt10" style="display:block">CÓMO LLEGAR</div>
     <div class="prrampa mt4">${P.rampa.map(s=>`<span>${fmt1(s.kg)}<i>× ${s.r}</i></span>`).join('<u>→</u>')}<u>→</u><span class="fin">${fmt1(P.single)}<i>× 1</i></span></div>
@@ -4768,15 +4772,15 @@ function exInformeHTML(){
         :'<div class="small mt4" style="color:var(--gold);line-height:1.5">Este ejercicio no suma a ningún músculo todavía: dime cuál es y empieza a contar.</div>'}
       <div class="flex wrapf mt8 mb12" style="gap:5px">
         <span class="small dim" style="margin-right:2px">${exMuscElegido(id)?'Lo pusiste en':'Cámbialo a'}</span>
-        ${Object.keys(MUSC_PATRON).map(m=>`<button class="chip xs ${exMuscElegido(id)===m?'fill':''}" data-a="exMusc" data-id="${esc(id)}" data-m="${m}">${esc(MUSC_NOM[m]||m)}</button>`).join('')}
+        ${Object.keys(MUSC_PATRON).map(m=>`<button class="chip xs ${exMuscElegido(id)===m?'fill':''}" data-a="exMusc" data-id="${esc(id)}" data-m="${m}" aria-label="${esc(MUSC_NOM[m]||m)}">${esc(MUSC_NOM[m]||m)}</button>`).join('')}
         ${exMuscElegido(id)?`<button class="chip xs" data-a="exMusc" data-id="${esc(id)}" data-m="">${ic('x',9)} automático</button>`:''}
       </div>
-      ${(I.L.max&&I.L.recio)?`<div class="lbl" style="display:block">LAS TRES LECTURAS</div>
+      ${(I.L.max&&I.L.recio)?`<div class="lbl" style="display:block">Las tres lecturas</div>
         <div class="fzadosw mt4 mb12">${Object.keys(FZA_BASES).filter(k=>I.L[k]).map(k=>`
           <div class="fzados ${k===fzaBaseModo()?'on':''}"><i>${FZA_BASES[k].n}</i>
             <b>${fmt1(Math.round(I.L[k].rm*10)/10)}<em>kg</em></b>
             <u>${fmt1(I.L[k].w)} × ${I.L[k].r} · ${fmtD(I.L[k].d)}</u></div>`).join('')}</div>`:''}
-      <div class="lbl" style="display:block">SESIÓN POR SESIÓN</div>
+      <div class="lbl" style="display:block">Sesión por sesión</div>
       <div class="mt4">${I.hist.slice(-12).reverse().map(h=>`
         <div class="infses"><b>${fmtD(h.d)}</b><span>${h.sets.map(s=>fmt1(s.w)+'×'+s.r).join('  ')}</span></div>`).join('')}</div>
       ${I.sesiones>12?`<div class="small dim mt4">Se muestran las últimas 12 de ${I.sesiones}.</div>`:''}`}
@@ -4790,7 +4794,7 @@ function fzaEscalera(x, pc){
   const por5=rm=>Math.round(rm/(1+5/30)/2.5)*2.5;
   return `<div class="fzaesc" data-a="nada">
     ${x.sw?`<div class="fzafuente">
-      <span class="lbl">DE DÓNDE SALE TU NÚMERO</span>
+      <span class="lbl">De dónde sale tu número</span>
       <div class="small mt4" style="line-height:1.55">El <b>${fmtD(x.d)}</b> hiciste <b style="color:var(--ink)">${fmt1(x.sw)} kg × ${x.sr} ${x.sr===1?'repetición':'repeticiones'}</b>${x.ex&&exPorLado(x.ex)?' <b style="color:var(--gold)">por lado</b>':''}${x.ex?` en ${esc(shortEx(exNombre(x.ex)))}`:''}. De ahí sale tu 1RM estimado de <b style="color:var(--ink)">${fmt1(x.rm)} kg</b>.</div>
       <div class="small dim mt4">${x.ex&&exPorLado(x.ex)?`${fmt1(x.sw)} × 2 lados = ${fmt1(x.sw*2)} kg · `:''}${fmt1(x.ex&&exPorLado(x.ex)?x.sw*2:x.sw)} × (1 + ${x.sr} ÷ 30) = ${fmt1(x.rm)} kg.</div>
       ${(()=>{ /* las dos lecturas, siempre las dos: cambiar de modo no borra un record */
@@ -4809,11 +4813,11 @@ function fzaEscalera(x, pc){
       ${x.ex?`<div class="escaj mt8">
         <div class="flex between" style="align-items:center;gap:8px">
           <span class="small dim grow">¿Ese peso es por brazo o pierna, o el total?</span>
-          <button class="chip ${exPorLado(x.ex)?'fill':''}" data-a="exLado" data-id="${x.ex}">${exPorLado(x.ex)?'Por lado':'Total'}</button></div>
+          <button class="chip ${exPorLado(x.ex)?'fill':''}" data-a="exLado" data-id="${x.ex}" aria-label="${exPorLado(x.ex)?'Por lado':'Total'}">${exPorLado(x.ex)?'Por lado':'Total'}</button></div>
         ${exEsMaquina(x.ex)?`<div class="flex between mt8" style="align-items:center;gap:8px">
           <span class="small dim grow">¿Cuánto pesa el carro vacío?</span>
           <span class="flex wrapf" style="gap:4px;justify-content:flex-end">${[0,15,20,25,30,40,45].map(v=>
-            `<button class="chip xs ${exTara(x.ex)===v?'fill':''}" data-a="exTara" data-id="${x.ex}" data-v="${v}">${v===0?'nada':v}</button>`).join('')}</span></div>`:''}
+            `<button class="chip xs ${exTara(x.ex)===v?'fill':''}" data-a="exTara" data-id="${x.ex}" data-v="${v}" aria-label="${v===0?'nada':v}">${v===0?'nada':v}</button>`).join('')}</span></div>`:''}
       </div>`:''}
     ${fzaPRGancho(x, pc)}
     ${x.ex?`<button class="chip mt8" data-a="exInf" data-id="${x.ex}">${ic('clip',11)} Informe completo de ${esc(shortEx(exNombre(x.ex)))}</button>`:''}
@@ -4856,7 +4860,7 @@ function fzaEscalera(x, pc){
       ${(FZA_VARIANTES[x.k]&&FZA_VARIANTES[x.k].length>1)?`<div class="mt8" style="padding-top:8px;border-top:1px solid var(--line2)">
         <span class="small dim">¿Con qué tabla lo comparo?</span>
         <div class="flex wrapf mt4" style="gap:6px">${FZA_VARIANTES[x.k].map(([id,lb])=>
-          `<button class="chip ${((x.tabla||{}).id===id)?'fill':''}" data-a="fzaTablaSet" data-k="${x.k}" data-id="${id}">${lb}</button>`).join('')}</div>
+          `<button class="chip ${((x.tabla||{}).id===id)?'fill':''}" data-a="fzaTablaSet" data-k="${x.k}" data-id="${id}" aria-label="${lb}">${lb}</button>`).join('')}</div>
         <div class="small dim mt4" style="line-height:1.5">Un rumano no se juzga con la tabla del convencional, ni una dominada lastrada con la del jalón: el mismo número significa cosas distintas.</div>
       </div>`:''}
     </div>`:''}
@@ -4944,7 +4948,7 @@ function fzaBaseSelHTML(){
   const m=fzaBaseModo();
   return `<div class="fzabasesel" data-a="nada">
     ${Object.keys(FZA_BASES).map(k=>`<button class="fzabaseb ${k===m?'on':''}" data-a="fzaBase" data-s="${k}"
-      aria-pressed="${k===m?'true':'false'}"><b>${FZA_BASES[k].n}</b><i>${FZA_BASES[k].d}</i></button>`).join('')}
+      aria-pressed="${k===m?'true':'false'}" aria-label="${FZA_BASES[k].n}"><b>${FZA_BASES[k].n}</b><i>${FZA_BASES[k].d}</i></button>`).join('')}
   </div>`;
 }
 function fzaGlobalHTML(g, pc){
@@ -4961,7 +4965,7 @@ function fzaGlobalHTML(g, pc){
   return `<div class="fzaglob" style="--nc:${c}" data-a="fzaIsla" role="button" tabindex="0"
     aria-label="Ver el detalle de tu nivel global">
     <div class="flex between" style="align-items:baseline;gap:8px">
-      <span class="lbl">TU NIVEL GLOBAL</span>
+      <span class="lbl">Tu nivel global</span>
       <i class="small dim flex" style="gap:4px">${g.n} calibrado${g.n===1?'':'s'} ${ic('chevR',11)}</i>
     </div>
     <div class="flex" style="align-items:baseline;gap:8px;margin:4px 0 8px">
@@ -4971,8 +4975,8 @@ function fzaGlobalHTML(g, pc){
     <span class="fzaejeb grande"><em style="width:${clamp(g.mix.i>=4?100:(g.mix.i*25+g.mix.pct*0.25),4,100)}%;background:linear-gradient(90deg, color-mix(in srgb, ${c} 55%, transparent), ${c})"></em></span>
     ${fzaBaseSelHTML()}
     <div class="fzaejes2">
-      ${eje('FUERZA RELATIVA', g.rel, 'a tu ratio, entre quienes pesan lo que tú')}
-      ${eje('FUERZA TOTAL', g.abs, 'a esos kilos, pese lo que pese quien los mueva')}
+      ${eje('Fuerza relativa', g.rel, 'a tu ratio, entre quienes pesan lo que tú')}
+      ${eje('Fuerza total', g.abs, 'a esos kilos, pese lo que pese quien los mueva')}
     </div>
     <div class="small dim mt8" style="line-height:1.5">Los dos dicen <b>cuánta gente de la que entrena llega ahí</b>, pero no a la misma pregunta: la relativa te compara con quienes pesan como tú, la total con todo el mundo sin mirar la báscula. El global mezcla ${Math.round(FZA_MEZCLA.rel*100)}% y ${Math.round(FZA_MEZCLA.abs*100)}%. Van separados porque bajar de peso sube la relativa sin mover una placa, y subir de peso sube la total sin ser más eficiente.</div>
   </div>`;
@@ -4994,7 +4998,7 @@ function fzaIslaHTML(){
     <div class="fzaislain" data-a="nada" role="dialog" aria-label="Detalle de tu nivel global">
       <div class="flex between" style="align-items:flex-start;gap:10px">
         <div style="min-width:0">
-          <span class="lbl">TU NIVEL GLOBAL</span>
+          <span class="lbl">Tu nivel global</span>
           <div class="flex" style="align-items:baseline;gap:8px;margin-top:3px">
             <b class="fzaglobn" style="color:${c}">${g.mix.n}</b>
             ${g.mix.i<4?`<span class="small dim">${g.mix.pct}% hacia ${g.mix.sig}</span>`:'<span class="small dim">tope de la tabla</span>'}
@@ -5003,7 +5007,7 @@ function fzaIslaHTML(){
         <button class="chip" data-a="fzaIslaCerrar" aria-label="Cerrar">${ic('x',10)}</button>
       </div>
       <div class="fzaejes2 mt10">
-        <div class="fzaeje" style="--nc:${COL[g.rel.i]}"><span class="lbl">FUERZA RELATIVA</span>
+        <div class="fzaeje" style="--nc:${COL[g.rel.i]}"><span class="lbl">Fuerza relativa</span>
           <b class="fzaejen">${g.rel.n}</b><span class="fzaejep">${g.rel.raro}</span>
           <i class="fzaejes">percentil ${g.rel.pc} para tus ${fmt1(Math.round(pc*10)/10)} kg</i>
           <span class="fzaejeb"><em style="width:${clamp(g.rel.pc,4,100)}%"></em></span></div>
@@ -5026,7 +5030,7 @@ function fzaIslaHTML(){
             <span><i>en kilos</i><b style="color:${COL[na]}">${FZA_NIVELES[na]}</b><u>${fzaUnoDeCada(x.sc.pAbs)}</u></span>
           </div>
         </div>`;}).join('')}
-      ${fuera.length?`<div class="lbl mt12" style="display:block">FUERA DEL CÁLCULO</div>
+      ${fuera.length?`<div class="lbl mt12" style="display:block">Fuera del cálculo</div>
         <div class="small dim" style="line-height:1.5;margin:3px 0 6px">Aislados sin baremo de población. Se registran y se miden contra tu propio récord, pero no ascienden a nadie.</div>
         <div class="flex wrapf" style="gap:5px">${fuera.map(x=>`<span class="chip xs">${esc(x.n)} ${fmt1(x.rm)} kg</span>`).join('')}</div>`:''}
       <div class="small dim mt12" style="line-height:1.5">Los umbrales salen de Strength Level y son percentiles de la gente que entrena: Novato el 20%, Intermedio el 50%, Avanzado el 80%, Élite el 95%. La columna de kilos integra ese percentil sobre la distribución de pesos corporales, por eso responde "cuánta gente mueve esto" sin mirar la báscula.</div>
@@ -5172,7 +5176,7 @@ function fzaCard(){
               </div>`:''}
               <div class="mt8 flex between" style="align-items:center;gap:8px">
                 <span class="small dim grow">¿Ese peso es por brazo o pierna, o el total?</span>
-                <button class="chip ${exPorLado(o.id)?'fill':''}" data-a="exLado" data-id="${o.id}">${exPorLado(o.id)?'Por lado':'Total'}</button></div>
+                <button class="chip ${exPorLado(o.id)?'fill':''}" data-a="exLado" data-id="${o.id}" aria-label="${exPorLado(o.id)?'Por lado':'Total'}">${exPorLado(o.id)?'Por lado':'Total'}</button></div>
             </div>
           </div>`:''}
         </div>`;
@@ -5607,7 +5611,7 @@ function hlCard(o){
         <div class="hlnum">${o.num}${o.uni?`<em>${esc(o.uni)}</em>`:''}</div>
         ${o.lbl?`<div class="hllbl">${o.lbl}</div>`:''}
       </div>
-      ${o.btn?`<button class="hlbtn" data-a="${o.a}"${o.s?` data-s="${esc(o.s)}"`:''}${o.z?` data-z="${esc(o.z)}"`:''}>${esc(o.btn)}${ic('chevR',13)}</button>`:''}
+      ${o.btn?`<button class="hlbtn" data-a="${o.a}"${o.s?` data-s="${esc(o.s)}"`:''}${o.z?` data-z="${esc(o.z)}"`:''} aria-label="${esc(o.btn)}">${esc(o.btn)}${ic('chevR',13)}</button>`:''}
     </div>
   </div>`;
 }
@@ -5811,7 +5815,7 @@ function filaExplica(icono, negrita, resto, primera){
 function uiCaja(id, titulo, dato, fnInner, defecto){
   const abierto=(UI.cajas && UI.cajas[id]!==undefined) ? !!UI.cajas[id] : !!defecto;
   return `<section class="mod tight">
-    <button class="schedhead ${abierto?'open':''}" data-a="uiCajaTgl" data-k="${id}" aria-expanded="${abierto?'true':'false'}">
+    <button class="schedhead ${abierto?'open':''}" data-a="uiCajaTgl" data-k="${id}" aria-expanded="${abierto?'true':'false'}" aria-label="${String(titulo).replace(/<[^>]*>/g,'').trim()}">
       <span class="grow tl" style="min-width:0"><b class="schedt" style="display:block">${titulo}</b>
         <span class="small dim" style="display:block">${dato}</span></span>
       <span class="nfchev">${ic('chevR',16)}</span>
@@ -5900,7 +5904,7 @@ function medMapa(sel, o){
   };
   return `<div class="mrot" data-swnav="medvista" role="group" aria-label="Vista del cuerpo">
     ${MED_VISTAS.map(v=>`<button class="mrotb ${v[0]===vista?'on':''}" data-a="medVista" data-v="${v[0]}"
-      aria-pressed="${v[0]===vista?'true':'false'}">${v[1]}</button>`).join('')}
+      aria-pressed="${v[0]===vista?'true':'false'}" aria-label="${v[1]}">${v[1]}</button>`).join('')}
   </div>
   <svg class="medbp ${zsel?'hassel':''} ${calor?'calor':''} ${o.zoom&&zsel?'zoom':''}" viewBox="${VB}" role="group"
     aria-label="Cuerpo, vista ${vista}. Toca una zona para ver su medida">
@@ -6274,7 +6278,7 @@ function cargaPop(zona, vista, carga, dias){
     </div>`:''}
     ${ej.length?`<p class="zps">${esc(ej.slice(0,2).join(' · '))}${ej.length>2?' +'+(ej.length-2):''}</p>`
       :`<p class="zps">Nada ${dias===7?'esta semana':'en '+Math.round(dias/7)+' semanas'}.</p>`}
-    ${ms.length>1?`<div class="zpm">${ms.map(mm=>`<button class="${mm===m?'on':''}" data-a="cargaMusc" data-m="${mm}">${esc(MUSC_NOM[mm]||mm)}</button>`).join('')}</div>`:''}
+    ${ms.length>1?`<div class="zpm">${ms.map(mm=>`<button class="${mm===m?'on':''}" data-a="cargaMusc" data-m="${mm}" aria-label="${esc(MUSC_NOM[mm]||mm)}">${esc(MUSC_NOM[mm]||mm)}</button>`).join('')}</div>`:''}
   </div>`;
 }
 /* El cuerpo pintado por NIVEL DE FUERZA. Es la tercera lectura del mismo mapa: cuanto
@@ -6509,7 +6513,7 @@ function fzaQueMeter(vista, zona, yaTiene, musculo){
     <b>Para subir aquí</b>, lo que más carga ${esc((MUSC_NOM[m]||m).toLowerCase())}:
     ${top.map(e=>`<b style="color:var(--ink)">${esc(shortEx(e.x.name))}</b> (${e.pc}%)`).join(', ')}.
     <div class="flex wrapf mt8" style="gap:6px">${top.map(e=>
-      `<button class="chip" data-a="excatOpen" data-id="${e.x.id}">${ic('plus',9)} ${esc(shortEx(e.x.name))}</button>`).join('')}</div>
+      `<button class="chip" data-a="excatOpen" data-id="${e.x.id}" aria-label="${esc(shortEx(e.x.name))}">${ic('plus',9)} ${esc(shortEx(e.x.name))}</button>`).join('')}</div>
   </div></div>`;
 }
 /* Desequilibrio entre lados: la medida ya la teniamos, y si hay registros de un ejercicio
@@ -6707,7 +6711,7 @@ function vCruce(){
         if(!lista.length) return '';
         const ab = abierto===k;
         return `<div class="crucegr ${ab?'open':''}" style="--cc:${COL[k]}">
-          <button class="crucegrh" data-a="cruceGrupo" data-s="${k}" aria-expanded="${ab?'true':'false'}">
+          <button class="crucegrh" data-a="cruceGrupo" data-s="${k}" aria-expanded="${ab?'true':'false'}" aria-label="${nom}">
             <span class="crucegrd" aria-hidden="true"></span>
             <b>${nom}</b>
             <i class="crucegrn">${lista.length}</i>
@@ -6833,11 +6837,11 @@ function fzaEjHTML(e, pc, COL, gk, destacado){
           <div class="small dim mt4">${e.corp?`Cuenta ${exFraccion(e.ex)<1?`el ${Math.round(exFraccion(e.ex)*100)}% de tu peso de ese día (el resto lo sostiene la inclinación)`:`tu peso de ese día`} (${fmt1(pesoDeDia(e.d)*exFraccion(e.ex))} kg) más el lastre: ${fmt1(exPesoReal(e.ex, e.sw, e.d))} kg movidos. `:''}${exTara(e.ex)?`Más los ${fmt1(exTara(e.ex))} kg del carro: ${fmt1(exPesoReal(e.ex, e.sw, e.d))} kg. `:''}${exPorLado(e.ex)?`Como está marcado por lado, cuentan ${fmt1((e.sw+exTara(e.ex))*2)} kg. `:''}De ahí sale tu 1RM de <b>${fmt1(e.rm)} kg</b>.</div>
           <div class="mt8 flex between" style="align-items:center;gap:8px">
             <span class="small dim grow">¿El peso es por brazo o pierna, o el total?</span>
-            <button class="chip ${exPorLado(e.ex)?'fill':''}" data-a="exLado" data-id="${e.ex}">${exPorLado(e.ex)?'Por lado':'Total'}</button></div>
+            <button class="chip ${exPorLado(e.ex)?'fill':''}" data-a="exLado" data-id="${e.ex}" aria-label="${exPorLado(e.ex)?'Por lado':'Total'}">${exPorLado(e.ex)?'Por lado':'Total'}</button></div>
           ${exEsMaquina(e.ex)?`<div class="mt8" style="padding-top:8px;border-top:1px solid var(--line2)">
             <span class="small dim">¿Cuánto pesa el carro vacío de esa máquina?</span>
             <div class="flex wrapf mt4" style="gap:5px">${[0,15,20,25,30,40,45].map(v=>
-              `<button class="chip ${exTara(e.ex)===v?'fill':''}" data-a="exTara" data-id="${e.ex}" data-v="${v}">${v===0?'nada':v+' kg'}</button>`).join('')}</div>
+              `<button class="chip ${exTara(e.ex)===v?'fill':''}" data-a="exTara" data-id="${e.ex}" data-v="${v}" aria-label="${v===0?'nada':v+' kg'}">${v===0?'nada':v+' kg'}</button>`).join('')}</div>
             <div class="small dim mt4" style="line-height:1.5">Se suma a los discos. Si no lo sabes, mira la placa de la máquina o déjalo en nada: es mejor quedarse corto que inventarlo.</div>
           </div>`:''}
         </div>
@@ -6938,7 +6942,7 @@ function vCarga(){
   <section class="mod">
     <div class="mod-head hero"><span class="ttl"><span class="heroic">${ic('flame',18)}</span>Carga por músculo</span>
       <div class="flex" style="gap:5px">${[[7,'1 sem'],[14,'2 sem'],[28,'4 sem']].map(([d,l])=>
-        `<button class="chip ${dias===d?'fill':''}" data-a="cargaDias" data-d="${d}">${l}</button>`).join('')}</div></div>
+        `<button class="chip ${dias===d?'fill':''}" data-a="cargaDias" data-d="${d}" aria-label="${l}">${l}</button>`).join('')}</div></div>
     <p class="small dim" style="margin:0 0 4px;line-height:1.5">Cada serie se reparte entre los músculos que de verdad trabajan: un press de banca no es solo pecho, también suma tríceps y deltoide. Eso son <b>series efectivas</b>.</p>
     <div class="medwrap">${medMapa(sel, {calor:cargaMusculos(vista, carga), paths:MED_MUSC2[vista], cotas:false})}${cargaPop(sel, vista, carga, dias)}</div>
     <div class="cargaleg">${[['#FF5257','sin trabajo'],['#FF8A3D','por debajo'],['#FFC94D','a un paso'],['#58DFA3','creciendo'],['#8FD98F','alto'],['#FF5257','pasado']].map(([c,l],i)=>
@@ -6947,7 +6951,7 @@ function vCarga(){
       <div class="medph">${ic('barbell',13)} <b>${esc(MUSC_NOM[selF.m]||selF.m)}</b><span class="small dim">${dias===7?'esta semana':'en '+Math.round(dias/7)+' semanas'}</span></div>
       ${selMs.length>1?`<div class="flex wrapf" style="gap:6px;margin-bottom:10px">${selMs.map(mm=>{
         const s=((carga.musc[mm]||{}).series)||0, nv=cargaNivel(mm,s);
-        return `<button class="chip ${mm===selM?'fill':''}" data-a="cargaMusc" data-m="${mm}">
+        return `<button class="chip ${mm===selM?'fill':''}" data-a="cargaMusc" data-m="${mm}" aria-label="${esc(MUSC_NOM[mm]||mm)}">
           ${esc(MUSC_NOM[mm]||mm)} <b style="${mm===selM?'':'color:'+nv.c}">${fmt1(s)}</b></button>`;}).join('')}</div>`:''}
       <div class="flex between" style="align-items:baseline;gap:10px">
         <b class="numi" style="font:800 22px var(--num)">${fmt1(selF.s)} <span class="small dim" style="font-weight:600">series efectivas</span></b>
@@ -7091,7 +7095,7 @@ function vMedidasCuerpo(){
           aria-label="${x.n}" title="${x.n}" aria-expanded="${x.k==='medir'?(abre?'true':'false'):'false'}" style="--xw:${xtwDe(x.n)}px">
           ${ic(x.i,17)}<span>${x.n}</span></button>`).join('')}</div>
       ${abre?`<div class="flex wrapf mt10" style="gap:6px;justify-content:center">
-        ${Object.keys(MED_GRUPOS).map(g=>`<button class="chip ${UI.medForm===g?'fill':''}" data-a="medAbrir" data-g="${g}">${MED_GRUPOS[g].n}</button>`).join('')}
+        ${Object.keys(MED_GRUPOS).map(g=>`<button class="chip ${UI.medForm===g?'fill':''}" data-a="medAbrir" data-g="${g}" aria-label="${MED_GRUPOS[g].n}">${MED_GRUPOS[g].n}</button>`).join('')}
         <button class="chip ${UI.medForm==='todo'?'fill':''}" data-a="medAbrir" data-g="todo">Todo</button>
       </div>
       <div class="small dim tc mt8">Puedes medirte cuando quieras, no solo el día que toca.</div>`:''}`;})()}
@@ -7314,7 +7318,7 @@ function puCapsula(){
       </div>
     </div>
     <div class="small mt8" style="line-height:1.5;color:var(--ink2)">${esc(nv.d)}</div>
-    <span class="lbl" style="display:block;margin-top:12px">CON CUÁNTA AYUDA HOY</span>
+    <span class="lbl" style="display:block;margin-top:12px">Con cuánta ayuda hoy</span>
     <div class="pubandas">${PU_NIVELES.map((x,i)=>`<button class="chip ${i===st.nivel?'fill':''}" data-a="puNivelSet" data-v="${i}" aria-pressed="${i===st.nivel?'true':'false'}" aria-label="Usar ${esc(x.n)}">${esc(x.n)}</button>`).join('')}</div>
     <div class="small dim mt4">Elige según cómo te sientas hoy: si no puedes con las 3 limpias, sube la ayuda sin pensarlo.</div>
     <div class="flex between mt12" style="align-items:baseline">
@@ -7322,7 +7326,7 @@ function puCapsula(){
       <span class="small dim">${enNivel}/${PU_SESIONES_NIVEL} sesiones para el siguiente</span>
     </div>
     <div class="goalbar mt4"><i style="width:${Math.round(Math.min(enNivel/PU_SESIONES_NIVEL,1)*100)}%"></i></div>
-    <button class="btn primary full mt12" data-a="puStart">${ic('play',14)} ${hecho?'Hacerlo otra vez':'Empezar los 15 minutos'}</button>
+    <button class="btn primary full mt12" data-a="puStart" aria-label="${hecho?'Hacerlo otra vez':'Empezar los 15 minutos'}">${ic('play',14)} ${hecho?'Hacerlo otra vez':'Empezar los 15 minutos'}</button>
     ${total?`<div class="small dim mt8">Llevas ${total} sesión${total>1?'es':''} · ${(st.sesiones||[]).reduce((a,s)=>a+s.rondas*s.reps,0)} dominadas en total.</div>`:''}
   </section>`;
 }
@@ -11265,7 +11269,7 @@ function fotoBox(imgSrc, label, canDel, onDel, shareD, curDate, onDate, cmpIt){
   box.innerHTML=`<div class="fboxin"><img loading="lazy" decoding="async" src="${imgSrc}" alt="">
     ${(curDate&&onDate)?`<div class="fdedit mt8">${ic('cal',13)} <span class="small dim">Fecha de la foto</span><input type="date" class="in" id="fdate" value="${curDate}" max="${TODAY()}"><button class="btn sm primary" id="fdsave">Cambiar</button></div>`:''}
     ${cmpIt?`<button class="btn full mt8" id="fcmp">${ic('fotoAB',14)} Comparar esta con otra</button>`:''}
-    ${shareD?`<button class="btn full mt8 ${shared?'':'primary'}" id="fshare">${ic(shared?'check':'heart',14)} ${shared?'Visible para '+(UID==='andres'?'Cami':'Andrés')+' · toca para ocultar':'Compartir con '+(UID==='andres'?'Cami':'Andrés')}</button>`:''}
+    ${shareD?`<button class="btn full mt8 ${shared?'':'primary'}" id="fshare" aria-label="${shared?'Visible para '+(UID==='andres'?'Cami':'Andrés')+' · toca para ocultar':'Compartir con '+(UID==='andres'?'Cami':'Andrés')}">${ic(shared?'check':'heart',14)} ${shared?'Visible para '+(UID==='andres'?'Cami':'Andrés')+' · toca para ocultar':'Compartir con '+(UID==='andres'?'Cami':'Andrés')}</button>`:''}
     <div class="flex mt8" style="gap:8px">
     <span class="chip dim grow" style="justify-content:center">${label}</span>
     ${canDel?'<button class="btn sm red" id="fdel">Borrar</button>':''}<button class="btn sm" id="fcls">Cerrar</button></div></div>`;
@@ -12264,7 +12268,7 @@ function waterUI(dISO,act){
   </div>
   <button class="wstep" data-a="wStepTgl">${ic('drop',10)} vaso de ${paso>=1000?fmt1(paso/1000)+' L':paso+' ml'} ${ic(UI.wStepOpen?'minus':'chevR',9)}</button>
   ${UI.wStepOpen?`<div class="flex wrapf mt4" style="gap:4px">
-    ${[150,200,250,330,500,600,750,1000].map(v=>`<button class="chip xs ${paso===v?'fill':''}" data-a="waterStep" data-n="${v}">${v>=1000?'1 L':v}</button>`).join('')}
+    ${[150,200,250,330,500,600,750,1000].map(v=>`<button class="chip xs ${paso===v?'fill':''}" data-a="waterStep" data-n="${v}" aria-label="${v>=1000?'1 L':v}">${v>=1000?'1 L':v}</button>`).join('')}
   </div>`:''}`;
 }
 function daystrip(){
@@ -12347,7 +12351,7 @@ function impRevHTML(){
   return `<div class="fzaisla impisla" data-a="nada">
     <div class="fzaislain" data-a="nada" role="dialog" aria-label="Revisar el import">
       <div class="flex between" style="align-items:flex-start;gap:10px;margin-bottom:8px">
-        <div style="min-width:0"><span class="lbl">REVISAR ANTES DE GUARDAR</span>
+        <div style="min-width:0"><span class="lbl">Revisar antes de guardar</span>
           <div class="fzaglobn" style="color:var(--ink);margin-top:2px">${R.dudas.length} sin coincidencia clara</div></div>
         <button class="chip" data-a="impRevCancel" aria-label="Cancelar">${ic('x',10)}</button>
       </div>
@@ -12375,7 +12379,7 @@ function impRevHTML(){
               </div>
               <div class="inwrap mt8">${ic('search',14)}<input class="in has-ic" placeholder="Buscar el correcto…" value="${esc(qs[x.nom]||'')}" data-ch="imprevq" data-n="${esc(x.nom)}"></div>
               ${cands.length?`<div class="flex wrapf mt8" style="gap:5px">${cands.map(e=>
-                `<button class="chip" data-a="impDec" data-n="${esc(x.nom)}" data-v="${e.id}">${esc(e.name)}</button>`).join('')}</div>`
+                `<button class="chip" data-a="impDec" data-n="${esc(x.nom)}" data-v="${e.id}" aria-label="${esc(e.name)}">${esc(e.name)}</button>`).join('')}</div>`
                 : (q?'<div class="small dim mt8">Nada con esa búsqueda.</div>':'')}`}
         </div>`;}).join('')}
       <div class="flex mt12" style="gap:8px">
@@ -12932,7 +12936,7 @@ function nlogPanel(slot){
               <div class="flex mt4" style="gap:6px">
                 <input class="in ctr" data-ch="nlogeq" type="text" inputmode="decimal" placeholder="g" style="flex:1">
                 <button class="btn sm primary" data-a="nlogEqGuardar" data-i="${ix}" style="flex:none">Listo</button>
-                <button class="btn sm ghost" data-a="nlogEqCancel" style="flex:none">${ic('x',12)}</button>
+                <button class="btn sm ghost" data-a="nlogEqCancel" style="flex:none" aria-label="Cancelar">${ic('x',12)}</button>
               </div>
               <span class="small dim" style="display:block;margin-top:4px">Se guarda y no te la vuelvo a preguntar.</span>
             </div>`;
@@ -13022,7 +13026,7 @@ function nlogPanel(slot){
     </div>`:''}
     ${UI.codigoBuscar!==undefined?`<div class="flex mt8" style="gap:6px">
       <input class="in grow" id="codigoIn" inputmode="numeric" placeholder="código de barras del paquete (770...)" value="${esc(UI.codigoBuscar||'')}" aria-label="Código de barras">
-      <button class="btn sm primary" data-a="codigoBuscar">${UI.codigoCargando?'Buscando…':'Buscar'}</button>
+      <button class="btn sm primary" data-a="codigoBuscar" aria-label="${UI.codigoCargando?'Buscando…':'Buscar'}">${UI.codigoCargando?'Buscando…':'Buscar'}</button>
     </div>
     <div class="small dim mt4">Lo busco en Open Food Facts (base abierta) y te dejo el formulario listo. Necesita señal.</div>`:''}
     ${(UI.nlogNew&&typeof UI.nlogNew==='object')?(()=>{ const nn=UI.nlogNew, kc=Math.round((nn.p||0)*4+(nn.c||0)*4+(nn.g||0)*9);
@@ -13033,7 +13037,7 @@ function nlogPanel(slot){
       <input class="in mt8" id="nnName" data-ch="nnname" list="nnSuggest" placeholder="¿qué comiste?" value="${esc(nn.name||'')}">
       <datalist id="nnSuggest">${nameSuggestions(nn.name).map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
       <div class="small dim mt10" style="margin-bottom:6px">Unidad de medida · así puedo calcularlo bien</div>
-      <div class="flex wrapf">${[['g','por 100 g'],['cda','por cucharada'],['porción','por unidad o porción']].map(([v,lb])=>`<button class="chip ${nn.u===v?'fill':''}" data-a="nlogNewUnit" data-v="${v}">${lb}</button>`).join('')}</div>
+      <div class="flex wrapf">${[['g','por 100 g'],['cda','por cucharada'],['porción','por unidad o porción']].map(([v,lb])=>`<button class="chip ${nn.u===v?'fill':''}" data-a="nlogNewUnit" data-v="${v}" aria-label="${lb}">${lb}</button>`).join('')}</div>
       ${nn.u==='cda'?`<div class="nnslide mt10"><div class="flex between"><span class="nnsl">Peso aprox por cucharada</span><span class="nnsv"><b id="nnpesoCdav">${nn.pesoCda||15}</b> g</span></div>
           <input type="range" class="nnrange" data-ch="nnrange" data-k="pesoCda" style="--rc:var(--ink2)" min="5" max="40" value="${nn.pesoCda||15}"></div>`:''}
       <div class="small dim mt10">Macros por <b style="color:var(--ink)">${esc(modoLb(nn.u))}</b> · desliza para ajustar</div>
@@ -13173,7 +13177,7 @@ function nutriExtras(){
       </div>
       <button class="btn primary full mt12" data-a="freeAdd">${ic('plus',14)} Agregar al día</button>`
     :`<div class="small dim mb8">Escríbelo como se lo contarías a alguien y yo calculo: "2 huevos y una arepa", "150 g de pollo con una taza de arroz"…</div>
-      <div class="flex wrapf mb8">${['2 huevos','150 g de pollo','1 taza de arroz','yogur griego','1 scoop de whey','1 banano','1 arepa'].map(x=>`<button class="chip" data-a="freeChip" data-x="${x}">${ic('plus',10)} ${x}</button>`).join('')}</div>
+      <div class="flex wrapf mb8">${['2 huevos','150 g de pollo','1 taza de arroz','yogur griego','1 scoop de whey','1 banano','1 arepa'].map(x=>`<button class="chip" data-a="freeChip" data-x="${x}" aria-label="${x}">${ic('plus',10)} ${x}</button>`).join('')}</div>
       <textarea class="in mb8" id="freeTxt" rows="2" placeholder="Hoy comí…" style="text-align:left">${esc(UI.freeTxt||'')}</textarea>
       <button class="btn primary full" data-a="freeCalc">Calcular macros</button>
       ${UI.freeRes?`<div class="mt12">
@@ -13309,7 +13313,7 @@ const node=(on,icn,val,lb,bonus)=>{
         <img loading="lazy" src="${UID==='andres'?CAB.tileFotoA:CAB.tileFotoC}" alt="" decoding="async" style="position:absolute;right:4px;bottom:0;height:88px;filter:drop-shadow(0 6px 12px rgba(0,0,0,.45))">
       </div>`:''}
     </div>
-    <button class="small dim mt8" data-a="tab" data-t="mas" style="display:flex;gap:6px;align-items:center;text-align:left">${ic('bell',12)} ${next.length?'Próximos: '+next.slice(0,2).map(r=>r.time+' '+r.label.toLowerCase()).join(' · '):'Sin recordatorios activos'}</button>
+    <button class="small dim mt8" data-a="tab" data-t="mas" style="display:flex;gap:6px;align-items:center;text-align:left" aria-label="${next.length?'Próximos: '+next.slice(0,2).map(r=>r.time+' '+r.label.toLowerCase()).join(' · '):'Sin recordatorios activos'}">${ic('bell',12)} ${next.length?'Próximos: '+next.slice(0,2).map(r=>r.time+' '+r.label.toLowerCase()).join(' · '):'Sin recordatorios activos'}</button>
   </section>
 `;
 }
@@ -13433,7 +13437,7 @@ function cycPesoNota(c){
   else txt=retiene
       ? `Estable esta semana (${fmt1(Math.round(a.kg*10)/10)} kg). En fase ${c.fase.toLowerCase()} mantenerte ya es buena señal: suele subir por retención.`
       : `Estable esta semana: <b>${fmt1(Math.round(a.kg*10)/10)} kg</b> de promedio.`;
-  return `<div class="cycpeso"><span class="lbl" style="color:${c.col}">TU PESO ESTA SEMANA</span>
+  return `<div class="cycpeso"><span class="lbl" style="color:${c.col}">Tu peso esta semana</span>
     <div class="small mt4" style="line-height:1.5">${txt}</div></div>`;
 }
 /* tira de las 4 fases con la actual resaltada, reusada en la ventana de detalle del ciclo */
@@ -13526,7 +13530,7 @@ function vEntrenar(){
    que es como uno busca cuando no tiene el nombre en la cabeza. */
 function exPickRow(x, accion, extra){
   const at=Object.entries(extra||{}).map(([k,v])=>`data-${k}="${v}"`).join(' ');
-  return `<button class="actrow" data-a="${accion}" ${at} data-id="${x.id}">${excatThumb(x)}
+  return `<button class="actrow" data-a="${accion}" ${at} data-id="${x.id}" aria-label="${esc(x.name)}">${excatThumb(x)}
     <span class="grow tl" style="min-width:0"><b class="small" style="display:block">${esc(x.name)}</b>
       <i class="small dim">${EXCAT_LABELS[x.cat]||x.cat}${x.equip?' · '+(EXCAT_EQUIP_BADGE[x.equip]||x.equip):''}</i></span>${ic('plus',14)}</button>`;
 }
@@ -13573,7 +13577,7 @@ function rutEditorHTML(r){
         <button class="rutbtn red" data-a="rutQuita" data-rid="${r.id}" data-id="${e.id}" aria-label="Quitar ${esc(e.name)}">${ic('x',12)}</button>
       </div>`;}).join('')}
     ${quitados.length?`<div class="small dim mt8">Quitados: ${quitados.map(x=>
-      `<button class="chip" data-a="rutQuita" data-rid="${r.id}" data-id="${x.id}" data-und="1">${esc(shortEx(x.n))} ${ic('plus',9)}</button>`).join(' ')}</div>`:''}
+      `<button class="chip" data-a="rutQuita" data-rid="${r.id}" data-id="${x.id}" data-und="1" aria-label="${esc(shortEx(x.n))}">${esc(shortEx(x.n))} ${ic('plus',9)}</button>`).join(' ')}</div>`:''}
     <div class="inwrap mt12">${ic('search',15)}<input class="in has-ic" placeholder="Buscar un ejercicio…" value="${esc(UI.rutQ||'')}" data-ch="rutq"></div>
     ${q ? (found.length?`<div class="mt8">${found.map(x=>exPickRow(x, 'rutAgrega', {rid:r.id})).join('')}</div>`
                        :'<div class="small dim mt8">Nada con esa búsqueda.</div>')
@@ -13616,7 +13620,7 @@ function libreForm(sel){
         </div>
       </div>`).join('')}</div>`:''}
     ${frec.length&&!q?`<div class="flex wrapf mt8" style="gap:6px">${frec.map(f=>
-      `<button class="chip" data-a="libreAdd" data-id="${f.id}">${ic('plus',9)} ${esc(shortEx(exNombre(f.id)))}</button>`).join('')}</div>`:''}
+      `<button class="chip" data-a="libreAdd" data-id="${f.id}" aria-label="${esc(shortEx(exNombre(f.id)))}">${ic('plus',9)} ${esc(shortEx(exNombre(f.id)))}</button>`).join('')}</div>`:''}
     <div class="inwrap mt8">${ic('search',15)}<input class="in has-ic" placeholder="Buscar un ejercicio…" value="${esc(UI.libreQ||'')}" data-ch="libreq"></div>
     ${q ? (found.length?`<div class="mt8">${found.map(x=>exPickRow(excatById(x.id)||{id:x.id,name:x.name,cat:'otros'}, 'libreAdd', {})).join('')}</div>`
                        :'<div class="small dim mt8">Nada con esa búsqueda.</div>')
@@ -13647,7 +13651,7 @@ function vRutinaDetalle(){
   </section>
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('barbell',16)} Ejercicios</span>
-      <button class="chip ${UI.rutEdit===r.id?'fill':''}" data-a="rutEdit" data-rid="${r.id}">${UI.rutEdit===r.id?'Listo':'Editar'}</button></div>
+      <button class="chip ${UI.rutEdit===r.id?'fill':''}" data-a="rutEdit" data-rid="${r.id}" aria-label="${UI.rutEdit===r.id?'Listo':'Editar'}">${UI.rutEdit===r.id?'Listo':'Editar'}</button></div>
     ${UI.rutEdit===r.id?rutEditorHTML(r):''}
     ${sessEx(r).map((e,i)=>{ const l=(S.logs[e.id]||[]).slice(-1)[0]; const nS=(S.custom&&S.custom[e.id])??e.sets;
       return `<div class="row"><span class="num" style="font-size:15px;min-width:26px">${pad2(i+1)}</span>
@@ -13702,7 +13706,7 @@ function vRutinas(){
     </button>
   </div>
   ${UI.mobilOpen?`<section class="mod">
-    <div class="mod-head"><span class="ttl">${ic('heart',16)} Movilidad diaria · ~${movTotalMin()} min</span><button class="btn sm ${S.mobil[TODAY()]?'ghost':'primary'}" data-a="mobilTgl">${S.mobil[TODAY()]?'Hecha ✓':'Hecha hoy (+1)'}</button></div>
+    <div class="mod-head"><span class="ttl">${ic('heart',16)} Movilidad diaria · ~${movTotalMin()} min</span><button class="btn sm ${S.mobil[TODAY()]?'ghost':'primary'}" data-a="mobilTgl" aria-label="${S.mobil[TODAY()]?'Hecha ✓':'Hecha hoy (+1)'}">${S.mobil[TODAY()]?'Hecha ✓':'Hecha hoy (+1)'}</button></div>
     <button class="btn primary full mb12" data-a="movPlay">${ic('play',14)} Empezar rutina guiada</button>
     ${MOV_RUTINA.map(bl=>`
       <span class="lbl" style="display:block;margin:10px 0 2px">${esc(bl.b).toUpperCase()}</span>
@@ -13776,7 +13780,7 @@ function vExcat(){
       <p class="small dim" style="margin:0 0 2px">Toca la zona que quieres trabajar. Gira el cuerpo para llegar a la espalda.</p>
       ${medMapa(z, {accion:'excatZona', cotas:false})}
       ${conEj.length>1?`<div class="flex wrapf mt8" style="gap:6px">${conEj.map(mm=>
-        `<button class="chip ${mm===m?'fill':''}" data-a="excatMusc" data-m="${mm}">${esc(MUSC_NOM[mm]||mm)}</button>`).join('')}</div>`:''}
+        `<button class="chip ${mm===m?'fill':''}" data-a="excatMusc" data-m="${mm}" aria-label="${esc(MUSC_NOM[mm]||mm)}">${esc(MUSC_NOM[mm]||mm)}</button>`).join('')}</div>`:''}
       ${m?`<div class="flex between mt8" style="align-items:baseline">
           <b>${esc(MUSC_NOM[m]||m)}</b><span class="small dim">${items.length} ejercicio${items.length===1?'':'s'}${eq?' con '+EXCAT_EQUIP_LABELS[eq].toLowerCase():''} · de más a menos activación</span></div>
         ${items.length?items.map(it=>excatRowPc(it.x, it.pc)).join(''):`<div class="small dim" style="padding:10px 2px">Ninguno con ese filtro de equipo. Quítalo y vuelve a mirar.</div>`}`
@@ -13855,7 +13859,7 @@ function excatDetailBox(id){
     ${true?`<div class="mt12 flex between" style="align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.03)">
       <div class="grow" style="min-width:0"><b class="small">¿El peso es por lado o el total?</b>
         <div class="small dim mt4" style="line-height:1.45">Si apuntas 27 en un curl con mancuerna y son 27 <b>por brazo</b>, márcalo: son 54 kg de trabajo real y así cuadran el tonelaje y tu nivel.</div></div>
-      <button class="chip ${exPorLado(id)?'fill':''}" data-a="exLado" data-id="${id}" style="flex:none">${exPorLado(id)?'Por lado':'Total'}</button>
+      <button class="chip ${exPorLado(id)?'fill':''}" data-a="exLado" data-id="${id}" style="flex:none" aria-label="${exPorLado(id)?'Por lado':'Total'}">${exPorLado(id)?'Por lado':'Total'}</button>
     </div>`:''}
     ${(()=>{const e=esfuerzoEx(id); if(Math.abs(e.f-1)<0.02 && !e.extra) return '';
       const mas=e.f>1;
@@ -14063,7 +14067,7 @@ function schedPlanHTML(){
           <span class="nfchev">${ic('chevR',14)}</span>
         </button>
         ${UI.wkPick===dow?`<div class="wkopts">
-          ${ROUTINES_ASIG().map(r=>`<button class="wkopt ${tok===r.id?'on':''}" data-a="wkSet" data-d="${dow}" data-v="${r.id}"><img loading="lazy" src="${entrenoImg(r)}" alt="" decoding="async">${r.name}</button>`).join('')}
+          ${ROUTINES_ASIG().map(r=>`<button class="wkopt ${tok===r.id?'on':''}" data-a="wkSet" data-d="${dow}" data-v="${r.id}" aria-label="${r.name}"><img loading="lazy" src="${entrenoImg(r)}" alt="" decoding="async">${r.name}</button>`).join('')}
           <button class="wkopt movopt ${mov?'on':''}" data-a="wkSet" data-d="${dow}" data-v="mov"><span class="wkoic">${ic('heart',15)}</span>Movilidad</button>
           <button class="wkopt restopt ${tok==='rest'?'on':''}" data-a="wkSet" data-d="${dow}" data-v="rest"><span class="wkoic">${ic('moon',15)}</span>Descanso</button>
         </div>`:''}
@@ -14165,9 +14169,9 @@ function calSemana(){
   return `
   <section class="mod">
     <div class="mod-head">
-      <button class="btn sm ghost" data-a="calNav" data-n="-1">${ic('chevL',14)}</button>
+      <button class="btn sm ghost" data-a="calNav" data-n="-1" aria-label="Anterior">${ic('chevL',14)}</button>
       <span class="ttl">Semana del ${fmtD(mon)}</span>
-      <button class="btn sm ghost" data-a="calNav" data-n="1">${ic('chevR',14)}</button>
+      <button class="btn sm ghost" data-a="calNav" data-n="1" aria-label="Siguiente">${ic('chevR',14)}</button>
     </div>
     ${rows}
     <div class="flex wrapf mt8" style="gap:12px">
@@ -14230,9 +14234,9 @@ function calMes(){
       <div style="flex:1 1 170px;min-width:0"><span class="lbl">${trainedMo} entreno${trainedMo===1?'':'s'} este mes</span>
         <h2 class="t-h2" style="margin-top:4px">${MESES[mo]} ${y}</h2></div>
       <div class="flex" style="gap:6px">
-        <button class="btn sm ghost" data-a="calNav" data-n="-1">${ic('chevL',14)}</button>
+        <button class="btn sm ghost" data-a="calNav" data-n="-1" aria-label="Anterior">${ic('chevL',14)}</button>
         <button class="chip fill" data-a="calToday">Hoy ${fromISO(TODAY()).getDate()}</button>
-        <button class="btn sm ghost" data-a="calNav" data-n="1">${ic('chevR',14)}</button>
+        <button class="btn sm ghost" data-a="calNav" data-n="1" aria-label="Siguiente">${ic('chevR',14)}</button>
       </div>
     </div>
     <div class="calhead mt12">${['L','M','X','J','V','S','D'].map(x=>`<span>${x}</span>`).join('')}</div>
@@ -14264,9 +14268,9 @@ function daySummary(d){
        carro: los dos ajustes viven junto a las series, no escondidos en otra pantalla */
     const opt=`<div class="flex wrapf mt8" style="gap:5px;align-items:center">
       <span class="small dim" style="margin-right:2px">Ese peso es</span>
-      <button class="chip xs ${exPorLado(id)?'fill':''}" data-a="exLado" data-id="${id}">${exPorLado(id)?'por lado':'el total'}</button>
+      <button class="chip xs ${exPorLado(id)?'fill':''}" data-a="exLado" data-id="${id}" aria-label="${exPorLado(id)?'por lado':'el total'}">${exPorLado(id)?'por lado':'el total'}</button>
       ${exEsMaquina(id)?`<span class="small dim" style="margin:0 2px 0 6px">Carro</span>
-        ${[0,15,20,25,30,40,45].map(v=>`<button class="chip xs ${exTara(id)===v?'fill':''}" data-a="exTara" data-id="${id}" data-v="${v}">${v===0?'nada':v}</button>`).join('')}`:''}
+        ${[0,15,20,25,30,40,45].map(v=>`<button class="chip xs ${exTara(id)===v?'fill':''}" data-a="exTara" data-id="${id}" data-v="${v}" aria-label="${v===0?'nada':v}">${v===0?'nada':v}</button>`).join('')}`:''}
     </div>`;
     return `<div class="dayedex"><div class="flex between" style="margin-bottom:6px"><b class="small">${esc(name)}</b><button class="chip red" data-a="dayDelEx" data-d="${d}" data-id="${id}" data-hi="${hi}" aria-label="Quitar ${esc(name)} de este día">${ic('x',10)} quitar</button></div>${h.sets.map((s,i)=>`<div class="deset"><span class="desi">${i+1}</span><input class="in ctr" inputmode="decimal" value="${s.w}" data-ch="logSet" data-ex="${id}" data-hi="${hi}" data-i="${i}" data-f="w" aria-label="kg"><span class="dex">kg ×</span><input class="in ctr" inputmode="numeric" value="${s.r}" data-ch="logSet" data-ex="${id}" data-hi="${hi}" data-i="${i}" data-f="r" aria-label="reps"><span class="dex">reps</span></div>`).join('')}${opt}</div>`;
   }).join('');
@@ -14304,7 +14308,7 @@ function calEditor(){
       ${splan?`<span class="chip dim">${splan.name}</span>`:'<span class="chip dim">Libre</span>'}</div>
     ${sessionLogged?`<span class="lbl" style="display:block;margin-bottom:8px">${ic('check',12)} Lo que hiciste este día</span>${daySummary(sel)}`:''}
     ${!sessionLogged && sel<=TODAY() ? `<div class="mb12"><span class="lbl">¿Entrenaste? regístralo con series</span>
-      <div class="flex wrapf mt8">${ROUTINES_ASIG().map(r=>`<button class="chip ${splan&&r.id===splan.id?'fill':''}" data-a="pastSession" data-rid="${r.id}">${ic('barbell',11)} ${r.name}</button>`).join('')}
+      <div class="flex wrapf mt8">${ROUTINES_ASIG().map(r=>`<button class="chip ${splan&&r.id===splan.id?'fill':''}" data-a="pastSession" data-rid="${r.id}" aria-label="${r.name}">${ic('barbell',11)} ${r.name}</button>`).join('')}
         <button class="chip ${UI.libre&&UI.libre.d===sel?'fill':''}" data-a="libreAbrir" data-d="${sel}">${ic('plus',11)} Personalizado</button></div>
       ${UI.libre&&UI.libre.d===sel?libreForm(sel):`<div class="small dim mt8">Se abre la sesión apuntando al ${fmtD(sel)}: los kg y reps entran al historial y a las gráficas de fuerza de cada ejercicio. Si ese día hiciste algo que no es ninguna rutina, usa <b>Personalizado</b>.</div>`}</div>`
     : (sessionLogged && sel<=TODAY() ? `<div class="mb12">
@@ -14312,7 +14316,7 @@ function calEditor(){
         :`<button class="btn ghost full" data-a="libreAbrir" data-d="${sel}">${ic('plus',13)} Agregar más ejercicios de ese día</button>`}</div>` : '')}
     <span class="lbl">¿Qué hiciste este día?</span>
     <div class="flex wrapf mt8 mb12">
-      ${ACTDEF.map(a=>`<button class="chip ${S.acts[sel]?.t===a.t?'fill':''}" data-a="calAct" data-t="${a.t}">${ic(a.icon,12)} ${a.label}</button>`).join('')}
+      ${ACTDEF.map(a=>`<button class="chip ${S.acts[sel]?.t===a.t?'fill':''}" data-a="calAct" data-t="${a.t}" aria-label="${a.label}">${ic(a.icon,12)} ${a.label}</button>`).join('')}
       ${S.acts[sel]?`<button class="chip red" data-a="calAct" data-t="${S.acts[sel].t}">${ic('x',12)} Quitar</button>`:''}
     </div>
     ${runBox(sel)}
@@ -14354,12 +14358,12 @@ function calEditor(){
     <div class="row">
       <div class="ck ${S.inject.includes(sel)?'on':''}">${S.inject.includes(sel)?ic('check',14):''}</div>
       <div class="grow"><b style="font-size:16px">Inyección</b><div class="small dim">retatrutida · 1 vez por semana</div></div>
-      <button class="btn sm ${S.inject.includes(sel)?'ghost':''}" data-a="injectAt">${ic('syringe',13)} ${S.inject.includes(sel)?'Quitar':'Marcar'}</button>
+      <button class="btn sm ${S.inject.includes(sel)?'ghost':''}" data-a="injectAt" aria-label="${S.inject.includes(sel)?'Quitar':'Marcar'}">${ic('syringe',13)} ${S.inject.includes(sel)?'Quitar':'Marcar'}</button>
     </div>
     ${(FOTOS_OK||SB)?`<div class="row">
       <div class="ck ${FOTODAYS.has(sel)?'on':''}">${FOTODAYS.has(sel)?ic('check',14):''}</div>
       <div class="grow"><b style="font-size:16px">Foto de ese día</b><div class="small dim">cámara o galería · quedó pendiente, súbela después</div></div>
-      <button class="btn sm ghost" data-a="fotoShotAt">${ic('camera',13)} ${FOTODAYS.has(sel)?'Cambiar':'Agregar'}</button>
+      <button class="btn sm ghost" data-a="fotoShotAt" aria-label="${FOTODAYS.has(sel)?'Cambiar':'Agregar'}">${ic('camera',13)} ${FOTODAYS.has(sel)?'Cambiar':'Agregar'}</button>
     </div>`:''}
     <div class="small dim mt8">Todo lo que marques aquí entra a la racha, la adherencia y las gráficas.</div>
   </section>`, false);
@@ -14654,7 +14658,7 @@ function exStats(exId){
   const pr=(icn,lb,v,dd)=>`<div class="prrow${dd?' tap':''}" ${dd?`data-a="recDay" data-d="${dd}"`:''}><span class="prl">${ic(icn,15)} ${lb}</span><span class="prv">${v}${dd?' <span class="prd">'+fmtD(dd)+'</span>'+ic('chevR',11):''}</span></div>`;
   const box=document.createElement('div'); box.className='fbox sheet';
   box.innerHTML=`<div class="fboxin exstats">
-    <div class="flex between mb8"><b class="t-h2" style="min-width:0">${esc(ex.name)}</b><button class="btn sm" id="fcls">${ic('x',14)}</button></div>
+    <div class="flex between mb8"><b class="t-h2" style="min-width:0">${esc(ex.name)}</b><button class="btn sm" id="fcls" aria-label="Cerrar">${ic('x',14)}</button></div>
     ${hist.length?`
     <div class="grid1px cols3 mb8">
       <div class="stat"><span class="lbl">Última</span><div class="v">${fmt1(lastTop)}</div><span class="u">kg · ${last?fmtD(last.d):''}</span></div>
@@ -14734,10 +14738,10 @@ function exExtras(e){
   const alt=(S.draft.alts||{})[e.id];
   return `
   ${UI.taraOpen?`<div class="mt8 exopanel">
-    <span class="lbl">EL CARRO DE LA MÁQUINA</span>
+    <span class="lbl">El carro de la máquina</span>
     <div class="small dim mt4" style="line-height:1.5">El carro vacío ya pesa, y ese peso se mueve igual. Si no se cuenta, el 1RM y el nivel salen bajos. Hack squat suele ir entre 20 y 45 kg.</div>
     <div class="flex wrapf mt8" style="gap:5px">
-      ${[0,15,20,25,30,40,45].map(v=>`<button class="chip ${exTara(e.id)===v?'fill':''}" data-a="exTara" data-id="${e.id}" data-v="${v}">${v===0?'nada':v+' kg'}</button>`).join('')}
+      ${[0,15,20,25,30,40,45].map(v=>`<button class="chip ${exTara(e.id)===v?'fill':''}" data-a="exTara" data-id="${e.id}" data-v="${v}" aria-label="${v===0?'nada':v+' kg'}">${v===0?'nada':v+' kg'}</button>`).join('')}
     </div>
     <div class="small dim mt8">Se guarda para este ejercicio y se aplica también a lo que ya registraste.</div>
   </div>`:''}
@@ -14745,10 +14749,10 @@ function exExtras(e){
     ${(()=>{const g=MUSCLE[e.id]; if(!g) return '';
       const cands=swapCandidates(e.id); if(!cands.length) return '';
       return `<span class="lbl">MISMO GRUPO · ${g.toUpperCase()}</span>
-      <div class="swapgrid mt8 mb8">${cands.map(x=>`<button class="swapcard ${alt===x.name?'sel':''}" data-a="swapEx" data-ex="${e.id}" data-n="${esc(x.name)}"><img src="assets/ej/${x.img}" loading="lazy" decoding="async" alt="" onerror="this.style.display='none'"><span>${shortEx(x.name)}</span></button>`).join('')}</div>`})()}
+      <div class="swapgrid mt8 mb8">${cands.map(x=>`<button class="swapcard ${alt===x.name?'sel':''}" data-a="swapEx" data-ex="${e.id}" data-n="${esc(x.name)}" aria-label="${shortEx(x.name)}"><img src="assets/ej/${x.img}" loading="lazy" decoding="async" alt="" onerror="this.style.display='none'"><span>${shortEx(x.name)}</span></button>`).join('')}</div>`})()}
     <div class="flex wrapf">
       <button class="chip ${!alt?'fill':''}" data-a="swapEx" data-ex="${e.id}" data-n="">${e.name} (original)</button>
-      ${(ALTS[e.id]||[]).map(n=>`<button class="chip ${alt===n?'fill':''}" data-a="swapEx" data-ex="${e.id}" data-n="${esc(n)}">${n}</button>`).join('')}
+      ${(ALTS[e.id]||[]).map(n=>`<button class="chip ${alt===n?'fill':''}" data-a="swapEx" data-ex="${e.id}" data-n="${esc(n)}" aria-label="${n}">${n}</button>`).join('')}
     </div></div>`:''}
   ${UI.noteOpen?`<textarea class="in mt8" rows="2" placeholder="Ajustes de máquina, agarre, sensaciones… (queda guardado)" data-ch="exnote" data-ex="${e.id}" style="text-align:left">${esc(S.exnotes[e.id]||'')}</textarea>`:''}
   ${UI.platesOpen?`<div class="mt8">${(S.draft.data[e.id].map(s=>Number(s.w)).filter((v,i,a)=>v>20&&a.indexOf(v)===i).map(w=>`<div class="flex mb8" style="gap:10px;align-items:center"><span class="mono" style="font:500 13px var(--num);min-width:56px">${fmt1(w)} kg</span>${plateViz(w)}</div>`).join(''))||'<div class="small dim">Escribe un peso mayor a 20 kg (la barra) y te dibujo los discos por lado.</div>'}<div class="small dim">discos por lado · barra de 20 kg</div></div>`:''}`;
@@ -14768,12 +14772,12 @@ function exCard(e,idx,focus,N){
       ${(()=>{const g=MUSCLE[e.id]; if(!g) return '';
         const cands=swapCandidates(e.id); if(!cands.length) return '';
         return `<span class="lbl">MISMO GRUPO · ${g.toUpperCase()}</span>
-        <div class="swapgrid mt8 mb8">${cands.map(x=>`<button class="swapcard ${alt===x.name?'sel':''}" data-a="swapEx" data-ex="${e.id}" data-n="${esc(x.name)}">
+        <div class="swapgrid mt8 mb8">${cands.map(x=>`<button class="swapcard ${alt===x.name?'sel':''}" data-a="swapEx" data-ex="${e.id}" data-n="${esc(x.name)}" aria-label="${shortEx(x.name)}">
             <img src="assets/ej/${x.img}" loading="lazy" decoding="async" alt="" onerror="this.style.display='none'">
             <span>${shortEx(x.name)}</span></button>`).join('')}</div>`})()}
       <div class="flex wrapf">
         <button class="chip ${!alt?'fill':''}" data-a="swapEx" data-ex="${e.id}" data-n="">${e.name} (original)</button>
-        ${(ALTS[e.id]||[]).map(n=>`<button class="chip ${alt===n?'fill':''}" data-a="swapEx" data-ex="${e.id}" data-n="${esc(n)}">${n}</button>`).join('')}
+        ${(ALTS[e.id]||[]).map(n=>`<button class="chip ${alt===n?'fill':''}" data-a="swapEx" data-ex="${e.id}" data-n="${esc(n)}" aria-label="${n}">${n}</button>`).join('')}
       </div>
     </div>`:''}
     ${focus&&!alt?exMedia(e.id):''}
@@ -14835,15 +14839,15 @@ function exRow(e,idx,N,done){
       <button class="chip ${UI.noteOpen?'fill':''}" data-a="exOptPick" data-ex="${e.id}" data-o="note">${ic('clip',12)} Nota</button>
       <button class="chip ${UI.platesOpen?'fill':''}" data-a="exOptPick" data-ex="${e.id}" data-o="plates">${ic('barbell',12)} Discos</button>
       <button class="chip ${exPorLado(e.id)?'fill':''}" data-a="exLado" data-id="${e.id}"
-        aria-pressed="${exPorLado(e.id)?'true':'false'}">${ic('eqMancuerna',12)} ${exPorLado(e.id)?'Por lado':'Total'}</button>
+        aria-pressed="${exPorLado(e.id)?'true':'false'}" aria-label="${exPorLado(e.id)?'Por lado':'Total'}">${ic('eqMancuerna',12)} ${exPorLado(e.id)?'Por lado':'Total'}</button>
       ${exEsMaquina(e.id)?`<button class="chip ${UI.taraOpen?'fill':''}" data-a="exOptPick" data-ex="${e.id}" data-o="tara">${ic('eqMaquina',12)} Carro ${exTara(e.id)?fmt1(exTara(e.id))+' kg':'sin poner'}</button>`:''}
       <button class="chip" data-a="exInf" data-id="${e.id}">${ic('clip',12)} Informe</button>
-      <button class="chip ${exMuscElegido(e.id)?'fill':''}" data-a="exMuscTgl" data-id="${e.id}">${ic('target',12)} ${exMuscElegido(e.id)?esc(MUSC_NOM[exMuscElegido(e.id)]||exMuscElegido(e.id)):'¿Qué músculo?'}</button>
+      <button class="chip ${exMuscElegido(e.id)?'fill':''}" data-a="exMuscTgl" data-id="${e.id}" aria-label="${exMuscElegido(e.id)?esc(MUSC_NOM[exMuscElegido(e.id)]||exMuscElegido(e.id)):'¿Qué músculo?'}">${ic('target',12)} ${exMuscElegido(e.id)?esc(MUSC_NOM[exMuscElegido(e.id)]||exMuscElegido(e.id)):'¿Qué músculo?'}</button>
     </div>`:''}
     ${UI.exMuscOpen===e.id?`<div class="escaj mt8">
       <span class="small dim" style="display:block;line-height:1.5">¿A qué músculo va este ejercicio? Lo que elijas manda sobre lo que la app deduzca del nombre, y de ahí sale la carga por músculo.</span>
       <div class="flex wrapf mt8" style="gap:5px">
-        ${Object.keys(MUSC_PATRON).map(m=>`<button class="chip xs ${exMuscElegido(e.id)===m?'fill':''}" data-a="exMusc" data-id="${e.id}" data-m="${m}">${esc(MUSC_NOM[m]||m)}</button>`).join('')}
+        ${Object.keys(MUSC_PATRON).map(m=>`<button class="chip xs ${exMuscElegido(e.id)===m?'fill':''}" data-a="exMusc" data-id="${e.id}" data-m="${m}" aria-label="${esc(MUSC_NOM[m]||m)}">${esc(MUSC_NOM[m]||m)}</button>`).join('')}
         ${exMuscElegido(e.id)?`<button class="chip xs" data-a="exMusc" data-id="${e.id}" data-m="">${ic('x',9)} automático</button>`:''}
       </div>
       ${(()=>{ const pat=ejPatron(e.id, exNombre(e.id)), r=pat?repartoDe(pat):null;
@@ -14884,7 +14888,7 @@ function vSession(){
       <span class="small dim" style="min-width:0">RIR 1-2 · el cronómetro arranca al marcar</span>
       <button class="restbtn ${UI.restOpen?'on':''}" data-a="restMenu" aria-label="cambiar descanso" style="flex:none">${ic('clock',14)} ${restLbl}</button>
     </div>
-    ${UI.restOpen?`<div class="flex wrapf mt8" style="gap:6px">${[['auto','AUTO'],['60','1:00'],['90','1:30'],['120','2:00'],['180','3:00']].map(([v,l])=>`<button class="chip ${String(S.draft.restSec||'auto')===v?'fill':''}" data-a="restSet" data-v="${v}">${l}</button>`).join('')}</div>`:''}
+    ${UI.restOpen?`<div class="flex wrapf mt8" style="gap:6px">${[['auto','AUTO'],['60','1:00'],['90','1:30'],['120','2:00'],['180','3:00']].map(([v,l])=>`<button class="chip ${String(S.draft.restSec||'auto')===v?'fill':''}" data-a="restSet" data-v="${v}" aria-label="${l}">${l}</button>`).join('')}</div>`:''}
     ${dl?'<div class="chip red mt8">Descarga: haz solo 2 series</div>':''}
   </section>
   ${EX.map((e,i)=>exRow(e,i,N,exDone(e))).join('')}
@@ -14896,7 +14900,7 @@ function vSession(){
       return found.length?found.map(x=>`<button class="actrow" data-a="addExFromCat2" data-id="${x.id}" aria-label="${esc(x.name)}">${excatThumb(x)}<span class="grow tl" style="min-width:0"><b style="font:600 15px var(--ui);display:block">${esc(x.name)}</b></span><span class="exbadge">${EXCAT_EQUIP_BADGE[x.equip]||'OTRO'}</span></button>`).join(''):'<div class="small dim">Nada con esa búsqueda.</div>';})()}</div>`:''}
     <div class="flex mt8" style="gap:8px">
       <input class="in grow" id="addExName" placeholder="U otro nombre libre (queda 3×8-12)">
-      <button class="btn sm" data-a="addExFree">${ic('plus',13)}</button>
+      <button class="btn sm" data-a="addExFree" aria-label="Agregar con este nombre">${ic('plus',13)}</button>
     </div>`:''}
   </section>
   <section class="mod"><button class="btn primary full" data-a="finish">${ic('check',16)} Finalizar sesión</button>
@@ -14937,7 +14941,9 @@ function macroLine(m){ return `${m.pg}P · ${m.cg}C · ${m.fg}G · ~${m.kc} kcal
    resto (porciones, carbo, grasa, kcal) queda chico y apagado detras, sin chip
    nuevo. por=null cuando las porciones ya se ven aparte (ver gestSemanaHTML). */
 function recPersonRow(who, col, por, m){
-  return `<div class="recwline"><i class="pdot" style="background:${col}"></i><b class="recwname">${who}</b>${por!=null?`<span class="recwport">× ${por}</span>`:''}<b class="recwprot">${m.pg}<i>P</i></b><span class="recwrest">${m.cg}C · ${m.fg}G · ~${m.kc} kcal</span></div>`;
+  /* Fase 4: coma decimal tambien aca (39.8P se veia con punto, contra la regla) */
+  const fq=v=>v%1?fmt1(v):String(v);
+  return `<div class="recwline"><i class="pdot" style="background:${col}"></i><b class="recwname">${who}</b>${por!=null?`<span class="recwport">× ${por}</span>`:''}<b class="recwprot">${fq(m.pg)}<i>P</i></b><span class="recwrest">${fq(m.cg)}C · ${fq(m.fg)}G · ~${m.kc} kcal</span></div>`;
 }
 /* Punto E: un solo criterio de color de estado para toda la vista de comida (el
    resumen de la semana, "como se distribuye" y la semana comida por comida): verde
@@ -15042,7 +15048,7 @@ function vRecetas(){
   </section>
   <section class="mod tight">
     <div class="inwrap"><span style="left:13px">${ic('search',16)}</span><input class="in has-ic" placeholder="Buscar receta…" value="${esc(UI.recQ)}" data-ch="recq" style="padding-right:44px"><button class="infilter" data-a="foodFilter" aria-label="filtros">${ic('filter',15)}</button></div>
-    ${UI.foodFilter?`<div class="flex wrapf mt8">${CATS.map(c=>`<button class="chip cat-${c.id}" data-a="foodCat" data-c="${c.id}">${catIco(c.id,14)} ${c.label}</button>`).join('')}</div>
+    ${UI.foodFilter?`<div class="flex wrapf mt8">${CATS.map(c=>`<button class="chip cat-${c.id}" data-a="foodCat" data-c="${c.id}" aria-label="${c.label}">${catIco(c.id,14)} ${c.label}</button>`).join('')}</div>
     <div class="flex wrapf mt8">${DIF_OPTS.map(([v,lb])=>`<button class="chip ${UI.recDif===v?'fill':''}" data-a="recDifSet" data-v="${v}" aria-label="filtrar por dificultad ${lb}">${lb}</button>`).join('')}</div>`:''}
   </section>
   <section class="mod">
@@ -15062,7 +15068,7 @@ function vIdeasReceta(){
   return `
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('star',16)} Sugerir receta</span>
-      <button class="chip ${UI.ideaOpen?'fill':''}" data-a="ideaOpen">${UI.ideaOpen?'Cerrar':'Nueva idea'}</button></div>
+      <button class="chip ${UI.ideaOpen?'fill':''}" data-a="ideaOpen" aria-label="${UI.ideaOpen?'Cerrar':'Nueva idea'}">${UI.ideaOpen?'Cerrar':'Nueva idea'}</button></div>
     <div class="small dim${UI.ideaOpen?' mb8':''}">¿Viste o te acordaste de una receta? Cuéntala aquí. El estimado de macros sale de cruzar tus ingredientes contra tu catálogo de alimentos, no de una búsqueda en internet.</div>
     ${UI.ideaOpen?`
     <input class="in mb8" id="irName" placeholder="Nombre de la receta" value="${esc(UI.irNameVal||'')}">
@@ -15126,10 +15132,10 @@ function weekFormHTML(){
   return `<div class="fboxin">
     <div class="flex between mb8"><b class="t-h2">Arma la semana</b><button class="btn sm" data-a="wkFormClose" aria-label="cerrar">${ic('x',14)}</button></div>
 
-    <span class="lbl">PROTEÍNAS DE LA SEMANA</span>
+    <span class="lbl">Proteínas de la semana</span>
     <div class="flex wrapf mt8 mb12">${PROT_CATS.map(id=>{
       const c=CATS.find(x=>x.id===id);
-      return `<button class="chip ${p.proteinas.includes(id)?'fill':''}" data-a="wkProt" data-v="${id}">${catIco(id,14)} ${c.label}</button>`;
+      return `<button class="chip ${p.proteinas.includes(id)?'fill':''}" data-a="wkProt" data-v="${id}" aria-label="${c.label}">${catIco(id,14)} ${c.label}</button>`;
     }).join('')}</div>
 
     <span class="lbl">Comidas por día · cuántas veces come cada uno</span>
@@ -15162,8 +15168,8 @@ function weekFormHTML(){
       <div class="grow"><b style="font-size:15px">Aprovechar lo que ya tengo en casa</b><div class="small dim">No borra tu checklist ni fuerza los básicos</div></div>
     </button>
 
-    <span class="lbl">TIEMPO DE COCINA</span>
-    <div class="seg cols3 mt8 mb8">${TIEMPO_OPTS.map(([v,lb])=>`<button class="${p.tiempo===v?'on':''}" data-a="wkTiempo" data-v="${v}">${lb}</button>`).join('')}</div>
+    <span class="lbl">Tiempo de cocina</span>
+    <div class="seg cols3 mt8 mb8">${TIEMPO_OPTS.map(([v,lb])=>`<button class="${p.tiempo===v?'on':''}" data-a="wkTiempo" data-v="${v}" aria-label="${lb}">${lb}</button>`).join('')}</div>
 
     <span class="lbl">Hasta qué dificultad cocinar</span>
     <div class="seg cols3 mt8 mb12">${DIF_OPTS.map(([v,lb])=>`<button class="${p.dificultad===v?'on':''}" data-a="wkDificultad" data-v="${v}" aria-label="hasta ${lb}">${lb}</button>`).join('')}</div>
@@ -15410,7 +15416,12 @@ function vLista(){
   const mult=PERIODS.find(p=>p.id===S.meal.period).mult;
   const view=S.meal.view||'both';
   const agg={};
-  const addIng=(n,q,u,c)=>{ const k=n+'|'+u; agg[k]=agg[k]||{n,u,q:0,c}; agg[k].q+=q; };
+  const addIng=(n,q,u,c)=>{
+    /* Fase 4: lo mismo en ml y en L caia en dos filas ("Leche" de recetas en ml y la
+       de basicos en L). Se normaliza a ml al agregar: mismo total y mismo costo
+       (el precio por L pasa a precio por ml), y fmtQty ya pinta 1000+ ml como L. */
+    if(u==='L'){ q=q*1000; c=c/1000; u='ml'; }
+    const k=n+'|'+u; agg[k]=agg[k]||{n,u,q:0,c}; agg[k].q+=q; };
   /* la lista sale de la SEMANA REAL: las mismas comidas (y los mismos ingredientes
      ya moldeados por el motor) que muestra "la semana comida por comida". Antes se
      multiplicaba porciones/semana a mano: con 6 recetas a 5 porciones se compraba
@@ -15465,9 +15476,9 @@ function vLista(){
     ${list.length?`<div class="flex between" style="align-items:baseline"><span class="small dim">Suma parcial · lo ya marcado</span>
       <span style="font:600 15px var(--num)">${fmtCOP(boughtCost)} <span class="small dim">de ${fmtCOP(total)}</span></span></div>
     <div class="bar mt8 mb12"><i style="width:${(total?clamp(boughtCost/total*100,0,100):0).toFixed(0)}%"></i></div>`:''}
-    <div class="seg cols3 mb8">${MKT_VIEWS.map(v=>`<button class="${view===v.id?'on':''}" data-a="mktView" data-v="${v.id}">${v.label}</button>`).join('')}</div>
+    <div class="seg cols3 mb8">${MKT_VIEWS.map(v=>`<button class="${view===v.id?'on':''}" data-a="mktView" data-v="${v.id}" aria-label="${v.label}">${v.label}</button>`).join('')}</div>
     <div class="small dim mb12">Ambos = mercado grupal. Andrés / Cami muestran la distribución individual de cada uno con sus básicos.</div>
-    <div class="seg cols3 mb12">${PERIODS.map(p=>`<button class="${S.meal.period===p.id?'on':''}" data-a="period" data-p="${p.id}">${p.label}</button>`).join('')}</div>
+    <div class="seg cols3 mb12">${PERIODS.map(p=>`<button class="${S.meal.period===p.id?'on':''}" data-a="period" data-p="${p.id}" aria-label="${p.label}">${p.label}</button>`).join('')}</div>
     <button class="row full" style="width:100%;text-align:left" data-a="staples">
       <div class="tgl ${S.meal.staples?'on':''}"><i></i></div>
       <div class="grow"><b style="font-size:16px">Incluir básicos fijos</b><div class="small dim">Avena, whey (scoop de Cami), yogur, fruta, maní, chía, huevos, atún respaldo, leche</div></div>
@@ -15475,7 +15486,7 @@ function vLista(){
     <div class="flex mt12" style="gap:8px">
       <input class="in grow" id="mkName" placeholder="Ítem libre (café, límpido…)">
       <input class="in" id="mkCost" inputmode="numeric" placeholder="$ opc." style="width:90px">
-      <button class="btn sm primary" data-a="mkAdd">${ic('plus',13)}</button>
+      <button class="btn sm primary" data-a="mkAdd" aria-label="Agregar al mercado">${ic('plus',13)}</button>
     </div>
     ${(S.meal.extras||[]).length?`<div class="small dim mt8 mb8">Ítems libres (van en todas las vistas):</div>`:''}
     ${(S.meal.extras||[]).map((it,i)=>{ const done=ckOn(it.n); return `
@@ -15528,10 +15539,10 @@ function vFacturas(){
   return `
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('camera',16)} Precios y facturas</span>
-      <button class="chip ${UI.facOpen?'fill':''}" data-a="facOpen">${UI.facOpen?'Cerrar':'Registrar precio'}</button></div>
+      <button class="chip ${UI.facOpen?'fill':''}" data-a="facOpen" aria-label="${UI.facOpen?'Cerrar':'Registrar precio'}">${UI.facOpen?'Cerrar':'Registrar precio'}</button></div>
     <div class="small dim${UI.facOpen?' mb8':''}">El precio se escribe a mano mirando la factura o el ticket. La foto queda de respaldo; esta app no lee el texto de la imagen (sin OCR).</div>
     ${UI.facOpen?`
-    <button class="btn full mb8" data-a="facPickFoto">${ic('camera',14)} ${UI.facFotoOk?'Foto adjunta ✓ · cambiar foto':'Adjuntar foto de la factura (opcional)'}</button>
+    <button class="btn full mb8" data-a="facPickFoto" aria-label="${UI.facFotoOk?'Foto adjunta ✓ · cambiar foto':'Adjuntar foto de la factura (opcional)'}">${ic('camera',14)} ${UI.facFotoOk?'Foto adjunta ✓ · cambiar foto':'Adjuntar foto de la factura (opcional)'}</button>
     <input class="in mb8" id="facProd" list="facSuggest" placeholder="Producto (ej: Pechuga de pollo)" data-ch="facq" value="${esc(UI.facQ||'')}" autocomplete="off">
     <datalist id="facSuggest">${nameSuggestions(UI.facQ).map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
     ${hist?`<div class="small dim mb8">Histórico de "${esc(UI.facQ)}": último ${fmtCOP(hist.ultimo.precio)} en ${esc(hist.ultimo.tienda||'?')} · mejor ${fmtCOP(hist.mejor.precio)} en ${esc(hist.mejor.tienda||'?')} (${hist.n} registro${hist.n>1?'s':''})</div>`:''}
@@ -15542,7 +15553,7 @@ function vFacturas(){
     <input class="in mb8" id="facFecha" type="date" value="${TODAY()}">
     <button class="btn primary full" data-a="facSave">${ic('check',14)} Guardar precio</button>
     `:''}
-    <button class="btn full mt8 ghost" data-a="facPasteTgl">${ic('clip',14)} ${UI.facPaste?'Cerrar pegado':'Pegar texto de la factura'}</button>
+    <button class="btn full mt8 ghost" data-a="facPasteTgl" aria-label="${UI.facPaste?'Cerrar pegado':'Pegar texto de la factura'}">${ic('clip',14)} ${UI.facPaste?'Cerrar pegado':'Pegar texto de la factura'}</button>
     ${UI.facPaste?`
     <div class="small dim mt8 mb8">Truco gratis: abre la foto de la factura en el iPhone, mantén presionado el texto (Live Text), Seleccionar todo, Copiar, y pega aquí. Yo saco los productos y precios.</div>
     <textarea class="in mb8" id="facTxt" rows="5" placeholder="Pega aquí el texto copiado de la factura"></textarea>
@@ -15674,7 +15685,7 @@ function islaSemanaHTML(){
     <div class="small dim mt8">Sincronizada con el calendario y con Entrenar. Se reinicia cada domingo a las 8 pm para planear la semana que arranca.</div>
     <div class="flex mt12" style="gap:8px">
       <button class="btn ghost" data-a="islaSemanaBase">Plantilla base</button>
-      <button class="btn primary grow" data-a="islaEntrenarHoy" ${rHoy?'':'disabled'}>${ic('barbell',14)} ${rHoy?'Entrenar: '+esc(rHoy.name):'Hoy es '+(weekTok(hoyDow)==='mov'?'movilidad':'descanso')}</button>
+      <button class="btn primary grow" data-a="islaEntrenarHoy" ${rHoy?'':'disabled'} aria-label="${rHoy?'Entrenar: '+esc(rHoy.name):'Hoy es '+(weekTok(hoyDow)==='mov'?'movilidad':'descanso')}">${ic('barbell',14)} ${rHoy?'Entrenar: '+esc(rHoy.name):'Hoy es '+(weekTok(hoyDow)==='mov'?'movilidad':'descanso')}</button>
     </div>
   </section></div>`;
 }
@@ -15740,7 +15751,7 @@ function swapBoxHTML(rid, uid, ix){
     ${SWAP_GRUPOS[grupo].map(op=>{
       const eq=op===orig?{q,u}:cantEquivalente(orig,q,u,op);
       const precio=precioDe(op);
-      return `<button class="row full" style="width:100%;text-align:left" data-a="swapSet" data-rid="${rid}" data-u2="${uid}" data-orig="${esc(orig)}" data-n="${esc(op)}">
+      return `<button class="row full" style="width:100%;text-align:left" data-a="swapSet" data-rid="${rid}" data-u2="${uid}" data-orig="${esc(orig)}" data-n="${esc(op)}" aria-label="${esc(op)}">
         <div class="ck ${actual===op?'on':''}">${actual===op?ic('check',14):''}</div>
         <div class="grow"><b style="font-size:15px">${esc(op)}${op===orig?' <span class="small dim">(original)</span>':''}</b>
           <div class="small dim">${fmtQty(eq.q,eq.u)}${precio?' · '+fmtCOP(costOf(eq.q,eq.u,precio)):''}</div></div>
@@ -16154,8 +16165,8 @@ function metasComoHTML(uid){
       <b class="crucen">${ic('zap',14)} De dónde salen tus ${fmtInt(M.kcal)} kcal</b>
       <span class="crucetag">déficit ${M.deficit}${M.defIni!==M.defFin?' de '+M.defIni:''}</span></div>
     <div class="metascomo mt8">
-      <span><i>GASTO ESTIMADO</i><b>${fmtInt(M.gasto)}<em>kcal</em></b></span>
-      <span><i>MENOS EL DÉFICIT</i><b>−${M.deficit}<em>kcal</em></b></span>
+      <span><i>Gasto estimado</i><b>${fmtInt(M.gasto)}<em>kcal</em></b></span>
+      <span><i>Menos el déficit</i><b>−${M.deficit}<em>kcal</em></b></span>
       <span class="on"><i>TU META</i><b>${fmtInt(M.kcal)}<em>kcal</em></b></span>
     </div>
     ${''/* Fase 2: el parrafo largo de la rampa se fue a nivel 3; aqui una linea */}
@@ -16403,7 +16414,7 @@ function gestPlanHTML(){
 function gestCaja(id, titulo, sub, fnInner, defecto){
   const abierto=(S.cfg.gestOpen && S.cfg.gestOpen[id]!==undefined) ? !!S.cfg.gestOpen[id] : defecto;
   return `<section class="mod tight">
-    <button class="schedhead ${abierto?'open':''}" data-a="gestCajaTgl" data-id="${id}" aria-expanded="${abierto?'true':'false'}">
+    <button class="schedhead ${abierto?'open':''}" data-a="gestCajaTgl" data-id="${id}" aria-expanded="${abierto?'true':'false'}" aria-label="${String(titulo).replace(/<[^>]*>/g,'').trim()}">
       <span class="grow tl" style="min-width:0"><b class="schedt" style="display:block">${titulo}</b>
         <span class="small dim" style="display:block">${sub}</span></span>
       <span class="nfchev">${ic('chevR',16)}</span>
@@ -16518,9 +16529,9 @@ function retoCard(k,ttl){
       const myProp=(S.retoprops||{})[k]||'', otProp=(partnerState('retoprops')||{})[k]||'';
       const mv=(S.retovotes||{})[k], ov=(partnerState('retovotes')||{})[k];
       if(acc) return `<div class="flex mt8" style="gap:8px;align-items:center">${ic('star',13)}<span class="small grow" style="color:var(--mint)"><b>Premio acordado:</b> ${esc(acc)}</span><button class="chip" data-a="retoEdit" data-k="${k}">Cambiar</button></div>${UI.retoEdit===k?premioUI(k,myProp,otProp,mv,ov):''}`;
-      return `<button class="chip mt8" data-a="retoEdit" data-k="${k}">${ic('star',11)} ${(myProp||otProp)?'Premio en votación':'Proponer premio'}</button>${UI.retoEdit===k?premioUI(k,myProp,otProp,mv,ov):''}`;
+      return `<button class="chip mt8" data-a="retoEdit" data-k="${k}" aria-label="${(myProp||otProp)?'Premio en votación':'Proponer premio'}">${ic('star',11)} ${(myProp||otProp)?'Premio en votación':'Proponer premio'}</button>${UI.retoEdit===k?premioUI(k,myProp,otProp,mv,ov):''}`;
     })()}
-    <button class="chip mt8" data-a="retoDx" data-k="${k}">${UI.retoDx===k?'Ocultar desglose':'¿De dónde salen los puntos?'}</button>
+    <button class="chip mt8" data-a="retoDx" data-k="${k}" aria-label="${UI.retoDx===k?'Ocultar desglose':'¿De dónde salen los puntos?'}">${UI.retoDx===k?'Ocultar desglose':'¿De dónde salen los puntos?'}</button>
     ${UI.retoDx===k?(()=>{
       const mb=ptsBreakdown(a0,r.b), ob=partnerBreakdown(a0,r.b);
       const rows=[['drop','Agua (1/día)','agua'],['food','Comidas (1/día)','prote'],['steps','Pasos a la meta (1/día)','pasos'],['steps','Pasos extra (+1 por 5.000, máx 2)','extra'],['barbell','Entrenos (bonus +1)','bonus'],['heart','Movilidad (+1)','mob']];
@@ -16644,7 +16655,7 @@ function vPerfil(){
     const recent=S.sessions.slice().sort((a,b)=>a.d<b.d?1:-1).slice(0,5);
     if(!recent.length) return '';
     return `<section class="mod">
-    <div class="mod-head"><span class="ttl">${ic('flame',16)} Actividad reciente</span><button class="btn sm ghost" data-a="perfMore">${UI.perfMore?'Menos':'Ver más'}</button></div>
+    <div class="mod-head"><span class="ttl">${ic('flame',16)} Actividad reciente</span><button class="btn sm ghost" data-a="perfMore" aria-label="${UI.perfMore?'Menos':'Ver más'}">${UI.perfMore?'Menos':'Ver más'}</button></div>
     ${(UI.perfMore?S.sessions.slice().sort((a,b)=>a.d<b.d?1:-1).slice(0,15):recent).map(s=>{
       const r=findRoutine(s.rid);
       /* r.ex vacio (rutina virtual Personalizado): no hay lista fija que filtrar, cuenta todo lo del dia */
@@ -16697,7 +16708,7 @@ function vPerfil(){
   ['medGo','','ruler','Medidas','mapa del cuerpo y grasa %'],
          ['fotoVer','','camera','Fotos','registro y comparar'],
          ['tab','mas','more','Ajustes','PIN, nube y plan']].map(([a,t2,icn,lb,sub])=>`
-      <button class="accbox" data-a="${a}" ${t2?`data-t="${t2}"`:''}>
+      <button class="accbox" data-a="${a}" ${t2?`data-t="${t2}"`:''} aria-label="${lb}">
         <span class="accic">${ic(icn,19)}</span>
         <b>${lb}</b>
         <span class="small dim">${sub}</span>
@@ -16752,7 +16763,7 @@ function vRetos(){
     :`<div class="small dim mb8">Borrón y cuenta nueva desde una fecha. Solo vale si <b>los dos</b> proponen la misma.</div>
       <div class="flex" style="gap:8px">
         <input type="date" class="in" id="rrDate" value="${mine||TODAY()}" max="${TODAY()}" style="flex:1">
-        <button class="btn sm primary" data-a="resetProp" style="flex:none">${mine?'Cambiar':'Proponer'}</button>
+        <button class="btn sm primary" data-a="resetProp" style="flex:none" aria-label="${mine?'Cambiar':'Proponer'}">${mine?'Cambiar':'Proponer'}</button>
         ${mine?'<button class="btn sm ghost" data-a="resetClear" style="flex:none">Quitar</button>':''}
       </div>
       <div class="small dim mt8">${mine?'Tu propuesta: '+fmtD(mine)+'. ':''}${other?otherN+' propone: '+fmtD(other)+(mine&&other!==mine?'. Aún no coinciden.':''):otherN+' no ha propuesto.'}${other&&!mine?` <button class="chip" data-a="resetAccept">Aceptar la de ${otherN}</button>`:''}</div>`}
@@ -16780,7 +16791,7 @@ function rendimientoCard(sub){
   const mode=['general','peso','volumen','tiempo','ejercicios','pasos'].includes(sub)?sub:'general';
   const t=TODAY(), N=UI.progRange||30, cut=rangeCut();
   const DL=['D','L','M','X','J','V','S'];
-  const rrchips=`<div class="rrchips">${RANGES.map(([n,l])=>`<button class="rrc ${(UI.progRange||30)===n?'on':''}" data-a="progRange" data-n="${n}">${l}</button>`).join('')}</div>`;
+  const rrchips=`<div class="rrchips">${RANGES.map(([n,l])=>`<button class="rrc ${(UI.progRange||30)===n?'on':''}" data-a="progRange" data-n="${n}" aria-label="${l}">${l}</button>`).join('')}</div>`;
   /* progresion de cargas: primer vs ultimo registro de cada ejercicio, historia completa (no depende del intervalo) */
   let e1n=0,e1o=0,ec=0; Object.values(S.logs).forEach(h=>{ if(h.length<2) return; const last=h[h.length-1],first=h[0];
     const lm=Math.max(...last.sets.map(s=>e1rm(+s.w||0,+s.r||0))), fm=Math.max(...first.sets.map(s=>e1rm(+s.w||0,+s.r||0)));
@@ -17009,7 +17020,7 @@ function goalCardHTML(g){
         ${B.previoRM?`Tu marca anterior (${fmt1(B.previoRM)} kg de 1RM) sigue guardada, pero <b>no cuenta para la tendencia</b>: la curva arranca aquí.`:'La tendencia se calcula desde esta fecha.'}
         ${mo?`<div class="dim mt4">${esc(mo[2])}</div>`:''}
       </div></div>`;})():''}
-    ${UI.goalBase!==g.id?`<button class="btn ghost full mt8" data-a="goalBaseBox" data-id="${g.id}">${ic('repeat',13)} ${B?'Cambiar el punto de partida':'Bajé el peso a propósito'}</button>`:''}
+    ${UI.goalBase!==g.id?`<button class="btn ghost full mt8" data-a="goalBaseBox" data-id="${g.id}" aria-label="${B?'Cambiar el punto de partida':'Bajé el peso a propósito'}">${ic('repeat',13)} ${B?'Cambiar el punto de partida':'Bajé el peso a propósito'}</button>`:''}
     ${UI.goalBase===g.id?(()=>{
       const bw=UI.goalBaseW||'', br=UI.goalBaseR||'', bm=UI.goalBaseM||'tecnica';
       return `<div class="mod tight mt8" style="border-style:dashed">
@@ -17021,7 +17032,7 @@ function goalCardHTML(g){
           <input class="in" data-ch="goalbaser" type="text" inputmode="numeric" placeholder="reps" aria-label="repeticiones" value="${esc(br)}" style="width:64px;flex:none">
         </div>
         <div class="flex wrapf mt8" style="gap:6px">${GOAL_MOTIVOS.map(m=>
-          `<button class="chip ${bm===m[0]?'fill':''}" data-a="goalBaseM" data-m="${m[0]}">${m[1]}</button>`).join('')}</div>
+          `<button class="chip ${bm===m[0]?'fill':''}" data-a="goalBaseM" data-m="${m[0]}" aria-label="${m[1]}">${m[1]}</button>`).join('')}</div>
         <div class="flex mt12" style="gap:8px">
           <button class="btn primary grow" data-a="goalBaseSave" data-id="${g.id}">Guardar punto de partida</button>
           <button class="btn" data-a="goalBaseBox" data-id="">Cancelar</button>
@@ -17294,7 +17305,7 @@ function vNutriStats(){
 const RANGES=[[7,'SEM'],[15,'15D'],[30,'30D'],[180,'6M'],[365,'AÑO']];
 function rangeCut(){ return addDays(TODAY(), -((UI.progRange||30)-1)); }
 function rangeSeg(){
-  return `<div class="seg cols5 mb8">${RANGES.map(([n,l])=>`<button class="${(UI.progRange||30)===n?'on':''}" data-a="progRange" data-n="${n}">${l}</button>`).join('')}</div>`;
+  return `<div class="seg cols5 mb8">${RANGES.map(([n,l])=>`<button class="${(UI.progRange||30)===n?'on':''}" data-a="progRange" data-n="${n}" aria-label="${l}">${l}</button>`).join('')}</div>`;
 }
 function weightPts(){
   const cut=rangeCut(), ws0=S.weights.filter(w=>w.d>=cut);
@@ -17380,7 +17391,7 @@ function vEjercicios(){
     <div class="mod-head"><span class="ttl">${ic('trend',16)} Progreso por ejercicio</span>
       <button class="chip" data-a="exInf" data-id="${ex.id}">${ic('clip',11)} Informe</button></div>
     <div class="inwrap mb8">${ic('search',16)}<input class="in has-ic" placeholder="¿Qué vas a entrenar hoy?" value="${esc(UI.exQ)}" data-ch="exq"></div>
-    ${UI.exQ?`<div class="flex wrapf mb8">${ROUTINES_VIS().flatMap(r=>r.ex).filter(e=>e.name.toLowerCase().includes(UI.exQ.toLowerCase())).slice(0,8).map(e=>`<button class="chip ${e.id===UI.ex?'fill':''}" data-a="exPick" data-ex="${e.id}">${shortEx(e.name)}</button>`).join('')||'<span class="small dim">Nada con esa búsqueda</span>'}</div>`:''}
+    ${UI.exQ?`<div class="flex wrapf mb8">${ROUTINES_VIS().flatMap(r=>r.ex).filter(e=>e.name.toLowerCase().includes(UI.exQ.toLowerCase())).slice(0,8).map(e=>`<button class="chip ${e.id===UI.ex?'fill':''}" data-a="exPick" data-ex="${e.id}" aria-label="${shortEx(e.name)}">${shortEx(e.name)}</button>`).join('')||'<span class="small dim">Nada con esa búsqueda</span>'}</div>`:''}
     <select class="in mb8" data-ch="exsel">
       ${ROUTINES_VIS().map(r=>`<optgroup label="${r.name}">${r.ex.filter(e=>!UI.exQ||e.name.toLowerCase().includes(UI.exQ.toLowerCase())).map(e=>`<option value="${e.id}" ${e.id===UI.ex?'selected':''}>${e.name}</option>`).join('')}</optgroup>`).join('')}
       ${(()=>{ /* ejercicios con historial FUERA del plan (importados de Strong, ids del
@@ -17472,7 +17483,7 @@ function vTiempo(){
   return `<section class="mod">
     <div class="mod-head"><span class="ttl">${ic('cal',16)} Historial de entrenos</span><span class="cross">+</span></div>
     <div class="seg cols3 mb8">
-      ${[[7,'7 DÍAS'],[30,'30 DÍAS'],[0,'TODO']].map(([n,lb])=>`<button class="${(UI.histRange||30)===n?'on':''}" data-a="histRange" data-n="${n}">${lb}</button>`).join('')}
+      ${[[7,'7 DÍAS'],[30,'30 DÍAS'],[0,'TODO']].map(([n,lb])=>`<button class="${(UI.histRange||30)===n?'on':''}" data-a="histRange" data-n="${n}" aria-label="${lb}">${lb}</button>`).join('')}
     </div>
     ${days.length?days.map(d=>{
       const names=byDay[d].map(rid=>{const rr=findRoutine(rid); return rr?rr.name:rid;}).join(' + ');
@@ -18233,16 +18244,16 @@ function vCheckin(){
     <div class="cigroup mt12">${ic('heart',13)} Cómo te sentiste</div>
     <div class="grid1px cols2 mcells" style="border:none;background:none;gap:8px">
       <div><span class="lbl">${ic('zap',12)} Energía</span>
-      <div class="seg mt8 mb8" style="grid-template-columns:repeat(5,1fr)" id="ciEne">${[1,2,3,4,5].map(n=>`<button class="${n===3?'on':''}" data-a="segpick" data-g="ciEne" data-v="${n}">${n}</button>`).join('')}</div></div>
+      <div class="seg mt8 mb8" style="grid-template-columns:repeat(5,1fr)" id="ciEne">${[1,2,3,4,5].map(n=>`<button class="${n===3?'on':''}" data-a="segpick" data-g="ciEne" data-v="${n}" aria-label="${n}">${n}</button>`).join('')}</div></div>
       <div><span class="lbl">${ic('moon',12)} Sueño</span>
-      <div class="seg mt8 mb8" style="grid-template-columns:repeat(5,1fr)" id="ciSue">${[1,2,3,4,5].map(n=>`<button class="${n===3?'on':''}" data-a="segpick" data-g="ciSue" data-v="${n}">${n}</button>`).join('')}</div></div>
+      <div class="seg mt8 mb8" style="grid-template-columns:repeat(5,1fr)" id="ciSue">${[1,2,3,4,5].map(n=>`<button class="${n===3?'on':''}" data-a="segpick" data-g="ciSue" data-v="${n}" aria-label="${n}">${n}</button>`).join('')}</div></div>
     </div>
     <span class="lbl">Notas</span>
     <textarea class="in mt8 mb12" id="ciNotas" rows="2" placeholder="Sensaciones, hambre, cargas…" style="text-align:left"></textarea>
     ${(FOTOS_OK||SB)?`<div class="row" style="border:1px solid var(--line2);border-radius:14px;padding:10px 12px;margin-bottom:12px">
       <div class="ck ${FOTODAYS.has(t)?'on':''}">${FOTODAYS.has(t)?ic('check',14):''}</div>
       <div class="grow"><b style="font-size:16px">Foto del check-in</b><div class="small dim">La Cabrita trajo la cámara: misma pose y luz de siempre</div></div>
-      <button class="btn sm ghost" data-a="fotoShot">${ic('camera',13)} ${FOTODAYS.has(t)?'Cambiar':'Agregar'}</button>
+      <button class="btn sm ghost" data-a="fotoShot" aria-label="${FOTODAYS.has(t)?'Cambiar':'Agregar'}">${ic('camera',13)} ${FOTODAYS.has(t)?'Cambiar':'Agregar'}</button>
     </div>`:''}
     <button class="btn primary full" data-a="saveCheckin">Guardar check-in</button>
   </section>`, fromISO(TODAY()).getDay()===0 && !ciSem);
@@ -18255,10 +18266,13 @@ function vCheckin(){
     ${lineChart({pts:cs.map(c=>({x:fmtD(c.d), d:c.d, v:c.fat, tip:fmtD(c.d)+' · '+fmt1(c.fat)+'%'})), goal:UID==='andres'?14.5:26.5, goalLabel:'META', horizonte:UI.progRange||30, piso:(UID==='andres'?14.5:26.5)-5, fmt:v=>fmt1(v)+'%', trend:true, h:150})}</section>`})()}
   ${S.checkins.length?`<section class="mod">
     <div class="mod-head"><span class="ttl">${ic('cal',16)} Evolución</span><span class="cross">+</span></div>
-    <div class="tbwrap"><table class="tb">
-      <tr><th>Fecha</th><th class="r">Peso</th><th class="r">Cint.</th><th class="r">Grasa</th><th class="r">Adh.</th><th class="r">Ene/Sue</th></tr>
-      ${S.checkins.slice().reverse().map(c=>`<tr><td>${fmtD(c.d)}</td><td class="r">${fmt1(c.kg)}</td><td class="r">${c.cint||'·'}</td><td class="r">${c.fat?fmt1(c.fat)+'%':'·'}</td><td class="r">${c.adh}%</td><td class="r">${c.ene}/${c.sue}</td></tr>`).join('')}
-    </table></div></section>`:''}`;
+    <div class="tbwrap"><table class="tb tbfit">
+      ${''/* Fase 4: a 320 px esta tabla scrolleaba en horizontal. El % sube a la
+         cabecera y las celdas se compactan (.tbfit): las 6 columnas caben. */}
+      <tr><th>Fecha</th><th class="r">Peso</th><th class="r">Cint.</th><th class="r">Grasa</th><th class="r">Adh.</th><th class="r">E/S</th></tr>
+      ${S.checkins.slice().reverse().map(c=>`<tr><td>${fmtD(c.d)}</td><td class="r">${fmt1(c.kg)}</td><td class="r">${c.cint?fmt1(c.cint):'·'}</td><td class="r">${c.fat?fmt1(c.fat):'·'}</td><td class="r">${c.adh}</td><td class="r">${c.ene}/${c.sue}</td></tr>`).join('')}
+    </table>
+    <div class="small dim mt8">Grasa y adherencia en % · E/S = energía y sueño (1 a 5)</div></div></section>`:''}`;
 }
 
 /* ============ VISTA: MÁS ============ */
@@ -18268,7 +18282,7 @@ function vMas(){
   return `
   <section class="mod" id="rembox">
     <div class="mod-head"><span class="ttl">${ic('bell',16)} Recordatorios</span>
-      <button class="btn sm ${S.cfg.notif?'ghost':'primary'}" data-a="notifPerm">${S.cfg.notif?'Activas ✓':'Activar avisos'}</button></div>
+      <button class="btn sm ${S.cfg.notif?'ghost':'primary'}" data-a="notifPerm" aria-label="${S.cfg.notif?'Activas ✓':'Activar avisos'}">${S.cfg.notif?'Activas ✓':'Activar avisos'}</button></div>
     ${S.reminders.map((r,i)=>{
       /* el titulo y la nota se leen del catalogo por id y no de lo guardado: el usuario
          solo edita hora y encendido, y asi el copy corto llega tambien a quien ya tenia
@@ -18347,9 +18361,9 @@ function vMas(){
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('clip',16)} Buzón de ideas · cada 15 días</span><span class="cross">+</span></div>
     <div class="small dim mb8">Recetas que quieran probar y ejercicios que quieran meter. Cada quincena me pasan la lista a Claude y vuelvo con recetas completas (macros y mercado) e imágenes nuevas.</div>
-    <div class="flex mb8" style="gap:8px"><input class="in" id="ideaFood" placeholder="Receta que se nos antoja…" style="flex:1"><button class="btn sm primary" data-a="ideaAdd" data-t="food" style="flex:none">${ic('plus',13)}</button></div>
-    <div class="flex mb8" style="gap:8px"><input class="in" id="ideaEx" placeholder="Ejercicio para agregar…" style="flex:1"><button class="btn sm primary" data-a="ideaAdd" data-t="ex" style="flex:none">${ic('plus',13)}</button></div>
-    ${Object.entries(S.ideas).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0)).map(([id,it])=>`<div class="ingrow"><span>${ic(it.t==='food'?'food':'barbell',12)} ${esc(it.x)}</span><span class="dim">${it.by==='andres'?'A':'C'}</span><button class="chip red" data-a="ideaDel" data-id="${id}">${ic('x',10)}</button></div>`).join('')||'<div class="small dim">Vacío. Lo que anoten aquí es lo que traemos a la próxima sesión de cocina.</div>'}
+    <div class="flex mb8" style="gap:8px"><input class="in" id="ideaFood" placeholder="Receta que se nos antoja…" style="flex:1"><button class="btn sm primary" data-a="ideaAdd" data-t="food" style="flex:none" aria-label="Agregar idea de comida">${ic('plus',13)}</button></div>
+    <div class="flex mb8" style="gap:8px"><input class="in" id="ideaEx" placeholder="Ejercicio para agregar…" style="flex:1"><button class="btn sm primary" data-a="ideaAdd" data-t="ex" style="flex:none" aria-label="Agregar idea de ejercicio">${ic('plus',13)}</button></div>
+    ${Object.entries(S.ideas).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0)).map(([id,it])=>`<div class="ingrow"><span>${ic(it.t==='food'?'food':'barbell',12)} ${esc(it.x)}</span><span class="dim">${it.by==='andres'?'A':'C'}</span><button class="chip red" data-a="ideaDel" data-id="${id}" aria-label="Borrar la idea">${ic('x',10)}</button></div>`).join('')||'<div class="small dim">Vacío. Lo que anoten aquí es lo que traemos a la próxima sesión de cocina.</div>'}
   </section>
   ${UID==='cami'?`<section class="mod" id="cicloCfg">
     <div class="mod-head"><span class="ttl">${ic('heart',16)} Ciclo · configuración</span><span class="cross">+</span></div>
@@ -18379,7 +18393,7 @@ function vMas(){
       ${S.cfg.pin?`<button class="btn sm red" data-a="pinOff">Quitar</button>`:''}</div>
     <div class="flex mt8" style="gap:8px">
       <input class="in" id="pinIn" inputmode="numeric" placeholder="4 dígitos" maxlength="6" style="flex:1">
-      <button class="btn sm primary" data-a="pinSet" style="flex:none">${(S.cfg.pinH||S.cfg.pin)?'Cambiar':'Activar'}</button>
+      <button class="btn sm primary" data-a="pinSet" style="flex:none" aria-label="${(S.cfg.pinH||S.cfg.pin)?'Cambiar':'Activar'}">${(S.cfg.pinH||S.cfg.pin)?'Cambiar':'Activar'}</button>
     </div>
     ${(S.cfg.pinH||S.cfg.pin)?`<div class="flex between mt8"><span class="small">Pedir PIN también al abrir la app</span>
       <button class="tgl ${S.cfg.lockPin?'on':''}" data-a="lockTgl" aria-label="candado al abrir"><i></i></button></div>`:''}

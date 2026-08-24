@@ -149,10 +149,10 @@ lista `UI_IMGS` de ambos sw.js (precarga offline), nunca embebida en base64.
 
 ## Deuda conocida
 
-- ~50 botones solo-icono sin `aria-label`.
-- 28 labels bajo 12,5 px por límite físico de sus contenedores.
-- La tabla de evolución del check-in tiene scroll horizontal a 320 px.
-- "Leche" puede duplicarse en la lista de compras (una receta la mide en ml, los básicos en L).
+- 28 labels bajo 12,5 px por límite físico de sus contenedores (excepción documentada).
+- 35 avisos del verificador por CSS uppercase: son los labels cortos del sistema
+  tipográfico, intencionales (los botones sin aria-label, la tabla del check-in a
+  320 px y la "Leche" duplicada se saldaron en REV 211).
 
 ## Aviso del entorno
 

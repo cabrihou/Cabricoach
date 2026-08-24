@@ -211,7 +211,7 @@ leyendo, con la Biblia, con idea, tomándose una foto, dormida, con el reloj.
 
 ## 9. Accesibilidad
 
-- Todo botón solo-icono lleva `aria-label` descriptivo. **Deuda actual: ~53 botones sin nombre**, la mayoría con texto condicional; es lo próximo a saldar.
+- Todo botón solo-icono lleva `aria-label` descriptivo. **Deuda saldada en REV 211**: el verificador cuenta 0 botones sin nombre; los de texto condicional llevan aria-label espejo de su expresión.
 - Los elementos que actúan como botón llevan `role="button"` y son alcanzables por teclado.
 - Contraste AA en texto secundario sobre tarjetas.
 - Toda animación se apaga con `prefers-reduced-motion`.

@@ -2228,6 +2228,30 @@ b,strong{font-weight:600}
 @keyframes sheetin{from{transform:translateY(100%)}to{transform:none}}
 @keyframes sheetveil{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.fbox.sheet,.fbox.sheet .fboxin{animation:none}}
+/* ---- Injertos de transitions.dev (REV 212), adaptados a los tokens de la app ----
+   Se toman los patrones que llenaban huecos reales (check que se dibuja, pop de
+   badge, sacudida de error, entrada del contenido de una caja) con la curva y las
+   duraciones DE LA APP; solo se importa el easing de rebote para el pop. Los demas
+   patrones de la coleccion ya estaban cubiertos (nrod, sheet, xtabs, shimmer, toast). */
+/* 10 · el check se DIBUJA al marcarse: corre cuando el estado empieza a aplicar,
+   tanto si el morph inserta el svg como si solo cambia la clase del ancestro */
+.ck.on svg path,.settbl.srow.done .okbtn2 svg path,.bignum .wchk.on svg path,.mck.on svg path{
+  stroke-dasharray:30;animation:ckdraw .32s cubic-bezier(.32,.72,0,1) both}
+@keyframes ckdraw{from{stroke-dashoffset:30}to{stroke-dashoffset:0}}
+/* 3 · pop rebotado en badges que aparecen (proteina de la franja, tick de checkpoint) */
+.tick,.nslotp{animation:badgepop .4s cubic-bezier(.34,1.36,.64,1) both}
+@keyframes badgepop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+/* 12 · sacudida de error: hoy solo en el PIN equivocado, reutilizable con .shake */
+.shake{animation:sacudida .4s cubic-bezier(.36,.07,.19,.97)}
+@keyframes sacudida{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-4px)}40%,60%{transform:translateX(4px)}}
+/* 21 · el contenido de una caja plegable entra animado SOLO al abrirla por toque
+   (la clase la pone el template cuando UI._cajaAbre es esa caja; un re-render de la
+   misma vista no re-anima porque el morph solo quita la clase) */
+.cajain{animation:cajain .22s cubic-bezier(.32,.72,0,1) both}
+@keyframes cajain{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+  .ck.on svg path,.settbl.srow.done .okbtn2 svg path,.bignum .wchk.on svg path,.mck.on svg path,
+  .tick,.nslotp,.shake,.cajain{animation:none}}
 /* tarjeta de carrusel: ancho fijo en % para que la siguiente siempre se asome */
 .ccard{width:76%;max-width:300px;min-width:214px;background:var(--card2);border:1px solid var(--line2);
   border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:7px;color:var(--ink);text-align:left}
@@ -2313,7 +2337,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 211';
+const APPREV='REV 212';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -5814,13 +5838,17 @@ function filaExplica(icono, negrita, resto, primera){
    preferencia (dia pasado de Agenda, formulario del check-in, colas de Retos). */
 function uiCaja(id, titulo, dato, fnInner, defecto){
   const abierto=(UI.cajas && UI.cajas[id]!==undefined) ? !!UI.cajas[id] : !!defecto;
+  /* injerto 21 (transitions.dev): si esta caja se acaba de abrir por toque, sus
+     secciones entran animadas; la clase solo vive en ese render */
+  let inner = abierto ? fnInner() : '';
+  if(abierto && UI._cajaAbre===id) inner=inner.split('<section class="').join('<section class="cajain ');
   return `<section class="mod tight">
     <button class="schedhead ${abierto?'open':''}" data-a="uiCajaTgl" data-k="${id}" aria-expanded="${abierto?'true':'false'}" aria-label="${String(titulo).replace(/<[^>]*>/g,'').trim()}">
       <span class="grow tl" style="min-width:0"><b class="schedt" style="display:block">${titulo}</b>
         <span class="small dim" style="display:block">${dato}</span></span>
       <span class="nfchev">${ic('chevR',16)}</span>
     </button>
-  </section>` + (abierto ? fnInner() : '');
+  </section>` + inner;
 }
 /* M4 · el respaldo estandar cuando falta una imagen: inicial en capsula tintada */
 function avatarIni(nombre, cls){
@@ -12300,7 +12328,10 @@ function pinGate(name, avatar, onSubmit, opts){
   document.body.appendChild(box);
   const q=s=>box.querySelector?box.querySelector(s):null, inp=q('#pgIn');
   setTimeout(()=>{ if(inp) inp.focus(); }, 60);
-  const done=ok=>{ if(ok){ box.remove(); } else { const er=q('#pgErr'); if(er) er.textContent='PIN incorrecto'; if(inp){ inp.value=''; inp.focus(); } if(navigator.vibrate) navigator.vibrate(60); } };
+  const done=ok=>{ if(ok){ box.remove(); } else { const er=q('#pgErr'); if(er) er.textContent='PIN incorrecto';
+    /* injerto 12 (transitions.dev): sacudida de error ademas de la vibracion */
+    const bx=q('.fboxin')||box; bx.classList.remove('shake'); void bx.offsetWidth; bx.classList.add('shake');
+    if(inp){ inp.value=''; inp.focus(); } if(navigator.vibrate) navigator.vibrate(60); } };
   const submit=()=>{ const v=(inp&&inp.value||'').trim(); if(!v) return; onSubmit(v, done); };
   const okb=q('#pgOk'); if(okb) okb.onclick=submit;
   const xb=q('#pgX'); if(xb) xb.onclick=()=>box.remove();
@@ -16413,13 +16444,15 @@ function gestPlanHTML(){
    comidas con escalado; pintarla cerrada era pagar todo eso para no mostrarla. */
 function gestCaja(id, titulo, sub, fnInner, defecto){
   const abierto=(S.cfg.gestOpen && S.cfg.gestOpen[id]!==undefined) ? !!S.cfg.gestOpen[id] : defecto;
+  let inner = abierto ? fnInner() : '';
+  if(abierto && UI._cajaAbre===id) inner=inner.split('<section class="').join('<section class="cajain ');   /* injerto 21 */
   return `<section class="mod tight">
     <button class="schedhead ${abierto?'open':''}" data-a="gestCajaTgl" data-id="${id}" aria-expanded="${abierto?'true':'false'}" aria-label="${String(titulo).replace(/<[^>]*>/g,'').trim()}">
       <span class="grow tl" style="min-width:0"><b class="schedt" style="display:block">${titulo}</b>
         <span class="small dim" style="display:block">${sub}</span></span>
       <span class="nfchev">${ic('chevR',16)}</span>
     </button>
-  </section>` + (abierto ? fnInner() : '');
+  </section>` + inner;
 }
 function vGestion(){
   const hayRotacion = recetasActivas('a').length || recetasActivas('c').length;
@@ -18737,6 +18770,7 @@ function renderReal(){
   countUp(escribiendo || morphed);
   nrodPass();
   xtabsPaso(morphed);
+  UI._cajaAbre=null;   /* la apertura animada solo vale para el render que la abrio */
 document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.t===UI.tab));
   navIndicator();
   updateIsland();
@@ -19319,7 +19353,9 @@ const ACTIONS = {
   hxAbrir(d, el){ UI.hxAbre=UI.hxAbre||{}; UI.hxAbre[d.k]=!UI.hxAbre[d.k]; renderAnclado(el); },
   /* nivel 3: abre la ventana con la explicacion larga. No re-renderiza la vista. */
   info3(d){ UI._i3d=d; i3Open(d.k); },
-  uiCajaTgl(d, el){ UI.cajas=UI.cajas||{}; UI.cajas[d.k]=!(UI.cajas[d.k]!==undefined?UI.cajas[d.k]:el.classList.contains('open')); renderAnclado(el); },
+  uiCajaTgl(d, el){ UI.cajas=UI.cajas||{}; UI.cajas[d.k]=!(UI.cajas[d.k]!==undefined?UI.cajas[d.k]:el.classList.contains('open'));
+    if(UI.cajas[d.k]) UI._cajaAbre=d.k;   /* injerto 21: la apertura por toque entra animada */
+    renderAnclado(el); },
   /* nivel 2 en MAS: las recetas largas (Atajos de Salud, atajo pro) viven plegadas */
   masTgl(d, el){ UI.mas=UI.mas||{}; UI.mas[d.k]=!UI.mas[d.k]; renderAnclado(el); },
   hxEstSel(d, el){ hxForm().est=d.est; renderAnclado(el); },
@@ -21055,7 +21091,9 @@ const ACTIONS = {
     S.cfg.gestOpen=S.cfg.gestOpen||{};
     const abierto=(S.cfg.gestOpen[d.id]!==undefined) ? !!S.cfg.gestOpen[d.id]
       : (d.id==='plan'); /* espejo de los 'defecto' de vGestion */
-    S.cfg.gestOpen[d.id]=!abierto; save('cfg'); render();
+    S.cfg.gestOpen[d.id]=!abierto;
+    if(!abierto) UI._cajaAbre=d.id;   /* injerto 21: apertura animada */
+    save('cfg'); render();
   },
   /* vaciar el mercado = deseleccionar todas las recetas. Con confirmacion y deshacer,
      porque tumba la semana armada de los dos de un toque. Los cambios de ingrediente,

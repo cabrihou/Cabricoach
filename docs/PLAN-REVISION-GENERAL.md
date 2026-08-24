@@ -337,4 +337,18 @@ conteo de veces).
 
 Extra: recPersonRow ahora usa coma decimal (39,8P; hallazgo de la Fase 2).
 
+### Extra fuera del plan · injertos de transitions.dev (REV 212, pedido de Andy 24/08)
+
+Andy trajo https://github.com/Jakubantalik/transitions.dev (32 transiciones CSS
+portables con guardas de reduced-motion). Se injertaron SOLO los patrones que
+llenaban huecos, adaptados a los tokens de la app (la curva y duraciones de
+DESIGN-STANDARDS mandan; único easing importado: el rebote del badge):
+check que se dibuja al marcarse (10), pop de badges que aparecen (3), sacudida
+de error en el PIN (12) y entrada animada del contenido de una caja plegable al
+abrirla por toque (21, con UI._cajaAbre para no re-animar en re-renders). Los
+demás patrones ya estaban cubiertos por lo propio: número rodante, hoja
+inferior, xtabs, shimmer de galería y toast (ya animaba). OJO Fase 5: el
+inventario de movimiento creció; estas animaciones también hay que verlas en
+tema claro.
+
 

@@ -129,6 +129,30 @@ Cuatro familias embebidas como data-URI (nunca por link externo), cuatro variabl
 - **Botón primario**: píldora con `--grad`, texto oscuro, glow `0 6px 20px rgba(94,233,206,.35)`.
 - **Toggle/checkbox**: redondeados; estado on = acento con tinta oscura.
 
+## 4b. Tema claro (Fase 5, REV 213)
+
+- **Mecanismo**: `html[data-tema=claro]` redefine SOLO superficies, tintas, líneas y
+  sombras. Los acentos (azul de Andrés, dorado de Cami, verde compartido) son identidad
+  y no cambian. `S.cfg.tema` es POR USUARIO: `oscuro` (defecto), `claro` o `auto`
+  (claro de 7 am a 7 pm). `temaAplicar()` corre en cada render y mueve también el
+  `theme-color` de la barra del iPhone. Interruptor en MÁS → Preferencias.
+- **Tokens nuevos**: `--lift` (rampa RGB de pistas/hairlines: blanco en oscuro, tinta
+  en claro; lo que deba seguir blanco SIEMPRE, sobre fotos o rellenos de acento, va con
+  rgba literal), `--cardbg` y `--tile` (los gradientes de tarjeta antes horneados),
+  `--glass-rgb`/`--glass2-rgb` (vidrio de topbar/nav/bandejas), `--herofin` (final del
+  radial del héroe).
+- **Paleta clara**: papel `#F2F3F1`, tarjetas blancas con gradiente sutil, tinta
+  `#1A2026`, líneas al 11% de tinta, sombra al 8%, glow del acento al 20%. El número
+  héroe degrada de tinta al acento (en oscuro sigue de blanco al acento).
+- **Se queda oscuro a propósito** (chrome fijo): velos y badges sobre fotos (su texto
+  es literal claro `#F2F5F4`), la isla, `#timerbar`, el visor de cámara, `.zpop` del
+  mapa, toast y tooltip (píldora de alto contraste). Los escenarios con ilustraciones
+  (`.retohero`, `.rthumb`, `.rmini`) y los thumbnails de foto esperan la ronda de
+  tratamiento de imágenes.
+- **Regla al agregar CSS nuevo**: nada de blancos/negros horneados en superficies de
+  tema: usar los tokens o la rampa `--lift`. El verificador no ve colores: el barrido
+  de capturas en claro es la red de seguridad.
+
 ## 5. Imágenes (assets/stock/)
 
 **Miniaturas de rutinas/actividades (vigente, 16/07):** set propio GENERADO en Magnific (flux-dev),

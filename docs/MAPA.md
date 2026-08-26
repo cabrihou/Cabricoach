@@ -476,7 +476,7 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 - **M5** Buzón de ideas
 - **M6** Ciclo · configuración
 - **M7** Privacidad · PIN
-- **M8** Preferencias (meta de agua, meta de pasos)
+- **M8** Preferencias (tema oscuro/claro/auto desde REV 213 con `temaSet`, meta de agua, meta de pasos)
 - **M11** Hyrox: interruptor de la sección (`S.cfg.hyrox`, `ACTIONS.hxTgl`, encendida
   por defecto para los dos) y campo opcional de edad (`S.cfg.edad`, `CHANGES.hxEdad`),
   que es lo que decide qué fila de percentiles se usa. Al apagar, las rutinas Hyrox que

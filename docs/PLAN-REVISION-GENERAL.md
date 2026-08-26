@@ -185,7 +185,7 @@ commit "REV N: ..." (sin push hasta que Andy apruebe el deploy).
 - [x] Fase 2 · Sistema de 3 niveles + injertos A (REV 209, falta revisión de Andy)
 - [x] Fase 3 · Flujos de registro + injertos M (REV 210, falta revisión de Andy)
 - [x] Fase 4 · Consistencia y deuda (REV 211, falta revisión de Andy)
-- [ ] Fase 5 · Tema claro
+- [~] Fase 5 · Tema claro (infraestructura en REV 213; faltan imágenes y barrido final)
 
 Notas de ejecución (agrega aquí decisiones, hallazgos y lo que quede a medias):
 
@@ -350,5 +350,41 @@ demás patrones ya estaban cubiertos por lo propio: número rodante, hoja
 inferior, xtabs, shimmer de galería y toast (ya animaba). OJO Fase 5: el
 inventario de movimiento creció; estas animaciones también hay que verlas en
 tema claro.
+
+### Fase 5 · infraestructura ejecutada 24/08/2026 (REV 213; Andy pidió arrancar por
+la infraestructura y dejar las imágenes para después, con agentes económicos para
+las tareas simples)
+
+División del trabajo: la sesión coordinadora hizo diseño y lógica (tokens, paleta,
+temaAplicar, interruptor, decisiones de qué se queda oscuro); UN agente Sonnet en
+serie hizo el volumen mecánico en dos tandas con reporte por sitio.
+
+Hecho:
+- Bloque html[data-tema=claro] (papel #F2F3F1, tarjetas blancas, tinta #1A2026) +
+  S.cfg.tema POR USUARIO (oscuro/claro/auto 7-19h) + temaAplicar() en cada render +
+  theme-color dinámico + interruptor en M8 + persistencia verificada tras recarga.
+- Rampa --lift: 72 de 90 rgba blancas del CSS convertidas (18 se quedan blancas:
+  sobre fotos, sobre acento, chrome fijo), tabla completa en el reporte del agente.
+- Censo de 117 fondos horneados en 9 familias (A-K) y conversión: --tile (13 clases
+  de tile + pcard/nslot/exdetimg/shotbox/f3b), --cardbg (.mod/.tight/catgroup/exrow,
+  unifica un final de gradiente con 1 unidad RGB de diferencia), vidrio reactivo
+  (--glass-rgb topbar, --glass2-rgb nav/avpop/cmptray), --herofin (el radial del
+  héroe moría en negro horneado, el hallazgo grande de las capturas).
+- Texto sobre fondos fijos oscuros pasado a literal claro (badges de foto, fmeta,
+  cmpslot, rday, mzoomout, toast, tooltip): eran var(--ink) y en claro quedaban
+  tinta sobre negro.
+- Banner de meal prep: verdes inline pensados para oscuro movidos a clases .mpt/.mpd
+  con override claro y fondo aclarado.
+- Suite CDP en verde: interruptor, data-tema, theme-color, persistencia, tema por
+  usuario, auto según hora, oscuro restaurado idéntico, 0 errores, capturas de 7
+  vistas en claro + Cami en claro revisadas como producto.
+
+Pendiente para cerrar la fase (próxima ronda):
+- Escenarios .retohero/.rthumb/.rmini y thumbnails de foto (van con el tratamiento
+  de ilustraciones de las cabras; el VS blanco del hero de Retos necesita halo/placa).
+- Revisión de contraste del acento COMO TEXTO en claro (mint/verde/dorado en textos
+  pequeños: .mint, chips, gkg) con capturas, sin romper la identidad.
+- El barrido final de las 12 vistas x 2 usuarios x claro con revisión visual completa
+  (el punto 5 de la fase) y actualizar PRUEBAS.md con el paso de tema.
 
 

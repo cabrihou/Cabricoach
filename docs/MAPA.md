@@ -18,11 +18,24 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 
 ## I · Inicio (`vInicio`)
 
-- **I1** Hero del peso: número grande, "toca para registrar", slider y meta (`.bignum`, `.wtap`)
+- **I1** Hero del peso (REV 215): **tres columnas** en una fila (`.herotop.h3`): el peso
+  enorme (60 px a 390) a la izquierda, la grasa como cifra mediana con su flecha verde
+  si baja o roja si sube (`.herogr`) y la meta con lo que falta (`.herometa`). Sin
+  rótulo "Andrés · Descarga" ni pastilla de grasa aparte. La cabrita flota en la
+  esquina de la tarjeta (`.cabfloat`, única animación continua del Inicio, se apaga
+  con prefers-reduced-motion) y sigue abriendo su dato al tocarla. Bajo 370 px el
+  número baja a 46 px para no invadir la columna de grasa (medido)
+  - I1b Tira de días (`daystrip`) en **horizontal**: letra, número y círculo en fila,
+    29 px de alto en vez de 57 apilados
 - **I2** Checkpoint del día: tarjetas de atajos (`ckSection`)
   - I2a Entreno ("Ir a entrenar" + check que completa la rutina)
-  - I2b Pasos · I2c Agua · **I2d Medidas** (lleva a Progreso → Medidas, `medGo`; dice
-    qué toca hoy o en cuántos días) · I2e Foto del día
+  - I2b Pasos · I2c Agua · **I2d Medidas** (lleva a la vista propia de Medidas, `medGo`;
+    dice qué toca hoy o en cuántos días) · **I2e Hyrox** (REV 215, solo con la sección
+    encendida: tiempo proyectado y estaciones medidas)
+  - **I2f** La **foto del día** dejó de ser una caja ancha de esta rejilla y pasó a ser
+    un **botón flotante** del Inicio (REV 215, `fabFotoHTML`, `.fabfoto`): ocupaba una
+    caja entera todos los días para decir lo mismo. Si ya hay foto de hoy cambia de
+    aspecto y lleva a la galería en vez de a la cámara
 - **I4x** Guardar una combinación como **plato reutilizable** (alimento compuesto en
   customFoods, sale en la categoría Platos y se registra con su desglose). Se puede
   desde el borrador (`platoGuardar`) **y desde un loggeo ya guardado** con 2+
@@ -34,6 +47,29 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   `S.week` del calendario, más botón "Entrenar: rutina de hoy" y plantilla base
   (`islaSemanaHTML`, `ACTIONS.islaSemana`). La semana se reinicia sola cada
   domingo 8 pm (`weekAutoReset`, sello en `S.cfg.weekResetStamp`)
+- **IM** "Tus metas" (REV 214, rediseñada en REV 215 · `metasHomeHTML`): va entre el
+  hero y el checkpoint del día, **plegada por defecto** (`S.cfg.metasOpen`): siempre se
+  ve la etapa y el resto se despliega a un toque, para que el Inicio no crezca sin
+  control. Rejilla **bento** (`.bento`, `.bt`): las cajas NO miden todas lo mismo, la
+  etapa ocupa dos columnas y el peso dos filas (`.w2`, `.h2`).
+  Cada familia de meta tiene **su color** (`META_COL`): tiñe la caja entera con un
+  degradado suave, el borde, la cápsula del icono y la cifra. **Sin textos de apoyo**
+  (pedido del dueño: "vas en", "faltan" apretaban la caja): queda nombre, cifra y
+  gráfico, **en horizontal** (cifra a un lado, gráfico al otro, `.btrow` / `.btw`). El
+  **estado** va en el punto de la esquina y una meta lograda muestra un check. Los
+  detalles viven en la isla, que se tiñe del mismo color (`.islatint`).
+  **Tablero personalizable** (`S.cfg.metasCfg`, hoja `metasEditHTML` desde el botón
+  "Editar"): por meta se elige tamaño (S 1x1, W 2x1, T 1x2, L 2x2), gráfico (barra,
+  anillo, línea, barras), orden y si se ve. La etapa siempre va primera, ancha y con
+  su sparkline. Sin configuración: etapa W, peso T, el resto S, elegidas por urgencia y
+  cercanía (`metasDestacadas`). "Ver todas" está al final del editor. **Al tocar cualquiera se abre su
+  isla flotante** con la proyección completa (`islaMetaHTML`, `.fbox.islameta`, creada
+  al vuelo sin pasar por `render()`, igual que la isla semanal).
+  `metasUnificadas` lee con una sola forma las cuatro familias de metas que estaban
+  dispersas: etapa, peso (`metaFases`), grasa (`metaGrasaDe`), medida
+  (`medObjetivoDe`), fuerza (`S.goals` con `goalProy`) y hábito (pasos)
+- **IR** Aviso de rescan de bioimpedancia cuando faltan 3 días o menos, con el
+  protocolo puesto (misma hora, misma hidratación, sin entrenar, 2 h sin comer)
 - **I3** Caja rotativa "Para ti": pendiente de hoy, coach del día, versículos, datos, hitos (`homeRotator`, `rotcard`)
   - I3a Cápsula "Tu próximo entreno": desde REV 121 la tarjeta trae jerarquía propia
     (rutina como título, hora, hasta 2 líneas de análisis de las últimas sesiones:
@@ -336,9 +372,69 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 - **P8** Vista Pasos (`vPasos`)
 - **P9** Nutrición en Progreso: adherencia, kcal, dona de macros, top alimentos (`vNutriStats`)
 
-## MD · Medidas (categoría de Progreso, `vMedidasCuerpo`; también vista propia
-`vMedidas` a la que se llega desde PF7)
+## PL · Plan por etapas (vista propia, `vPlan`; REV 214)
 
+Se entra desde el semáforo del Check-in, desde la portada de Medidas, desde la hoja de
+Medidas y desde "Ver todas" en las metas del Inicio (`planGo`).
+
+- **PL1** Semáforo de la semana (`semaforoHTML`) con las sugerencias de ajuste
+- **PL2** "Lo que comes en esta etapa": kcal, macros y **de dónde salen**
+  (`metasComoHTML`: TMB medida por el factor de actividad, más el ajuste de la etapa).
+  Si hay un ajuste aceptado, se puede quitar
+- **PL3** Tabla de checkpoints: un domingo por fila, esperado contra real y semáforo.
+  **Las filas son tocables** y abren la isla de esa semana (`islaCheckHTML`,
+  `.fbox.islack`) con lo registrado ese domingo y de dónde sale el esperado
+- **PL4** Línea de tiempo de las etapas (plegada), con entreno, meta de fuerza y notas
+  de la activa
+- **PL5** Rescans de bioimpedancia (plegado): los seis del plan, el protocolo, la
+  última lectura y el **formulario de rescan completo** (peso, grasa, magra del
+  reporte, músculo, visceral, TMB, agua y magra por segmento). Al guardarlo, el % de
+  grasa entra también al check-in, que es de donde leen la meta y las gráficas
+- **PL6** Creatina (plegado): estado, y la **calculadora de pausa**. Al pausarla, el
+  peso esperado de los checkpoints baja según la tabla del plan (`creatPausaKg`), los
+  rescans de esas 4 semanas se marcan no comparables en magra y se avisa de la caída
+  de 1 a 2 repeticiones. Al reanudar, la tabla se aplica al revés
+- **PL7** Diario de decisiones (plegado): cada ajuste aceptado y cada pausa quedan con
+  fecha y motivo (`decisionAnotar`, `S.plan.dec`)
+
+**El motor** vive junto a las utilidades de creatina: `etapaEn`, `etapaDomingos`
+(domingos REALES, el documento original los listaba como domingos pero casi todos eran
+lunes), `pesoEsperado`, `checkpointsDe`, `semanaEstado`, `ajustesSugeridos`,
+`creatPausaAjuste`, `biaNoComparable`, `pasosMeta` y `factorActividad` (que se
+recalibra sola con lo que de verdad se comió y los kilos que de verdad se movieron).
+
+## MD · Medidas (vista propia, `vMedidas`; REV 214)
+
+**Tres niveles con TRES FORMAS distintas**, que es lo que dice dónde estás. Antes los
+tres se veían iguales (la misma fila de chips con solo iconos, dibujada arriba y abajo,
+más una tercera al pie) y una sola variable (`UI.cuerpoSub`) hacía de capa del mapa y
+de sub-pestaña a la vez.
+
+- **Nivel 1, portada** (`medPortadaHTML`, `UI.medSec = null`): etapa activa, tres cifras
+  (peso, grasa, cintura), el aviso de lo que toca hoy con su único botón de medir, y la
+  **lista de destinos con nombre completo y su cifra viva** (`medSecDato`). Nunca un
+  icono sin rótulo
+- **Nivel 2, destino** (`MED_SECS`: Cuerpo, Composición, Historial): pantalla propia con
+  volver, y **el título ES el menú**: al tocarlo sale una hoja inferior
+  (`medHojaHTML`, `.fbox.hoja`) para saltar de hermano a hermano sin devolverse
+- **Nivel 3, controles**: las capas del mapa (`MED_CAPAS`: Medidas, Carga, Fuerza,
+  Cruce) van **pegadas al mapa y con el rótulo siempre visible** (`.mcapas.fija`),
+  porque no son navegación: son un control de lo que pintan. `UI.medCapa` las maneja.
+  El swipe lateral cambia de capa dentro de Cuerpo
+
+Medidas ya no es un grupo de Progreso (se llegaba por dos caminos con estructura
+distinta, y `medGo` estaba definido dos veces en `ACTIONS`, así que el acceso del Perfil
+a la vista propia era código muerto). En REV 215 **vuelve al selector de Progreso al
+lado de Nutrición** por pedido del dueño, pero **teñido de ámbar y con borde punteado**
+(`.pgopt.pgomed`): se lee como "esto te lleva a otra sección", no como una tercera
+pestaña del mismo contenido. `progGroup()` solo devuelve `act` o `nutri`.
+
+- **MD0b** Formulario de medidas (`medForm`, REV 215): cada campo se puede **escribir o
+  deslizar** (input + `range` sincronizados por `CHANGES.medIn`/`medSl`, sin re-render
+  para no perder el foco) y **arranca en el último registro** (`medUltimo`). Como viene
+  prellenado, `medGuardar` solo guarda lo tocado (`data-touched`), si no cada apertura
+  duplicaría medidas. Las instrucciones de cómo tomar cada medida siguen bajo el campo;
+  peso y estatura tienen las suyas. Rangos por tipo en `medRango`
 - **MD1** Aviso de lo que toca hoy: cada grupo tiene su cadencia (peso diario,
   **cintura y cuello cada 8 días**, resto del set cada 15, estructura cada 365). Si
   coinciden varios se funden en un solo formulario (`medEstado`, `medCamposHoy`).
@@ -366,9 +462,11 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   grasa meta (`medCinturaObjetivo`); si esa inversión cae por debajo de 0,40 de
   cintura/estatura se marca imposible y se explica en vez de mostrar un número irreal
   (es lo que pasa con la cadera de Cami). En Cami el pecho no lleva objetivo: es busto
-- **MD11** Medidas es el **tercer grupo del selector de Progreso** (`progGrpSelector`),
-  al lado de Actividad física y Nutrición: dejó de ser un chip perdido entre los de
-  actividad. `progGroup()` devuelve `cuerpo` cuando la sub-vista es `medidas`
+- **MD11** (retirado en REV 214: Medidas ya no es un grupo de Progreso, es vista propia)
+- **MD12** Bioimpedancia completa (REV 214, `medBiaHTML`, destino Composición): masa
+  libre de grasa, masa grasa, músculo esquelético, visceral, agua, TMB y magra por
+  segmento, con la nota de creatina y el aviso de "no comparable" cuando toca. Se
+  alimenta de `S.bia` y del `bia0` del plan (la línea base del 15/09/2026)
 - **MD10** "Cada cuánto medirte" (`medCadenciaCard`): las cuatro cadencias con el
   porqué de cada una, cuáles son clave y cuántos días faltan para la próxima
 - **MD4** Bloque Navy: % de grasa, masa grasa y magra sobre el promedio de 7 días,
@@ -441,7 +539,13 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 ## K · Check-in (vista propia, `vCheckin`)
 
 - **K1** Resumen de la semana que cierra (peso promedio, días, entrenos)
-- **K2** Formulario: peso, grasa %, medidas, adherencia, energía, sueño, notas, foto.
+- **K0** Semáforo de la semana (REV 214, `semaforoHTML`): etapa activa, peso promedio
+  contra el esperado del domingo, tolerancia y estado (verde dentro, ámbar una semana
+  fuera, rojo dos o más), más las sugerencias de ajuste con su botón para aceptarlas.
+  Si la etapa está por cerrar, encima sale la tarjeta de cierre (`etapaCierre`)
+- **K2** Formulario: peso, grasa %, medidas, **entrenos cumplidos y planeados**,
+  **promedio de pasos** (REV 214: son los dos datos con los que se juzga un peso plano
+  antes de tocar la comida), adherencia, energía, sueño, notas, foto.
   Desde REV 209 vive plegado (`uiCaja` "Registrar check-in", abre solo el domingo
   sin check-in de la semana); K1 además cuantifica lo que espera el check-in
   (entrenos y series de la semana) cuando aún no se cierra
@@ -489,7 +593,25 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 Si una zona cambia de lugar, el código se queda con la zona, no con la posición.
 Al agregar cajas nuevas se les asigna el siguiente número libre de su pantalla.
 
-## HX · Hyrox (vista propia, `vHyrox`; se entra desde E7 y se sale con `volver`)
+## HX · Hyrox (vista propia, `vHyrox`; se entra desde E7, desde I2e y se sale con `volver`)
+
+**REV 215 · portada y destinos**, igual que Medidas y por la misma razón (una fila de
+pestañas con solo iconos no se entiende en un teléfono):
+
+- **HX0** Portada (`hxHomeHTML`, `UI.hxSub = null`): tiempo proyectado, nivel, cuántas
+  estaciones llevas medidas y cuáles faltan, la semana del plan de 12, la última marca,
+  y la lista de destinos escritos (`HX_SECS`)
+- **HXn** Cada destino es pantalla propia con volver y **el título abre la hoja**
+  (`hxHojaHTML`, `.fbox.hoja`) para saltar entre ellos
+- **HXC** "Crear sesión" (`hxVCrear`): eliges estaciones de las 8, ajustas la distancia
+  o las repeticiones de cada una, decides **circuito de N vueltas o una sola pasada** y
+  cuántos metros correr antes de cada estación. Se guarda como una rutina normal en
+  `S.customRoutines` con `hx:true`, así que entra sola a `ROUTINES` y se entrena y se
+  registra igual que las demás
+- **Volver desde una rutina**: `goSession` y `routineOpen` guardan `UI.sessBack` cuando
+  se entra desde otra vista, y `backTrain`/`routineBack` lo respetan. Antes, entrar a
+  una rutina desde Hyrox te dejaba en la lista de Entrenar sin camino de regreso
+
 
 Cinco pestañas (`xtabs`, `UI.hxSub`, `ACTIONS.hxSub`), envueltas en `data-swnav="hxsub"`:
 deslizar en horizontal cambia de pestaña. Toda la sección se apaga con M11.
@@ -702,7 +824,7 @@ lo contrario de fácil de llenar. `serieW` / `serieValida` tratan el vacío como
 `exPesoCorporal(id)`, el campo muestra **"lastre"** en vez de "kg", y al marcar una serie no
 se rellena el peso desde el histórico. Sirve igual en la sesión y en el registro libre.
 
-## MD0 · Las tres cajas de Medidas
+## MD0 · Las tres cajas de Medidas (histórico, sustituido en REV 214)
 
 Al entrar solo se ven **tres cajas plegadas** en fila (`UI.medBox`, acordeón), en vez de una
 pared de secciones: **Meta de grasa · Tu cuerpo · Tu meta**. El aviso de lo que toca hoy
@@ -854,6 +976,10 @@ entre "estoy flojo aquí" y "haz esto".
 
 ## Las cuatro capas viven en el mapa
 
+> REV 214: las capas volvieron a ser cuatro (Grasa y Meta se habían colado como si fueran
+> capas del cuerpo y no pintan nada en el mapa) y ahora llevan **el rótulo siempre
+> visible**: en un teléfono no hay hover que lo revele.
+
 El selector de capa (`medCapaBar`) son cuatro chips pequeños encima del cuerpo, no una fila
 de pestañas aparte: **Medidas · Carga · Fuerza · Cruce**. Vive fuera de `medMapa` a
 propósito, porque si una capa no tiene datos y la barra estuviera dentro del mapa te quedabas
@@ -996,7 +1122,10 @@ Tres cosas que van juntas:
   Solo un grupo abierto a la vez (`UI.cruceGrupo`, arranca en `ojo`), y dentro, tocar una
   casilla abre su lectura completa a lo ancho.
 
-### El nav de abajo de Medidas
+### El nav de abajo de Medidas (histórico, sustituido en REV 214)
+
+> REV 214: este pie desapareció. Grasa y Meta se fueron al destino Composición y medir
+> quedó con **un solo** camino (`medirNuevo`), no dos.
 
 En la capa Medidas el pie de página no repite las seis capas: lleva **Grasa**, **Meta** y
 **Tomar medidas**. Las dos primeras cambian de capa; la tercera despliega ahí mismo los grupos

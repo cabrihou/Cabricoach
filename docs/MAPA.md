@@ -18,16 +18,28 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
 
 ## I · Inicio (`vInicio`)
 
-- **I1** Hero del peso (REV 215): **tres columnas** en una fila (`.herotop.h3`): el peso
-  enorme (60 px a 390) a la izquierda, la grasa como cifra mediana con su flecha verde
-  si baja o roja si sube (`.herogr`) y la meta con lo que falta (`.herometa`). Sin
-  rótulo "Andrés · Descarga" ni pastilla de grasa aparte. La cabrita flota en la
-  esquina de la tarjeta (`.cabfloat`, única animación continua del Inicio, se apaga
-  con prefers-reduced-motion) y sigue abriendo su dato al tocarla. Bajo 370 px el
-  número baja a 46 px para no invadir la columna de grasa (medido)
-  - I1b Tira de días (`daystrip`) en **horizontal**: letra, número y círculo en fila,
-    29 px de alto en vez de 57 apilados
-- **I2** Checkpoint del día: tarjetas de atajos (`ckSection`)
+- **I1** Hero del peso (REV 215): una fila de tres columnas (`.herotop.h3`): la cabrita
+  flotando (`.cabfloat`, única animación continua del Inicio, se apaga con
+  prefers-reduced-motion, sigue abriendo su dato al tocarla), el peso enorme (55 px a
+  390, 44 bajo 370) con la grasa como **chip diminuto pegado al kg** (`.hgrasa`: cifra y
+  flecha verde si baja o roja si sube; si no cabe al lado baja debajo del número, nunca
+  invade la meta), y la meta con lo que falta (`.herometa`). Sin rótulo, sin texto de
+  "registrado hoy", sin pastilla de grasa aparte
+  - I1b Tira de días (`daystrip`): letra y número apilados con aire y una **barrita**
+    debajo que se enciende al cumplir (verde) o marca el día de hoy (acento). En fila
+    quedaban apretados en 47 px
+- **I2** Checkpoint del día: tarjetas de atajos (`ckSection`). REV 215: el título "N de 3
+  al momento" y la racha van a lo ancho; la cabrita bajó a 88 px y acompaña la fila del
+  camino (antes ocupaba una columna de 150 px y dejaba una esquina muerta). El nodo de
+  agua muestra litros, no vasos de 250
+  - **I2b Pasos**: la caja solo muestra el dato; tocarla abre una ventana
+    (`pasosWindow`) con número, slider y +/-. **El número se arrastra** arriba o abajo
+    como un contador (`dragNum`, también en la ventana del peso y en los campos de
+    Medidas); un toque corto abre el teclado
+  - **I2c Agua**: sin botón de "vaso de X ml". **Mantener oprimido el +** (1,5 s,
+    `W_HOLD_MS`) abre un selector flotante de medida (`.wpick`); se desliza hasta una
+    opción y al soltar queda; soltar afuera cierra sin cambiar. El toque corto sigue
+    sumando. `touch-action:none` en el botón para que el arrastre no se vuelva scroll
   - I2a Entreno ("Ir a entrenar" + check que completa la rutina)
   - I2b Pasos · I2c Agua · **I2d Medidas** (lleva a la vista propia de Medidas, `medGo`;
     dice qué toca hoy o en cuántos días) · **I2e Hyrox** (REV 215, solo con la sección
@@ -47,6 +59,9 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   `S.week` del calendario, más botón "Entrenar: rutina de hoy" y plantilla base
   (`islaSemanaHTML`, `ACTIONS.islaSemana`). La semana se reinicia sola cada
   domingo 8 pm (`weekAutoReset`, sello en `S.cfg.weekResetStamp`)
+- **IN** Nutrición del Inicio (`nutriDay`): sin el texto de ánimo ("vas arrancando el
+  día"), que solo aparece de noche con déficit real; "Meta calculada con X kg" pasó a
+  una i (`INFO3['meta-prot']`)
 - **IM** "Tus metas" (REV 214, rediseñada en REV 215 · `metasHomeHTML`): va entre el
   hero y el checkpoint del día, **plegada por defecto** (`S.cfg.metasOpen`): siempre se
   ve la etapa y el resto se despliega a un toque, para que el Inicio no crezca sin
@@ -58,11 +73,16 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   gráfico, **en horizontal** (cifra a un lado, gráfico al otro, `.btrow` / `.btw`). El
   **estado** va en el punto de la esquina y una meta lograda muestra un check. Los
   detalles viven en la isla, que se tiñe del mismo color (`.islatint`).
-  **Tablero personalizable** (`S.cfg.metasCfg`, hoja `metasEditHTML` desde el botón
-  "Editar"): por meta se elige tamaño (S 1x1, W 2x1, T 1x2, L 2x2), gráfico (barra,
-  anillo, línea, barras), orden y si se ve. La etapa siempre va primera, ancha y con
-  su sparkline. Sin configuración: etapa W, peso T, el resto S, elegidas por urgencia y
-  cercanía (`metasDestacadas`). "Ver todas" está al final del editor. **Al tocar cualquiera se abre su
+  **Plegada (lo primero que se ve)**: solo una **tira de anillos** (`metaRingHTML`,
+  `.metastrip`), uno por meta con su progreso en su color y el icono en el centro, de a
+  cuatro por ancho y deslizable con snap si hay más; sin fila de botón, tocar cualquier
+  anillo abre el tablero (`metasTgl`). **Abierta**: el bento, con [Ver menos] y el
+  botón de editar.
+  **Tablero personalizable** (`S.cfg.metasCfg`, hoja `metasEditHTML`): por meta se elige
+  tamaño (S 1x1, W 2x1, T 1x2, L 2x2), gráfico (barra, anillo, línea, barras), orden y
+  si se ve. La etapa siempre va primera, ancha y con su sparkline. Sin configuración:
+  etapa W, peso T, el resto S, elegidas por urgencia y cercanía (`metasDestacadas`).
+  "Ver todas" está al final del editor. **Al tocar cualquiera se abre su
   isla flotante** con la proyección completa (`islaMetaHTML`, `.fbox.islameta`, creada
   al vuelo sin pasar por `render()`, igual que la isla semanal).
   `metasUnificadas` lee con una sola forma las cuatro familias de metas que estaban
@@ -594,6 +614,9 @@ Si una zona cambia de lugar, el código se queda con la zona, no con la posició
 Al agregar cajas nuevas se les asigna el siguiente número libre de su pantalla.
 
 ## HX · Hyrox (vista propia, `vHyrox`; se entra desde E7, desde I2e y se sale con `volver`)
+
+- **HXR** En Sesiones, "Ver" abre la rutina en una **isla flotante** (`rutIsla`, reusa
+  `vRutinaDetalle`); tocar afuera la cierra y no se pierde dónde estabas
 
 **REV 215 · portada y destinos**, igual que Medidas y por la misma razón (una fila de
 pestañas con solo iconos no se entiende en un teléfono):

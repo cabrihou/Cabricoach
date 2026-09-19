@@ -36,6 +36,13 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
     (`pasosWindow`) con número, slider y +/-. **El número se arrastra** arriba o abajo
     como un contador (`dragNum`, también en la ventana del peso y en los campos de
     Medidas); un toque corto abre el teclado
+  - **I2x Sin instrucciones en las cajas** (REV 216): fuera "toca para registrar",
+    "toca para marcar" y "mantén el + para cambiar la medida". Ese alto se lo reparten
+    los datos: el anillo de pasos crece a 76 px y su semana pasa a lo ancho (`.ckweek`),
+    el vaso de agua sube a 104 px, y Medidas pasa a la misma anatomía que las demás
+    (cifra grande con su rótulo, en vez de dos líneas de texto sobre la cabrita).
+    Creatina y Hyrox usan `.ckmini` (icono en cápsula arriba, cifra, rótulo abajo):
+    en 82 px de ancho "icono + Creatina" en línea se salía 13 px
   - **I2c Agua**: sin botón de "vaso de X ml". **Mantener oprimido el +** (1,5 s,
     `W_HOLD_MS`) abre un selector flotante de medida (`.wpick`); se desliza hasta una
     opción y al soltar queda; soltar afuera cierra sin cambiar. El toque corto sigue
@@ -61,7 +68,10 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   domingo 8 pm (`weekAutoReset`, sello en `S.cfg.weekResetStamp`)
 - **IN** Nutrición del Inicio (`nutriDay`): sin el texto de ánimo ("vas arrancando el
   día"), que solo aparece de noche con déficit real; "Meta calculada con X kg" pasó a
-  una i (`INFO3['meta-prot']`)
+  una i (`INFO3['meta-prot']`), que va en línea con las kcal. REV 216: el chip
+  "faltan X g" tenía una fila para él solo y dejaba vacía la esquina de arriba; lo que
+  dice ya está en "Con qué cerrar" y en la caja de PROTEÍNA, así que solo se pinta
+  cuando aporta algo nuevo (meta cumplida, o alerta de noche) y va junto a la cifra
 - **IM** "Tus metas" (REV 214, rediseñada en REV 215 · `metasHomeHTML`): va entre el
   hero y el checkpoint del día, **plegada por defecto** (`S.cfg.metasOpen`): siempre se
   ve la etapa y el resto se despliega a un toque, para que el Inicio no crezca sin
@@ -76,7 +86,8 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   **Plegada (lo primero que se ve)**: solo una **tira de anillos** (`metaRingHTML`,
   `.metastrip`), uno por meta con su progreso en su color y el icono en el centro, de a
   cuatro por ancho y deslizable con snap si hay más; sin fila de botón, tocar cualquier
-  anillo abre el tablero (`metasTgl`). **Abierta**: el bento, con [Ver menos] y el
+  anillo abre el tablero (`metasTgl`). Los rótulos van cortos (`metaNomCorto`): a 360 px
+  "Grasa de salida" no cabe en una columna de cuatro. **Abierta**: el bento, con [Ver menos] y el
   botón de editar.
   **Tablero personalizable** (`S.cfg.metasCfg`, hoja `metasEditHTML`): por meta se elige
   tamaño (S 1x1, W 2x1, T 1x2, L 2x2), gráfico (barra, anillo, línea, barras), orden y

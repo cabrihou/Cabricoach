@@ -1495,7 +1495,7 @@ html[data-tema=claro] .mealprep .mpd{color:#33604C}
 .medfx{font:500 12.5px var(--num);line-height:1.6;color:var(--ink2);background:var(--card2);border-radius:10px;padding:9px 11px;overflow-x:auto;white-space:nowrap}
 .medfx.sust{color:var(--ink);border:1px solid rgba(var(--acc-rgb),.35)}
 .cycpeso{margin-top:12px;padding-top:10px;border-top:1px solid var(--line2)}
-.gkg{display:inline-flex;align-items:baseline;gap:5px;padding:3px 9px;border-radius:999px;background:rgba(var(--lift),.06);border:1px solid var(--line)}
+.gkg{display:inline-flex;align-items:baseline;gap:5px;padding:3px 9px;border-radius:999px;background:rgba(var(--lift),.06);border:1px solid var(--line);flex-wrap:wrap;max-width:100%;min-width:0}
 .gkg b{font:700 17px var(--num);font-variant-numeric:tabular-nums;line-height:1}
 .gkg span{font:600 11px var(--ui);color:var(--smoke)}
 .gkg i{font:500 11px var(--ui);font-style:normal;color:var(--ink3,#7a8699);margin-left:2px}
@@ -1970,11 +1970,25 @@ body.trayon #view{padding-bottom:96px}
 .ckrow2>.cktile{min-height:0}
 .ckhx{cursor:pointer;justify-content:center;gap:4px}
 .ckhx b{font-size:14px}
-.ckhxn{font:600 22px/1 var(--num);font-variant-numeric:tabular-nums;color:var(--ink)}
+.ckhxn{font:600 20px/1 var(--num);font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
+/* la semana de pasos a lo ancho de la caja, con el alto que dejo la instruccion */
+.ckweek{height:34px!important;width:100%;margin:0!important}
+/* cajas chicas de la fila (creatina, Hyrox): 82 px no dan para "icono + nombre" en
+   linea, asi que el nombre baja y la cifra manda, como en el resto del checkpoint */
+.ckmini{align-items:center;justify-content:center;text-align:center;gap:5px;padding:10px 6px}
+.ckminic{position:relative;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(var(--lift),.07);color:var(--ink2)}
+.ckmini.on .ckminic{background:rgba(var(--acc-rgb),.18);color:var(--mint)}
+.ckminic .tickmini{position:absolute;right:-3px;bottom:-3px;width:15px;height:15px;border-radius:50%;background:var(--grad);color:var(--onmint);display:flex;align-items:center;justify-content:center}
+.ckminil{font:600 10.5px var(--ui);color:var(--smoke);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ckmini .ckcreatn{font-size:22px}
+/* el vaso llena el alto que sobraba en la caja de agua */
+.cktile .wglass{height:104px}
 .ckcreatn em{font:700 12px var(--num);font-style:normal;color:var(--smoke)}
 .ckcreat:active{transform:scale(.98)}
 .nuthero{position:relative;overflow:hidden;border-radius:14px;min-height:126px}
 .nuthrow{display:flex;gap:14px;align-items:center;position:relative;z-index:1;padding-right:66px;min-height:118px}
+/* a 360 px la cabrita se come el ancho y la fila de g/kg se salia: que pueda partirse */
+@media (max-width:379px){.nuthrow{gap:10px;padding-right:54px}.nuthrow>div:last-child{min-width:0}}
 .nutgoat{position:absolute;right:0;bottom:-6px;height:132px;width:auto;object-fit:contain;pointer-events:none;z-index:0;-webkit-mask-image:linear-gradient(90deg,transparent 4%,#000 52%);mask-image:linear-gradient(90deg,transparent 4%,#000 52%);filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
 .nutnudge{font-size:14.5px;line-height:1.45;color:var(--ink);margin-top:6px}
 .nutnudge.alert{color:var(--red);font-weight:600}
@@ -2642,7 +2656,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 216';
+const APPREV='REV 217';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -13449,9 +13463,8 @@ function waterUI(dISO,act){
       <button class="wbtn2 plus" data-a="${act}" data-n="${paso}" aria-label="más agua">${ic('drop',13)} +${fmtInt(paso)} ML</button>
     </div>
   </div>
-  ${''/* REV 215: el boton "vaso de X ml" se fue. La medida se cambia manteniendo oprimido
-     el + (ver wStepHold): sale un selector, se suelta sobre una opcion y listo. */}
-  <span class="small dim" style="display:block;margin-top:6px;text-align:right">mantén el + para cambiar la medida</span>`;
+  ${''/* REV 216: la medida se cambia manteniendo oprimido el + (wPickAbrir). No se
+     explica en pantalla: una instruccion fija ocupa mas de lo que ensena. */}`;
 }
 function daystrip(){
   const t=TODAY(), base=fromISO(t), mon=addDays(t,-((base.getDay()+6)%7));
@@ -14101,13 +14114,19 @@ function nutriDay(t, opts){
     :alerta?`Se acaba el día y vas en ${Math.round(pct)}%. Te faltan ${falta} g.`
     :(falta<=30?`Casi: ${falta} g más y listo.`:`Te faltan ${falta} g. Proteína primero.`);
   return `<section class="mod nutriday">
-    <div class="flex" style="justify-content:flex-end;margin-bottom:6px">${done?`<span class="chip fill">${ic('check',11)} Meta</span>`:`<span class="chip ${alerta?'red':'dim'}">faltan ${falta} g</span>`}</div>
+    ${''/* REV 216: el chip "faltan X g" tenia una fila para el solo y dejaba vacia la
+       esquina de arriba. Lo que dice ya esta en "Con que cerrar" y en la caja de
+       PROTEINA, asi que solo se pinta cuando aporta algo nuevo: meta cumplida, o
+       alerta de noche. Y va en linea con la cifra, no en una fila aparte. */}
     <div class="nuthero">
       <img loading="lazy" class="nutgoat" src="${face}" alt="" decoding="async">
       <div class="nuthrow">
         <div class="ringrodwrap" style="flex:none">${ring(pct, '', 'PROTEÍNA', 110, 11)}<span class="ringrod">${nrod(Math.round(pct),0)}<i>%</i></span></div>
         <div style="min-width:0">
-          <div class="t-metric-md" style="line-height:1">${eat.pg}<span class="t-unit"> / ${goal} g</span></div>
+          <div class="flex" style="align-items:baseline;gap:8px;flex-wrap:wrap">
+            <div class="t-metric-md" style="line-height:1">${eat.pg}<span class="t-unit"> / ${goal} g</span></div>
+            ${done?`<span class="chip fill">${ic('check',11)} Meta</span>`:alerta?`<span class="chip red">faltan ${falta} g</span>`:''}
+          </div>
           ${(()=>{ /* g de proteina por KG de peso: es la cifra con la que se lee de
             verdad si comiste suficiente, sin depender de cuanto peses. Va aqui, pegada
             al total, porque en el bloque de texto de abajo pasaba desapercibida. */
@@ -14116,9 +14135,11 @@ function nutriDay(t, opts){
             const col=gk>=meta?'var(--mint)':gk>=meta*0.8?'var(--gold)':'var(--red)';
             return `<div class="gkg mt4"><b style="color:${col}">${fmt1(gk)}</b><span>g/kg</span><i>meta 1,8</i> ${i3('gkg-calc','Cómo')}</div>`;
           })()}
-          <div class="small dim" style="margin-top:5px">≈ ${eat.kc} <span style="opacity:.6">/ ${PLAN.kcal} kcal</span></div>
+          <div class="flex" style="align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap">
+            <span class="small dim">≈ ${eat.kc} <span style="opacity:.6">/ ${PLAN.kcal} kcal</span></span>
+            ${i3('meta-prot','Cómo')}
+          </div>
           ${alerta?`<div class="nutnudge mt8 alert">${nudge}</div>`:''}
-          <div class="mt4">${i3('meta-prot','Cómo sale la meta')}</div>
         </div>
       </div>
     </div>
@@ -14578,30 +14599,28 @@ const node=(on,icn,val,lb,bonus)=>{
          pasos se fue a una ventana (pasosWindow), igual que el peso: tocar la caja la abre. */}
       <button class="cktile ${st.pasos?'on':''}" data-a="pasosModal" aria-label="Pasos de hoy ${fmtInt(stepsToday||0)} de ${fmtInt(S.cfg.stepGoal)}, toca para registrar">
         <b>${ic('steps',17)} Pasos${st.pasos?`<span class="tick">${ic('check',11)}</span>`:''}</b>
-        <div class="flex" style="width:100%;gap:12px;align-items:center">
-          <div style="position:relative;flex:none">${ring(clamp(stepsToday/S.cfg.stepGoal*100,0,100),Math.round(clamp(stepsToday/S.cfg.stepGoal*100,0,100))+'%','',66,7)}</div>
-          <div class="grow" style="min-width:0;text-align:left"><div class="ckmetric">${stepsToday>=1000?fmt1(stepsToday/1000).replace(',0','')+'k':String(stepsToday||0)}</div><span class="small dim cksub">de ${fmtInt(S.cfg.stepGoal)}</span>
-            <div class="stepmini mt8">${Array.from({length:8},(_,i)=>{const d=addDays(t,-(7-i)),v=S.steps[d]||0,pc=clamp(v/S.cfg.stepGoal*100,4,100);return `<i style="height:${pc}%;${v>=S.cfg.stepGoal?'':'opacity:.4'}"></i>`;}).join('')}</div>
-          </div>
+        ${''/* sin la linea de "toca para registrar": ese alto se lo reparten el anillo
+           (mas grande) y la semana, que pasa a lo ancho de la caja */}
+        <div class="flex grow" style="width:100%;gap:12px;align-items:center">
+          <div style="position:relative;flex:none">${ring(clamp(stepsToday/S.cfg.stepGoal*100,0,100),Math.round(clamp(stepsToday/S.cfg.stepGoal*100,0,100))+'%','',76,8)}</div>
+          <div class="grow" style="min-width:0;text-align:left"><div class="ckmetric">${stepsToday>=1000?fmt1(stepsToday/1000).replace(',0','')+'k':String(stepsToday||0)}</div><span class="small dim cksub">de ${fmtInt(S.cfg.stepGoal)}</span></div>
         </div>
-        <span class="small dim">${stepsToday?'toca para corregir':'toca para registrar'}</span>
+        <div class="stepmini ckweek">${Array.from({length:8},(_,i)=>{const d=addDays(t,-(7-i)),v=S.steps[d]||0,pc=clamp(v/S.cfg.stepGoal*100,4,100);return `<i style="height:${pc}%;${v>=S.cfg.stepGoal?'':'opacity:.4'}" title="${fmtD(d)}: ${fmtInt(v)}"></i>`;}).join('')}</div>
       </button>
       <div class="ckrow2">
       ${(()=>{ const cc=creatCfg(); if(!cc) return '';
         const hoy=creatHoy(), rk=creatRacha();
-        return `<button class="cktile ckcreat ${hoy?'on':''}" data-a="creat" aria-pressed="${hoy?'true':'false'}">
-          <b>${ic('drop',15)} Creatina${hoy?`<span class="tick">${ic('check',11)}</span>`:''}</b>
-          <div class="flex between" style="width:100%;align-items:baseline;gap:8px">
-            <span class="ckcreatn">${cc.dosis}<em>g</em></span>
-            <span class="small dim">${hoy?(rk>1?rk+' días seguidos':'hecho hoy'):'toca para marcar'}</span>
-          </div>
+        return `<button class="cktile ckmini ckcreat ${hoy?'on':''}" data-a="creat" aria-pressed="${hoy?'true':'false'}" aria-label="Creatina, ${cc.dosis} gramos${hoy?', hecho hoy':''}">
+          <span class="ckminic">${ic('drop',16)}${hoy?`<i class="tickmini">${ic('check',9)}</i>`:''}</span>
+          <span class="ckcreatn">${cc.dosis}<em>g</em></span>
+          <span class="ckminil">${hoy&&rk>1?rk+' días':'Creatina'}</span>
         </button>`;})()}
       ${(()=>{ if(typeof hxOn!=='function' || !hxOn()) return '';
         const g=hxNivelGlobal(), mk=hxMarcas(), n=new Set(mk.map(m=>m.est)).size;
-        return `<button class="cktile ckhx" data-a="hxGo" aria-label="Hyrox">
-          <b>${ic('flag',15)} Hyrox</b>
+        return `<button class="cktile ckmini ckhx" data-a="hxGo" aria-label="Hyrox, ${g.sin?'sin marcas':hxMMSS(g.p.seg)+' proyectado'}">
+          <span class="ckminic">${ic('flag',16)}</span>
           <span class="ckhxn">${g.sin?'·':hxMMSS(g.p.seg)}</span>
-          <span class="small dim">${g.sin?'sin marcas':n+' de 8 estaciones'}</span>
+          <span class="ckminil">${g.sin?'Hyrox':n+'/8 · Hyrox'}</span>
         </button>`;})()}
       </div>
       </div>
@@ -14614,13 +14633,13 @@ const node=(on,icn,val,lb,bonus)=>{
       const mTarde=mp.some(x=>x.tarde);
       return `<div class="cktile ${ciDone&&!mp.length?'on':''}" data-a="medGo" role="button" style="cursor:pointer;position:relative;overflow:hidden">
         <b style="position:relative;z-index:1">${ic('ruler',16)} Medidas${ciDone&&!mp.length?`<span class="tick">${ic('check',11)}</span>`:''}</b>
-        ${''/* el texto largo se salia de la caja por encima de la cabrita: ahora dice lo
-           justo, maximo dos grupos y el resto contado */}
-        <span class="small dim" style="max-width:46%;position:relative;z-index:1">${mp.length
-          ?`${mp.length} pendiente${mp.length>1?'s':''}${mTarde?' · con retraso':''}`
-          :'Al día · toca en '+medFaltanDias()+' días'}</span>
-        ${mp.length?`<span class="small" style="max-width:46%;position:relative;z-index:1;color:var(--ink2);line-height:1.35">${esc(mp.slice(0,2).map(x=>x.n.toLowerCase()).join(', '))}${mp.length>2?' y '+(mp.length-2)+' más':''}</span>`:''}
-        <span class="chip ${mp.length?'fill':'dim'} mt8" style="position:relative;z-index:1">${mp.length?'MEDIR':'VER'}</span>
+        ${''/* la misma anatomia que las demas cajas: una cifra que manda y su rotulo.
+           Las dos lineas de texto se iban encima de la cabrita y no decian mas. */}
+        <div style="position:relative;z-index:1;max-width:52%">
+          <div class="ckmetric">${mp.length?mp.length:(medFaltanDias()||'·')}</div>
+          <span class="small dim cksub">${mp.length?('pendiente'+(mp.length>1?'s':'')+(mTarde?' · tarde':'')):(medFaltanDias()?'días para la próxima':'al día')}</span>
+        </div>
+        <span class="chip ${mp.length?'fill':'dim'}" style="position:relative;z-index:1;margin-top:auto">${mp.length?'MEDIR':'VER'}</span>
         <img loading="lazy" src="${UID==='andres'?CAB.tileCheckA:CAB.tileCheckC}" alt="" decoding="async" style="position:absolute;right:-16px;bottom:-6px;height:186px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.5));pointer-events:none">
       </div>`})()}
       ${''/* la caja de comidas se unificó en la sección NUTRICIÓN de abajo */}
@@ -20114,11 +20133,20 @@ function metaTileHTML(x){
    arriba siempre la etapa, y el resto del bento se despliega a un toque. */
 /* anillo chico de una meta para la tira plegada: progreso en su color y el icono
    en el centro. ring() pinta texto en el centro; se le pasa vacio y el icono va encima. */
+/* nombre corto para la tira: en 4 columnas a 360 px "Grasa de salida" no cabe y salia
+   con puntos suspensivos. La version larga se ve en la caja y en la isla. */
+function metaNomCorto(x){
+  if(x.tipo==='etapa') return 'Etapa '+x.E.e.n;
+  if(x.tipo==='peso') return 'Peso';
+  if(x.tipo==='grasa') return 'Grasa';
+  if(x.tipo==='habito') return 'Pasos';
+  return String(x.n).split(' ')[0];
+}
 function metaRingHTML(x){
   const bc=META_COL[x.tipo]||'var(--mint)';
   return `<button class="mring" style="--bc:${bc}" data-a="metasTgl" aria-label="${esc(x.n)}, ${x.pct}%">
     <span class="btring">${ring(x.pct,'','',74,7)}<span class="mringic">${ic(x.ic,20)}</span></span>
-    <span class="mringn">${esc(x.n.replace(/^Etapa \d+ · /,''))}</span>
+    <span class="mringn">${esc(metaNomCorto(x))}</span>
   </button>`;
 }
 /* La seccion del Inicio. El heroe dice como voy HOY; esto dice a que le estoy apuntando.

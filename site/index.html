@@ -645,6 +645,30 @@ svg .acc{fill:var(--mint);stroke:none}
 .wpick button{padding:9px 0;border-radius:10px;border:1px solid var(--line2);background:var(--card2);color:var(--ink);font:600 14px var(--num);font-variant-numeric:tabular-nums}
 .wpick button.on{border-color:rgba(var(--acc-rgb),.6);color:var(--mint)}
 .wpick button.hov{background:var(--grad);color:var(--onmint);border-color:transparent;transform:scale(1.06)}
+/* una etapa del plan completo: cabecera, sus tres cifras y el detalle de entreno */
+.planet{border:1px solid var(--line2);border-radius:16px;padding:12px;margin-bottom:9px;background:var(--card2)}
+.planet.on{border-color:rgba(var(--acc-rgb),.45);background:rgba(var(--acc-rgb),.06)}
+.planet.off{opacity:.55}
+.planetn{font:600 15.5px var(--ui)}
+.planetg{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px;margin-top:10px}
+.planetg>span{display:block;min-width:0;background:rgba(var(--lift),.05);border:1px solid var(--line2);border-radius:12px;padding:8px 9px}
+.planetg i{display:block;font:600 9.5px var(--ui);font-style:normal;letter-spacing:.06em;text-transform:uppercase;color:var(--smoke)}
+.planetg b{display:block;font:700 17px/1.1 var(--num);font-variant-numeric:tabular-nums;margin-top:3px}
+.planetg u{display:block;font:500 10.5px var(--ui);text-decoration:none;color:var(--smoke);margin-top:2px;line-height:1.3}
+/* pie de isla: las acciones van como chips en una fila, no como botones apilados a lo
+   ancho. El "Cerrar" se quito: la X de la cabecera y tocar afuera ya cierran. */
+.islapie{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line2)}
+.islapie .chip{padding:8px 13px;font-size:13px}
+.islapie:empty{display:none}
+.islax{position:absolute;top:10px;right:10px;z-index:3;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(11,13,15,.72);backdrop-filter:blur(6px);border:1px solid var(--line);color:var(--ink)}
+.rutisla .fboxin{position:relative}
+/* lista vertical: la usa la meta del heroe, donde cada opcion necesita nombre y cifra */
+.wpicklista{display:flex;flex-direction:column;gap:5px}
+.wpicklista button{display:flex;align-items:center;gap:10px;text-align:left;padding:9px 11px;font:600 14px var(--ui)}
+.wpicklista .wpicki{flex:none;display:inline-flex}
+.wpicklista b{flex:1;min-width:0;font:600 14px var(--ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wpicklista em{flex:none;font:700 14px var(--num);font-style:normal;font-variant-numeric:tabular-nums;color:var(--smoke)}
+.wpicklista button.hov em,.wpicklista button.hov .wpicki{color:var(--onmint)}
 .cicab{position:absolute;right:4px;top:44px;width:118px;filter:drop-shadow(0 12px 22px rgba(0,0,0,.5));pointer-events:none;z-index:1}
 /* comparador antes/despues: se arrastra la foto misma (ver fotoCompare).
    touch-action:none para que iOS no scrollee la pagina durante el arrastre. */
@@ -1495,7 +1519,7 @@ html[data-tema=claro] .mealprep .mpd{color:#33604C}
 .medfx{font:500 12.5px var(--num);line-height:1.6;color:var(--ink2);background:var(--card2);border-radius:10px;padding:9px 11px;overflow-x:auto;white-space:nowrap}
 .medfx.sust{color:var(--ink);border:1px solid rgba(var(--acc-rgb),.35)}
 .cycpeso{margin-top:12px;padding-top:10px;border-top:1px solid var(--line2)}
-.gkg{display:inline-flex;align-items:baseline;gap:5px;padding:3px 9px;border-radius:999px;background:rgba(var(--lift),.06);border:1px solid var(--line);flex-wrap:wrap;max-width:100%;min-width:0}
+.gkg{display:inline-flex;align-items:baseline;gap:5px;padding:3px 9px;border-radius:999px;background:rgba(var(--lift),.06);border:1px solid var(--line);flex:0 0 auto;white-space:nowrap}
 .gkg b{font:700 17px var(--num);font-variant-numeric:tabular-nums;line-height:1}
 .gkg span{font:600 11px var(--ui);color:var(--smoke)}
 .gkg i{font:500 11px var(--ui);font-style:normal;color:var(--ink3,#7a8699);margin-left:2px}
@@ -1909,6 +1933,10 @@ body.trayon #view{padding-bottom:96px}
 .bt .bth .btic{width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;
   background:color-mix(in srgb, var(--bc,var(--mint)) 22%, transparent);flex:none}
 .btv{font:700 clamp(26px,7.4vw,34px)/1 var(--num);font-variant-numeric:tabular-nums;letter-spacing:-.02em;color:var(--bc,var(--ink));white-space:nowrap}
+/* sin dato propio la cifra que se ve es la ESPERADA: va en gris para no hacerla pasar
+   por una medida tuya */
+.bt.sindato .btv{color:var(--ink2)}
+.bt.sindato .btpie{color:var(--gold)}
 .bt.sz-t .btv,.bt.sz-l .btv{font-size:clamp(34px,10vw,44px)}
 .btv em{font:600 12px var(--num);font-style:normal;color:var(--smoke);margin-left:2px}
 .btsub{font:500 12.5px var(--ui);color:var(--smoke);line-height:1.3}
@@ -1929,7 +1957,18 @@ body.trayon #view{padding-bottom:96px}
    tablero se lea con el color de la familia de la meta, se envuelve y su trazo de
    progreso (el segundo circulo) pasa a heredar ese color */
 .bt .btring{color:var(--bc,var(--mint));display:inline-flex}
-.bt .btring svg circle:nth-of-type(2){stroke:currentColor}
+/* el anillo lo dibuja ring() con un degradado propio y un glow del acento del usuario:
+   dentro de una caja de meta manda el color de la meta, si no todas salian azules */
+.bt .btring svg circle:nth-of-type(2){stroke:var(--bc,var(--mint))!important;filter:drop-shadow(0 0 7px color-mix(in srgb, var(--bc,var(--mint)) 55%, transparent))!important}
+.bt .btring svg text{fill:var(--bc,var(--mint))!important}
+/* barras, barritas de la semana y sparkline, todo del mismo color */
+.bt .bar>i{background:var(--bc,var(--mint))}
+.bt .stepmini i{background:var(--bc,var(--mint))}
+.bt .medspark path{stroke:var(--bc,var(--mint))}
+.bt .medspark circle{fill:var(--bc,var(--mint))}
+/* lo mismo en la isla de la meta, que se tine igual */
+.islatint .btring svg circle:nth-of-type(2),.islatint svg circle:nth-of-type(2){stroke:var(--bc)!important}
+.islatint .bar>i{background:var(--bc)}
 .bt.sz-l .btspark{height:56px}
 /* mini grafico de la etapa: lo real en el color de la meta, lo esperado punteado */
 .btspark{width:100%;height:30px;display:block;color:var(--bc,var(--mint));margin-top:2px}
@@ -2134,7 +2173,8 @@ body.trayon #view{padding-bottom:96px}
 .hgrasa.sin{color:var(--smoke);font:600 11.5px var(--ui)}
 .hgrasa:active{opacity:.8}
 .herotop .lbl{margin:0}
-.herometa{flex:none;text-align:right;line-height:1.2;padding-left:6px;border-left:1px solid var(--line2)}
+.herometa{flex:none;text-align:right;line-height:1.2;padding-left:6px;border-left:1px solid var(--line2);background:none;border-top:0;border-right:0;border-bottom:0;color:inherit;cursor:pointer;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:none}
+.herometa:active{opacity:.75}
 .herometa b{display:block;font:700 18px var(--num);font-variant-numeric:tabular-nums;color:var(--ink)}
 .herometa span{display:block;font:600 9.5px var(--ui);letter-spacing:.06em;text-transform:uppercase;color:var(--smoke)}
 .herometa i{display:block;font:600 12px var(--ui);font-style:normal;color:var(--mint);margin-top:4px}
@@ -2422,7 +2462,8 @@ b,strong{font-weight:600}
 .fbox.small .fboxin{max-width:min(92vw,380px)}
 /* N5: ventana flotante con contenido largo (formulario de la semana): scroll interno
    en vez de desbordar el fondo fijo, que no tiene overflow propio */
-.fbox.scroll{align-items:flex-start;padding-top:calc(env(safe-area-inset-top) + 20px);padding-bottom:calc(env(safe-area-inset-bottom) + 20px)}
+/* REV 218: las islas se abren centradas (antes salian pegadas al borde de arriba) */
+.fbox.scroll{align-items:center;padding-top:calc(env(safe-area-inset-top) + 16px);padding-bottom:calc(env(safe-area-inset-bottom) + 16px)}
 .fbox.scroll .fboxin{max-height:86vh;overflow-y:auto}
 /* ===== SISTEMA DE NIVELES DE INFORMACION (REV 207) =====
    Nivel 1: la cifra o el estado, sin tocar nada. Nivel 2: el desglose, plegado.
@@ -2656,7 +2697,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 217';
+const APPREV='REV 218';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -3037,7 +3078,12 @@ const PLANS = {
   },
   cami:{
     title:'Recomposición', start:'2026-07-27', end:'2027-12-31', weeks:156, block:true,
-    wStart:59.5, wGoal:56.5, metaNote:'meta: 26-27% de grasa manteniendo músculo',
+    /* REV 218. Se habia quedado en 56,5 (la meta vieja) mientras Andres si paso a la de
+       su etapa: con 56,4 kg el heroe decia "lograda" y no lo esta. La salida de su cut
+       es 26% de grasa, que con su masa libre de grasa del BIA del 15/09
+       (56,7 - 16,7 = 40,0 kg) cae en 54,1 kg. Igual que con Andres, el numero no se
+       escribe a mano: manda el % de la etapa y metaFases lo recalcula cada semana. */
+    wStart:59.5, wGoal:54.1, metaNote:'54,1 kg al 26% de grasa, con tu masa magra de hoy',
     /* misma fecha de arranque que Andres. 3 g diarios: la dosis de creatina no escala con el
        peso, escala con la masa muscular, y 3 g saturan igual solo que mas despacio.
        El agua que retiene si escala con el musculo, y ella tiene menos: 0,6 a 1,2 kg. */
@@ -13534,46 +13580,67 @@ function dragNum(el, get, set, porPx, dec){
    sumando agua como siempre. W_HOLD_MS es el tiempo de pulsacion. */
 const W_HOLD_MS=1500;
 const W_PASOS=[150,200,250,330,500,600,750,1000];
-let WH=null;
-function wPickAbrir(btn){
-  wPickCerrar();
-  const r=btn.getBoundingClientRect(), paso=Math.max(50,+((S.cfg&&S.cfg.waterStep)||250));
-  const box=document.createElement('div'); box.className='wpick';
-  box.innerHTML=`<span class="wpickt">cada toque suma</span><div class="wpickrow">${W_PASOS.map(v=>`<button data-n="${v}" class="${v===paso?'on':''}" aria-label="${v>=1000?'1 litro':v+' ml'}">${v>=1000?'1 L':v}</button>`).join('')}</div>`;
-  document.body.appendChild(box);
+/* ---- MENU POR PULSACION LARGA (REV 218) ----
+   Una sola pieza para los dos sitios que lo usan (la medida del agua y la meta de la
+   esquina del heroe): se mantiene oprimido, sale la tarjeta, se desliza hasta una
+   opcion y al soltar queda. Soltar afuera no cambia nada y el toque corto deja pasar
+   el click normal del control. Nada de esto se explica en pantalla a proposito. */
+const HOLD_MENUS=[];
+function holdRegistrar(sel, contenido, elegir){ HOLD_MENUS.push({sel, contenido, elegir}); }
+function holdCerrar(){ document.querySelectorAll('.wpick').forEach(b=>b.remove()); }
+function holdAbrir(btn, html, cls){
+  holdCerrar();
+  const r=btn.getBoundingClientRect();
+  const box=document.createElement('div'); box.className='wpick '+(cls||'');
+  box.innerHTML=html; document.body.appendChild(box);
   const w=Math.min(window.innerWidth-16, 340);
   box.style.width=w+'px';
   box.style.left=Math.max(8, Math.min(window.innerWidth-w-8, r.left+r.width/2-w/2))+'px';
-  box.style.top=Math.max(8, r.top-box.offsetHeight-12)+'px';
+  /* arriba si cabe; si no, debajo (el heroe esta pegado al borde de arriba) */
+  const arriba=r.top-box.offsetHeight-12;
+  box.style.top=(arriba>=8?arriba:Math.min(window.innerHeight-box.offsetHeight-8, r.bottom+12))+'px';
   try{ navigator.vibrate&&navigator.vibrate(12); }catch(_){}
 }
-function wPickCerrar(){ document.querySelectorAll('.wpick').forEach(b=>b.remove()); }
-function wPickBajo(x,y){ const el=document.elementFromPoint(x,y); return el&&el.closest?el.closest('.wpick button'):null; }
+function holdBajo(x,y){ const el=document.elementFromPoint(x,y); return el&&el.closest?el.closest('.wpick button'):null; }
+let WH=null;
 document.addEventListener('pointerdown', e=>{
-  const b=e.target.closest&&e.target.closest('.wbtn2.plus'); if(!b) return;
+  if(!e.target.closest) return;
+  const m=HOLD_MENUS.find(x=>e.target.closest(x.sel)); if(!m) return;
+  const b=e.target.closest(m.sel);
   try{ b.setPointerCapture(e.pointerId); }catch(_){}   /* los moves siguen llegando aunque el dedo salga del boton */
-  WH={b, abierto:false, t:setTimeout(()=>{ if(WH){ WH.abierto=true; wPickAbrir(b); } }, W_HOLD_MS)};
+  WH={b, m, abierto:false, t:setTimeout(()=>{ if(WH){ WH.abierto=true; holdAbrir(b, m.contenido(), m.cls); } }, W_HOLD_MS)};
 }, {passive:true});
 document.addEventListener('pointermove', e=>{
   if(!WH||!WH.abierto) return;
-  const ch=wPickBajo(e.clientX,e.clientY);
+  const ch=holdBajo(e.clientX,e.clientY);
   document.querySelectorAll('.wpick button').forEach(x=>x.classList.toggle('hov', x===ch));
 }, {passive:true});
 document.addEventListener('pointerup', e=>{
   if(!WH) return; clearTimeout(WH.t);
-  if(!WH.abierto){ WH=null; return; }          /* toque corto: el click suma agua */
-  const ch=wPickBajo(e.clientX,e.clientY);
-  if(ch){ S.cfg.waterStep=+ch.dataset.n; save('cfg'); toast('Cada toque suma '+fmtInt(S.cfg.waterStep)+' ml'); }
-  wPickCerrar();
-  WH.supr=true;                                 /* el click que sigue no debe sumar agua */
+  if(!WH.abierto){ WH=null; return; }          /* toque corto: pasa el click del control */
+  const ch=holdBajo(e.clientX,e.clientY);
+  if(ch) WH.m.elegir(ch);
+  holdCerrar();
+  WH.supr=true;                                 /* el click que sigue no debe dispararse */
   setTimeout(()=>{ WH=null; render(); }, 60);
 });
-document.addEventListener('pointercancel', ()=>{ if(WH){ clearTimeout(WH.t); wPickCerrar(); WH=null; } });
+document.addEventListener('pointercancel', ()=>{ if(WH){ clearTimeout(WH.t); holdCerrar(); WH=null; } });
 document.addEventListener('click', e=>{
-  const b=e.target.closest&&e.target.closest('.wbtn2.plus');
-  if(b&&WH&&WH.supr){ e.stopPropagation(); e.preventDefault(); }
+  if(!e.target.closest || !WH || !WH.supr) return;
+  if(HOLD_MENUS.some(x=>e.target.closest(x.sel))){ e.stopPropagation(); e.preventDefault(); }
 }, true);
-document.addEventListener('contextmenu', e=>{ if(e.target.closest&&e.target.closest('.wbtn2.plus')) e.preventDefault(); });
+document.addEventListener('contextmenu', e=>{ if(e.target.closest && HOLD_MENUS.some(x=>e.target.closest(x.sel))) e.preventDefault(); });
+/* la medida del agua */
+holdRegistrar('.wbtn2.plus',
+  ()=>{ const paso=Math.max(50,+((S.cfg&&S.cfg.waterStep)||250));
+    return `<span class="wpickt">cada toque suma</span><div class="wpickrow">${W_PASOS.map(v=>`<button data-n="${v}" class="${v===paso?'on':''}" aria-label="${v>=1000?'1 litro':v+' ml'}">${v>=1000?'1 L':v}</button>`).join('')}</div>`; },
+  ch=>{ S.cfg.waterStep=+ch.dataset.n; save('cfg'); toast('Cada toque suma '+fmtInt(S.cfg.waterStep)+' ml'); });
+/* la meta que se ve en la esquina del heroe */
+holdRegistrar('.herometa',
+  ()=>{ const sel=(S&&S.cfg&&S.cfg.heroMeta)||'peso';
+    const opts=metasUnificadas().filter(x=>x.tipo!=='etapa');
+    return `<span class="wpickt">la meta de la esquina</span><div class="wpicklista">${opts.map(x=>`<button data-k="${esc(x.id)}" class="${x.id===sel?'on':''}" aria-label="${esc(x.n)}"><span class="wpicki" style="color:${META_COL[x.tipo]||'var(--mint)'}">${ic(x.ic,15)}</span><b>${esc(metaNomCorto(x))}</b><em>${x.v}${x.u?' '+x.u:''}</em></button>`).join('')}</div>`; },
+  ch=>{ S.cfg.heroMeta=ch.dataset.k; save('cfg'); });
 /* ventana de pasos: misma pieza que la del peso (numero, slider y +/-), para que la
    caja del Inicio quede solo con el dato */
 function pasosWindow(){
@@ -14133,11 +14200,14 @@ function nutriDay(t, opts){
             const kg=PLAN.pesoBase||0; if(!kg) return '';
             const gk=Math.round(eat.pg/kg*100)/100, meta=1.8;
             const col=gk>=meta?'var(--mint)':gk>=meta*0.8?'var(--gold)':'var(--red)';
-            return `<div class="gkg mt4"><b style="color:${col}">${fmt1(gk)}</b><span>g/kg</span><i>meta 1,8</i> ${i3('gkg-calc','Cómo')}</div>`;
+            /* la "i" salio de la capsula: dentro la estiraba a lo ancho de la caja */
+            return `<div class="flex mt4" style="gap:6px;align-items:center;flex-wrap:wrap">
+              <span class="gkg"><b style="color:${col}">${fmt1(gk)}</b><span>g/kg</span><i>meta 1,8</i></span>
+              ${i3('gkg-calc','Cómo')}</div>`;
           })()}
           <div class="flex" style="align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap">
             <span class="small dim">≈ ${eat.kc} <span style="opacity:.6">/ ${PLAN.kcal} kcal</span></span>
-            ${i3('meta-prot','Cómo')}
+            ${i3('meta-prot','Meta')}
           </div>
           ${alerta?`<div class="nutnudge mt8 alert">${nudge}</div>`:''}
         </div>
@@ -14420,10 +14490,7 @@ function vInicio(){
           <button class="hgrasa ${g?gcls:'sin'}" data-a="grasaGo" aria-label="${esc(gLbl)}">${g?`${fmt1(g.pct)}<em>%</em>${gArrow?`<i>${gArrow}</i>`:''}`:'grasa ·'}</button>
         </div>
       </div>
-      <div class="herometa">
-        <b>${fmt1(PLAN.wGoal)}</b><span>meta kg</span>
-        <i class="${togo>0?'':'ok'}">${togo>0?'faltan '+fmt1(togo):'lograda'}</i>
-      </div>
+      ${heroMetaHTML()}
     </div>`;})()}
     <div class="bar knob mt12" style="max-width:280px;margin-left:auto;margin-right:auto"><i style="width:${pct.toFixed(1)}%"></i></div>
     <div class="statrow">
@@ -14635,11 +14702,12 @@ const node=(on,icn,val,lb,bonus)=>{
         <b style="position:relative;z-index:1">${ic('ruler',16)} Medidas${ciDone&&!mp.length?`<span class="tick">${ic('check',11)}</span>`:''}</b>
         ${''/* la misma anatomia que las demas cajas: una cifra que manda y su rotulo.
            Las dos lineas de texto se iban encima de la cabrita y no decian mas. */}
-        <div style="position:relative;z-index:1;max-width:52%">
+        ${''/* el rotulo bajo la cifra se metia encima de la cabrita: queda solo el
+           numero (lo que importa) y el color del chip dice si toca o no */}
+        <div style="position:relative;z-index:1;max-width:44%">
           <div class="ckmetric">${mp.length?mp.length:(medFaltanDias()||'·')}</div>
-          <span class="small dim cksub">${mp.length?('pendiente'+(mp.length>1?'s':'')+(mTarde?' · tarde':'')):(medFaltanDias()?'días para la próxima':'al día')}</span>
         </div>
-        <span class="chip ${mp.length?'fill':'dim'}" style="position:relative;z-index:1;margin-top:auto">${mp.length?'MEDIR':'VER'}</span>
+        <span class="chip ${mp.length?'fill':'dim'}" style="position:relative;z-index:1;margin-top:auto">${mp.length?(mp.length>1?'MEDIR '+mp.length:'MEDIR'):(medFaltanDias()?'EN '+medFaltanDias()+' D':'AL DÍA')}</span>
         <img loading="lazy" src="${UID==='andres'?CAB.tileCheckA:CAB.tileCheckC}" alt="" decoding="async" style="position:absolute;right:-16px;bottom:-6px;height:186px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.5));pointer-events:none">
       </div>`})()}
       ${''/* la caja de comidas se unificó en la sección NUTRICIÓN de abajo */}
@@ -18050,7 +18118,8 @@ function vPerfil(){
   <section class="mod">
     <div class="mod-head"><span class="ttl">${ic('zap',16)} Accesos</span><span class="cross">+</span></div>
     <div class="accgrid">
-      ${[['progGo','','chart','Progreso','actividad y nutrición'],
+      ${[['etapaGo','','flag','Plan','etapas, metas y checkpoints'],
+         ['progGo','','chart','Progreso','actividad y nutrición'],
          ['ckGo','','clip','Check-in','peso y medidas'],
   ['medGo','','ruler','Medidas','mapa del cuerpo y grasa %'],
          ['fotoVer','','camera','Fotos','registro y comparar'],
@@ -19948,10 +20017,13 @@ function metasUnificadas(){
   const out=[];
   /* 1. la etapa: siempre primera y a lo ancho, es el marco de todo lo demas */
   const E=semanaEstado(UID);
-  if(E) out.push({id:'etapa', tipo:'etapa', ancha:true, ic:'flag',
-    n:'Etapa '+E.e.n+' · '+E.e.nombre, v:E.real!=null?fmt1(E.real):'·', u:'kg',
-    act:'esperado '+(E.esp!=null?fmt1(E.esp):'·')+' el '+fmtD(E.dom),
-    pie:'semana '+E.sem+' de '+E.tot,
+  /* sin pesaje de la semana no hay contra que comparar: manda el esperado, en gris,
+     y el pie lo dice. Antes salia un "·" gigante del color de la meta y no se entendia. */
+  if(E) out.push({id:'etapa', tipo:'etapa', ancha:true, ic:'flag', sinDato:E.real==null,
+    n:'Etapa '+E.e.n+' · '+E.e.nombre,
+    v:E.real!=null?fmt1(E.real):(E.esp!=null?fmt1(E.esp):'·'), u:'kg',
+    act:E.real!=null?('esperado '+fmt1(E.esp)+' el '+fmtD(E.dom)):('esperado el '+fmtD(E.dom)),
+    pie:E.real!=null?('semana '+E.sem+' de '+E.tot):'sin pesaje esta semana',
     pct:clamp(Math.round(E.sem/Math.max(1,E.tot)*100),0,100), estado:E.estado, E,
     filas:checkpointsDe(UID, E.e)});
   /* 2. el peso de salida, que sale de tu masa magra real al % de la etapa */
@@ -20000,8 +20072,9 @@ function metasUnificadas(){
     const py=goalProy(gl.ex, tRM);
     const lograda=bRM>=tRM;
     const fser=goalHistRM(gl.ex).slice(-10);
+    /* el peso es la cifra; las reps van como unidad chica, igual que el "cm" o el "kg" */
     out.push({id:'g'+gl.id, tipo:'fuerza', ic:'barbell', n:goalExName(gl.ex),
-      v:fmt1(gl.target)+' × '+(gl.reps||1), u:'',
+      v:fmt1(gl.target).replace(',0',''), u:'kg × '+(gl.reps||1),
       act:bRM?'1RM '+fmt1(bRM)+' de '+fmt1(tRM):'sin registros',
       pie:lograda?'lograda':(py&&py.sube&&py.fecha?'≈ '+fmtDiaMes(py.fecha):(py&&py.ya?'ya la tocas':'sin tendencia')),
       pct:bRM&&tRM?clamp(Math.round(bRM/tRM*100),0,100):0, vis:'bar', serie:fser,
@@ -20046,6 +20119,26 @@ function metasDestacadas(n){
   const resto=ordenadas.filter(x=>!(cfg[x.id]&&cfg[x.id].off));
   return et.concat(resto.slice(0, n||4));
 }
+/* ---- LA META DE LA ESQUINA (REV 218, pedido del dueno) ----
+   Antes era siempre el peso y salia de PLAN.wGoal, un numero fijo, mientras las cajas de
+   metas usaban el objetivo calculado con la magra real: dos verdades para lo mismo.
+   Ahora es CUALQUIERA de tus metas (peso, grasa, una medida, fuerza, pasos), sale de la
+   misma fuente que las cajas y se elige manteniendo oprimida la esquina. */
+function heroMetaSel(){
+  const all=(typeof metasUnificadas==='function')?metasUnificadas():[];
+  if(!all.length) return null;
+  const id=(S&&S.cfg&&S.cfg.heroMeta)||'peso';
+  return all.find(x=>x.id===id) || all.find(x=>x.id==='peso') || all.find(x=>x.tipo!=='etapa') || all[0];
+}
+function heroMetaHTML(){
+  const x=heroMetaSel();
+  if(!x) return '';
+  const logr=/lograda|en meta/.test(x.pie||'');
+  return `<button class="herometa" data-a="islaMeta" data-k="${esc(x.id)}" aria-label="Meta: ${esc(x.n)}, ${esc(x.v)}${x.u?' '+x.u:''}, ${esc(x.pie)}">
+    <b>${x.v}</b><span>${esc(metaNomCorto(x))}${x.u?' '+x.u:''}</span>
+    <i class="${logr?'ok':''}">${esc(x.pie)}</i>
+  </button>`;
+}
 /* Boton flotante de la foto del dia (REV 215, pedido del dueno). Solo en el Inicio.
    Si ya hay foto de hoy cambia de aspecto y lleva a la galeria en vez de a la camara:
    un boton que repite la misma accion cuando ya esta hecha solo confunde. */
@@ -20061,13 +20154,19 @@ function fabFotoHTML(){
 /* color por familia de meta: la cifra y el filo de la caja se tinen con el, y el estado
    (verde, ambar, rojo) queda en el punto de la esquina. Asi un vistazo dice DOS cosas
    distintas sin mezclarlas: de que es la meta y como va. */
-const META_COL={etapa:'rgb(var(--acc-rgb))', peso:'var(--mint)', grasa:'#8FA0FF',
-  medida:'#FFC94D', fuerza:'#FF9A76', habito:'#58DFA3'};
+/* un color por familia, todos distintos entre si. `peso` no puede ser var(--mint)
+   porque esa variable ES el acento del usuario: el anillo del peso salia igual al de la
+   etapa (y dorado en Cami, igual que Cintura). */
+const META_COL={etapa:'rgb(var(--acc-rgb))', peso:'#34D399', grasa:'#8FA0FF',
+  medida:'#FFC94D', fuerza:'#FF9A76', habito:'#7DD3FC'};
 /* sparkline de la etapa: lo real contra lo esperado, que es justo la lectura que pide
    el plan (la tendencia de 2 o 3 semanas, no el dato suelto) */
 function metaSpark(filas){
   const con=filas.filter(f=>f.esp!=null);
   if(con.length<2) return '';
+  /* sin ningun peso real, la grafica es una linea punteada sola y no se entiende:
+     mejor no dibujarla y dejar que la caja diga que falta pesarse */
+  if(!con.some(f=>f.real!=null)) return '';
   const W=140,H=38;
   const vs=con.map(f=>f.esp).concat(con.filter(f=>f.real!=null).map(f=>f.real));
   let mn=Math.min(...vs), mx=Math.max(...vs);
@@ -20122,7 +20221,7 @@ function metaTileHTML(x){
   } else {
     cuerpo=`<div class="btw"><div class="btcol">${cifra}</div><div class="btvis">${visual}</div></div>`;
   }
-  return `<button class="bt sz-${sz}" style="--bc:${bc}" data-a="islaMeta" data-k="${esc(x.id)}" aria-label="${esc(x.n)}${x.act?', '+esc(x.act):''}${x.pie?', '+esc(x.pie):''}">
+  return `<button class="bt sz-${sz}${x.sinDato?' sindato':''}" style="--bc:${bc}" data-a="islaMeta" data-k="${esc(x.id)}" aria-label="${esc(x.n)}${x.act?', '+esc(x.act):''}${x.pie?', '+esc(x.pie):''}">
     ${dot}${meta}
     ${cab}
     ${cuerpo}
@@ -20199,13 +20298,19 @@ function islaMetaHTML(id){
     <div class="small dim mt8" style="line-height:1.55">${planPorque(x.E.e, {n:x.E.sem, tol:x.E.tol, d:x.E.dom})}</div>`;
   } else if(x.tipo==='peso'){
     const m=x.m;
-    cuerpo=`<div class="small mt12" style="line-height:1.55">El objetivo no es un número redondo: es el peso al que quedas si pierdes <b>solo grasa</b>. Con tu <b>${fmt1(m.pct)}%</b> medido por ${m.fuente} tienes <b style="color:var(--ink)">${fmt1(m.magra)} kg</b> de masa libre de grasa; manteniéndola, el <b>${fmt1(m.metaPct)}%</b> cae en <b style="color:var(--ink)">${fmt1(m.objetivo)} kg</b>.</div>
+    /* la grafica de los pesajes con la meta marcada: es lo primero que uno quiere ver */
+    const ps=(S.weights||[]).slice(-30);
+    cuerpo=`${ps.length>1?`<div class="mt12">${lineChart({pts:ps.map(w=>({x:fmtD(w.d), d:w.d, v:w.kg, tip:fmtD(w.d)+' · '+fmt1(w.kg)+' kg'})), goal:m.objetivo, goalLabel:'META', fmt:v=>fmt1(v)+' kg', trend:true, h:160})}</div>`:''}
+    <div class="small mt12" style="line-height:1.55">El objetivo no es un número redondo: es el peso al que quedas si pierdes <b>solo grasa</b>. Con tu <b>${fmt1(m.pct)}%</b> medido por ${m.fuente} tienes <b style="color:var(--ink)">${fmt1(m.magra)} kg</b> de masa libre de grasa; manteniéndola, el <b>${fmt1(m.metaPct)}%</b> cae en <b style="color:var(--ink)">${fmt1(m.objetivo)} kg</b>.</div>
     ${m.recta?`<div class="small dim mt8" style="line-height:1.55">La fecha sale de una recta sobre <b>${m.recta.n} pesadas</b> de las últimas ${fmt1(m.recta.semanas)} semanas, no de comparar dos días sueltos. Baja ${fmt1(Math.abs(m.recta.kgSem))} kg por semana y tus pesadas se ajustan un ${Math.round(m.recta.r2*100)}%.</div>`:''}
     ${m.desde&&m.hasta?`<div class="small mt8">Llegarías entre <b>${fmtDiaMes(m.desde)}</b> y <b>${fmtDiaMes(m.hasta)}</b>.</div>`:''}
     <div class="small dim mt8" style="line-height:1.5">${notaMagraCreat(UID)}</div>`;
   } else if(x.tipo==='grasa'){
     const g=x.g;
-    cuerpo=`<div class="small mt12" style="line-height:1.55">Tu última medida es de <b>${fmt1(g.pct)}%</b> por ${g.fuente}${g.dias!=null?' hace '+g.dias+' día'+(g.dias===1?'':'s'):''}, en rango <b>${esc(g.rango.toLowerCase())}</b>. La meta de <b>${fmt1(g.meta)}%</b> es la salida del cut de tu plan, no un número suelto.</div>
+    /* la serie del % de grasa, con la meta de la etapa marcada */
+    const fs=(S.checkins||[]).filter(c=>c.fat>0).slice(-14);
+    cuerpo=`${fs.length>1?`<div class="mt12">${lineChart({pts:fs.map(c=>({x:fmtD(c.d), d:c.d, v:c.fat, tip:fmtD(c.d)+' · '+fmt1(c.fat)+'%'})), goal:g.meta, goalLabel:'META', piso:Math.max(3,g.meta-4), fmt:v=>fmt1(v)+'%', trend:true, h:150})}</div>`:''}
+    <div class="small mt12" style="line-height:1.55">Tu última medida es de <b>${fmt1(g.pct)}%</b> por ${g.fuente}${g.dias!=null?' hace '+g.dias+' día'+(g.dias===1?'':'s'):''}, en rango <b>${esc(g.rango.toLowerCase())}</b>. La meta de <b>${fmt1(g.meta)}%</b> es la salida del cut de tu plan, no un número suelto.</div>
     ${g.viejo?`<div class="small mt8" style="color:var(--gold);line-height:1.5">${ic('alert',12)} La medida ya está vieja: vuelve a medirte para que la meta signifique algo.</div>`:''}
     <div class="small dim mt8" style="line-height:1.5">El margen de la cinta es de ±3 a 4 puntos, así que lo que manda es la tendencia. ${notaMagraCreat(UID)}</div>`;
   } else if(x.tipo==='medida'){
@@ -20218,12 +20323,15 @@ function islaMetaHTML(id){
     ${py&&py.sube&&py.fecha?`<div class="small mt8" style="line-height:1.55">Al ritmo de tus últimas sesiones (${fmt1(py.porSem)} kg por semana) la lograrías alrededor del <b>${fmtDiaMes(py.fecha)}</b>.</div>`
       :py&&py.ya?'<div class="small mt8">Tu tendencia ya la toca: confírmalo en la próxima sesión.</div>'
       :'<div class="small dim mt8">Todavía no hay una tendencia que suba para proyectar fecha. Registra un par de sesiones más.</div>'}
-    <button class="btn sm ghost full mt12" data-a="progGo">Ver el detalle en Progreso</button>`;
+    `;
   } else if(x.tipo==='habito'){
     const e=etapaActiva(UID);
-    cuerpo=`<div class="small mt12" style="line-height:1.55">Tu meta son <b>${fmtInt(x.pm)}</b> pasos al día${(e&&e.pasos==='auto')?', que es tu propio promedio de las últimas 4 semanas: la meta es sostener lo que ya lograste, no un número inventado':''}. Esta semana vas en <b>${x.pp!=null?fmtInt(x.pp):'·'}</b>.</div>
+    /* las dos ultimas semanas de pasos contra la meta */
+    const ps=(x.serie||[]).slice(-14);
+    cuerpo=`${ps.length>1?`<div class="mt12">${lineChart({pts:ps.map(q=>({x:fmtD(q.d), d:q.d, v:q.v, tip:fmtD(q.d)+' · '+fmtInt(q.v)})), goal:x.pm, goalLabel:'META', fmt:v=>fmtInt(v), trend:true, h:150})}</div>`:''}
+    <div class="small mt12" style="line-height:1.55">Tu meta son <b>${fmtInt(x.pm)}</b> pasos al día${(e&&e.pasos==='auto')?', que es tu propio promedio de las últimas 4 semanas: la meta es sostener lo que ya lograste, no un número inventado':''}. Esta semana vas en <b>${x.pp!=null?fmtInt(x.pp):'·'}</b>.</div>
     ${UID==='cami'?'<div class="small mt8" style="line-height:1.55">Tu cambio de agosto a septiembre fue el primero en 8 meses y salió de caminar más y ser constante. Es la variable a proteger: antes de tocar la comida, se recupera esto.</div>':''}
-    ${x.pm!==(S.cfg&&S.cfg.stepGoal)?`<button class="btn sm ghost full mt12" data-a="pasosFijar">Fijarla como mi meta diaria (${fmtInt(x.pm)})</button>`:''}`;
+    `;
   }
   const bc=META_COL[x.tipo]||'var(--mint)';
   return `<div class="fboxin islatint" style="--bc:${bc}" role="dialog" aria-modal="true" aria-label="${esc(x.n)}">
@@ -20237,8 +20345,12 @@ function islaMetaHTML(id){
       </div>
       <div class="bar mt12"><i style="width:${x.pct}%"></i></div>
       ${cuerpo}
-      <button class="btn sm ghost full mt12" data-a="metasEdit">${ic('more',13)} Editar tablero</button>
-      <button class="btn ghost full mt8" data-a="islaMetaCerrar">Cerrar</button>
+      <div class="islapie">
+        ${x.tipo==='habito'&&x.pm!==(S.cfg&&S.cfg.stepGoal)?`<button class="chip" data-a="pasosFijar">${ic('steps',11)} Fijar ${fmtInt(x.pm)}</button>`:''}
+        ${x.tipo==='fuerza'?`<button class="chip" data-a="progGo">${ic('chart',11)} Progreso</button>`:''}
+        ${x.tipo==='etapa'?`<button class="chip" data-a="etapaGo">${ic('flag',11)} Ver el plan</button>`:''}
+        <button class="chip" data-a="metasEdit">${ic('more',11)} Tablero</button>
+      </div>
     </section>
   </div>`;
 }
@@ -20307,24 +20419,38 @@ function planCheckHTML(e){
 /* la linea de tiempo de las etapas: donde voy y que viene */
 function planEtapasHTML(es, act){
   const hoy=TODAY();
-  return uiCaja('plan-etapas', ic('flag',15)+' Las etapas del plan',
+  /* REV 218 (pedido del dueno): el plan completo, no solo la etapa activa. Va abierta,
+     porque es justo lo que se viene a ver aqui: a que le estamos apuntando. */
+  const M=metasDe(UID);
+  return uiCaja('plan-etapas', ic('flag',15)+' El plan completo',
     act?'vas en la '+act.n+' de '+es.length+' · '+esc(act.nombre):'sin etapa activa',
     ()=>`<section class="mod">
     ${es.map(x=>{
       const activa=x===act, pasada=x.fin && x.fin<hoy;
       const doms=etapaDomingos(x);
-      return `<div class="medcad ${activa?'key':''}" style="${activa?'':'opacity:'+(pasada?'.5':'.78')}">
-        <div class="cadn"><b>${x.n}</b><i>${x.tipo==='cut'?'cut':x.tipo==='volumen'?'volumen':'manten.'}</i></div>
-        <div class="grow" style="min-width:0">
-          <b>${esc(x.nombre)}${activa?' <span class="chip xs gold">ahora</span>':''}</b>
-          <div class="small dim mt4" style="line-height:1.5">${fmtDiaMes(x.ini)}${x.fin?' al '+fmtDiaMes(x.fin):''} · ${doms.length} semanas${x.salida?' · salida: '+esc(x.salida.txt):''}</div>
-          ${activa&&x.entreno?`<div class="small mt4" style="line-height:1.5">${ic('barbell',11)} ${esc(x.entreno)}</div>`:''}
-          ${activa&&x.fuerza?`<div class="small mt4" style="line-height:1.5">${ic('trend',11)} ${esc(x.fuerza)}</div>`:''}
-          ${activa&&(x.notas||[]).length?(x.notas||[]).map(nt=>`<div class="small dim mt4" style="line-height:1.5">${ic('info',11)} ${esc(nt)}</div>`).join(''):''}
+      /* las kcal de cada etapa se estiman con el peso de salida de la anterior, que es
+         el que va a tener cuando llegue: escribirlas a mano seria mentir en marzo */
+      const pesoRef = activa ? M.pesoBase : ((x.proy&&(x.proy.base||(x.proy.rango&&x.proy.rango[0])))||M.pesoBase);
+      const gasto = gastoDe(PLANS[UID], pesoRef);
+      const kc = gasto!=null ? Math.round((gasto+(x.ajuste||0))/10)*10 : null;
+      const rit = x.proy&&x.proy.ritmo ? (x.proy.ritmo<0?fmt1(Math.abs(x.proy.ritmo))+' kg/sem menos':'+'+fmt1(x.proy.ritmo)+' kg/sem') : 'peso estable';
+      return `<div class="planet ${activa?'on':''} ${pasada?'off':''}">
+        <div class="flex between" style="align-items:baseline;gap:8px">
+          <b class="planetn">${x.n}. ${esc(x.nombre)}</b>
+          <span class="chip xs ${activa?'fill':'dim'}" style="flex:none">${activa?'ahora':pasada?'cerrada':'después'}</span>
         </div>
+        <div class="small dim mt4">${fmtDiaMes(x.ini)}${x.fin?' al '+fmtDiaMes(x.fin):''} · ${doms.length} semanas</div>
+        <div class="planetg">
+          ${kc?`<span><i>Comida</i><b>${fmtInt(kc)}</b><u>kcal${x.prot?' · '+x.prot+' g prot':''}</u></span>`:''}
+          <span><i>Peso</i><b>${rit.split(' ')[0]}</b><u>${rit.split(' ').slice(1).join(' ')||'estable'}</u></span>
+          ${x.salida?`<span><i>Salida</i><b>${x.salida.pct!=null?fmt1(x.salida.pct)+'%':(x.salida.kg?fmt1(x.salida.kg):'·')}</b><u>${esc(x.salida.txt)}</u></span>`:''}
+        </div>
+        ${x.entreno?`<div class="small mt8" style="line-height:1.5">${ic('barbell',11)} ${esc(x.entreno)}</div>`:''}
+        ${x.fuerza?`<div class="small mt4" style="line-height:1.5">${ic('trend',11)} ${esc(x.fuerza)}</div>`:''}
+        ${(x.notas||[]).map(nt=>`<div class="small dim mt4" style="line-height:1.5">${ic('info',11)} ${esc(nt)}</div>`).join('')}
       </div>`;}).join('')}
-    <div class="small dim mt8" style="line-height:1.5">Las fechas de las últimas etapas son tentativas: se confirman en el rescan que cierra la anterior.</div>
-  </section>`, false);
+    <div class="small dim mt8" style="line-height:1.5">Las fechas de las últimas etapas son tentativas: se confirman en el rescan que cierra la anterior. Las calorías de las etapas que vienen se estiman con el peso al que vas a llegar, por eso no son un número escrito a mano.</div>
+  </section>`, true);
 }
 /* rescans: cuando, para que, con que condiciones, y el formulario para registrarlo */
 function planRescanHTML(){
@@ -20447,7 +20573,7 @@ function islaCheckHTML(dom){
         <b class="small">De dónde sale el esperado</b>
         <div class="small dim mt8" style="line-height:1.55">${planPorque(e, f)}</div>
       </div>
-      <button class="btn ghost full mt12" data-a="islaCheckCerrar">Cerrar</button>
+      <div class="islapie"><button class="chip" data-a="etapaGo">${ic('flag',11)} Ver el plan</button></div>
     </section>
   </div>`;
 }
@@ -22696,8 +22822,9 @@ const ACTIONS = {
     if(!box){ box=document.createElement('div'); box.className='fbox scroll rutisla';
       box.onclick=e=>{ if(e.target===box) ACTIONS.rutIslaCerrar(); };
       document.body.appendChild(box); }
-    box.innerHTML=`<div class="fboxin" role="dialog" aria-modal="true" aria-label="Rutina"><div class="rutislain">${html}</div>
-      <button class="btn full mt8" data-a="rutIslaCerrar">Cerrar</button></div>`;
+    box.innerHTML=`<div class="fboxin" role="dialog" aria-modal="true" aria-label="Rutina">
+      <button class="islax" data-a="rutIslaCerrar" aria-label="cerrar">${ic('x',15)}</button>
+      <div class="rutislain">${html}</div></div>`;
   },
   rutIslaCerrar(){ const box=document.querySelector('.fbox.rutisla'); if(box) box.remove(); },
   /* la isla de una meta: mismo patron, se crea al vuelo sin reconstruir la vista */

@@ -77,7 +77,14 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   ve la etapa y el resto se despliega a un toque, para que el Inicio no crezca sin
   control. Rejilla **bento** (`.bento`, `.bt`): las cajas NO miden todas lo mismo, la
   etapa ocupa dos columnas y el peso dos filas (`.w2`, `.h2`).
-  Cada familia de meta tiene **su color** (`META_COL`): tiñe la caja entera con un
+  **La meta de la esquina del hero** (`heroMetaHTML`) sale de esta misma lista y se
+  elige **manteniéndola oprimida** (`holdRegistrar`): puede ser el peso, la grasa, una
+  medida, una de fuerza o los pasos. Antes era siempre el peso y salía de `PLAN.wGoal`,
+  un número fijo, mientras las cajas usaban el objetivo calculado: dos verdades.
+  Cada familia de meta tiene **su color** (`META_COL`, seis distintos: `peso` NO puede
+  usar `var(--mint)` porque esa variable es el acento del usuario y el anillo del peso
+  salía igual al de la etapa). **Todo lo de dentro de la caja va de ese color**: anillo
+  (hay que pisar el degradado y el glow que pinta `ring()`), barra, sparkline y barritas: tiñe la caja entera con un
   degradado suave, el borde, la cápsula del icono y la cifra. **Sin textos de apoyo**
   (pedido del dueño: "vas en", "faltan" apretaban la caja): queda nombre, cifra y
   gráfico, **en horizontal** (cifra a un lado, gráfico al otro, `.btrow` / `.btw`). El
@@ -415,8 +422,11 @@ Medidas y desde "Ver todas" en las metas del Inicio (`planGo`).
 - **PL3** Tabla de checkpoints: un domingo por fila, esperado contra real y semáforo.
   **Las filas son tocables** y abren la isla de esa semana (`islaCheckHTML`,
   `.fbox.islack`) con lo registrado ese domingo y de dónde sale el esperado
-- **PL4** Línea de tiempo de las etapas (plegada), con entreno, meta de fuerza y notas
-  de la activa
+- **PL4** **El plan completo** (`.planet`, abierta por defecto): las cuatro etapas con
+  sus fechas, sus tres cifras (comida, ritmo de peso, salida), entreno, meta de fuerza y
+  notas. Las kcal de las etapas que vienen se estiman con el peso al que se va a llegar
+  (`gastoDe` sobre `proy.base`), no se escriben a mano. Se entra también desde el acceso
+  **Plan** del Perfil
 - **PL5** Rescans de bioimpedancia (plegado): los seis del plan, el protocolo, la
   última lectura y el **formulario de rescan completo** (peso, grasa, magra del
   reporte, músculo, visceral, TMB, agua y magra por segmento). Al guardarlo, el % de
@@ -570,6 +580,11 @@ pestaña del mismo contenido. `progGroup()` solo devuelve `act` o `nutri`.
 ## K · Check-in (vista propia, `vCheckin`)
 
 - **K1** Resumen de la semana que cierra (peso promedio, días, entrenos)
+- **K0b** Las islas (`.fbox.scroll`) se abren **centradas** en la pantalla y su pie son
+  **chips en una fila**, sin botón "Cerrar" (la X y tocar afuera ya cierran). Cada isla
+  de meta trae su gráfica: peso y grasa contra su meta, cintura, pasos. Si no hay
+  ningún peso real de la semana, la caja de etapa muestra el **esperado en gris** y lo
+  dice en el pie: antes salía un "·" gigante y una línea punteada sola
 - **K0** Semáforo de la semana (REV 214, `semaforoHTML`): etapa activa, peso promedio
   contra el esperado del domingo, tolerancia y estado (verde dentro, ámbar una semana
   fuera, rojo dos o más), más las sugerencias de ajuste con su botón para aceptarlas.

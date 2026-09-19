@@ -78,8 +78,12 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   control. Rejilla **bento** (`.bento`, `.bt`): las cajas NO miden todas lo mismo, la
   etapa ocupa dos columnas y el peso dos filas (`.w2`, `.h2`).
   **La meta de la esquina del hero** (`heroMetaHTML`) sale de esta misma lista y se
-  elige **manteniéndola oprimida** (`holdRegistrar`): puede ser el peso, la grasa, una
-  medida, una de fuerza o los pasos. Antes era siempre el peso y salía de `PLAN.wGoal`,
+  elige **manteniéndola oprimida** (`holdRegistrar`): peso, grasa, fuerza, pasos o
+  **cualquier medida del cuerpo**. Las medidas no se listan una por una en ese menú (son
+  quince): hay una entrada "Medida" que abre su propia isla (`medMetaPickHTML`,
+  `medMetaSet`) con las que ya tienen registro. `metaMedida(k)` fabrica la meta de
+  cualquier campo, con objetivo si lo tiene y por tendencia si no, y `metaPorId`
+  resuelve los ids `med:<campo>`. Antes era siempre el peso y salía de `PLAN.wGoal`,
   un número fijo, mientras las cajas usaban el objetivo calculado: dos verdades.
   Cada familia de meta tiene **su color** (`META_COL`, seis distintos: `peso` NO puede
   usar `var(--mint)` porque esa variable es el acento del usuario y el anillo del peso

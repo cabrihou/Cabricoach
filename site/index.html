@@ -1896,8 +1896,8 @@ body.trayon #view{padding-bottom:96px}
    `--bc` es el color de la familia de la meta: tine la cifra y el borde, no el fondo
    entero (dos colores por tarjeta como maximo, que es la regla tipografica). */
 .bento{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px;align-items:stretch}
-.bt{position:relative;display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-align:left;
-  padding:12px;border-radius:16px;border:1px solid var(--line2);
+.bt{position:relative;display:flex;flex-direction:column;gap:7px;align-items:flex-start;text-align:left;
+  padding:13px 13px 12px;border-radius:16px;border:1px solid var(--line2);
   background:linear-gradient(180deg, color-mix(in srgb, var(--bc,var(--mint)) 14%, var(--tile)) 0%, var(--tile) 70%);
   border-color:color-mix(in srgb, var(--bc,var(--mint)) 28%, var(--line2));
   color:var(--ink);overflow:hidden;min-width:0;min-height:132px;transition:border-color .15s,transform .12s}
@@ -1909,7 +1909,10 @@ body.trayon #view{padding-bottom:96px}
 /* sin textos de apoyo las cajas pueden ser bajas: la s mide ~96 px, no 132 */
 .bt{min-height:0;gap:5px;padding:11px 12px}
 .bt.sz-s{min-height:94px}
-.bt.sz-w{min-height:104px}
+.bt.sz-w{min-height:126px}
+/* la caja de etapa apretaba la cifra contra la grafica y la barra contra el borde */
+.bt.sz-w .etapaw{margin:3px 0 5px}
+.bt.sz-w .btcol{gap:6px}
 .bt .bthn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 /* cifra y grafico lado a lado, el grafico a la derecha con ancho fijo para que la cifra
    no lo empuje fuera de la caja */
@@ -1971,9 +1974,9 @@ body.trayon #view{padding-bottom:96px}
 .islatint .bar>i{background:var(--bc)}
 .bt.sz-l .btspark{height:56px}
 /* mini grafico de la etapa: lo real en el color de la meta, lo esperado punteado */
-.btspark{width:100%;height:48px;display:block;color:var(--bc,var(--mint));overflow:visible}
+.btspark{width:100%;height:58px;display:block;color:var(--bc,var(--mint));overflow:visible}
 /* la grafica se lleva algo mas de la mitad; la cifra manda a la izquierda */
-.etapaw{grid-template-columns:auto minmax(0,1.35fr);gap:10px;align-items:center}
+.etapaw{grid-template-columns:auto minmax(0,1.35fr);gap:12px;align-items:center}
 .etapaw .btvis{min-width:0;width:100%}
 .btspark .r{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .btspark .e{fill:none;stroke:currentColor;stroke-width:1.6;stroke-dasharray:4 4;opacity:.45;vector-effect:non-scaling-stroke}
@@ -2706,7 +2709,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 220';
+const APPREV='REV 221';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -13647,9 +13650,17 @@ holdRegistrar('.wbtn2.plus',
 /* la meta que se ve en la esquina del heroe */
 holdRegistrar('.herometa',
   ()=>{ const sel=(S&&S.cfg&&S.cfg.heroMeta)||'peso';
-    const opts=metasUnificadas().filter(x=>x.tipo!=='etapa');
-    return `<span class="wpickt">la meta de la esquina</span><div class="wpicklista">${opts.map(x=>`<button data-k="${esc(x.id)}" class="${x.id===sel?'on':''}" aria-label="${esc(x.n)}"><span class="wpicki" style="color:${META_COL[x.tipo]||'var(--mint)'}">${ic(x.ic,15)}</span><b>${esc(metaNomCorto(x))}</b><em>${x.v}${x.u?' '+x.u:''}</em></button>`).join('')}</div>`; },
-  ch=>{ S.cfg.heroMeta=ch.dataset.k; save('cfg'); });
+    /* las medidas no se listan una por una aqui (son quince): van en una sola entrada
+       que abre su propia isla, como pidio el dueno */
+    const opts=metasUnificadas().filter(x=>x.tipo!=='etapa' && x.tipo!=='medida');
+    const esMed=String(sel).indexOf('med:')===0 || sel==='cintura';
+    const mSel=esMed?metaPorId(sel):null;
+    const fila=(k,col,icn,nom,val,on)=>`<button data-k="${esc(k)}" class="${on?'on':''}" aria-label="${esc(nom)}"><span class="wpicki" style="color:${col}">${ic(icn,15)}</span><b>${esc(nom)}</b><em>${val}</em></button>`;
+    return `<span class="wpickt">la meta de la esquina</span><div class="wpicklista">${opts.map(x=>fila(x.id, META_COL[x.tipo]||'var(--mint)', x.ic, metaNomCorto(x), x.v+(x.u?' '+x.u:''), x.id===sel)).join('')}
+      ${fila('__med', META_COL.medida, 'ruler', 'Medida', mSel?esc(mSel.n):'elegir', esMed)}</div>`; },
+  ch=>{ const k=ch.dataset.k;
+    if(k==='__med'){ setTimeout(()=>ACTIONS.medMetaPick(), 80); return; }
+    S.cfg.heroMeta=k; save('cfg'); });
 /* ventana de pasos: misma pieza que la del peso (numero, slider y +/-), para que la
    caja del Inicio quede solo con el dato */
 function pasosWindow(){
@@ -20063,18 +20074,8 @@ function metasUnificadas(){
       estado:g.falta>0?(g.viejo?'ambar':'verde'):'verde', g});
   }
   /* 4. la cintura: el checkpoint honesto de grasa y el freno del volumen */
-  const oc=(typeof medObjetivoDe==='function')?medObjetivoDe('cintura'):null;
-  const uc=(typeof medUltimo==='function')?medUltimo('cintura'):null;
-  if(oc && uc){
-    const s=medSerie('cintura'), ini=s.length?s[0].v:uc.v;
-    const falta=Math.round((uc.v-oc.o)*10)/10;
-    out.push({id:'cintura', tipo:'medida', ic:'ruler', n:'Cintura',
-      v:fmt1(oc.o), u:'cm', act:'vas en '+fmt1(uc.v)+' cm',
-      pie:falta<=0?'lograda':'faltan '+fmt1(falta)+' cm',
-      pct:clamp(Math.round((ini-uc.v)/Math.max(0.1,ini-oc.o)*100),0,100),
-      vis:'spark', serie:s,
-      estado:falta<=0?'verde':'verde', oc, uc});
-  }
+  const mc=metaMedida('cintura');
+  if(mc){ mc.id='cintura'; out.push(mc); }
   /* 5. las de fuerza, que ya traian su propia proyeccion de fecha */
   (S.goals||[]).forEach(gl=>{
     const bRM=goalBestRM(gl.ex), tRM=e1rm(gl.target, gl.reps||1);
@@ -20103,6 +20104,39 @@ function metasUnificadas(){
     det:(eAct&&eAct.pasos==='auto')?'meta = tu promedio de 4 semanas':null,
     estado:pp==null?'sin':(pp>=pm*0.8?'verde':'ambar'), pm, pp});
   return out;
+}
+/* Una meta a partir de CUALQUIER medida del cuerpo (REV 221, pedido del dueno: la
+   esquina del heroe podia ser solo cintura). Si esa medida tiene objetivo se muestra
+   como meta con su avance; si no lo tiene (las anclas oseas, o una sin proporcion
+   definida), se muestra la medida y su cambio, que igual es lo que uno quiere ver. */
+function metaMedida(k){
+  if(typeof medUltimo!=='function') return null;
+  const u=medUltimo(k); if(!u) return null;
+  const campo=(typeof MED_CAMPOS!=='undefined') ? MED_CAMPOS.find(c=>c.k===k) : null;
+  const nom=campo?campo.n:(k.charAt(0).toUpperCase()+k.slice(1));
+  const s=medSerie(k), ini=s.length?s[0].v:u.v;
+  const o=(typeof medObjetivoDe==='function')?medObjetivoDe(k):null;
+  if(!o) return {id:'med:'+k, tipo:'medida', ic:'ruler', n:nom, campo:k,
+    v:fmt1(u.v), u:'cm', act:'tu última medida',
+    pie:s.length>1?((u.v>s[s.length-2].v?'+':'')+fmt1(Math.round((u.v-s[s.length-2].v)*10)/10)+' cm'):'sin comparar',
+    pct:0, vis:'spark', serie:s, estado:'verde', uc:u};
+  const falta=Math.round((o.dir==='baja'?(u.v-o.o):(o.o-u.v))*10)/10;
+  return {id:'med:'+k, tipo:'medida', ic:'ruler', n:nom, campo:k,
+    v:fmt1(o.o), u:'cm', act:'vas en '+fmt1(u.v)+' cm',
+    pie:falta<=0?'lograda':'faltan '+fmt1(falta)+' cm',
+    pct:clamp(Math.round((ini-u.v)/Math.max(0.1,ini-o.o)*100),0,100),
+    vis:'spark', serie:s, estado:falta<=0?'verde':'verde', oc:o, uc:u};
+}
+/* las medidas que se pueden elegir: las que ya tienen al menos un registro */
+function medidasConDato(){
+  if(typeof MED_CAMPOS==='undefined') return [];
+  return MED_CAMPOS.filter(c=>!c.ancla && medUltimo(c.k));
+}
+/* resuelve una meta por id, incluidas las "med:<campo>" que no viven en la lista */
+function metaPorId(id){
+  if(!id) return null;
+  if(String(id).indexOf('med:')===0) return metaMedida(String(id).slice(4));
+  return metasUnificadas().find(x=>x.id===id)||null;
 }
 /* Cuales van al Inicio: la etapa siempre, y despues cuatro elegidas por urgencia (lo que
    pide atencion primero) y por cercania (lo que esta a punto de lograrse motiva mas que
@@ -20134,10 +20168,11 @@ function metasDestacadas(n){
    Ahora es CUALQUIERA de tus metas (peso, grasa, una medida, fuerza, pasos), sale de la
    misma fuente que las cajas y se elige manteniendo oprimida la esquina. */
 function heroMetaSel(){
-  const all=(typeof metasUnificadas==='function')?metasUnificadas():[];
-  if(!all.length) return null;
   const id=(S&&S.cfg&&S.cfg.heroMeta)||'peso';
-  return all.find(x=>x.id===id) || all.find(x=>x.id==='peso') || all.find(x=>x.tipo!=='etapa') || all[0];
+  const x=(typeof metaPorId==='function')?metaPorId(id):null;
+  if(x) return x;
+  const all=(typeof metasUnificadas==='function')?metasUnificadas():[];
+  return all.find(q=>q.id==='peso') || all.find(q=>q.tipo!=='etapa') || all[0] || null;
 }
 function heroMetaHTML(){
   const x=heroMetaSel();
@@ -20147,6 +20182,27 @@ function heroMetaHTML(){
     <b>${x.v}</b><span>${esc(metaNomCorto(x))}${x.u?' '+x.u:''}</span>
     <i class="${logr?'ok':''}">${esc(x.pie)}</i>
   </button>`;
+}
+function medMetaPickHTML(){
+  const sel=(S&&S.cfg&&S.cfg.heroMeta)||'';
+  const cs=medidasConDato();
+  const bc=META_COL.medida;
+  return `<div class="fboxin islatint" style="--bc:${bc}" role="dialog" aria-modal="true" aria-label="Elegir la medida">
+    <section class="mod">
+      <div class="mod-head"><span class="ttl"><span class="btic">${ic('ruler',14)}</span> Qué medida</span>
+        <button class="btn sm" data-a="medMetaCerrar" aria-label="cerrar">${ic('x',13)}</button></div>
+      ${cs.length?cs.map(c=>{ const m=metaMedida(c.k); if(!m) return '';
+        const act=(sel==='cintura'&&c.k==='cintura')||sel==='med:'+c.k;
+        return `<button class="accrow ${act?'on':''}" data-a="medMetaSet" data-k="${esc(c.k)}" aria-label="${esc(c.n)}">
+          <span class="accic" style="color:${bc};background:color-mix(in srgb, ${bc} 20%, transparent)">${ic('ruler',16)}</span>
+          <div class="grow" style="min-width:0"><b>${esc(c.n)}</b>
+            <div class="small dim">${esc(m.act)}${m.oc?' · meta '+fmt1(m.oc.o)+' cm':''}</div></div>
+          <span class="medval"><b>${m.oc?fmt1(m.oc.o):fmt1(m.uc.v)}</b><em>cm</em></span>
+          ${act?ic('check',15):ic('chevR',15)}</button>`;}).join('')
+      :'<div class="small dim">Todavía no hay medidas registradas. Tómalas en Medidas y vuelve.</div>'}
+      <div class="islapie"><button class="chip" data-a="medGo">${ic('ruler',11)} Medirme</button></div>
+    </section>
+  </div>`;
 }
 /* Boton flotante de la foto del dia (REV 215, pedido del dueno). Solo en el Inicio.
    Si ya hay foto de hoy cambia de aspecto y lleva a la galeria en vez de a la camara:
@@ -20221,7 +20277,7 @@ function metaTileHTML(x){
   const dot=`<span class="btdot" style="background:${est}" title="${SEMA_TXT[x.estado]||''}"></span>`;
   const ringPx={s:54,w:76,t:112,l:128}[sz]||76;
   let visual;
-  if(esEtapa) visual=metaSpark(x.filas||[], {h:sz==='l'?76:48});
+  if(esEtapa) visual=metaSpark(x.filas||[], {h:sz==='l'?86:58});
   else if(vis==='ring') visual=`<span class="btring">${ring(x.pct, x.ringTxt||(x.pct+'%'), '', ringPx, sz==='s'?6:8)}</span>`;
   else if(vis==='spark' && x.serie && x.serie.length>1) visual=medSpark(x.serie.slice(-8));
   else if(vis==='steps'){
@@ -20307,7 +20363,7 @@ function metasHomeHTML(){
 }
 /* ---- la isla de una meta: la proyeccion completa, al contacto ---- */
 function islaMetaHTML(id){
-  const x=metasUnificadas().find(y=>y.id===id);
+  const x=metaPorId(id);
   if(!x) return '';
   const col=SEMA_COL[x.estado]||'var(--smoke)';
   let cuerpo='';
@@ -20339,9 +20395,13 @@ function islaMetaHTML(id){
     ${g.viejo?`<div class="small mt8" style="color:var(--gold);line-height:1.5">${ic('alert',12)} La medida ya está vieja: vuelve a medirte para que la meta signifique algo.</div>`:''}
     <div class="small dim mt8" style="line-height:1.5">El margen de la cinta es de ±3 a 4 puntos, así que lo que manda es la tendencia. ${notaMagraCreat(UID)}</div>`;
   } else if(x.tipo==='medida'){
-    const s=medSerie('cintura').slice(-8);
-    cuerpo=`${s.length>1?lineChart({pts:s.map(p=>({x:fmtD(p.d), d:p.d, v:p.v, tip:fmtD(p.d)+' · '+fmt1(p.v)+' cm'})), goal:x.oc.o, goalLabel:'META', fmt:v=>fmt1(v)+' cm', trend:true, h:150}):''}
-    <div class="small mt8" style="line-height:1.55">El objetivo de <b>${fmt1(x.oc.o)} cm</b> sale de ${esc(x.oc.fuente)}. La cintura es el dato más honesto que tienes: si el peso baja y ella no, lo que se está yendo no es solo grasa.</div>`;
+    /* generico: antes estaba cableado a cintura y daba por hecho que hay objetivo, asi
+       que cualquier otra medida (o una sin objetivo) reventaba y la isla salia vacia */
+    const s=(x.serie||[]).slice(-10);
+    const esCint=(x.campo||x.id)==='cintura';
+    cuerpo=`${s.length>1?lineChart(Object.assign({pts:s.map(q=>({x:fmtD(q.d), d:q.d, v:q.v, tip:fmtD(q.d)+' · '+fmt1(q.v)+' cm'})), fmt:v=>fmt1(v)+' cm', trend:true, h:150}, x.oc?{goal:x.oc.o, goalLabel:'META'}:{})):''}
+    ${x.oc?`<div class="small mt8" style="line-height:1.55">El objetivo de <b>${fmt1(x.oc.o)} cm</b> sale de ${esc(x.oc.fuente)}.${esCint?' La cintura es el dato más honesto que tienes: si el peso baja y ella no, lo que se está yendo no es solo grasa.':''}</div>`
+      :`<div class="small mt8" style="line-height:1.55">Esta medida no tiene un objetivo definido: se sigue por su tendencia. Un centímetro real de músculo son meses de trabajo, así que lo que importa es hacia dónde va, no el número de un día.</div>`}`;
   } else if(x.tipo==='fuerza'){
     const py=x.py;
     cuerpo=`<div class="small mt12" style="line-height:1.55">Tu mejor 1RM estimado va en <b style="color:var(--ink)">${x.bRM?fmt1(x.bRM)+' kg':'sin registros'}</b> y la meta equivale a <b>${fmt1(x.tRM)} kg</b>.</div>
@@ -22861,6 +22921,19 @@ const ACTIONS = {
     box.innerHTML=islaMetaHTML(d.k);
   },
   islaMetaCerrar(){ const box=document.querySelector('.fbox.islameta'); if(box) box.remove(); },
+  /* isla para escoger CUAL medida va en la esquina del heroe */
+  medMetaPick(){
+    let box=document.querySelector('.fbox.medmeta');
+    if(!box){ box=document.createElement('div'); box.className='fbox scroll medmeta';
+      box.onclick=e=>{ if(e.target===box) ACTIONS.medMetaCerrar(); };
+      document.body.appendChild(box); }
+    box.innerHTML=medMetaPickHTML();
+  },
+  medMetaCerrar(){ const box=document.querySelector('.fbox.medmeta'); if(box) box.remove(); },
+  medMetaSet(d){
+    S.cfg.heroMeta = d.k==='cintura' ? 'cintura' : 'med:'+d.k;
+    save('cfg'); ACTIONS.medMetaCerrar(); render();
+  },
   /* el bento de metas va plegado: el Inicio se estaba volviendo larguisimo. La
      preferencia se guarda, no es de la visita. */
   metasTgl(){ S.cfg.metasOpen=!S.cfg.metasOpen; save('cfg'); render(); },

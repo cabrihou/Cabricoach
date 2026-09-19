@@ -84,7 +84,11 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   Cada familia de meta tiene **su color** (`META_COL`, seis distintos: `peso` NO puede
   usar `var(--mint)` porque esa variable es el acento del usuario y el anillo del peso
   salía igual al de la etapa). **Todo lo de dentro de la caja va de ese color**: anillo
-  (hay que pisar el degradado y el glow que pinta `ring()`), barra, sparkline y barritas: tiñe la caja entera con un
+  (hay que pisar el degradado y el glow que pinta `ring()`), barra, sparkline y barritas.
+  **La gráfica de la etapa** (`metaSpark`) va a lo ancho de la caja y se explica sola:
+  la trayectoria del plan en punteado, tu peso encima en línea sólida con área, el punto
+  de hoy, la marca del domingo en curso y las cifras de arranque y salida en los
+  extremos. Sin esos rótulos era una línea punteada suelta que no decía nada: tiñe la caja entera con un
   degradado suave, el borde, la cápsula del icono y la cifra. **Sin textos de apoyo**
   (pedido del dueño: "vas en", "faltan" apretaban la caja): queda nombre, cifra y
   gráfico, **en horizontal** (cifra a un lado, gráfico al otro, `.btrow` / `.btw`). El

@@ -479,12 +479,14 @@ lado de Nutrición** por pedido del dueño, pero **teñido de ámbar y con borde
 (`.pgopt.pgomed`): se lee como "esto te lleva a otra sección", no como una tercera
 pestaña del mismo contenido. `progGroup()` solo devuelve `act` o `nutri`.
 
-- **MD0b** Formulario de medidas (`medForm`, REV 215): cada campo se puede **escribir o
-  deslizar** (input + `range` sincronizados por `CHANGES.medIn`/`medSl`, sin re-render
-  para no perder el foco) y **arranca en el último registro** (`medUltimo`). Como viene
-  prellenado, `medGuardar` solo guarda lo tocado (`data-touched`), si no cada apertura
-  duplicaría medidas. Las instrucciones de cómo tomar cada medida siguen bajo el campo;
-  peso y estatura tienen las suyas. Rangos por tipo en `medRango`
+- **MD0b** Formulario de medidas (`medForm`, REV 222): una fila por medida, texto a la
+  izquierda y **el número es el control** a la derecha (`.mednv`): arrastrarlo arriba o
+  abajo sube o baja un paso cada `MED_PX` px (`medNumEnganchar`, se engancha tras cada
+  render); tocarlo abre el campo para escribir (`medEditar`). Sin slider. **Arranca en el
+  último registro** y lo cambiado vive en `UI.medVals` (por usuario y día), no en el DOM,
+  así sobrevive a cualquier repintado; `medGuardar` guarda solo eso y rechaza valores
+  fuera de `medRango`. Abrir, cerrar y guardar no desplazan la pantalla (`renderAnclado`,
+  `medAnclarNav`). Las instrucciones de cómo tomar cada medida siguen bajo el nombre.
 - **MD1** Aviso de lo que toca hoy: cada grupo tiene su cadencia (peso diario,
   **cintura y cuello cada 8 días**, resto del set cada 15, estructura cada 365). Si
   coinciden varios se funden en un solo formulario (`medEstado`, `medCamposHoy`).

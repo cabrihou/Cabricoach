@@ -373,6 +373,9 @@ body.kb #nav{transition:opacity .12s,transform .18s}
   background:#22272B;color:#F2F5F4;font:400 14.5px/1.4 var(--ui);letter-spacing:0;
   padding:12px 18px;opacity:0;transition:opacity .2s,transform .2s;max-width:90vw;text-align:center;border-radius:999px;border:1px solid rgba(var(--acc-rgb),.3);box-shadow:var(--shadow)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* oculto seguia recibiendo toques: una franja muerta fija sobre el nav donde una fila
+   de resultados no respondia. Solo atrapa toques cuando se ve */
+#toast:not(.show){pointer-events:none}
 
 /* recetas */
 details.rec{border:1px solid var(--line);background:var(--card2);margin-bottom:8px;border-radius:var(--r-md);overflow:hidden}
@@ -473,8 +476,8 @@ table.tb .r{text-align:right}
 .statrow>.stw:active{opacity:.8}
 .statrow>.stw .sv svg{margin-top:2px}
 .pmbtn{flex:none;width:46px;height:46px;border-radius:14px;border:1px solid var(--line);background:var(--card2);color:var(--ink);font:400 26px var(--ui);cursor:pointer}
-.pmnum.dragging,.medin .in.dragging{border-color:rgb(var(--acc-rgb));color:rgb(var(--acc-rgb))}
-.pmnum,.medin .in{cursor:ns-resize}
+.pmnum.dragging{border-color:rgb(var(--acc-rgb));color:rgb(var(--acc-rgb))}
+.pmnum{cursor:ns-resize}
 .pmnum{width:150px;text-align:center;font:700 44px/1 var(--num);letter-spacing:-.01em;background:none;border:none;border-bottom:2px solid var(--line);color:var(--ink);padding:4px 0;font-variant-numeric:tabular-nums}
 .pmnum:focus{outline:none;border-bottom-color:var(--mint)}
 .pmbtn:active{background:rgba(var(--acc-rgb),.14)}
@@ -1506,12 +1509,34 @@ html[data-tema=claro] .mealprep .mpd{color:#33604C}
 .medkpi{display:flex;gap:8px;flex-wrap:wrap}
 .medkpi span{font:500 12px var(--ui);color:var(--ink2);background:rgba(var(--lift),.06);border:1px solid var(--line);border-radius:999px;padding:3px 9px}
 .medkpi b{font:700 14px var(--num);color:var(--ink)}
-.medgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+/* REV 222: una fila por medida. A la izquierda el texto (ahi el dedo desplaza la
+   pagina como siempre); a la derecha el numero, que es el control: se arrastra en
+   vertical o se toca para escribir. touch-action:none SOLO en el numero, para que la
+   lista se siga pudiendo recorrer con el dedo por fuera de el. */
+.medgrid{display:flex;flex-direction:column}
+.medfield{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.medfield:first-child{border-top:none;padding-top:4px}
+.medtx{flex:1;min-width:0}
 .medfield .lbl{display:block}
-.medin{position:relative;margin-top:6px}
-.medin .in{padding-right:38px;font:600 18px var(--num);font-variant-numeric:tabular-nums}
-.medin .medu{position:absolute;right:12px;top:50%;transform:translateY(-50%);font:600 11.5px var(--ui);color:var(--smoke)}
-.medsl{margin-top:8px}
+.medult{display:block;margin-top:2px}
+.meddl{font-family:var(--num);font-variant-numeric:tabular-nums;color:rgb(var(--acc-rgb))}
+.medayu{display:block;margin-top:4px;line-height:1.4}
+.medayu svg{display:inline-block;vertical-align:-1px;margin-right:3px}
+.mednum{position:relative;flex:0 0 118px;height:64px}
+.mednv,.mednin{position:absolute;inset:0;width:100%;height:100%;box-sizing:border-box;border-radius:14px;
+  padding:0 30px 0 10px;text-align:center;font:700 26px/1 var(--num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.mednv{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:ns-resize;
+  background:var(--card2,rgba(255,255,255,.04));border:1px solid var(--line);color:var(--ink)}
+.mednv[hidden],.mednin[hidden]{display:none}
+/* pista muda de que se arrastra: dos flechitas encima y debajo del numero */
+.mednv::before,.mednv::after{content:'';position:absolute;left:calc(50% - 14px);width:0;height:0;
+  border-left:4px solid transparent;border-right:4px solid transparent;opacity:.45}
+.mednv::before{top:6px;border-bottom:5px solid var(--smoke)}
+.mednv::after{bottom:6px;border-top:5px solid var(--smoke)}
+.mednv.dragging{border-color:rgb(var(--acc-rgb));color:rgb(var(--acc-rgb));background:rgba(var(--acc-rgb),.10)}
+.medfield.on .mednv{border-color:rgba(var(--acc-rgb),.55);color:rgb(var(--acc-rgb))}
+.mednin{border:1px solid rgb(var(--acc-rgb))}
+.mednum .medu{position:absolute;right:10px;top:50%;transform:translateY(-50%);font:600 11.5px var(--ui);color:var(--smoke);pointer-events:none}
 .medformula summary{font:500 13px var(--ui);color:var(--ink2);cursor:pointer;list-style:none}
 .medformula summary::-webkit-details-marker{display:none}
 .medformula summary::before{content:'▸ ';color:var(--mint)}
@@ -2709,7 +2734,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 221';
+const APPREV='REV 222';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -7919,28 +7944,49 @@ function medRango(k){
   return {min:55, max:160, step:0.5, u:'cm'};   /* pecho, cintura, cadera, hombros */
 }
 /* Formulario: SOLO los campos que tocan hoy (o los del grupo elegido a mano).
-   REV 215 (pedido del dueno): cada campo se puede escribir o deslizar, y ARRANCA en el
-   ultimo registro, que es desde donde uno de verdad se mueve. Como viene prellenado,
-   solo se guarda lo que se toque (data-touched), si no cada apertura crearia medidas
-   falsas identicas a las anteriores. Las instrucciones de como medir se quedan. */
+   REV 222 (pedido del dueno): el numero ES el control. Arrastrarlo hacia arriba sube,
+   hacia abajo baja; un toque lo vuelve un campo para escribir. Sin slider.
+   Cada campo ARRANCA en el ultimo registro y solo se guarda lo que se cambie. Lo
+   cambiado vive en UI.medVals (no en el DOM): antes era un data-touched que solo se
+   marcaba con el evento 'change', y en el iPhone tocar "Guardar" no le quita el foco
+   al campo, asi que el change nunca llegaba y la medicion no se dejaba guardar. Ademas
+   cualquier repintado borraba la marca. Las instrucciones de como medir se quedan. */
+function medVals(){
+  const hoy=TODAY();
+  if(!UI.medVals || UI.medVals.uid!==UID || UI.medVals.d!==hoy) UI.medVals={uid:UID, d:hoy, v:{}};
+  return UI.medVals.v;
+}
+function medValsLimpiar(){ UI.medVals=null; UI.medEdit=null; }
+/* el valor que muestra un campo: lo cambiado ahora, lo de hoy o el ultimo registro */
+function medValCampo(k){
+  const mv=medVals(); if(mv[k]!=null) return mv[k];
+  const reg=((S.medidas||{})[TODAY()]||{});
+  if(reg[k]!=null) return reg[k];
+  const u=medUltimo(k); return u?u.v:null;
+}
+function medDeltaTxt(k){
+  const mv=medVals(), u=medUltimo(k);
+  if(mv[k]==null || !u) return '';
+  const d=Math.round((mv[k]-u.v)*10)/10;
+  return d===0 ? 'igual' : (d>0?'+':'−')+fmt1(Math.abs(d));
+}
 function medForm(sel){
-  const campos=sel.campos;
-  const hoy=TODAY(), reg=(S.medidas||{})[hoy]||{};
+  const campos=sel.campos, mv=medVals();
   const inp=(k,lb,ult,ayuda)=>{
-    const R=medRango(k);
-    const v0 = reg[k]!=null ? reg[k] : (ult!=null ? ult : '');
-    const vSl = v0!==''? v0 : Math.round((R.min+R.max)/2);
-    return `<div class="medfield">
-      <div class="flex between" style="align-items:baseline;gap:8px">
+    const R=medRango(k), v=medValCampo(k), mod=mv[k]!=null, ed=UI.medEdit===k;
+    const vtx = v!=null ? fmt1(v) : '·';
+    const dl=medDeltaTxt(k);
+    return `<div class="medfield${mod?' on':''}" data-k="${k}">
+      <div class="medtx">
         <span class="lbl">${lb}</span>
-        ${ult!=null?`<span class="small dim">último ${fmt1(ult)}</span>`:'<span class="small dim">sin registro</span>'}
+        <span class="small dim medult">${ult!=null?'último '+fmt1(ult):'sin registro'}${dl?` · <b class="meddl">${dl}</b>`:''}</span>
+        ${ayuda?`<i class="small dim medayu">${ic('info',11)} ${esc(ayuda)}</i>`:''}
       </div>
-      <div class="medin">
-        <input class="in ctr" inputmode="decimal" id="med_${k}" data-ch="medIn" data-k="${k}" value="${v0!==''?fmt1(v0):''}" placeholder="${R.u}" aria-label="${lb} en ${R.u==='kg'?'kilos':'centímetros'}">
+      <div class="mednum">
+        <button type="button" class="mednv" data-k="${k}"${ed?' hidden':''} aria-label="${lb}: ${vtx} ${R.u==='kg'?'kilos':'centímetros'}. Arrastra hacia arriba o abajo para cambiarlo, o toca para escribir">${vtx}</button>
+        <input class="in mednin" inputmode="decimal" id="med_${k}" data-ch="medIn" data-k="${k}"${ed?'':' hidden'} value="${v!=null?fmt1(v):''}" aria-label="${lb} en ${R.u==='kg'?'kilos':'centímetros'}">
         <span class="medu">${R.u}</span>
       </div>
-      <input type="range" class="nnrange medsl" data-ch="medSl" data-k="${k}" min="${R.min}" max="${R.max}" step="${R.step}" value="${vSl}" aria-label="Deslizar ${lb}" style="--rc:rgb(var(--acc-rgb))">
-      ${ayuda?`<i class="small dim" style="display:block;margin-top:6px;line-height:1.4">${ic('info',11)} ${esc(ayuda)}</i>`:''}
     </div>`;
   };
   const filas=[];
@@ -7952,23 +7998,83 @@ function medForm(sel){
     filas.push(inp(c.k, c.n, u?u.v:null, ayuda));
   });
   const fase=medAvisoFase();
+  const n=Object.keys(mv).length;
   return `<section class="mod" id="medform">
     <div class="mod-head"><span class="ttl">${ic('ruler',16)} ${sel.grupos.length>1?'Medición de hoy':MED_GRUPOS[sel.grupos[0]]?MED_GRUPOS[sel.grupos[0]].n:'Medición'}</span>
       <button class="btn sm" data-a="medCerrar" aria-label="cerrar">${ic('x',13)}</button></div>
     ${fase?`<div class="nkcalert mb12">${ic('alert',14)}<div>${esc(fase.txt)}</div></div>`:''}
-    <div class="small dim mb12" style="line-height:1.5">Cada campo arranca en tu último registro: escribe o desliza. Solo se guarda lo que muevas; lo demás se queda como estaba. Cinta pegada sin apretar, siempre a la misma hora.</div>
+    <div class="small dim mb12" style="line-height:1.5">Arrastra cada número hacia arriba o hacia abajo, o tócalo para escribirlo. Arranca en tu último registro y solo se guarda lo que cambies. Cinta pegada sin apretar, siempre a la misma hora.</div>
     <div class="medgrid">${filas.join('')}</div>
-    <button class="btn primary full mt12" data-a="medGuardar">${ic('check',14)} Guardar medición de hoy</button>
+    <button class="btn primary full mt12" data-a="medGuardar" id="medGuardarBtn">${ic('check',14)} Guardar ${n?n+' medida'+(n>1?'s':''):'medición de hoy'}</button>
   </section>`;
 }
-/* los campos del formulario de medidas tambien se arrastran; se engancha tras cada render
-   porque el formulario se reconstruye entero */
-function medDragEnganchar(){
-  document.querySelectorAll('#medform input[data-ch="medIn"]:not([data-drag])').forEach(inp=>{
-    inp.dataset.drag='1';
-    const R=medRango(inp.dataset.k);
-    dragNum(inp, ()=>parseFloat(String(inp.value).replace(',','.'))||R.min, v=>{
-      v=Math.min(R.max, Math.max(R.min, v)); inp.value=fmt1(v); CHANGES.medIn(inp); }, R.step/3, 1);
+/* refresca en sitio lo que depende de un campo cambiado, sin render(): repintar la
+   vista entera mientras el dedo arrastra o el teclado esta abierto es lo que movia la
+   pantalla */
+function medCampoPintar(k){
+  const f=document.querySelector('#medform .medfield[data-k="'+k+'"]'); if(!f) return;
+  const mv=medVals(), v=medValCampo(k), R=medRango(k);
+  f.classList.toggle('on', mv[k]!=null);
+  const b=f.querySelector('.mednv');
+  if(b){ b.textContent=v!=null?fmt1(v):'·'; }
+  const u=medUltimo(k), ul=f.querySelector('.medult'), dl=medDeltaTxt(k);
+  if(ul) ul.innerHTML=(u?'último '+fmt1(u.v):'sin registro')+(dl?' · <b class="meddl">'+dl+'</b>':'');
+  const n=Object.keys(mv).length, g=document.getElementById('medGuardarBtn');
+  if(g) g.innerHTML=ic('check',14)+' '+(n?'Guardar '+n+' medida'+(n>1?'s':''):'Guardar medición de hoy');
+}
+/* abre el campo de texto de una medida. Se llama DENTRO del click: iOS solo abre el
+   teclado si el focus() ocurre en el mismo gesto del usuario */
+function medEditar(k){
+  const f=document.querySelector('#medform .medfield[data-k="'+k+'"]'); if(!f) return;
+  const b=f.querySelector('.mednv'), inp=f.querySelector('.mednin'); if(!inp) return;
+  UI.medEdit=k;
+  const v=medValCampo(k); inp.value=v!=null?fmt1(v):'';
+  if(b) b.hidden=true; inp.hidden=false;
+  inp.focus({preventScroll:true});
+  try{ inp.select(); }catch(_){}
+}
+function medEditarFin(inp){
+  const k=inp.dataset.k; if(UI.medEdit===k) UI.medEdit=null;
+  const f=inp.closest('.medfield'); if(!f) return;
+  const b=f.querySelector('.mednv');
+  inp.hidden=true; if(b) b.hidden=false;
+  medCampoPintar(k);
+}
+/* Arrastre del numero. Va aparte de dragNum porque aqui el numero es un boton (no un
+   input: un input recibe el foco al primer toque y abre el teclado aunque se arrastre)
+   y porque el valor salta de paso en paso (medio centimetro, 100 g), no de decimal en
+   decimal. MED_PX es cuantos pixeles de dedo vale un paso. */
+const MED_PX=9;
+function medNumEnganchar(){
+  document.querySelectorAll('#medform .mednv').forEach(b=>{
+    if(b._medDrag) return; b._medDrag=true;
+    const k=b.dataset.k, R=medRango(k);
+    let st=null;
+    b.addEventListener('pointerdown', e=>{
+      const v=medValCampo(k);
+      st={y:e.clientY, x:e.clientX, v:(v!=null?v:Math.round((R.min+R.max)/2/R.step)*R.step), movio:false, id:e.pointerId};
+    });
+    b.addEventListener('pointermove', e=>{
+      if(!st) return;
+      const dy=st.y-e.clientY, dx=Math.abs(e.clientX-st.x);
+      if(!st.movio){ if(Math.abs(dy)<6 || dx>Math.abs(dy)) return; st.movio=true; st.y=e.clientY;
+        try{ b.setPointerCapture(st.id); }catch(_){} b.classList.add('dragging'); }
+      e.preventDefault();
+      const pasos=Math.round((st.y-e.clientY)/MED_PX);
+      const nv=clamp(Math.round((st.v+pasos*R.step)*10)/10, R.min, R.max);
+      const mv=medVals();
+      if(mv[k]!==nv){ mv[k]=nv; medCampoPintar(k); }
+    });
+    const fin=()=>{ if(st&&st.movio){ b.classList.remove('dragging'); b._arrastro=Date.now(); } st=null; };
+    b.addEventListener('pointerup', fin); b.addEventListener('pointercancel', fin);
+    /* un arrastre termina en click en algunos navegadores: ese no abre el teclado */
+    b.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation();
+      if(Date.now()-(b._arrastro||0)<400) return; medEditar(k); });
+  });
+  document.querySelectorAll('#medform .mednin').forEach(inp=>{
+    if(inp._medEd) return; inp._medEd=true;
+    inp.addEventListener('blur', ()=>medEditarFin(inp));
+    inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); inp.blur(); } });
   });
 }
 /* ============ RETO: MI PRIMERA DOMINADA (Cami) ============
@@ -13581,10 +13687,11 @@ function dragNum(el, get, set, porPx, dec){
     const raw=st.v+dy*porPx, f=Math.pow(10,dec||0);
     set(Math.round(raw*f)/f);
   });
-  const fin=()=>{ if(st&&st.movio){ el.classList.remove('dragging'); const s=st; st=null; setTimeout(()=>{}, 0); return; } st=null; };
+  const fin=()=>{ if(st&&st.movio){ el.classList.remove('dragging'); el._arrastro=Date.now(); } st=null; };
   el.addEventListener('pointerup', fin); el.addEventListener('pointercancel', fin);
-  /* tras un arrastre, el click que dispara el navegador no debe abrir el teclado */
-  el.addEventListener('click', e=>{ if(el.classList.contains('dragging')) e.preventDefault(); });
+  /* tras un arrastre, el click que dispara el navegador no debe abrir el teclado. Antes
+     miraba la clase .dragging, pero fin() ya la habia quitado cuando llegaba el click */
+  el.addEventListener('click', e=>{ if(Date.now()-(el._arrastro||0)<400){ e.preventDefault(); el.blur(); } });
 }
 /* ---- medida del agua con pulsacion larga (REV 215, pedido del dueno) ----
    Mantener oprimido el + abre el selector de medida; se desliza el dedo hasta una opcion
@@ -13687,6 +13794,8 @@ function pasosWindow(){
   const clampV=v=>Math.min(60000,Math.max(0,Math.round(+String(v).replace(/\D/g,'')||0)));
   const setVal=(v,from)=>{ val=clampV(v); if(from!=='num') num.value=val||''; if(from!=='rng') rng.value=Math.min(25000,val); };
   rng.oninput=()=>setVal(rng.value,'rng'); num.oninput=()=>setVal(num.value,'num');
+  /* el tope de 60.000 se aplicaba al guardar sin que el campo lo mostrara */
+  num.onblur=()=>{ num.value=val||''; };
   dragNum(num, ()=>val, v=>setVal(Math.round(v/50)*50), 40, 0);   /* 25 px = 1.000 pasos */
   q('#psMinus').onclick=()=>setVal(val-500); q('#psPlus').onclick=()=>setVal(val+500);
   const cerrar=()=>box.remove();
@@ -16187,7 +16296,7 @@ function exCard(e,idx,focus,N){
     ${focus?`<div class="flex between mb8"><span class="lbl">EJERCICIO ${idx+1} DE ${N}</span>
       <div class="flex" style="gap:6px">
         <button class="iconbtn" data-a="exPeek" data-ex="${e.id}" aria-label="progreso del ejercicio">${ic('trend',16)}</button>
-        <button class="iconbtn ${UI.swapOpen?'on':''}" data-a="swapOpen" aria-label="cambiar ejercicio">${ic('repeat',16)}</button>
+        <button class="iconbtn ${UI.swapOpen?'on':''}" data-a="exSwapOpen" aria-label="cambiar ejercicio">${ic('repeat',16)}</button>
       </div></div>`:''}
     ${focus&&UI.swapOpen?`<div class="mb12">
       ${(()=>{const g=MUSCLE[e.id]; if(!g) return '';
@@ -21072,6 +21181,16 @@ function render(){
   if(RENDERING) return;
   RENDERING=true;
   try{ renderReal(); } finally { RENDERING=false; }
+  /* el formulario de medidas se reconstruye con la vista: sus numeros arrastrables se
+     enganchan tras CADA render (antes solo al abrir un grupo, y el que llegaba desde
+     medGo o tras cualquier repintado quedaba sin arrastre) */
+  if(UI.tab==='medidas' && document.getElementById('medform')) medNumEnganchar();
+}
+/* repinta Medidas dejando quieto el boton de "Tomar medidas": es lo que queda bajo el
+   dedo cuando el formulario se cierra o se guarda */
+function medAnclarNav(){
+  const b=document.querySelector('#view [data-a="medNavAb"]');
+  if(b) renderAnclado(b); else render();
 }
 function renderReal(){
   hideTip();
@@ -21699,6 +21818,10 @@ function doFinish(completeAll){
     }
   });
   if(!count){ toast('Marca al menos una serie con kg y reps'); return; }
+  /* series marcadas hechas que no se pueden guardar (sin kg): antes se perdian sin aviso */
+  const sinKg=sessEx(r).filter(e=>{ const a=S.draft.data[e.id]||[];
+    return a.some(s=>s.done && !serieValida(e.id, s)); }).map(e=>shortEx(e.name));
+  if(sinKg.length) setTimeout(()=>toast('Sin kg no se guardó: '+sinKg.slice(0,3).join(', ')+(sinKg.length>3?' y '+(sinKg.length-3)+' más':'')), 2600);
   save('logs');
   let nCust=0;
   sessEx(r).forEach(e=>{ const n=S.draft.data[e.id].length; if(n!==((S.custom[e.id])??e.sets)){ S.custom[e.id]=n; nCust++; } });
@@ -22033,7 +22156,9 @@ const ACTIONS = {
     arr.push({w:arr[arr.length-1]?.w??'', r:'', done:false});
     save('draft'); render();
   },
-  swapOpen(){ UI.swapOpen=!UI.swapOpen; render(); },
+  /* se llamaba swapOpen, igual que el cambio de ingrediente de Comida, y ganaba el de
+     Comida: el boton de cambiar ejercicio de la sesion no hacia nada */
+  exSwapOpen(d, el){ UI.swapOpen=!UI.swapOpen; renderAnclado(el); },
   noteOpen(){ UI.noteOpen=!UI.noteOpen; render(); },
   platesOpen(){ UI.platesOpen=!UI.platesOpen; render(); },
   exOptsTgl(d, el){ UI.exOpts = UI.exOpts===d.ex ? null : d.ex; renderAnclado(el); },
@@ -22062,6 +22187,15 @@ const ACTIONS = {
         if((arr[i].w===''||arr[i].w==null) && !exPesoCorporal(d.ex))
           arr[i].w = last?.sets?.[i]?.w ?? last?.sets?.[0]?.w ?? '';
         if(arr[i].r===''||arr[i].r==null) arr[i].r = last?.sets?.[i]?.r ?? last?.sets?.[0]?.r ?? ex.reps[0];
+      }
+      /* la primera vez que se hace un ejercicio con peso no hay historial del que sacar
+         los kg: marcarla "hecha" sin kg la dejaba verde en pantalla y doFinish la
+         descartaba en silencio (serieValida exige kg). Se pide el dato en vez de mentir */
+      if(serieW(d.ex, arr[i])===''){
+        toast('Escribe los kg de la serie '+(i+1)+' para marcarla');
+        const kg=document.querySelector('#view input[data-ch="set"][data-ex="'+d.ex+'"][data-i="'+i+'"][data-f="w"]');
+        if(kg){ try{ kg.focus(); }catch(_){} }
+        save('draft'); return;
       }
     }
     arr[i].done=!was;
@@ -22414,21 +22548,30 @@ const ACTIONS = {
   movPlay(){ movPlayerOpen(); },
   puStart(){ if(PU){ puBoxOpen(); return; } puStart(); },
   medZona(d){ UI.medZona = d.z ? (UI.medZona===d.z?null:d.z) : null; UI.cargaMusc=null; render(); },
-  medAbrir(d){ UI.medForm = (UI.medForm===d.g) ? null : (d.g==='pend'?'pend':d.g); render();
-    if(UI.medForm) setTimeout(()=>{ irACaja('medform'); medDragEnganchar(); }, 60); },
-  medCerrar(){ UI.medForm=null; render(); },
+  /* abrir un grupo ya no manda la pantalla al formulario (irACaja la bajaba 400-870 px
+     sola, que era el "se desplaza hacia abajo" del reporte): el chip tocado se queda
+     quieto bajo el dedo y el formulario aparece justo debajo */
+  medAbrir(d, el){ UI.medForm = (UI.medForm===d.g) ? null : (d.g==='pend'?'pend':d.g); UI.medEdit=null; renderAnclado(el); },
+  /* al cerrar desaparece el formulario: se ancla al boton de "Tomar medidas", que es
+     lo que queda donde estaba el dedo */
+  medCerrar(){ UI.medForm=null; UI.medEdit=null; medValsLimpiar(); medAnclarNav(); },
   medGuardar(){
     const hoy=TODAY();
     const reg=Object.assign({fecha:hoy}, (S.medidas||{})[hoy]||{});
-    let n=0;
-    document.querySelectorAll('#medform [data-ch="medIn"]').forEach(el=>{
-      /* los campos vienen prellenados con el ultimo registro: solo cuenta lo que el
-         usuario toco (escribio o deslizo), si no cada apertura duplicaria medidas */
-      if(el.dataset.touched!=='1') return;
-      const k=el.dataset.k, v=+String(el.value).replace(',','.').replace(/[^\d.]/g,'');
-      if(v>0){ reg[k]=Math.round(v*10)/10; n++; } else if(el.value.trim()==='') delete reg[k];
+    /* si el teclado sigue abierto, lo escrito ya esta en UI.medVals (se guarda por
+       tecla), pero se cierra el campo para que no quede colgado */
+    const f=campoEnfocado(); if(f && f.classList.contains('mednin')) f.blur();
+    /* los campos vienen prellenados con el ultimo registro: solo cuenta lo que el
+       usuario cambio (arrastro o escribio), si no cada apertura duplicaria medidas */
+    const mv=medVals(); let n=0; const malos=[];
+    Object.keys(mv).forEach(k=>{
+      const R=medRango(k), v=mv[k];
+      if(!(v>=R.min && v<=R.max)){ malos.push(k); return; }
+      reg[k]=Math.round(v*10)/10; n++;
     });
-    if(!n){ toast('Mueve o escribe al menos una medida'); return; }
+    if(malos.length){ const k=malos[0], c=MED_CAMPOS.find(x=>x.k===k), R=medRango(k);
+      toast('Revisa '+(c?c.n.toLowerCase():k)+': va entre '+fmt1(R.min)+' y '+fmt1(R.max)+' '+R.u); return; }
+    if(!n){ toast('Arrastra o escribe al menos una medida'); return; }
     S.medidas=S.medidas||{}; S.medidas[hoy]=reg;
     /* el peso vive en S.weights (el registro diario del Inicio): se escribe alli
        tambien para no tener dos verdades del mismo dato */
@@ -22437,7 +22580,7 @@ const ACTIONS = {
       S.weights.sort((a,b)=>a.d<b.d?-1:1); save('weights'); metasInvalidar(UID);
     }
     save('medidas');
-    UI.medForm=null; render();
+    UI.medForm=null; medValsLimpiar(); medAnclarNav();
     const nav=medNavy();
     toast(n+' medida'+(n>1?'s':'')+' guardada'+(n>1?'s':'')+(nav.ok?' · grasa ≈ '+fmt1(nav.pct)+'%':''));
   },
@@ -22730,7 +22873,7 @@ const ACTIONS = {
   excatMapa(){ UI.excatMapa=!UI.excatMapa; if(!UI.excatMapa) UI.excatZona=null; UI.excatQ=''; render(); window.scrollTo({top:0}); },
   cuerpoSub(d, el){ UI.medCapa=d.s; UI.medZona=null; renderAnclado(el); },
   /* ---- navegacion de Medidas (REV 214): portada, destino y hoja para saltar ---- */
-  medSecIr(d){ UI.medSec=d.s||null; UI.medZona=null; UI.medirAbre=false; UI.medForm=null;
+  medSecIr(d){ UI.medSec=d.s||null; UI.medZona=null; UI.medirAbre=false; UI.medForm=null; medValsLimpiar();
     ACTIONS.medHojaCerrar(); render(); window.scrollTo({top:0}); },
   medHoja(){
     let box=document.querySelector('.fbox.medhoja');
@@ -23930,14 +24073,17 @@ function dl(blob,name){
 
 /* cambios de inputs */
 const CHANGES = {
-  /* formulario de medidas: teclado y slider son el mismo valor. No se llama render()
-     porque destruiria el campo enfocado; solo se marcan como tocados */
-  medIn(el){ el.dataset.touched='1';
-    const v=parseFloat(String(el.value).replace(',','.'));
-    const sl=document.querySelector('#medform .medsl[data-k="'+el.dataset.k+'"]');
-    if(sl && isFinite(v)) sl.value=v; },
-  medSl(el){ const inp=document.querySelector('#medform input[data-ch="medIn"][data-k="'+el.dataset.k+'"]');
-    if(inp){ inp.value=fmt1(+el.value); inp.dataset.touched='1'; } },
+  /* formulario de medidas: lo escrito va a UI.medVals por tecla. No se llama render()
+     porque destruiria el campo enfocado. OJO: habia un SEGUNDO medIn vacio mas abajo en
+     este objeto y, como gana la ultima clave, lo escrito nunca contaba: esa era la causa
+     de "las medidas no se dejan registrar" (escribir no marcaba nada; solo el slider) */
+  medIn(el){ const k=el.dataset.k, mv=medVals(), txt=String(el.value).trim();
+    const v=parseFloat(txt.replace(',','.').replace(/[^\d.]/g,''));
+    /* borrar el campo deshace el cambio: vuelve al ultimo registro */
+    if(txt==='' || !isFinite(v) || v<=0) delete mv[k]; else mv[k]=Math.round(v*10)/10;
+    const f=el.closest('.medfield'); if(f) f.classList.toggle('on', mv[k]!=null);
+    const n=Object.keys(mv).length, g=document.getElementById('medGuardarBtn');
+    if(g) g.innerHTML=ic('check',14)+' '+(n?'Guardar '+n+' medida'+(n>1?'s':''):'Guardar medición de hoy'); },
   /* creador de sesion Hyrox: no re-renderiza en cada tecla (el render destruye el campo
      enfocado), solo guarda; lo que depende del valor se pinta al tocar otra cosa */
   hxCDist(el){ const v=parseInt(String(el.value).replace(/\D/g,''),10);
@@ -24020,7 +24166,6 @@ const CHANGES = {
     a.run=a.run||{}; const v=Math.round(+String(el.value).replace(/[^\d]/g,'')||0);
     if(v>0) a.run.min=v; else delete a.run.min;
     save('acts'); render(); },
-  medIn(){ /* se lee al guardar: re-pintar por tecla destruiria el campo enfocado */ },
   metaGrasa(el){
     /* al moverlo a mano se anota con que etapa: asi su valor manda dentro de esta etapa
        y la siguiente vuelve a proponer el % del plan */
@@ -24328,6 +24473,7 @@ document.addEventListener('input', e=>{
   /* la calculadora solo escuchaba 'change', que en un campo de texto salta al salir del
      campo: el numero se quedaba congelado mientras se escribia. Ahora recalcula por tecla. */
   else if(ch==='pcal' && CHANGES.pcal){ CHANGES.pcal(el); }
+  else if(ch==='medIn'){ CHANGES.medIn(el); }   /* por tecla: no depende del blur */
   else if((ch==='crBuscar'||ch==='crNombre') && CHANGES[ch]){ CHANGES[ch](el); }  /* armador de rutina: busca por tecla */
   else if(ch==='nnname'){ if(UI.nlogNew&&typeof UI.nlogNew==='object'){ UI.nlogNew.name=el.value;
     /* T6: si el texto calza exacto con algo ya diligenciado, rellena unidad y macros conocidos */
@@ -24419,8 +24565,10 @@ document.addEventListener('touchstart', e=>{
   if(e.touches.length!==1) return;
   const T=e.touches[0];
   if(T.clientX<=36) return;                       /* se lo queda el gesto de atras */
-  if(UI.tab!=='progreso' || progGroup()!=='cuerpo') return;
-  if(e.target.closest('.scrollx,.tbwrap,input[type=range],.cmpwrap')) return;
+  /* decia progreso/cuerpo (de cuando Medidas vivia en Progreso) y el touchend mira
+     medidas/cuerpo: el swipe entre capas no arrancaba nunca */
+  if(UI.tab!=='medidas' || medSec()!=='cuerpo') return;
+  if(e.target.closest('.scrollx,.tbwrap,input[type=range],.cmpwrap,#medform')) return;
   SWC={x:T.clientX, y:T.clientY, t:Date.now()};
 }, {passive:true});
 document.addEventListener('touchend', e=>{

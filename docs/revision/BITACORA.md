@@ -75,7 +75,8 @@ nube falsa sin señal y 0 errores de consola; capturas revisadas. `site/` sincro
 `publicar.sh`. APPREV 'REV 223', caché `cabritos-v167` en los dos sw.js.
 
 Servidor de revisión: `python3 -m http.server 8223 --bind 0.0.0.0 --directory site`
-(http://localhost:8223/?demo=1). Falta: revisión de Andy y su go para commit y push.
+(http://localhost:8223/?demo=1). Andy dio el go: commit `8e8c7e8`, push a main y
+Netlify confirmado en producción (cabricoach.netlify.app sirve REV 223 y `cabritos-v167`).
 Quedan para otro lote: ~18 `confirm()` nativos por migrar (incluido "pegar registros",
 que mezcla Aceptar/Cancelar con reemplazar/sumar), indicador de sincronización visible,
 aviso de versión nueva y temporizador de descanso grande.

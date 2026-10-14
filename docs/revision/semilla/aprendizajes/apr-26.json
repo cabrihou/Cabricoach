@@ -1,0 +1,7 @@
+{
+ "tema": "Diseño",
+ "titulo": "El tema claro va por tokens",
+ "texto": "html[data-tema=claro] redefine superficies y tintas; los acentos son identidad y no cambian. Nada de blancos o negros fijos en CSS nuevo: usar --lift y los tokens.",
+ "fuente": "DESIGN-STANDARDS §4b",
+ "orden": 25
+}

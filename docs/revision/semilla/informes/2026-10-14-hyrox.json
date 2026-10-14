@@ -1,0 +1,48 @@
+{
+ "seccion": "hyrox",
+ "lote": "2026-10-14",
+ "titulo": "Análisis UX y UI · 14 de octubre",
+ "lead": "Bien resuelto que diga en pantalla cuáles baremos son reales (SkiErg y Sled Push) y cuáles no.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Marca Va en lo que quieres que haga. Usa Responder si lo quieres distinto o tienes una pregunta: va en el próximo envío. Lo que no marques se queda aquí.",
+ "items": [
+  {
+   "codigo": "HX01",
+   "zona": "HX0",
+   "tipo": "Interfaz",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "«3/8» aparece 4 veces en la portada y «1:17:39» dos veces en Tu nivel.",
+   "hecho": "Cada cifra una sola vez."
+  },
+  {
+   "codigo": "HX02",
+   "zona": "HX3",
+   "tipo": "Interfaz",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "El carrusel de sesiones corta el texto a mitad («con 45 segundos de…»).",
+   "hecho": "Altura según el contenido o «Ver más»."
+  },
+  {
+   "codigo": "HX03",
+   "zona": "HX2",
+   "tipo": "Texto",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "«Mide farmers»; percentiles, baremo y lastre sin definir.",
+   "hecho": "«Empieza midiendo Farmers» y una «i» en los términos."
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

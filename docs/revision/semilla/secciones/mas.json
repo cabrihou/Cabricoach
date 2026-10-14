@@ -1,0 +1,39 @@
+{
+ "orden": 12,
+ "nombre": "Más (ajustes)",
+ "descripcion": "Recordatorios, Salud, PIN, nube, datos y preferencias.",
+ "partes": [
+  {
+   "id": "M1",
+   "nombre": "M1 · Recordatorios"
+  },
+  {
+   "id": "M2",
+   "nombre": "M2 · Salud y pasos"
+  },
+  {
+   "id": "M3",
+   "nombre": "M3 · Inyección"
+  },
+  {
+   "id": "M7",
+   "nombre": "M7 · PIN"
+  },
+  {
+   "id": "M8",
+   "nombre": "M8 · Preferencias"
+  },
+  {
+   "id": "M9",
+   "nombre": "M9 · Nube"
+  },
+  {
+   "id": "M10",
+   "nombre": "M10 · Datos"
+  },
+  {
+   "id": "M11",
+   "nombre": "M11 · Hyrox"
+  }
+ ]
+}

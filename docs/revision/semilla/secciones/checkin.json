@@ -1,0 +1,27 @@
+{
+ "orden": 9,
+ "nombre": "Check-in",
+ "descripcion": "El cierre del domingo: semáforo, resumen, formulario y evolución.",
+ "partes": [
+  {
+   "id": "K0",
+   "nombre": "K0 · Semáforo"
+  },
+  {
+   "id": "K1",
+   "nombre": "K1 · Resumen de la semana"
+  },
+  {
+   "id": "K2",
+   "nombre": "K2 · Formulario"
+  },
+  {
+   "id": "K3",
+   "nombre": "K3 · Gráficas"
+  },
+  {
+   "id": "K4",
+   "nombre": "K4 · Tabla de evolución"
+  }
+ ]
+}

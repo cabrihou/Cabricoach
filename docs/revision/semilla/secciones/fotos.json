@@ -1,0 +1,23 @@
+{
+ "orden": 8,
+ "nombre": "Fotos",
+ "descripcion": "Foto del día, antes y después, galería.",
+ "partes": [
+  {
+   "id": "FT1",
+   "nombre": "FT1 · Tomar hoy"
+  },
+  {
+   "id": "FT2",
+   "nombre": "FT2 · Antes y después"
+  },
+  {
+   "id": "FT3",
+   "nombre": "FT3 · Galería"
+  },
+  {
+   "id": "FT4",
+   "nombre": "FT4 · Ventana de una foto"
+  }
+ ]
+}

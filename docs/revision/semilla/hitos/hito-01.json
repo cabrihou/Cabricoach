@@ -1,0 +1,8 @@
+{
+ "tipo": "hito",
+ "fecha": "2026-07-29",
+ "rev": "REV 64",
+ "titulo": "CabriCoach se vuelve app instalable",
+ "detalle": "PWA en Netlify con fuentes embebidas y la fecha de las fotos leída del EXIF.",
+ "orden": 100
+}

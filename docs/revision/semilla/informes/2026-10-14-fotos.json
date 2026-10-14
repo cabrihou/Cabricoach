@@ -1,0 +1,39 @@
+{
+ "seccion": "fotos",
+ "lote": "2026-10-14",
+ "titulo": "Análisis UX y UI · 14 de octubre",
+ "lead": "Borrar una foto tiene confirmación y Deshacer con la imagen guardada: es el mejor patrón de borrado de la app y debería copiarse en el resto.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Marca Va en lo que quieres que haga. Usa Responder si lo quieres distinto o tienes una pregunta: va en el próximo envío. Lo que no marques se queda aquí.",
+ "items": [
+  {
+   "codigo": "FT01",
+   "zona": "FT1",
+   "tipo": "Datos",
+   "impacto": "alto",
+   "esfuerzo": "medio",
+   "pedido": "«Foto privada» no protege el archivo: todas suben a un bucket público (ver G10 en General).",
+   "hecho": "Bucket privado o, mientras tanto, nombre aleatorio y un texto honesto."
+  },
+  {
+   "codigo": "FT02",
+   "zona": "FT1",
+   "tipo": "Técnico",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Si una foto no alcanza a subir por falta de señal, queda solo en el teléfono y nunca se reintenta.",
+   "hecho": "Reintentar al volver la señal y mostrar «2 fotos sin subir»."
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

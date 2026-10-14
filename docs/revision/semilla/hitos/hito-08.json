@@ -1,0 +1,8 @@
+{
+ "tipo": "hito",
+ "fecha": "2026-08-02",
+ "rev": "REV 104",
+ "titulo": "La app baja de 4,3 MB a 991 KB",
+ "detalle": "Las imágenes de la interfaz salen del HTML a archivos sueltos.",
+ "orden": 107
+}

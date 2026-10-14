@@ -1,0 +1,57 @@
+{
+ "seccion": "agenda",
+ "lote": "2026-10-14",
+ "titulo": "Análisis UX y UI · 14 de octubre",
+ "lead": "El calendario es claro y la isla semanal funciona bien. Faltan detalles de lectura.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Marca Va en lo que quieres que haga. Usa Responder si lo quieres distinto o tienes una pregunta: va en el próximo envío. Lo que no marques se queda aquí.",
+ "items": [
+  {
+   "codigo": "AG01",
+   "zona": "A4",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Un día pasado guarda sus datos en dos cajas plegadas y llegar desde Mes son 3 toques.",
+   "hecho": "Abrir «Registro de ese día» por defecto."
+  },
+  {
+   "codigo": "AG02",
+   "zona": "A3",
+   "tipo": "Texto",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "Las siglas PA, PB, LA y LB no tienen leyenda; la de abajo explica colores, no siglas.",
+   "hecho": "Al tocar un día, el nombre completo; y la leyenda con las siglas."
+  },
+  {
+   "codigo": "AG03",
+   "zona": "A3",
+   "tipo": "Interfaz",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Los días pasados sin registro se pintan en rojo como fallo, y el estándar pide acompañar, no regañar.",
+   "hecho": "Gris punteado «sin registro»; el rojo solo si había un entreno planeado y no se hizo."
+  },
+  {
+   "codigo": "AG04",
+   "zona": "A3",
+   "tipo": "Texto",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "La fecha va en mayúscula sostenida («MIÉRCOLES 14 DE OCTUBRE 2026»).",
+   "hecho": "Caja de oración."
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

@@ -1,0 +1,31 @@
+{
+ "orden": 13,
+ "nombre": "Hyrox",
+ "descripcion": "Nivel, marcas, sesiones, progresiones y plan de 12 semanas.",
+ "partes": [
+  {
+   "id": "HX0",
+   "nombre": "HX0 · Portada"
+  },
+  {
+   "id": "HX1",
+   "nombre": "HX1 · Nivel"
+  },
+  {
+   "id": "HX2",
+   "nombre": "HX2 · Marcas"
+  },
+  {
+   "id": "HX3",
+   "nombre": "HX3 · Sesiones"
+  },
+  {
+   "id": "HX4",
+   "nombre": "HX4 · Progresiones"
+  },
+  {
+   "id": "HX5",
+   "nombre": "HX5 · Plan 12 semanas"
+  }
+ ]
+}

@@ -1,0 +1,10 @@
+{
+ "titulo": "Revisar la REV 223 en local y dar el go del deploy",
+ "detalle": "En el Mac: http://localhost:8223/?demo=1 (datos de demo, no guarda). En el iPhone, misma red Wi-Fi: http://192.168.2.16:8223/?demo=1 (sin https no corren la pantalla encendida ni el modo sin señal). Lo nuevo está en las Novedades de General, Inicio y Entrenar. Con tu go: commit, push y Netlify.",
+ "quien": "andy",
+ "prioridad": "alta",
+ "estado": "abierto",
+ "origen": "Lote 1 (REV 223)",
+ "orden": 0,
+ "creadoEn": "2026-10-14T10:30:00.000Z"
+}

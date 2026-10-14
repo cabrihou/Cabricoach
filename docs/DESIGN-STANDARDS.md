@@ -27,8 +27,9 @@ de esquinas a 90°, nada de uppercase en todo.
 | card | `#15181C` → en `.mod` | tarjeta base sobre el fondo |
 | `--ink` | `#F2F5F4` | texto primario |
 | `--ink2` | `#AEB6B3` | texto secundario |
-| `--smoke` | `#737C79` | texto atenuado, labels |
-| `--line` | `rgba(255,255,255,.08)` | hairlines y bordes de tarjeta |
+| `--smoke` | `#828C89` | texto atenuado, labels (el valor real del CSS; el documento decía #737C79 hasta REV 223) |
+| `--line` | `rgba(255,255,255,.08)` | hairlines, separadores y bordes de tarjeta |
+| `--line-ctl` | `rgba(255,255,255,.34)` (claro: `rgba(15,23,32,.48)`) | borde de **controles**: campos `.in`, círculos de serie `.sdot`, casilla `.exrck`, check `.okbtn2`. Da 3:1 contra la tarjeta (WCAG 1.4.11); con `--line` (1,26:1) no se distinguían en el gimnasio. REV 223 |
 | `--mint` | `#5C8DFF` | acento único (azul, decisión de Andy 16/07: "un azul más azul") |
 | `--grad` | `linear-gradient(135deg,#8FB5FF,#3D63F2)` | rellenos de progreso, CTA, anillos |
 | `--red` | `#FF5257` | SOLO alertas, récords y línea de meta |
@@ -43,7 +44,7 @@ de esquinas a 90°, nada de uppercase en todo.
 
 ## 2. Forma y profundidad
 
-- Radios: tarjetas 20 px, tiles internos 14 px, inputs 12 px, botones y chips = píldora (999 px).
+- Radios (los reales del CSS, REV 223): tarjetas `--r-lg` 26 px, tiles internos `--r-md` 16 px, inputs `--r-sm` 13 px, botones y chips = píldora (999 px). El documento decía 20/14/12; la auditoría del 14/10 midió que el código usa 26/16/13. Usar los tokens: hoy solo el 2,8 % de los radios los usa.
 - Tarjetas: fondo card + borde 1 px `--line` + sombra suave `0 8px 24px rgba(0,0,0,.35)`.
 - Chrome (topbar, nav inferior, barra de descanso): vidrio — `backdrop-filter: blur(18px)` sobre rgba del bg al 78–85 %.
 - El grano/noise se conserva pero a opacidad ≤ .04 (textura, no protagonismo).
@@ -83,7 +84,7 @@ Cuatro familias embebidas como data-URI (nunca por link externo), cuatro variabl
 
 ### Excepciones aceptadas (documentadas, no ignoradas)
 
-- **28 labels quedaron entre 9 y 11,5 px**: celdas de calendario, ejes de gráficas SVG, texto dentro de la barra de discos, tiras de días. En contenedores de 30-90 px no cabe 12,5 px sin romper la rejilla. Se subieron desde 8-10,5 px hasta donde el espacio permitió.
+- **Ojo, cifra corregida el 14/10/2026: la auditoría midió 135 declaraciones de letra por debajo de 12 px**, no 28. La excepción sigue valiendo solo para estos casos; el resto es deuda. Originalmente: **28 labels quedaron entre 9 y 11,5 px**: celdas de calendario, ejes de gráficas SVG, texto dentro de la barra de discos, tiras de días. En contenedores de 30-90 px no cabe 12,5 px sin romper la rejilla. Se subieron desde 8-10,5 px hasta donde el espacio permitió.
 - **Chips y controles segmentados van a 12-13 px, no a los 15 px de botón**: se tratan como *labels* de navegación y filtro, no como botones de acción. Los botones reales (`.btn` y variantes) sí cumplen el mínimo. Llevarlos a 15 px exigiría rediseñarlos porque a 320 px no caben.
 
 (El sistema anterior Bricolage Grotesque + Schibsted Grotesk + IBM Plex Mono quedó retirado en REV 100. Las cuatro familias nuevas pesan 121 KB, menos que las 187 KB que salieron.)
@@ -114,6 +115,8 @@ Cuatro familias embebidas como data-URI (nunca por link externo), cuatro variabl
 - **Espera cuantificada (REV 209)**: cuando algo está pendiente, se dice qué se acumula y que nada se pierde, con la cifra a la vista (medidas en el checkpoint, entrenos esperando el check-in, porciones cocinadas en Gestión).
 - **Caja plegable de sesión (`uiCaja`, REV 209)**: mismo patrón de cabecera `schedhead` con el dato clave visible, pero con memoria de sesión (UI.cajas) en vez de persistida; para plegar lo secundario en Agenda (día pasado), Check-in (formulario) y Retos (vitrina, reinicio).
 - **Hoja inferior (`.fbox.sheet`, REV 210)**: variante de presentación de la fbox para el detalle de un ítem de lista: anclada abajo con esquinas 20 px, manija, entra con translateY de 280 ms y el velo funde a la vez; el contenido y el cierre quedan en la zona del pulgar. La usan el detalle del catálogo (E5c), la ficha rápida de ejercicio (exStats) y la ventana de una foto (FT4). Sigue sin ser para lo que se consulta a diario.
+- **Hoja de confirmación (`hojaConfirmar`, REV 223)**: reemplaza a `confirm()` nativo, que en iOS solo ofrece "Cancelar" y "Aceptar". Título con la acción y el objeto ("¿Borrar el 13/10 del historial?"), una línea con la consecuencia, botón con verbo (`peligro:true` lo pinta rojo) y salida segura nombrada ("Conservar", "Volver a la sesión"); el foco arranca en la salida segura, Escape y tocar fuera cancelan. Devuelve una promesa. Regla: **si la acción se puede deshacer, no se pregunta: se hace y se ofrece Deshacer** (`snackUndo(msg, fn, ms)`, 8 s por defecto, 10 a 12 s en borrados grandes). Migradas en REV 223: borrar un día, sesión a medias e importar respaldo; borrar pesaje, sesión de Hyrox y serie pasaron a Deshacer. Quedan ~18 `confirm()` por migrar.
+- **Área de toque (REV 223)**: los controles chicos de la sesión (`.sdot`, `.exrck`, `.exrpk`) llevan un `::after` invisible que lleva el toque a 44 px de alto; el margen horizontal no pasa de la mitad del hueco con el vecino.
 - **Micro-confirmación (REV 210)**: patrón único "qué pasó + efecto" en el toast: "Serie 3 · 12 reps · +10 XP", "Agua +250 ml · vas 1.250 de 3.400", "Día completo · +43 XP". Toda acción de registro nueva confirma así, nunca un "Guardado" seco.
 - **Nudge de "te acercas" (REV 210)**: aviso proactivo ANTES del hito cuando falta poco: a menos de un escalón de una meta de fuerza (P10) o a 2 días o menos de una toma de medidas (MD1, con botón para adelantarla).
 - **Pie de espera (REV 210)**: las ventanas de proceso y las zonas de riesgo dicen abajo, en gris, qué se conserva si algo falla ("Nada cambia hasta que confirmes", "si se corta la conexión no se pierde nada").
@@ -126,7 +129,7 @@ Cuatro familias embebidas como data-URI (nunca por link externo), cuatro variabl
 - **Tarjeta-foto**: fotografía real oscura, overlay `linear-gradient(180deg, transparent 30%, rgba(11,13,15,.94))`, título encima, CTA píldora acento (ref. "Workout ▶", "Weight Training").
 - **Barras de progreso**: píldora 8–10 px, pista `rgba(255,255,255,.09)`, relleno `--grad`.
 - **Nav inferior**: vidrio, iconos Lucide-style stroke redondeado; tab activo = acento (icono + label), sin fondos duros por celda.
-- **Botón primario**: píldora con `--grad`, texto oscuro, glow `0 6px 20px rgba(94,233,206,.35)`.
+- **Botón primario**: píldora con `--grad`, texto oscuro, glow con `--glow` / `--acc-rgb` (el verde agua `rgba(94,233,206,.35)` que decía este documento ya no existe en el CSS).
 - **Toggle/checkbox**: redondeados; estado on = acento con tinta oscura.
 
 ## 4b. Tema claro (Fase 5, REV 213)

@@ -1,0 +1,47 @@
+{
+ "orden": 2,
+ "nombre": "Entrenar",
+ "descripcion": "Rutinas, sesión en vivo, catálogo de ejercicios y reloj.",
+ "partes": [
+  {
+   "id": "E1",
+   "nombre": "E1 · Rutinas"
+  },
+  {
+   "id": "E2",
+   "nombre": "E2 · Sesión activa"
+  },
+  {
+   "id": "E2a",
+   "nombre": "E2a · Series"
+  },
+  {
+   "id": "E3",
+   "nombre": "E3 · Importar entreno"
+  },
+  {
+   "id": "E4",
+   "nombre": "E4 · Historial"
+  },
+  {
+   "id": "E5",
+   "nombre": "E5 · Ejercicios"
+  },
+  {
+   "id": "E6",
+   "nombre": "E6 · Movilidad"
+  },
+  {
+   "id": "reloj",
+   "nombre": "Reloj"
+  },
+  {
+   "id": "E1b",
+   "nombre": "E1b · Personalizado"
+  },
+  {
+   "id": "E1x",
+   "nombre": "E1x · Crear rutina"
+  }
+ ]
+}

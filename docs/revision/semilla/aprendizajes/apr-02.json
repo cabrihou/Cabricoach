@@ -1,0 +1,7 @@
+{
+ "tema": "El archivo",
+ "titulo": "Un solo agente a la vez editando el archivo",
+ "texto": "Dos agentes en paralelo se pisan las ediciones, y un conflicto en el archivo único es irresoluble a mano. Leer y auditar en paralelo sí se puede.",
+ "fuente": "Memoria de Claude",
+ "orden": 1
+}

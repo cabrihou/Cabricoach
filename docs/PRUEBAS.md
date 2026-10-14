@@ -160,3 +160,19 @@ Render: todas las vistas por debajo de 16 ms. La más lenta es Retos.
 Lo que queda y es a propósito: las zonas del SVG del mapa miden 17×30 px en pantalla. Son las
 formas del dibujo, agrandar el área de toque implicaría rectángulos invisibles encima que
 taparían zonas vecinas. Las cotas de al lado (100-200 px de ancho) hacen de alternativa.
+
+## Suite de regresión y auditoría (REV 223, 14/10/2026)
+
+Ya no es solo receta: hay scripts que se pueden repetir en cualquier máquina.
+
+- `herramientas/sembrar-datos-prueba.js`: 70 días de datos para el usuario activo (peso,
+  pasos, agua, creatina, entrenos según su semana, comida, check-ins, medidas y Hyrox).
+- `herramientas/cdp_pruebas.py`: ayudante de CDP (`ev`, `nav`, `shot`, `frames`). Lee la
+  pestaña de `CDP_TAB_FILE` para no chocar con otra sesión que use el mismo Chrome (pasó: un
+  agente navegó la pestaña compartida y tumbó una captura).
+- `herramientas/pruebas_rev223.py`: 37 pruebas con clics reales (ver su cabecera). Debe
+  terminar en "37 de 37 pasan".
+- `herramientas/nube_falsa.py`: imita la tabla `kv` de Supabase en local; `/__off` simula
+  quedarse sin señal. Así se prueba la sincronización sin tocar la nube real.
+- `herramientas/a11y_medir.js` y `a11y_run.py`: auditoría WCAG medida (toque, contraste de
+  texto y de controles, teclado, árbol de accesibilidad, ventanas, zoom al 200 %).

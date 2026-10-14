@@ -91,6 +91,16 @@ amarillo y brillo dorado. En el prompt siempre: sin texto en la imagen y sin col
 campana. Generar cuesta créditos: solo cuando Andy lo pida.
 Regla completa en [docs/DESIGN-STANDARDS.md](docs/DESIGN-STANDARDS.md) §5.
 
+## Mesa de revisión (pedidos de Andy, pendientes y aprendizajes)
+
+Desde el 14/10/2026 los ajustes llegan por la **Revisión de CabriCoach**, un artifact
+privado con base de datos: <https://claude.ai/artifact/8X9qiXVU8PWTPd84PWn5MV>. Por
+sección de la app tiene capturas para señalar, notas, el informe del último análisis
+(Andy marca **Va** en lo aprobado) y una vista **Proyecto** con los pendientes, el
+progreso y los aprendizajes del proyecto. **Al empezar una sesión de trabajo, leer ahí
+los envíos y los pendientes** (herramienta `ArtifactData`). Cómo se usa, la base de
+datos, cómo se procesa cada pasada y cómo republicar: [docs/revision/README.md](docs/revision/README.md).
+
 ## Señalar dónde está algo
 
 `docs/MAPA.md` da un código corto a cada caja de la app (I4b, C3d, P2d…). Úsalos para

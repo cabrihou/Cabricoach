@@ -1,0 +1,30 @@
+{
+ "seccion": "mas",
+ "lote": "2026-10-14b",
+ "titulo": "Segunda pasada con la skill Design · 14 de octubre",
+ "lead": "Lo nuevo aquí es de accesibilidad: campos y recordatorios que el lector de pantalla no puede describir.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Segunda pasada, con el plugin Design de Anthropic. Marca Va en lo que quieres que haga y usa Responder si lo quieres distinto. El informe del primer análisis sigue abajo.",
+ "items": [
+  {
+   "codigo": "DA01",
+   "tipo": "Accesibilidad · WCAG 3.3.2 y 4.1.2",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "8 de los 16 campos de Más no tienen nombre para el lector (el PIN dice solo «4 dígitos», la edad no tiene rótulo) y ninguno de los 8 interruptores de recordatorios dice si está encendido.",
+   "hecho": "Rótulo en cada campo y el estado en los interruptores.",
+   "zona": "M1, M7, M8"
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

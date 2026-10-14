@@ -1,0 +1,9 @@
+{
+ "seccion": "general",
+ "codigo": "G12",
+ "titulo": "La app abre aunque la señal sea mala",
+ "detalle": "Espera la red 3 s; si no llega, abre la versión guardada y se actualiza para la próxima vez.",
+ "lote": "REV 223 · en local, sin deploy",
+ "publicado": null,
+ "orden": 105
+}

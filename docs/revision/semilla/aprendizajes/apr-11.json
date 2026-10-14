@@ -1,0 +1,7 @@
+{
+ "tema": "Probar y verificar",
+ "titulo": "En headless las animaciones se congelan",
+ "texto": "Las transiciones y los requestAnimationFrame no avanzan si nadie mira. El render de la app usa rAF, así que después de cambiar de vista hay que forzar 4 a 6 capturas antes de medir.",
+ "fuente": "PRUEBAS.md, 24/08",
+ "orden": 10
+}

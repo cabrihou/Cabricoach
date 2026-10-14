@@ -1,0 +1,63 @@
+{
+ "orden": 1,
+ "nombre": "Inicio",
+ "descripcion": "El resumen del día: peso, checkpoint, metas y nutrición.",
+ "partes": [
+  {
+   "id": "I1",
+   "nombre": "I1 · Héroe del peso"
+  },
+  {
+   "id": "I1b",
+   "nombre": "I1b · Tira de días"
+  },
+  {
+   "id": "I2",
+   "nombre": "I2 · Checkpoint del día"
+  },
+  {
+   "id": "I2b",
+   "nombre": "I2b · Pasos"
+  },
+  {
+   "id": "I2c",
+   "nombre": "I2c · Agua"
+  },
+  {
+   "id": "I2d",
+   "nombre": "I2d · Medidas"
+  },
+  {
+   "id": "I2e",
+   "nombre": "I2e · Hyrox"
+  },
+  {
+   "id": "IM",
+   "nombre": "IM · Tus metas"
+  },
+  {
+   "id": "I3",
+   "nombre": "I3 · Caja Para ti"
+  },
+  {
+   "id": "I4",
+   "nombre": "I4 · Nutrición del día"
+  },
+  {
+   "id": "I4b",
+   "nombre": "I4b · Con qué cerrar"
+  },
+  {
+   "id": "franjas",
+   "nombre": "Franjas y registro de comida"
+  },
+  {
+   "id": "I5",
+   "nombre": "I5 · Ciclo de Cami"
+  },
+  {
+   "id": "I2f",
+   "nombre": "I2f · Botón de foto del día"
+  }
+ ]
+}

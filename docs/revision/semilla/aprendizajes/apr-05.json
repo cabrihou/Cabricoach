@@ -1,0 +1,7 @@
+{
+ "tema": "El archivo",
+ "titulo": "iCloud deja archivos sin descargar",
+ "texto": "Documents se sincroniza y puede dejar archivos \"dataless\". Si una lectura o un Edit tarda una eternidad, revisar con ls -lO antes de culpar al entorno.",
+ "fuente": "Memoria de Claude",
+ "orden": 4
+}

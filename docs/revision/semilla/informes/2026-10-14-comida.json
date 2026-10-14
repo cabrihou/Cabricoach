@@ -1,0 +1,93 @@
+{
+ "seccion": "comida",
+ "lote": "2026-10-14",
+ "titulo": "Análisis UX y UI · 14 de octubre",
+ "lead": "El motor de la semana (recetas escaladas a la meta de cada uno y un mercado que compra lo que se cocina) es de lo más fuerte de la app. El problema es de entrada: lo diario no está donde la pestaña promete.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Marca Va en lo que quieres que haga. Usa Responder si lo quieres distinto o tienes una pregunta: va en el próximo envío. Lo que no marques se queda aquí.",
+ "items": [
+  {
+   "codigo": "CO01",
+   "zona": "C1",
+   "tipo": "Flujo",
+   "impacto": "alto",
+   "esfuerzo": "medio",
+   "pedido": "La pestaña Comida no registra lo que comes: tiene Recetas, Mercado y Gestión. El registro está al fondo del Inicio y el registro libre dentro de Gestión.",
+   "hecho": "Primera tarjeta de Comida: «Hoy», con las franjas y el + para registrar. Recetas, Mi semana y Mercado debajo."
+  },
+  {
+   "codigo": "CO02",
+   "zona": "C1",
+   "tipo": "Interfaz",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "El orden y los íconos de las sub-pestañas no siguen el flujo: los pasos dicen Recetas → Gestión → Mercado y las pestañas van Recetas, Mercado, Gestión; el carrito está en Recetas y el plato en Mercado.",
+   "hecho": "Recetas · Mi semana · Mercado, con el carrito en Mercado."
+  },
+  {
+   "codigo": "CO03",
+   "zona": "C5",
+   "tipo": "Texto",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Nombres internos a la vista: «Gestión alimentación», «rotación activa», «Meal prep compartido», «tuppers A y C».",
+   "hecho": "«Mi semana de comida», «tu semana armada» y «porciones de Andrés y de Cami»."
+  },
+  {
+   "codigo": "CO04",
+   "zona": "franjas",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "Al registrar, el buscador no queda listo para escribir, la franja no se elige por la hora, «Medir en» apila 5 píldoras en vertical y después de agregar el buscador queda debajo del botón Guardar.",
+   "hecho": "Buscador enfocado, franja según la hora, la unidad en una sola fila y el orden buscador, lista, total y Guardar."
+  },
+  {
+   "codigo": "CO05",
+   "zona": "franjas",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "No hay forma de repetir lo de ayer (o el desayuno de siempre), que es lo que más se repite.",
+   "hecho": "Un chip «Repetir lo de ayer» en la franja. «Lo tuyo» ya ayuda y se queda."
+  },
+  {
+   "codigo": "CO06",
+   "zona": "C2",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "Los pasos de una receta están en un desplegable dentro de otro (3 toques) y la pantalla se apaga mientras cocinas.",
+   "hecho": "Modo cocinando: pasos grandes uno por uno, pantalla encendida y temporizador por paso."
+  },
+  {
+   "codigo": "CO07",
+   "zona": "C3",
+   "tipo": "Datos",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "En el mercado compartido solo el checklist se fusiona; las recetas elegidas, el plan, los ocultos y los favoritos los gana el último que guardó.",
+   "hecho": "Fusionar por clave con su hora y avisar «Cami cambió el mercado»."
+  },
+  {
+   "codigo": "CO08",
+   "zona": "C2",
+   "tipo": "Texto",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "Placeholders que se cortan: «busca: hamburguesa, huevos, arepa, (» e «Ítem libre (café, límpi…».",
+   "hecho": "Placeholders cortos: «Busca un alimento», «Agrega algo a la lista»."
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

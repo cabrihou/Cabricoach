@@ -1,0 +1,9 @@
+{
+ "seccion": "entrenar",
+ "codigo": "EN01",
+ "titulo": "El sustituto usa sus propios kg",
+ "detalle": "Al cambiar de ejercicio, las series se recargan con la última vez del sustituto; al volver, con las del original y su progresión.",
+ "lote": "REV 223 · en local, sin deploy",
+ "publicado": null,
+ "orden": 113
+}

@@ -1,0 +1,9 @@
+{
+ "seccion": "general",
+ "codigo": "G06",
+ "titulo": "La nube ya no pisa lo que no alcanzó a subir",
+ "detalle": "Lo registrado sin señal queda pendiente, no se reemplaza al abrir y se sube solo cuando vuelve la señal. Probado con una nube falsa sin señal.",
+ "lote": "REV 223 · en local, sin deploy",
+ "publicado": null,
+ "orden": 102
+}

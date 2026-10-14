@@ -1,0 +1,9 @@
+{
+ "seccion": "general",
+ "codigo": "DG01",
+ "titulo": "Bordes de controles visibles",
+ "detalle": "Campos, series, casillas y check a 3:1, en oscuro y en claro.",
+ "lote": "REV 223 · en local, sin deploy",
+ "publicado": null,
+ "orden": 106
+}

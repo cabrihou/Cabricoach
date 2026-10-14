@@ -1,0 +1,10 @@
+{
+ "titulo": "Instalar el coach diario",
+ "detalle": "Después del cabritos.env: zsh herramientas/coach-diario/instalar.sh. Escribe la evaluación del día que la app ya sabe leer.",
+ "quien": "juntos",
+ "prioridad": "media",
+ "estado": "abierto",
+ "origen": "CLAUDE.md del proyecto",
+ "orden": 10,
+ "creadoEn": "2026-10-14T08:00:00.000Z"
+}

@@ -2,6 +2,11 @@
 
 > Actualizado: 03/08/2026, corte en REV 123. Este es el documento de aterrizaje:
 > qué es esto, en qué está, qué falta y dónde está todo lo demás.
+>
+> **Desde el 14/10/2026 el estado vivo (pendientes, progreso por fases e hitos hasta la
+> REV 222, aprendizajes y el análisis UX por sección) está en la mesa de revisión:**
+> <https://claude.ai/artifact/8X9qiXVU8PWTPd84PWn5MV> (ver [revision/README.md](revision/README.md)).
+> Lo de abajo sigue valiendo como historia y como explicación de decisiones.
 
 ## Qué es
 
@@ -98,7 +103,7 @@ verosímil y proyección del periodo elegido, metas dinámicas por peso.
 
 ## Proyectos satélite
 
-- **Base nutricional Colombia**: `Personal/nutricion-co/` (fuera de este repo).
+- **Base nutricional Colombia**: `Personal/archivo/nutricion-co/` (fuera de este repo; archivada el 2026-10-14, la app usa su copia `assets/paq/nutricion-co.json`).
   Cosecha de Open Food Facts (~7.100 productos con Colombia), tubería
   `cosechar_api.py` + vigilantes, entregables CSV/JSONL/reporte con validación de
   cuadre calórico y marcas propias por cadena derivadas de los datos. Licencia

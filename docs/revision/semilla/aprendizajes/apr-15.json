@@ -1,0 +1,7 @@
+{
+ "tema": "Publicar",
+ "titulo": "Push a main es el deploy",
+ "texto": "Netlify publica cabricoach.netlify.app con cada push a main de cabrihou/Cabricoach. Commitear sin push está bien mientras Andy revisa en local.",
+ "fuente": "CLAUDE.md del proyecto",
+ "orden": 14
+}

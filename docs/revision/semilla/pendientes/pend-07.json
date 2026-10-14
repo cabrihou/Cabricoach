@@ -1,0 +1,10 @@
+{
+ "titulo": "Armar el lote 1 con lo que marques Va",
+ "detalle": "Empezar por los bugs verificados (isla, nodo de comidas, gesto de volver, sustituto, borrar serie, tarjetas cortadas), con snapshot, verificador, CDP a 390 px y los dos usuarios. Commit sin push hasta que lo revises en local.",
+ "quien": "claude",
+ "prioridad": "alta",
+ "estado": "abierto",
+ "origen": "Análisis del 14/10",
+ "orden": 6,
+ "creadoEn": "2026-10-14T08:00:00.000Z"
+}

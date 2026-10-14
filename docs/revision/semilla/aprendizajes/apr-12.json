@@ -1,0 +1,7 @@
+{
+ "tema": "Probar y verificar",
+ "titulo": "Cambiar de usuario en pruebas",
+ "texto": "ACTIONS._doSwitch('cami') salta el PIN. confirm() bloquea el headless: sobreescribir window.confirm antes del clic.",
+ "fuente": "PRUEBAS.md",
+ "orden": 11
+}

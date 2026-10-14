@@ -1,0 +1,57 @@
+{
+ "seccion": "plan",
+ "lote": "2026-10-14",
+ "titulo": "Análisis UX y UI · 14 de octubre",
+ "lead": "El motor de etapas, checkpoints y diario de decisiones está muy completo. Lo que falta es que se lea en 10 segundos.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Marca Va en lo que quieres que haga. Usa Responder si lo quieres distinto o tienes una pregunta: va en el próximo envío. Lo que no marques se queda aquí.",
+ "items": [
+  {
+   "codigo": "PL01",
+   "zona": "PL4",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "Plan son unos 9 bloques de texto seguidos y cada etapa trae 3 a 5 párrafos sin plegar: para saber si vas bien hay que leer un manual.",
+   "hecho": "Cada etapa plegada con su dato clave (peso de salida, fechas, estado) y el texto en la ventana de detalle."
+  },
+  {
+   "codigo": "PL02",
+   "zona": "PL1",
+   "tipo": "Texto",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "«fuera dos semanas» en rojo (Plan, Check-in y Medidas) suena a regaño.",
+   "hecho": "«2 semanas sobre lo esperado» en ámbar, con la tolerancia de ±0,5 kg en el detalle."
+  },
+  {
+   "codigo": "PL03",
+   "zona": "PL1",
+   "tipo": "Texto",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "El aviso «La proteína viene floja dos semanas. Adherencia de 29% y 29%…» sale igual en Check-in y en Plan.",
+   "hecho": "Que viva en Plan y en Check-in sea una línea con enlace. Más simple: «Llevas dos semanas con 29 % de la proteína: súbela antes de tocar las calorías»."
+  },
+  {
+   "codigo": "PL04",
+   "zona": "PL4",
+   "tipo": "Texto",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "Inglés técnico sin explicar: Cut final, Mini cut, taper, peak week, rescan.",
+   "hecho": "Español con el término entre paréntesis la primera vez: «Definición final (cut)», «Nueva medición (rescan)»."
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

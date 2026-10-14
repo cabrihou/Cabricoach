@@ -1,0 +1,7 @@
+{
+ "tema": "El archivo",
+ "titulo": "SOLID gana sobre ICONS",
+ "texto": "ic() consulta primero los íconos rellenos: un ícono de trazo con un nombre repetido nunca se ve. Usar un nombre nuevo.",
+ "fuente": "DESIGN-STANDARDS §4",
+ "orden": 3
+}

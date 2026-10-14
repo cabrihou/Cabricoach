@@ -1,0 +1,7 @@
+{
+ "tema": "Nube y datos",
+ "titulo": "La nube es opcional y sin login",
+ "texto": "Supabase, tabla kv con código de casa y llave anónima: el aislamiento lo da el código. La sesión en curso y los avisos disparados no se sincronizan.",
+ "fuente": "ARQUITECTURA",
+ "orden": 37
+}

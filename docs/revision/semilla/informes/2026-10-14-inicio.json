@@ -1,0 +1,156 @@
+{
+ "seccion": "inicio",
+ "lote": "2026-10-14",
+ "titulo": "Análisis UX y UI · 14 de octubre",
+ "lead": "El héroe del peso y el checkpoint tienen muy buena presencia y las cabritas le dan personalidad. Lo que más cuesta es el largo (4 pantallas) y que la acción diaria más importante, registrar comida, esté al fondo.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Marca Va en lo que quieres que haga. Usa Responder si lo quieres distinto o tienes una pregunta: va en el próximo envío. Lo que no marques se queda aquí.",
+ "items": [
+  {
+   "codigo": "IN01",
+   "zona": "I4",
+   "tipo": "Flujo",
+   "impacto": "alto",
+   "esfuerzo": "medio",
+   "pedido": "Registrar comida, lo más importante del día para Andrés (llegar a la proteína), vive al final del Inicio, a unas 3 pantallas de scroll, y la pestaña Comida no registra.",
+   "hecho": "Un botón «+ Comida» siempre a mano que abra el registro con la franja según la hora y el buscador listo para escribir. Y subir la nutrición justo después del héroe."
+  },
+  {
+   "codigo": "IN02",
+   "zona": "I2",
+   "tipo": "Bug",
+   "impacto": "alto",
+   "esfuerzo": "bajo",
+   "pedido": "En el checkpoint los rótulos se cortan («PAS…», «CO…», «BON…») y el nodo de comidas no se puede tocar: el mapa de destinos tiene COMIDA y el nodo se pinta como COMIDAS.",
+   "hecho": "Corregir la clave y dejar el ícono con su cifra (el rótulo completo para el lector de pantalla), o rótulos de una palabra que quepan."
+  },
+  {
+   "codigo": "IN03",
+   "zona": "I2",
+   "tipo": "Bug",
+   "impacto": "alto",
+   "esfuerzo": "bajo",
+   "pedido": "Tarjetas que se desbordan a 390 px: la pastilla «Bonus» del Entreno se sale por la derecha, la cifra «1.000» del Agua invade la tarjeta de Medidas, «+250 ML» parte en dos líneas y en Medidas queda un «5» suelto con «EN 5 D» tapado por la cabrita.",
+   "hecho": "Cifras que se ajustan al ancho, la pastilla Bonus debajo del título y Medidas con cifra y rótulo («en 5 días») como las demás tarjetas."
+  },
+  {
+   "codigo": "IN04",
+   "zona": "I1, I2",
+   "tipo": "Texto",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Datos repetidos en la misma pantalla: la racha («0 días de racha» en el héroe y «Racha 0» en el checkpoint) y lo que falta de proteína («te faltan 126 g» en Con qué cerrar y la tarjeta «126 te falta»).",
+   "hecho": "Cada dato una sola vez: la racha en el checkpoint y lo que falta en Con qué cerrar."
+  },
+  {
+   "codigo": "IN05",
+   "zona": "I4",
+   "tipo": "Interfaz",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "La fila de macros mezcla lo comido (29 de carbo, 15 de grasa) con lo que falta (126 de proteína), y la «g» chiquita tras la cifra parece una flecha.",
+   "hecho": "Las tres tarjetas en el mismo sentido (comido sobre meta, con barra); lo que falta solo en Con qué cerrar."
+  },
+  {
+   "codigo": "IN06",
+   "zona": "I4",
+   "tipo": "Datos",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Dos metas de proteína lado a lado: «24 / 150 g» y «0,3 g/kg · meta 1,8» (1,8 × 89,6 son 161 g, no 150), y el g/kg sale en rojo a las 2 de la mañana.",
+   "hecho": "Una sola meta visible (150 g, piso 140), el g/kg en la ventana de detalle y el color según la hora, como pide el estándar."
+  },
+  {
+   "codigo": "IN07",
+   "zona": "I4",
+   "tipo": "Interfaz",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "«Cómo» y «Meta» son dos píldoras grandes que compiten con las cifras del anillo.",
+   "hecho": "Una «i» pequeña junto al dato que explican."
+  },
+  {
+   "codigo": "IN08",
+   "zona": "Inicio",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "El Inicio pide mucho: unas 35 cifras, 6 bloques de texto y 4 pantallas de alto. En 3 segundos no queda claro qué es lo principal: el peso compite con el anillo de proteína y con Con qué cerrar.",
+   "hecho": "Dos niveles: arriba «Hoy» (peso, proteína, agua y entreno) y abajo, plegado, lo de la semana (metas, progreso, próximos)."
+  },
+  {
+   "codigo": "IN09",
+   "zona": "Inicio",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Antes del peso aparecen tarjetas de tareas: el respaldo semanal desde el primer día y la guía de bienvenida.",
+   "hecho": "Un solo espacio de aviso con prioridad; el respaldo solo si no hay nube y ya pasaron 7 días."
+  },
+  {
+   "codigo": "IN10",
+   "zona": "IM",
+   "tipo": "Interfaz",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "«Tus metas» plegada muestra 4 anillos sin cifra (Etapa 1, Pasos, Peso, Cintura): se ven bien pero no dicen cuánto falta.",
+   "hecho": "La cifra o el porcentaje dentro de cada anillo."
+  },
+  {
+   "codigo": "IN11",
+   "zona": "I2c",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Para cambiar el tamaño del vaso hay que mantener el + durante 1,5 s, sin ninguna pista de que existe.",
+   "hecho": "Bajarlo a 0,6 s y un punto en el botón que insinúe el menú."
+  },
+  {
+   "codigo": "IN12",
+   "zona": "I1",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "La ventana del peso abre con el último peso pero sin el campo listo: hay que tocarlo, borrar y escribir (la de pasos sí lo deja listo).",
+   "hecho": "Campo enfocado y seleccionado, Enter guarda, y atajos −0,5, −0,2, igual y +0,2."
+  },
+  {
+   "codigo": "IN13",
+   "zona": "I2f",
+   "tipo": "Flujo",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "La foto del día abre primero la hoja de fototeca de iOS y no la cámara.",
+   "hecho": "Que abra la cámara directo, con la fototeca como segunda opción."
+  },
+  {
+   "codigo": "IN14",
+   "zona": "franjas",
+   "tipo": "Interfaz",
+   "impacto": "bajo",
+   "esfuerzo": "medio",
+   "pedido": "Las tres franjas (Mañana, Tarde, Noche) miden unos 350 px de alto cada una, con una ilustración grande para un solo dato.",
+   "hecho": "Franjas más bajas, cabrita pequeña y la proteína de cada franja grande."
+  },
+  {
+   "codigo": "IN15",
+   "zona": "I2b",
+   "tipo": "Texto",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "En la ventana de pasos, «Sincronizar desde Salud» no sincroniza: te manda a Más.",
+   "hecho": "Llamarlo «Cómo conectar Salud» y mostrar ahí mismo los pasos del Atajo."
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

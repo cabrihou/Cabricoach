@@ -1,0 +1,7 @@
+{
+ "tema": "Probar y verificar",
+ "titulo": "El plugin Design de Anthropic sirve para revisar",
+ "texto": "Instalado en Claude Code con claude plugin marketplace add anthropics/knowledge-work-plugins y claude plugin install design@knowledge-work-plugins (agregarlo en claude.ai no lo trae a Claude Code). Trae design-critique, accessibility-review, ux-copy, design-system, user-research, research-synthesis y design-handoff. Aporta método más que datos: contraste de controles, patrones de texto, escalas del sistema y plan de investigación. No sabe de PWA ni recorre flujos. Las mediciones de accesibilidad quedaron en herramientas/a11y_medir.js y a11y_run.py.",
+ "fuente": "Segunda pasada del 14/10",
+ "orden": 40
+}

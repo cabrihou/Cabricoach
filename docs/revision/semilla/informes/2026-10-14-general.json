@@ -1,0 +1,222 @@
+{
+ "seccion": "general",
+ "lote": "2026-10-14",
+ "titulo": "Análisis UX y UI · 14 de octubre",
+ "lead": "Visto en 30 pantallas por usuario con 70 días de datos sembrados y cuatro auditorías de código (flujos, robustez, texto y parte técnica). La base visual es fuerte y el cuidado del detalle se nota en todas partes. Lo que más pesa hoy: dónde vive cada cosa (navegación y puntos de registro), la confianza en los datos (nube, respaldo, recordatorios) y la cantidad de texto y cifras por pantalla.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Marca Va en lo que quieres que haga. Usa Responder si lo quieres distinto o tienes una pregunta: va en el próximo envío. Lo que no marques se queda aquí.",
+ "items": [
+  {
+   "codigo": "G01",
+   "zona": "G2",
+   "tipo": "Navegación",
+   "impacto": "alto",
+   "esfuerzo": "medio",
+   "pedido": "La barra inferior es solo íconos: el de Comida parece un enchufe, y Progreso, Retos, Check-in, Plan y Más no tienen entrada directa. A Más se llega por una línea gris diminuta al pie del checkpoint o al fondo del Perfil; a Retos solo manteniendo oprimido el avatar, sin ninguna pista.",
+   "hecho": "Rótulo corto bajo cada ícono (Inicio, Entrenar, Yo, Agenda, Comida). Tocar el avatar abre una hoja con Perfil, Progreso, Retos, Check-in, Plan y Ajustes; el gesto largo se queda como atajo para cambiar de usuario."
+  },
+  {
+   "codigo": "G02",
+   "zona": "G6",
+   "tipo": "Bug",
+   "impacto": "alto",
+   "esfuerzo": "bajo",
+   "pedido": "Con solo abrir una rutina se crea la sesión en curso y aparece la isla «Legs A · 0/5 ejercicios · toca para volver». Se queda fija encima de la barra en todas las vistas y tapa el final del contenido (Gestión, Perfil, Plan, Progreso) aunque no hayas marcado nada.",
+   "hecho": "Crear la sesión al marcar la primera serie, o borrarla al salir si no tiene series hechas. Mientras la isla esté visible, dejar el espacio abajo para que no tape nada."
+  },
+  {
+   "codigo": "G03",
+   "zona": "Navegación",
+   "tipo": "Bug",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "El gesto de deslizar desde el borde izquierdo siempre lleva a Inicio: ignora el «volver» que sí usa el botón. Desde Fotos abierta en Perfil, el botón vuelve a Perfil y el gesto a Inicio; dentro de Medidas o Hyrox el gesto salta a Inicio en vez de a la portada de la sección.",
+   "hecho": "Que el gesto haga lo mismo que el botón: volver a donde venías y, dentro de una subsección, a su portada."
+  },
+  {
+   "codigo": "G04",
+   "zona": "Navegación",
+   "tipo": "Interfaz",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "Volver es inconsistente: Medidas, Hyrox, Fotos, Check-in y Plan tienen cabecera con flecha; Perfil, Progreso, Retos y Más no tienen ninguna.",
+   "hecho": "La misma cabecera con flecha y título en todas las vistas que no están en la barra."
+  },
+  {
+   "codigo": "G05",
+   "zona": "Botones flotantes",
+   "tipo": "Interfaz",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Los botones flotantes (cámara en Inicio, importar y calculadora en Entrenar, rayo y plato en Comida) quedan fijos sobre el contenido y no dicen qué hacen. La cámara tapa el + de «Lo tuyo» al registrar comida y los de arriba tapan títulos como «Push B».",
+   "hecho": "Que se escondan al bajar y vuelvan al subir, con un rótulo corto; o pasar los de Entrenar y Comida a la cabecera de su vista."
+  },
+  {
+   "codigo": "G06",
+   "zona": "Nube",
+   "tipo": "Datos",
+   "impacto": "alto",
+   "esfuerzo": "medio",
+   "pedido": "Al abrir la app (y al volver tras 30 s) la nube escribe cada dato encima de lo del teléfono sin comparar fechas, y un envío que falló sin señal no se reintenta. Cami registra comida y agua sin señal en el gimnasio, abre la app ya con señal y la versión vieja de la nube borra lo del día.",
+   "hecho": "Marcar como pendiente lo que no subió, reintentar al volver la señal y al abrir, y no bajar un dato pendiente antes de subirlo. Para peso, agua, pasos, comida y series, fusionar por fecha en vez de reemplazar todo."
+  },
+  {
+   "codigo": "G07",
+   "zona": "Nube",
+   "tipo": "Interfaz",
+   "impacto": "alto",
+   "esfuerzo": "bajo",
+   "pedido": "Fuera de Más no hay ninguna señal de si lo que registraste ya está en la nube.",
+   "hecho": "Un punto discreto en la cabecera (al día, pendiente o con error) que al tocarlo diga «3 cambios sin subir»."
+  },
+  {
+   "codigo": "G08",
+   "zona": "M10",
+   "tipo": "Bug",
+   "impacto": "alto",
+   "esfuerzo": "bajo",
+   "pedido": "Importar un respaldo reemplaza todo sin preguntar ni revisar de quién es: Cami puede cargar el de Andrés por error y quedan reemplazados sus pesos, entrenos, PIN y lo compartido, y se sube a la nube.",
+   "hecho": "Hoja de confirmación con resumen («Respaldo de Andrés del 10/10: 320 pesajes, 86 entrenos»), bloqueo si no es del usuario activo, Deshacer, y nunca importar el PIN ni lo compartido."
+  },
+  {
+   "codigo": "G09",
+   "zona": "M1",
+   "tipo": "Flujo",
+   "impacto": "alto",
+   "esfuerzo": "medio",
+   "pedido": "Los recordatorios solo suenan con la app abierta (un temporizador dentro de la página, sin push), y el interruptor dice «Activas». Con la app cerrada, la inyección y el check-in no avisan. En iOS puede fallar incluso con la app abierta (por probar en el iPhone).",
+   "hecho": "Decirlo claro en Ajustes y usar el calendario (.ics) como camino principal para inyección y check-in. Push real solo si vale la pena: pide una función en Supabase."
+  },
+  {
+   "codigo": "G10",
+   "zona": "Fotos",
+   "tipo": "Datos",
+   "impacto": "alto",
+   "esfuerzo": "medio",
+   "pedido": "Las fotos de progreso viven en un bucket público con la ruta casa/usuario/fecha. «Privada» solo cambia lo que ve la pareja dentro de la app: el archivo sigue abierto para quien adivine la ruta.",
+   "hecho": "Bucket privado con enlaces temporales. Mientras tanto, nombre de archivo aleatorio y un texto honesto sobre qué protege «privada»."
+  },
+  {
+   "codigo": "G11",
+   "zona": "Datos",
+   "tipo": "Técnico",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Si el almacenamiento del teléfono se llena, guardar falla en silencio y la app sigue diciendo «Guardado». Tampoco pide almacenamiento persistente.",
+   "hecho": "Un aviso visible cuando falle guardar y pedir almacenamiento persistente al abrir."
+  },
+  {
+   "codigo": "G12",
+   "zona": "Arranque",
+   "tipo": "Técnico",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Con señal mala en el gimnasio la app se queda en negro hasta que la red se rinde: el service worker espera la red sin límite. Tampoco avisa cuando hay versión nueva.",
+   "hecho": "Esperar la red máximo 1,5 s y si no abrir desde el teléfono; aviso «Hay una versión nueva · Actualizar»; y una pantalla de carga con el logo en vez del negro."
+  },
+  {
+   "codigo": "G13",
+   "zona": "Texto",
+   "tipo": "Accesibilidad",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "El zoom está bloqueado, los tamaños van en px y hay unas 159 reglas de texto bajo 12 px: el texto no crece con el ajuste de tamaño del iPhone.",
+   "hecho": "Quitar el bloqueo de zoom, piso de 11 px para etiquetas y 12 para lectura, y un ajuste «Tamaño del texto» (100, 115, 130 %) en Ajustes."
+  },
+  {
+   "codigo": "G14",
+   "zona": "G5",
+   "tipo": "Accesibilidad",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "Las 32 ventanas flotantes no cierran con Escape, no retienen el foco y casi ninguna se anuncia como ventana; al cerrar, el foco no vuelve a donde estaba.",
+   "hecho": "Un solo ayudante para abrir ventanas que haga todo eso; cambio mecánico en los 32 sitios."
+  },
+  {
+   "codigo": "G15",
+   "zona": "Varias",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "El mismo dato se registra en muchos lugares: el peso en 5, los pasos en 4, la foto del día en 5, hay cuatro maneras de dar un entreno por hecho y tres almacenes de comida (franjas, comidas del plan y registro libre).",
+   "hecho": "Un solo punto de entrada por dato; los demás lugares abren ese mismo control. Para la comida, una sola lista del día con las comidas del plan como pendientes."
+  },
+  {
+   "codigo": "G16",
+   "zona": "Varias",
+   "tipo": "Datos",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "Hay varias metas de peso a la vista: 83,8 (Inicio y Medidas), 87,2 (Progreso y Más), 87,7 «esperado» (Plan) y 88,2 «con creatina», con tres fechas de llegada. Y el peso cambia sin rótulo: 89,6 hoy, 90,1 promedio, 89,9 en el historial.",
+   "hecho": "Dos nombres fijos y siempre iguales: «Meta de la etapa» y «Esperado esta semana». El peso del día y el promedio de 7 días con su rótulo en cada lugar."
+  },
+  {
+   "codigo": "G17",
+   "zona": "Texto",
+   "tipo": "Texto",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Vocabulario mezclado: Comida, Nutrición y Alimentación; Sesión, Entreno y Rutina; ejercicios en inglés junto a otros en español (Hack Squat y Pantorrilla de pie), y la misma rutina como Legs A en Entrenar y Pierna A en Plan. Miles sin punto (2501, 1416), fechas largas en mayúscula y «loggeo».",
+   "hecho": "Un glosario corto con un término por concepto y una pasada mecánica por toda la app."
+  },
+  {
+   "codigo": "G18",
+   "zona": "Texto",
+   "tipo": "Texto",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "Términos técnicos sin explicación a mano: RIR, 1RM y E1RM, Navy, bioimpedancia, TMB, déficit, tonelaje, series efectivas, descarga, PR.",
+   "hecho": "Un glosario en las ventanas de detalle y una «i» junto al término la primera vez que aparece en cada pantalla."
+  },
+  {
+   "codigo": "G19",
+   "zona": "Proyecciones",
+   "tipo": "Interfaz",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "Las fechas proyectadas no llevan año: Cami ve «≈ 25 de agosto», que se lee como una fecha ya pasada (es de 2027).",
+   "hecho": "Mostrar el año cuando la fecha está a más de 6 meses."
+  },
+  {
+   "codigo": "G20",
+   "zona": "Tema claro",
+   "tipo": "Accesibilidad",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "En tema claro el acento como texto no se lee: el azul da 3,05:1 y el dorado de Cami 1,49:1. La barra de estado del iPhone queda blanca sobre papel claro y el primer pintado siempre es oscuro.",
+   "hecho": "Tonos de texto propios para el claro (azul, ámbar y rojo más profundos), barra de estado según el tema y el tema aplicado antes del primer pintado. Es parte de cerrar la Fase 5."
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": "Verifiqué en el código lo grave: la nube reescribe sin comparar fechas (sbPull), un envío fallido no se reintenta (sbSend), importar no confirma, el nodo de comidas usa la clave COMIDAS cuando el mapa de destinos dice COMIDA, el gesto de volver ignora backTo, cambiar de ejercicio rellena con el historial del original, y no hay Wake Lock, almacenamiento persistente ni aviso de versión nueva. Sin verificar porque piden el iPhone: si los recordatorios fallan con la app abierta en iOS, si ?steps= desde Atajos llega a la app instalada y el contraste real en pantalla.",
+ "extras": [
+  {
+   "titulo": "Lo que necesito que decidas",
+   "lineas": [
+    "¿La barra inferior lleva rótulos? Cambia la estética minimal, pero hoy media app no se descubre.",
+    "¿El registro de comida se muda a la pestaña Comida (y el Inicio solo resume) o se queda en el Inicio con un botón fijo?",
+    "Recordatorios: ¿push real (pide una función en Supabase) o calendario .ics con un texto honesto?",
+    "Fotos: ¿pasamos el bucket a privado? Hay que migrar las fotos que ya están arriba.",
+    "Nombres de ejercicios: ¿español, inglés, o español con el inglés entre paréntesis?"
+   ]
+  },
+  {
+   "titulo": "Por dónde empezaría",
+   "lineas": [
+    "Lote 1, arreglos rápidos y verificados: la isla que no se va, el nodo de comidas que no se toca, el gesto de volver, el sustituto con los pesos del original, borrar serie sin Deshacer y las tarjetas cortadas del Inicio.",
+    "Lote 2, que nada se pierda: la nube que no pisa lo local, el indicador de sincronización, importar con confirmación y el aviso de almacenamiento.",
+    "Lote 3, dónde vive cada cosa: barra con rótulos, menú del avatar, registro de comida a un toque y un punto de entrada por dato.",
+    "Lote 4, leer menos: glosario, metas con nombre fijo, Plan y Composición plegados y vocabulario único.",
+    "Lote 5, accesibilidad y tema claro, que cierra la Fase 5 del plan de revisión."
+   ]
+  }
+ ],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

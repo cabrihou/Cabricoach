@@ -1,0 +1,10 @@
+{
+ "titulo": "Probar en el iPhone tres cosas que el navegador de pruebas no ve",
+ "detalle": "1) Si los recordatorios suenan con la app abierta y con la app cerrada. 2) Si el Atajo de Salud con ?steps= llega a la app instalada o se queda en Safari. 3) Si la pantalla se apaga durante el descanso.",
+ "quien": "andy",
+ "prioridad": "media",
+ "estado": "abierto",
+ "origen": "Análisis del 14/10",
+ "orden": 2,
+ "creadoEn": "2026-10-14T08:00:00.000Z"
+}

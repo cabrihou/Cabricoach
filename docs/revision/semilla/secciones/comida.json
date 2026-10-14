@@ -1,0 +1,31 @@
+{
+ "orden": 4,
+ "nombre": "Comida",
+ "descripcion": "Recetas, Mercado y Gestión (la semana de comida de los dos).",
+ "partes": [
+  {
+   "id": "C1",
+   "nombre": "C1 · Sub-pestañas"
+  },
+  {
+   "id": "C2",
+   "nombre": "C2 · Recetas"
+  },
+  {
+   "id": "C3",
+   "nombre": "C3 · Mercado"
+  },
+  {
+   "id": "C5",
+   "nombre": "C5 · Gestión"
+  },
+  {
+   "id": "libre",
+   "nombre": "Registro libre"
+  },
+  {
+   "id": "pcal",
+   "nombre": "Calculadora de proteína"
+  }
+ ]
+}

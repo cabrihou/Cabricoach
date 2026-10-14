@@ -1,0 +1,120 @@
+{
+ "seccion": "entrenar",
+ "lote": "2026-10-14",
+ "titulo": "Análisis UX y UI · 14 de octubre",
+ "lead": "La sesión ya repite pesos con un toque y se retoma sola al abrir, que es lo que más importa en el gimnasio. Los riesgos están en datos que quedan mal guardados y en tocar con precisión con una mano.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Marca Va en lo que quieres que haga. Usa Responder si lo quieres distinto o tienes una pregunta: va en el próximo envío. Lo que no marques se queda aquí.",
+ "items": [
+  {
+   "codigo": "EN01",
+   "zona": "E2",
+   "tipo": "Bug",
+   "impacto": "alto",
+   "esfuerzo": "bajo",
+   "pedido": "Al cambiar un ejercicio por otro, las series se rellenan con los pesos del original: el cambio solo guarda el sustituto y al marcar se usa el historial del ejercicio original. Queda guardado un peso que no levantaste.",
+   "hecho": "Al sustituir, vaciar kg y reps de las series sin hacer y usar el historial del sustituto si lo hay."
+  },
+  {
+   "codigo": "EN02",
+   "zona": "E2a",
+   "tipo": "Bug",
+   "impacto": "alto",
+   "esfuerzo": "bajo",
+   "pedido": "Borrar una serie (con la X o deslizando) no tiene Deshacer, y la X de 26 px está pegada al check.",
+   "hecho": "Deshacer en el aviso, como ya tiene quitar un ejercicio, y la X más separada."
+  },
+  {
+   "codigo": "EN03",
+   "zona": "E2",
+   "tipo": "Accesibilidad",
+   "impacto": "alto",
+   "esfuerzo": "bajo",
+   "pedido": "En el gimnasio, con una mano y sudado, los objetivos son chicos: círculos de serie de 28 px, casilla del ejercicio de 26 px y botón de gráfica de 32 px.",
+   "hecho": "Zona de toque invisible de 44 px alrededor de cada uno, sin cambiar el dibujo."
+  },
+  {
+   "codigo": "EN04",
+   "zona": "E2",
+   "tipo": "Flujo",
+   "impacto": "alto",
+   "esfuerzo": "medio",
+   "pedido": "Durante la sesión la pantalla se apaga y el descanso no avisa con el teléfono bloqueado: el pitido no suena bloqueado y la vibración no existe en iOS.",
+   "hecho": "Mantener la pantalla encendida mientras haya sesión abierta y un temporizador de descanso grande y visible."
+  },
+  {
+   "codigo": "EN05",
+   "zona": "E2",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "La lista de la sesión dice «última 102,0 kg» pero no lo que toca hoy; el objetivo de progresión solo aparece al abrir el ejercicio.",
+   "hecho": "En la fila: «Hoy: 104,5 × 6-8», con la regla de progresión ya aplicada."
+  },
+  {
+   "codigo": "EN06",
+   "zona": "E2",
+   "tipo": "Interfaz",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Cada ejercicio tiene tres controles sin rótulo en la cabecera: gráfica, «…» y una casilla vacía que no se sabe qué marca.",
+   "hecho": "La casilla con su significado («Hecho») y la gráfica dentro del menú «…»."
+  },
+  {
+   "codigo": "EN07",
+   "zona": "E1",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "En Rutinas, la de hoy queda en la segunda fila, debajo del aviso de progresión e igual de grande que las demás.",
+   "hecho": "Arriba una tarjeta «Hoy: Legs A · Empezar»; el aviso de progresión dentro de la sesión."
+  },
+  {
+   "codigo": "EN08",
+   "zona": "E1",
+   "tipo": "Texto",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "«5 ej. · 28/09» no dice que la fecha es la última vez, y «RIR 1-2» no se explica en ningún lado.",
+   "hecho": "«5 ejercicios · última vez 28/09» y una «i» en RIR (repeticiones que te quedan en reserva)."
+  },
+  {
+   "codigo": "EN09",
+   "zona": "E2a",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Editar kg y reps pide tocar campos de 58 y 50 px, y el teclado no pasa de kg a reps.",
+   "hecho": "Botones ±2,5 kg y ±1 rep debajo del campo enfocado, y Siguiente pasa de kg a reps."
+  },
+  {
+   "codigo": "EN10",
+   "zona": "E2",
+   "tipo": "Flujo",
+   "impacto": "bajo",
+   "esfuerzo": "medio",
+   "pedido": "Hay cuatro maneras de dar un entreno por hecho (marcar hecho, completar con lo sugerido, sesión de un día pasado y registro libre) y dos quedan a un toque de un accidente.",
+   "hecho": "Las que no registran series dentro de un menú «Marcar sin series»."
+  },
+  {
+   "codigo": "EN11",
+   "zona": "E5",
+   "tipo": "Técnico",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Las fotos de los ejercicios no se guardan para usar sin señal: en el gimnasio sin datos las que no has visto no cargan.",
+   "hecho": "Guardar en el teléfono las fotos de las rutinas activas de cada uno."
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

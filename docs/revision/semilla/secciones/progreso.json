@@ -1,0 +1,47 @@
+{
+ "orden": 5,
+ "nombre": "Progreso",
+ "descripcion": "Actividad física y nutrición en gráficas.",
+ "partes": [
+  {
+   "id": "P1",
+   "nombre": "P1 · Selector de grupo"
+  },
+  {
+   "id": "P2",
+   "nombre": "P2 · Rendimiento"
+  },
+  {
+   "id": "P3",
+   "nombre": "P3 · Categorías"
+  },
+  {
+   "id": "P4",
+   "nombre": "P4 · Peso"
+  },
+  {
+   "id": "P5",
+   "nombre": "P5 · Volumen"
+  },
+  {
+   "id": "P6",
+   "nombre": "P6 · Tiempo"
+  },
+  {
+   "id": "P7",
+   "nombre": "P7 · Ejercicios y fuerza"
+  },
+  {
+   "id": "P8",
+   "nombre": "P8 · Pasos"
+  },
+  {
+   "id": "P9",
+   "nombre": "P9 · Nutrición"
+  },
+  {
+   "id": "P10",
+   "nombre": "P10 · Metas de fuerza"
+  }
+ ]
+}

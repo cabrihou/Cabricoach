@@ -1,0 +1,7 @@
+{
+ "tema": "Probar y verificar",
+ "titulo": "Limpiar el service worker antes de navegar",
+ "texto": "Si no, se prueba una versión vieja. Y la página no se recarga sola después de editar: hay que navegar de nuevo.",
+ "fuente": "PRUEBAS.md",
+ "orden": 8
+}

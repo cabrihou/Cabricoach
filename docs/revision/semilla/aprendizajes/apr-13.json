@@ -1,0 +1,7 @@
+{
+ "tema": "Probar y verificar",
+ "titulo": "Cada agente en su propia pestaña de Chrome",
+ "texto": "El 14/10 un agente navegó la pestaña compartida y tumbó una captura a mitad. Abrir pestaña propia con /json/new.",
+ "fuente": "Análisis del 14/10",
+ "orden": 12
+}

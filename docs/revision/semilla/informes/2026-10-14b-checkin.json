@@ -1,0 +1,30 @@
+{
+ "seccion": "checkin",
+ "lote": "2026-10-14b",
+ "titulo": "Segunda pasada con la skill Design · 14 de octubre",
+ "lead": "Al llegar se ve la etapa antes que el check-in de la semana.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Segunda pasada, con el plugin Design de Anthropic. Marca Va en lo que quieres que haga y usa Responder si lo quieres distinto. El informe del primer análisis sigue abajo.",
+ "items": [
+  {
+   "codigo": "DK01",
+   "tipo": "Diseño · primera impresión",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Lo primero no es el check-in del domingo sino la tarjeta de la etapa (la misma de Plan) con la pastilla roja y un párrafo de 5 líneas; el formulario queda dos pantallas abajo.",
+   "hecho": "Abrir con «Semana del 12/10» y su formulario; la etapa en una línea con enlace a Plan.",
+   "zona": "K0, K1"
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

@@ -1,0 +1,43 @@
+{
+ "orden": 7,
+ "nombre": "Medidas",
+ "descripcion": "Cuerpo, composición, historial y carga por músculo.",
+ "partes": [
+  {
+   "id": "MD0b",
+   "nombre": "MD0b · Formulario"
+  },
+  {
+   "id": "MD1",
+   "nombre": "MD1 · Lo que toca hoy"
+  },
+  {
+   "id": "MD2",
+   "nombre": "MD2 · Mapa corporal"
+  },
+  {
+   "id": "MD3",
+   "nombre": "MD3 · Panel de la zona"
+  },
+  {
+   "id": "MD4",
+   "nombre": "MD4 · Navy"
+  },
+  {
+   "id": "MD12",
+   "nombre": "MD12 · Bioimpedancia"
+  },
+  {
+   "id": "comp",
+   "nombre": "Composición"
+  },
+  {
+   "id": "hist",
+   "nombre": "Historial"
+  },
+  {
+   "id": "MC",
+   "nombre": "MC · Carga por músculo"
+  }
+ ]
+}

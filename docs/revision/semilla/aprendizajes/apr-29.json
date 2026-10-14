@@ -1,0 +1,7 @@
+{
+ "tema": "Imágenes",
+ "titulo": "Salida y costo",
+ "texto": "JPEG 480 × 480 a assets/ej/ y copia en site/assets/ej/. Las de interfaz van a assets/cab/ y a UI_IMGS de los dos sw.js. Generar cuesta créditos: solo cuando Andy lo pida.",
+ "fuente": "CLAUDE.md del proyecto",
+ "orden": 28
+}

@@ -1,0 +1,30 @@
+{
+ "seccion": "medidas",
+ "lote": "2026-10-14b",
+ "titulo": "Segunda pasada con la skill Design · 14 de octubre",
+ "lead": "El mapa del cuerpo es lo más llamativo de la app y se lee bien: cifra, unidad y variación con flecha.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Segunda pasada, con el plugin Design de Anthropic. Marca Va en lo que quieres que haga y usa Responder si lo quieres distinto. El informe del primer análisis sigue abajo.",
+ "items": [
+  {
+   "codigo": "DM01",
+   "tipo": "Diseño · consistencia",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "La variación usa rojo para «bajó» en cuello y pecho (−0,1 y −0,6) y verde para «bajó» en cintura (−0,9): el mismo signo con colores opuestos. Puede ser a propósito (en definición bajar pecho puede ser músculo), pero la pantalla no lo dice.",
+   "hecho": "Si es a propósito, que la ventana de detalle explique qué dirección se busca en cada medida durante la etapa; si no, un color neutro con la flecha.",
+   "zona": "MD2"
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

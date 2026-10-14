@@ -1,0 +1,8 @@
+{
+ "tipo": "hito",
+ "fecha": "2026-08-01",
+ "rev": null,
+ "titulo": "El repo se cuida solo",
+ "detalle": "Hook de pre-commit que verifica y sincroniza site/, y setup para computador nuevo.",
+ "orden": 105
+}

@@ -1,0 +1,48 @@
+{
+ "seccion": "progreso",
+ "lote": "2026-10-14b",
+ "titulo": "Segunda pasada con la skill Design · 14 de octubre",
+ "lead": "El dato aparece tarde: hay tres niveles de navegación antes de la primera cifra.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Segunda pasada, con el plugin Design de Anthropic. Marca Va en lo que quieres que haga y usa Responder si lo quieres distinto. El informe del primer análisis sigue abajo.",
+ "items": [
+  {
+   "codigo": "DP01",
+   "tipo": "Diseño · jerarquía",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "Antes del primer dato hay tres niveles de navegación apilados: tarjetas grandes con ilustración (Actividad, Nutrición, Medidas), una fila de 6 íconos y los rangos SEM a AÑO. La cifra aparece a unos 600 px. «Medidas» va punteado y dorado porque lleva a otra vista, pero se ve como si estuviera deshabilitado.",
+   "hecho": "Un selector compacto para el grupo y la categoría, y Medidas como enlace con flecha, no como tarjeta.",
+   "zona": "P1, P3"
+  },
+  {
+   "codigo": "DP02",
+   "tipo": "Accesibilidad · WCAG 1.3.1 y 1.4.3",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Progreso no tiene ningún encabezado real (8 títulos que solo se ven), y en tema claro los rótulos del selector bajan a 1,25:1 («Medidas») y 3,88:1 («Nutrición»).",
+   "hecho": "Encabezados h2 y tonos de texto propios del tema claro.",
+   "zona": "P2"
+  },
+  {
+   "codigo": "DP03",
+   "tipo": "Diseño · consistencia",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "La tarjeta se llama «Rendimiento» en todas las pestañas, también en Peso, donde la cifra es el peso: el título no cambia con el contenido.",
+   "hecho": "Que el título sea la categoría: «Peso», «Volumen», «Pasos».",
+   "zona": "P2"
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

@@ -1,0 +1,27 @@
+{
+ "orden": 11,
+ "nombre": "Perfil",
+ "descripcion": "Nivel, logros, trofeos y accesos.",
+ "partes": [
+  {
+   "id": "PF1",
+   "nombre": "PF1 · Nivel y XP"
+  },
+  {
+   "id": "PF2",
+   "nombre": "PF2 · Logros"
+  },
+  {
+   "id": "PF3",
+   "nombre": "PF3 · Composición"
+  },
+  {
+   "id": "PF6",
+   "nombre": "PF6 · Trofeos"
+  },
+  {
+   "id": "PF7",
+   "nombre": "PF7 · Accesos"
+  }
+ ]
+}

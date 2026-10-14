@@ -1,0 +1,7 @@
+{
+ "tema": "Publicar",
+ "titulo": "Subir APPREV y el caché del service worker",
+ "texto": "APPREV ('REV N') en el HTML y cabritos-vN en sw.js y site/sw.js; si no, los teléfonos no actualizan. El hook de pre-commit verifica, avisa y sincroniza site/index.html.",
+ "fuente": "CLAUDE.md del proyecto",
+ "orden": 15
+}

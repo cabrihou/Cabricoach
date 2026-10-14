@@ -1,0 +1,57 @@
+{
+ "seccion": "comida",
+ "lote": "2026-10-14b",
+ "titulo": "Segunda pasada con la skill Design · 14 de octubre",
+ "lead": "La crítica pregunta qué ve uno al llegar: aquí se ve lo que se planea antes que lo que toca hacer hoy.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Segunda pasada, con el plugin Design de Anthropic. Marca Va en lo que quieres que haga y usa Responder si lo quieres distinto. El informe del primer análisis sigue abajo.",
+ "items": [
+  {
+   "codigo": "DC01",
+   "tipo": "Diseño · primera impresión",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Recetas abre con una tarjeta verde grande («Meal prep compartido · 84 Recetas») y Mercado con el total de $110.015: las dos empiezan por lo planeado, no por comprar o cocinar. En Mercado, antes de la lista hay dos segmentados y un texto de 3 líneas que explica uno de ellos.",
+   "hecho": "Mercado abre con la lista por comprar y el total pegado arriba; Los dos/Andrés/Cami y Semanal/Quincenal/Mensual en una fila de menús compactos.",
+   "zona": "C2, C3"
+  },
+  {
+   "codigo": "DC02",
+   "tipo": "Accesibilidad · WCAG 2.1.1 y 3.3.2",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Las filas del mercado (marcar comprado) no se alcanzan con teclado ni anuncian si ya se compró, y los campos «Ítem libre» y «$ opc.» no tienen nombre para el lector.",
+   "hecho": "Filas como botones con su estado (comprado o pendiente) y nombre en los dos campos.",
+   "zona": "C3"
+  },
+  {
+   "codigo": "DC03",
+   "tipo": "Accesibilidad · WCAG 4.1.2",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "El interruptor «Incluir básicos fijos» es un div: no se alcanza con teclado ni dice si está encendido; los segmentados no dicen cuál está activo.",
+   "hecho": "Interruptor como botón con su estado y estado marcado en los segmentados.",
+   "zona": "C3"
+  },
+  {
+   "codigo": "DC04",
+   "tipo": "Texto · ux-copy",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "«Ambos = mercado grupal. Andrés / Cami muestran la distribución individual de cada uno con sus básicos» explica un control que debería entenderse solo.",
+   "hecho": "Rótulos que no necesitan nota: «Los dos», «Solo Andrés», «Solo Cami».",
+   "zona": "C3"
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

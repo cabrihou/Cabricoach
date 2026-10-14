@@ -1,0 +1,48 @@
+{
+ "seccion": "checkin",
+ "lote": "2026-10-14",
+ "titulo": "Análisis UX y UI · 14 de octubre",
+ "lead": "La espera cuantificada («entrenos esperando el check-in») está muy bien. Duplica cosas de Plan y Medidas.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Marca Va en lo que quieres que haga. Usa Responder si lo quieres distinto o tienes una pregunta: va en el próximo envío. Lo que no marques se queda aquí.",
+ "items": [
+  {
+   "codigo": "CK01",
+   "zona": "K4",
+   "tipo": "Interfaz",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "La tabla Evolución tiene 6 columnas con abreviaturas (ADH., CINT., E/S) que solo se explican al pie, y la columna Grasa va llena de puntos.",
+   "hecho": "Encabezados completos con desplazamiento lateral o una tarjeta por semana, y «sin dato» en vez de puntos."
+  },
+  {
+   "codigo": "CK02",
+   "zona": "K2",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Pide a mano los pasos promedio de la semana cuando la app ya los tiene.",
+   "hecho": "Calcularlos y mostrarlos para confirmar."
+  },
+  {
+   "codigo": "CK03",
+   "zona": "K1",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Llegar al check-in del domingo pide ir al Perfil y bajar hasta Accesos.",
+   "hecho": "Que el recordatorio y una tarjeta del Inicio el domingo lleven directo, y la entrada en el menú del avatar (G01)."
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

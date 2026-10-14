@@ -1,0 +1,57 @@
+{
+ "seccion": "medidas",
+ "lote": "2026-10-14",
+ "titulo": "Análisis UX y UI · 14 de octubre",
+ "lead": "La portada de Medidas (lista de destinos con su dato) es de lo mejor resuelto de la app, y el formulario abre directo.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Marca Va en lo que quieres que haga. Usa Responder si lo quieres distinto o tienes una pregunta: va en el próximo envío. Lo que no marques se queda aquí.",
+ "items": [
+  {
+   "codigo": "MD01",
+   "zona": "MD12, MD4",
+   "tipo": "Datos",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "Composición muestra la grasa por Navy (18,6 %) y por bioimpedancia (15,0 %) sin decir cuál manda; son 12 tarjetas y 8 párrafos.",
+   "hecho": "Una cifra principal con su método, la otra como comparación plegada y una frase de por qué difieren."
+  },
+  {
+   "codigo": "MD02",
+   "zona": "MD0b",
+   "tipo": "Datos",
+   "impacto": "alto",
+   "esfuerzo": "medio",
+   "pedido": "Check-in y Medidas piden lo mismo y lo guardan en sitios distintos: medir la cintura en el check-in no apaga el pendiente de Medidas y la grasa Navy no la lee. Por eso la cintura sale 88,8 en Medidas y 92,5 en Check-in.",
+   "hecho": "Que el check-in lea la última medición de Medidas (o escriba ahí), para medir una sola vez."
+  },
+  {
+   "codigo": "MD03",
+   "zona": "MD2",
+   "tipo": "Accesibilidad",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "El botón «Frente» va con texto oscuro sobre fondo oscuro, y en Hombros sale una raya larga en lugar de la cifra.",
+   "hecho": "Contraste del botón y «sin dato» en vez de la raya."
+  },
+  {
+   "codigo": "MD04",
+   "zona": "MD1",
+   "tipo": "Texto",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "«Te acercas: peso de hoy en 1 día. Puedes adelantarla ya: se registra cuando sea» no se entiende.",
+   "hecho": "«Te toca medirte mañana. Si quieres, hazlo hoy y queda registrado.»"
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

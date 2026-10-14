@@ -1,0 +1,7 @@
+{
+ "tema": "Probar y verificar",
+ "titulo": "Siempre por http, nunca file://",
+ "texto": "Con file:// el localStorage se bloquea. Servir con python3 -m http.server y probar en Chrome headless por CDP a 390 × 844.",
+ "fuente": "PRUEBAS.md",
+ "orden": 7
+}

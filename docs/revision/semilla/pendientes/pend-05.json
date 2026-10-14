@@ -1,0 +1,10 @@
+{
+ "titulo": "Crear ~/.config/cabritos.env en este Mac",
+ "detalle": "Con la URL, la llave y el código de casa (están en la app, en Más > Nube). Activa el coach diario y deja que Claude lea la nube real en solo lectura para analizar con tus datos y no con datos de prueba.",
+ "quien": "andy",
+ "prioridad": "media",
+ "estado": "abierto",
+ "origen": "CLAUDE.md del proyecto",
+ "orden": 4,
+ "creadoEn": "2026-10-14T08:00:00.000Z"
+}

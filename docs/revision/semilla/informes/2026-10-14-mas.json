@@ -1,0 +1,57 @@
+{
+ "seccion": "mas",
+ "lote": "2026-10-14",
+ "titulo": "Análisis UX y UI · 14 de octubre",
+ "lead": "Todo está, pero mezcla lo que se toca cada semana con lo que se toca una vez al año.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Marca Va en lo que quieres que haga. Usa Responder si lo quieres distinto o tienes una pregunta: va en el próximo envío. Lo que no marques se queda aquí.",
+ "items": [
+  {
+   "codigo": "MA01",
+   "zona": "M1",
+   "tipo": "Interfaz",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Más abre con 7 recordatorios de unos 230 px cada uno; la nube, el PIN y los datos quedan muy abajo.",
+   "hecho": "Secciones plegadas con su estado en la cabecera: Recordatorios (5 activos), Apariencia, Nube y datos (al día), Hyrox (encendida)."
+  },
+  {
+   "codigo": "MA02",
+   "zona": "M10",
+   "tipo": "Datos",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "«Borrar mis datos» borra el teléfono, pero con la nube conectada todo vuelve al recargar.",
+   "hecho": "Decirlo y ofrecer aparte «Borrar también de la nube» con doble confirmación."
+  },
+  {
+   "codigo": "MA03",
+   "zona": "M9",
+   "tipo": "Texto",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Mensajes técnicos para el usuario: «Corre supabase-schema.sql en el SQL Editor», «RLS sin política», «llave equivocada».",
+   "hecho": "Un texto humano («No se pudo subir ahora; se reintenta solo») y el diagnóstico solo en «Probar conexión»."
+  },
+  {
+   "codigo": "MA04",
+   "zona": "M7",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "No hay un lugar que diga qué ve tu pareja de ti (puntos, entrenos, fotos marcadas), y el PIN evita curiosear pero no cifra nada.",
+   "hecho": "Una sección «Qué ve Cami de mí» y «Qué ve Andrés de mí», y una línea honesta sobre lo que hace el PIN."
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

@@ -1,0 +1,27 @@
+{
+ "orden": 3,
+ "nombre": "Agenda",
+ "descripcion": "Mi semana (planificador) y el calendario del mes.",
+ "partes": [
+  {
+   "id": "A1",
+   "nombre": "A1 · Selector Semana/Mes"
+  },
+  {
+   "id": "A2",
+   "nombre": "A2 · Mi semana"
+  },
+  {
+   "id": "A3",
+   "nombre": "A3 · Mes"
+  },
+  {
+   "id": "A4",
+   "nombre": "A4 · Detalle de un día"
+  },
+  {
+   "id": "A5",
+   "nombre": "A5 · Modo foto"
+  }
+ ]
+}

@@ -1,0 +1,1443 @@
+<title>Revisión de CabriCoach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Instrument+Sans:wght@400;500;600&family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: riel de secciones de la app a la izquierda, mesa de la seccion a la derecha; arriba, la barra del envio.
+   Paleta: la de CabriCoach (Night Gym). En oscuro, el negro azulado y el azul de Andres; en claro, el papel y la tinta del tema claro de la app. */
+:root {
+  --bg: #f2f3f1;
+  --surface: #fcfcfb;
+  --surface-2: #e8ebe9;
+  --ink: #1a2026;
+  --muted: #5d666e;
+  --line: #d9dee0;
+  --accent: #2f52d6;
+  --accent-ink: #ffffff;
+  --accent-soft: #dfe6fb;
+  --gold: #8a5a00;
+  --st-borrador: #5d666e;
+  --st-enviada: #0e7490;
+  --st-trabajo: #9a5b00;
+  --st-resuelta: #1d7f48;
+  --st-revisar: #6d3fc8;
+  --st-descartada: #8f979c;
+  --imp-alto: #c42b30;
+  --imp-medio: #9a5b00;
+  --imp-bajo: #5d666e;
+  --shadow: 0 1px 2px rgba(26, 32, 38, .06), 0 8px 24px rgba(26, 32, 38, .07);
+  --f-display: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body: "Instrument Sans", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-num: "Archivo", "Instrument Sans", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --r: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0d0f; --surface: #15181c; --surface-2: #1b1f23; --ink: #f2f5f4; --muted: #aeb6b3;
+    --line: #262b30; --accent: #5c8dff; --accent-ink: #081128; --accent-soft: #18233f; --gold: #ffc94d;
+    --st-borrador: #aeb6b3; --st-enviada: #4cc9de; --st-trabajo: #f0b24f; --st-resuelta: #58dfa3; --st-revisar: #b38cf5; --st-descartada: #737c79;
+    --imp-alto: #ff6b70; --imp-medio: #f0b24f; --imp-bajo: #aeb6b3;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b0d0f; --surface: #15181c; --surface-2: #1b1f23; --ink: #f2f5f4; --muted: #aeb6b3;
+  --line: #262b30; --accent: #5c8dff; --accent-ink: #081128; --accent-soft: #18233f; --gold: #ffc94d;
+  --st-borrador: #aeb6b3; --st-enviada: #4cc9de; --st-trabajo: #f0b24f; --st-resuelta: #58dfa3; --st-revisar: #b38cf5; --st-descartada: #737c79;
+  --imp-alto: #ff6b70; --imp-medio: #f0b24f; --imp-bajo: #aeb6b3;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.5; font-weight: 400; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 600; margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; font-family: var(--f-num); }
+
+.app { min-height: 100%; display: grid; grid-template-rows: auto 1fr; }
+
+/* Barra superior */
+.barra { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.barra-in { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 12px 20px; }
+.marca { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.marca h1 { font-size: 22px; }
+.marca .sub { color: var(--muted); font-size: 12.5px; }
+.conteos { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+button.conteo { cursor: pointer; }
+button.conteo:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+button.conteo[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.lista-estado h3.sec-tit { font-size: 18px; display: flex; align-items: center; gap: 10px; margin: 6px 0 2px; }
+.lista-estado h3.sec-tit button { font-family: var(--f-body); font-size: 12.5px; font-weight: 400; }
+.conteo { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 12.5px; }
+.conteo b { font-weight: 500; }
+.punto { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 7px 12px; border-radius: 8px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.btn-prim { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 500; }
+.btn-prim:hover { filter: brightness(1.06); }
+.btn-prim[disabled] { opacity: .45; cursor: not-allowed; filter: none; }
+.btn-txt { border: none; background: none; padding: 4px 6px; color: var(--muted); font-size: 12.5px; }
+.btn-txt:hover { color: var(--ink); }
+
+/* Cuerpo */
+.cuerpo { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 0; min-height: 0; }
+.riel { border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; }
+.riel-tit { font-size: 11.5px; color: var(--muted); padding: 10px 10px 4px; letter-spacing: .04em; }
+.sec-btn { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: none; background: none; padding: 8px 10px; border-radius: 8px; font-size: 13.5px; }
+.sec-btn:hover { background: var(--surface-2); }
+.sec-btn[aria-current="true"] { background: var(--surface); box-shadow: var(--shadow); font-weight: 500; }
+.sec-btn .n { margin-left: auto; font-size: 12px; color: var(--muted); }
+.sec-btn .n.abiertas { color: var(--accent); font-weight: 500; }
+.sec-ord { font-family: var(--f-mono); font-size: 11px; color: var(--muted); width: 18px; }
+
+.mesa { padding: 24px 28px 64px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+.mesa-cab { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.mesa-cab h2 { font-size: 30px; line-height: 1.1; }
+.mesa-cab p { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+.pestanas { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.pestana { border: none; background: none; padding: 9px 12px; font-size: 13.5px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.pestana[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 500; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; }
+.panel-tit { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.panel-tit h3 { font-size: 17px; }
+.panel-tit .aux { color: var(--muted); font-size: 12.5px; }
+
+/* Capturas */
+.tira { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.mini { flex: none; width: 150px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface-2); padding: 0; text-align: left; position: relative; }
+.mini[aria-current="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.mini img { display: block; width: 100%; height: 86px; object-fit: cover; object-position: top; }
+.mini .t { display: block; padding: 6px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini .badge { position: absolute; top: 6px; right: 6px; background: var(--accent); color: var(--accent-ink); font-size: 11px; border-radius: 999px; padding: 0 7px; font-weight: 500; }
+.soltar { flex: none; width: 150px; border: 1.5px dashed var(--line); border-radius: 8px; display: grid; place-items: center; text-align: center; color: var(--muted); font-size: 12px; padding: 10px; background: none; }
+.soltar:hover, .soltar.sobre { border-color: var(--accent); color: var(--ink); }
+
+.lienzo-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; margin-top: 14px; align-items: start; }
+.lienzo { position: relative; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface-2); cursor: crosshair; }
+.lienzo img { display: block; width: 100%; height: auto; user-select: none; -webkit-user-drag: none; }
+.pin { position: absolute; transform: translate(-50%, -50%); width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); border: 2px solid var(--surface); display: grid; place-items: center; font-size: 12px; font-weight: 600; font-family: var(--f-body); box-shadow: 0 2px 8px rgba(0,0,0,.25); padding: 0; cursor: pointer; }
+.pin.resuelta { background: var(--st-resuelta); }
+.pin.foco { outline: 3px solid var(--accent-soft); }
+.pin.nuevo { background: var(--ink); color: var(--bg); }
+.globo { position: absolute; z-index: 5; width: min(300px, 80vw); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: 12px; cursor: default; display: flex; flex-direction: column; gap: 8px; }
+.cap-lado { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.cap-tit { display: flex; gap: 8px; align-items: center; }
+.cap-tit input { flex: 1; min-width: 0; border: 1px solid transparent; background: none; border-radius: 6px; padding: 4px 6px; font-family: var(--f-display); font-size: 17px; font-weight: 600; }
+.cap-tit input:hover, .cap-tit input:focus { border-color: var(--line); background: var(--surface); }
+.vacio { color: var(--muted); font-size: 13px; padding: 18px; text-align: center; border: 1.5px dashed var(--line); border-radius: 8px; }
+
+/* Estructura */
+.partes { display: flex; flex-wrap: wrap; gap: 8px; }
+.parte { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 13px; display: inline-flex; gap: 8px; align-items: center; }
+.parte:hover { border-color: var(--accent); }
+.parte .n { font-size: 11.5px; color: var(--accent); font-weight: 500; }
+
+/* Notas */
+.composer { display: flex; flex-direction: column; gap: 8px; }
+textarea { width: 100%; min-height: 76px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 9px 10px; line-height: 1.45; }
+select, input[type="text"] { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 6px 8px; font-size: 13px; max-width: 100%; }
+.fila { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.fila .esp { flex: 1; }
+.notas { display: flex; flex-direction: column; gap: 10px; }
+.nota { border: 1px solid var(--line); border-radius: 9px; padding: 11px 12px; background: var(--surface); display: flex; gap: 10px; }
+.nota.foco { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.nota .marca-n { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-size: 12px; font-weight: 600; }
+.nota .marca-n.sin { background: var(--surface-2); color: var(--muted); }
+.nota-c { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.nota-t { white-space: pre-wrap; overflow-wrap: anywhere; }
+select.mover { padding: 3px 6px; font-size: 12px; color: var(--muted); margin-left: auto; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--muted); }
+.chip { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 1px 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); }
+.chip.estado { border-color: transparent; color: var(--surface); font-weight: 500; }
+.respuesta { border-left: 2px solid var(--st-resuelta); padding: 4px 0 4px 10px; font-size: 13px; color: var(--ink); background: color-mix(in srgb, var(--st-resuelta) 8%, transparent); border-radius: 0 6px 6px 0; }
+.respuesta b { font-weight: 500; }
+.turno { border-radius: 0 6px 6px 0; padding: 4px 0 4px 10px; font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
+.turno.agente { border-left: 2px solid var(--st-resuelta); background: color-mix(in srgb, var(--st-resuelta) 6%, transparent); }
+.turno.andy { border-left: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.turno b { font-weight: 500; }
+.turno .cuando { color: var(--muted); font-size: 11.5px; font-weight: 400; }
+.resp-nota { display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.grupo-tit { font-size: 12.5px; color: var(--muted); margin: 6px 0 2px; display: flex; gap: 8px; align-items: center; }
+
+/* Novedades */
+.lote { display: flex; flex-direction: column; gap: 8px; }
+.lote h4 { margin: 0; font-family: var(--f-display); font-size: 15px; font-weight: 600; }
+.nov { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+.nov:first-of-type { border-top: none; }
+.nov code { font-family: var(--f-mono); font-size: 12px; color: var(--accent); }
+.nov .tt { font-weight: 500; }
+.nov .dd { color: var(--muted); font-size: 13px; }
+
+/* Envío */
+.envio { border: 1px solid var(--accent); background: var(--surface); border-radius: var(--r); padding: 20px; display: flex; flex-direction: column; gap: 10px; position: fixed; z-index: 60; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; box-shadow: 0 0 0 100vmax rgba(20, 12, 22, .5), var(--shadow); }
+.envio h3 { font-size: 19px; }
+.man-res { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.man-res .chip { padding: 3px 10px; font-size: 12.5px; }
+.man-grupo { margin: 18px 0 8px; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.man { border: 1px solid var(--line); border-left: 3px solid var(--line); border-radius: 8px; padding: 12px 14px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
+.man + .man { margin-top: 8px; }
+.man.vencida { border-left-color: #c2410c; }
+.man.toca { border-left-color: var(--st-trabajo); }
+.man.aldia { border-left-color: var(--st-resuelta); }
+.man-cab { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.man-cab b { font-weight: 600; font-size: 14.5px; }
+.man-est { font-size: 12px; font-weight: 500; }
+.man-est.vencida { color: #c2410c; } .man-est.toca { color: var(--st-trabajo); } .man-est.aldia { color: var(--st-resuelta); } .man-est.sin { color: var(--muted); }
+.man details { font-size: 13px; }
+.man summary { cursor: pointer; color: var(--accent); font-size: 12.5px; }
+.man dl { display: grid; grid-template-columns: 110px 1fr; gap: 6px 12px; margin: 8px 0 0; }
+.man dt { color: var(--muted); }
+.man dd { margin: 0; white-space: pre-wrap; }
+@media (max-width: 560px) { .man dl { grid-template-columns: 1fr; } .man dt { margin-top: 4px; } }
+.sec-btn.manual { margin-bottom: 8px; border: 1px dashed var(--line); }
+.auto { border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.auto-cab { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.auto-cab b { font-weight: 600; }
+.auto .idea { white-space: pre-wrap; }
+.auto .chip.si { border-color: var(--st-resuelta); color: var(--st-resuelta); }
+.auto .chip.parcial { border-color: var(--st-trabajo); color: var(--st-trabajo); }
+.auto .chip.no { border-color: #c2410c; color: #c2410c; }
+.decide { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.decide .op { border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px; background: var(--surface); font-size: 12.5px; cursor: pointer; }
+.decide .op[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.avance { border-left: 3px solid var(--st-trabajo); background: var(--surface); border-radius: 6px; padding: 7px 10px; font-size: 12.5px; display: flex; flex-direction: column; gap: 4px; }
+.avance.activo { border-left-color: var(--st-resuelta); }
+.avance b { font-weight: 600; }
+.avance .falta ol { margin: 2px 0 0; padding-left: 18px; }
+.avance .falta li { margin: 1px 0; }
+.decision-txt { font-size: 12.5px; color: var(--muted); }
+.decision-txt b { color: var(--ink); font-weight: 500; }
+.sec-btn .vence { background: #c2410c; color: #fff; border-radius: 999px; padding: 0 7px; font-size: 11px; }
+.envio ul { margin: 0; padding-left: 18px; }
+.envio li { margin: 2px 0; }
+.aviso { font-size: 13px; padding: 8px 12px; border-radius: 8px; background: var(--surface-2); color: var(--ink); }
+.aviso.error { background: color-mix(in srgb, #c62f2f 14%, var(--surface)); }
+.como { color: var(--muted); font-size: 12.5px; line-height: 1.55; }
+.como ol { margin: 6px 0 0; padding-left: 18px; }
+
+/* Informe */
+.inf { display: flex; flex-direction: column; gap: 16px; }
+.inf-cab { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.inf-cab .aux { color: var(--muted); font-size: 12.5px; }
+.inf-cab a { color: var(--accent); font-size: 12.5px; margin-left: auto; text-decoration: none; }
+.inf-cab a:hover { text-decoration: underline; }
+.inf-lead { margin: 0; font-size: 15px; max-width: 75ch; }
+.inf-tabla { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+.inf-tabla table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.inf-tabla th, .inf-tabla td { text-align: left; vertical-align: top; padding: 8px 10px; border-top: 1px solid var(--line); }
+.inf-tabla th { border-top: none; background: var(--surface-2); font-weight: 500; font-size: 12px; color: var(--muted); }
+.inf-tabla td:first-child { font-family: var(--f-mono); font-size: 12px; color: var(--accent); white-space: nowrap; }
+.inf-tabla td:nth-child(2) { width: 30%; min-width: 150px; font-weight: 500; }
+.inf-bloque h4 { margin: 0 0 6px; font-family: var(--f-display); font-size: 15px; font-weight: 600; }
+.inf-bloque ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; max-width: 80ch; }
+.inf-bloque p { margin: 0; max-width: 80ch; }
+.revisar { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.rev-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-top: 1px solid var(--line); background: var(--surface); }
+.rev-item:first-child { border-top: none; }
+.rev-item input { width: 17px; height: 17px; accent-color: var(--accent); flex: none; margin: 0; }
+.rev-item label { flex: 1; min-width: 0; cursor: pointer; }
+.rev-item.hecho label { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent); }
+.progreso { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; flex: 1; max-width: 160px; }
+.progreso span { display: block; height: 100%; background: var(--st-resuelta); }
+
+/* Hilos sobre el informe */
+.btn-resp { border: none; background: none; padding: 2px 4px; color: var(--accent); font-size: 12.5px; font-weight: 500; white-space: nowrap; }
+.btn-resp:hover { text-decoration: underline; }
+.btn-resp .num { color: var(--muted); font-weight: 400; }
+.hilo { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 4px; padding-left: 12px; border-left: 2px solid var(--accent-soft); }
+.hilo .nota { padding: 8px 10px; }
+.resp-form { display: flex; flex-direction: column; gap: 8px; }
+.resp-form textarea { min-height: 64px; }
+.inf-tabla tr.fila-hilo td { border-top: none; padding-top: 0; font-family: var(--f-body); color: var(--ink); white-space: normal; }
+.inf-bloque li .linea { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; flex-wrap: wrap; }
+.inf-bloque li .linea span:first-child { flex: 1; min-width: 0; }
+.rev-wrap { border-top: 1px solid var(--line); background: var(--surface); }
+.rev-wrap:first-child { border-top: none; }
+.rev-wrap .rev-item { border-top: none; }
+.rev-wrap .hilo { margin: 0 12px 10px 39px; }
+.cita { font-size: 12.5px; color: var(--muted); border-left: 2px solid var(--line); padding-left: 8px; overflow-wrap: anywhere; }
+
+/* Casillas de OK y Resuelta */
+.ok-chk { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); cursor: pointer; white-space: nowrap; user-select: none; }
+.ok-chk input { width: 16px; height: 16px; margin: 0; accent-color: var(--st-resuelta); cursor: pointer; }
+.ok-chk.si { color: var(--st-resuelta); font-weight: 500; }
+.inf-tabla tr.ok td { background: color-mix(in srgb, var(--st-resuelta) 7%, transparent); }
+.inf-tabla td.celda-ok { width: 1%; padding-right: 0; }
+.inf-bloque li.ok > .linea > span:first-child { color: var(--muted); }
+.inf-bloque li.ok::marker { color: var(--st-resuelta); }
+.inf-avance { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); }
+.nota.resuelta-n { background: color-mix(in srgb, var(--st-resuelta) 6%, var(--surface)); }
+
+/* Fotos en las notas */
+.fotos { display: flex; gap: 8px; flex-wrap: wrap; }
+.foto { position: relative; width: 84px; height: 64px; border-radius: 7px; overflow: hidden; border: 1px solid var(--line); background: var(--surface-2); padding: 0; flex: none; }
+.foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.foto .quitar { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 50%; border: none; background: rgba(0,0,0,.6); color: #fff; font-size: 13px; line-height: 1; display: grid; place-items: center; padding: 0; }
+.foto.cargando { display: grid; place-items: center; font-size: 11px; color: var(--muted); }
+textarea.sobre { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.visor { position: fixed; inset: 0; z-index: 60; background: rgba(10, 6, 12, .86); display: grid; place-items: center; padding: 24px 16px; cursor: zoom-out; }
+.visor img { max-width: 100%; max-height: calc(100dvh - 48px); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+
+/* Editor para rayar fotos */
+.foto .rayar { position: absolute; left: 3px; bottom: 3px; border: none; background: rgba(0,0,0,.62); color: #fff; font-size: 11px; border-radius: 5px; padding: 2px 6px; }
+.visor-caja { display: flex; flex-direction: column; align-items: center; gap: 12px; cursor: default; max-width: 100%; }
+.visor-barra { display: flex; gap: 8px; }
+.editor { position: fixed; inset: 0; z-index: 70; background: var(--bg); display: flex; flex-direction: column; gap: 10px; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px calc(14px + env(safe-area-inset-bottom, 0px)); }
+.ed-barra { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ed-grupo { display: inline-flex; gap: 4px; align-items: center; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.ed-grupo button { border: 1px solid transparent; background: none; border-radius: 7px; padding: 5px 9px; font-size: 13px; }
+.ed-grupo button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.ed-color { width: 24px; height: 24px; border-radius: 50%; padding: 0 !important; border: 2px solid var(--surface) !important; box-shadow: 0 0 0 1px var(--line); }
+.ed-color[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); background-clip: padding-box; }
+.ed-zona { flex: 1; min-height: 0; display: grid; place-items: center; overflow: hidden; }
+.ed-wrap { position: relative; line-height: 0; max-width: 100%; }
+.ed-canvas { display: block; max-width: 100%; max-height: calc(100dvh - 140px); touch-action: none; cursor: crosshair; border-radius: 6px; box-shadow: var(--shadow); }
+.ed-texto { position: absolute; z-index: 2; font: 600 15px/1.2 var(--f-body); padding: 5px 8px; border: 2px solid var(--accent); border-radius: 6px; background: var(--surface); color: var(--ink); min-width: 160px; }
+.ed-ayuda { color: var(--muted); font-size: 12px; }
+
+/* Menú ocultable */
+.btn-icono { border: 1px solid var(--line); background: var(--surface); width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; padding: 0; flex: none; }
+.btn-icono:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.btn-icono svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.app.sin-nav .cuerpo { grid-template-columns: minmax(0, 1fr); }
+.app.sin-nav .riel { display: none; }
+
+/* Pantalla completa de la captura */
+.btn-full { position: absolute; top: 10px; right: 10px; z-index: 3; background: color-mix(in srgb, var(--surface) 92%, transparent); }
+.full { position: fixed; inset: 0; z-index: 40; background: var(--bg); display: flex; flex-direction: column; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)); gap: 10px; }
+.full-barra { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.full-barra h3 { font-size: 18px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.full-barra .aux { color: var(--muted); font-size: 12.5px; }
+.full-zona { flex: 1; min-height: 0; overflow: auto; display: grid; place-items: start center; }
+.full .lienzo { display: inline-block; max-width: 100%; }
+.full .lienzo img { width: auto; max-width: 100%; max-height: calc(100dvh - 96px); }
+
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 13px; z-index: 50; box-shadow: var(--shadow); }
+
+/* Capturas de celular: se ven a su tamano real y la columna de notas acompana el scroll */
+.lienzo.movil { max-width: 390px; justify-self: center; width: 100%; }
+.cap-lado { position: sticky; top: calc(76px + env(safe-area-inset-top, 0px)); max-height: calc(100dvh - 96px); overflow: auto; }
+.full .lienzo.movil img { max-height: none; }
+
+/* Chips de impacto y esfuerzo dentro del informe */
+.imp { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 0 8px; font-size: 11.5px; border: 1px solid currentColor; font-weight: 500; white-space: nowrap; }
+.imp.alto { color: var(--imp-alto); } .imp.medio { color: var(--imp-medio); } .imp.bajo { color: var(--imp-bajo); }
+.meta-it { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.meta-it .chip { font-size: 11.5px; }
+.inf-tabla td.celda-txt { font-weight: 400; }
+.inf-tabla td.celda-txt b { font-weight: 600; }
+.filtro-inf { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 12.5px; color: var(--muted); }
+
+/* Proyecto: pendientes, progreso y aprendizajes */
+.proy-res { display: flex; flex-wrap: wrap; gap: 10px; }
+.cifra { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; min-width: 130px; flex: 1 1 130px; display: flex; flex-direction: column; gap: 2px; }
+.cifra b { font-family: var(--f-num); font-size: 26px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.cifra span { color: var(--muted); font-size: 12.5px; }
+.pend { border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; background: var(--surface); display: flex; gap: 12px; align-items: flex-start; }
+.pend + .pend { margin-top: 8px; }
+.pend.hecho { opacity: .62; }
+.pend.hecho .pend-t { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent); }
+.pend input[type=checkbox] { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--st-resuelta); flex: none; cursor: pointer; }
+.pend-c { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.pend-t { font-weight: 600; font-size: 14.5px; }
+.pend details { font-size: 13px; color: var(--muted); }
+.pend summary { cursor: pointer; color: var(--accent); font-size: 12.5px; }
+.pend .det { white-space: pre-wrap; margin-top: 4px; color: var(--ink); }
+.pend.prio-alta { border-left: 3px solid var(--imp-alto); }
+.grupo-pend { margin: 18px 0 8px; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.grupo-pend:first-of-type { margin-top: 4px; }
+.fases { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.fase { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface); display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.fase b { font-family: var(--f-display); font-size: 15px; font-weight: 600; }
+.fase .est { font-size: 12px; font-weight: 500; }
+.fase.hecho .est { color: var(--st-resuelta); } .fase.en_curso .est { color: var(--st-trabajo); } .fase.pendiente .est { color: var(--muted); }
+.fase.en_curso { border-color: var(--st-trabajo); }
+.linea-t { display: flex; flex-direction: column; }
+.mes-t { font-family: var(--f-display); font-size: 16px; font-weight: 600; margin: 18px 0 6px; }
+.hito { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
+.hito .f { font-family: var(--f-num); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.hito .rev { font-family: var(--f-mono); font-size: 11.5px; color: var(--accent); }
+.hito .tt { font-weight: 600; }
+.hito .dd { color: var(--muted); font-size: 13px; }
+.apr-tema { font-family: var(--f-display); font-size: 16px; font-weight: 600; margin: 18px 0 6px; display: flex; gap: 8px; align-items: baseline; }
+.apr-tema .n { font-family: var(--f-body); font-size: 12px; color: var(--muted); font-weight: 400; }
+.apr { padding: 9px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+.apr b { font-weight: 600; }
+.apr .fte { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.sec-btn.proy { margin-bottom: 8px; border: 1px dashed var(--line); }
+.sec-btn .pend-n { background: var(--accent); color: var(--accent-ink); border-radius: 999px; padding: 0 7px; font-size: 11px; margin-left: auto; font-weight: 600; }
+
+@media (max-width: 900px) {
+  .cap-lado { position: static; max-height: none; }
+  .lienzo-wrap { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .riel { border-right: none; border-bottom: 1px solid var(--line); flex-direction: row; overflow-x: auto; padding: 8px 12px; gap: 4px; }
+  .riel-tit, .riel .como { display: none; }
+  .sec-btn { width: auto; white-space: nowrap; flex: none; }
+  .sec-ord { display: none; }
+  .mesa { padding: 18px 16px 56px; }
+  .mesa-cab h2 { font-size: 24px; }
+  .barra-in { padding: 10px 16px; }
+  .conteos { margin-left: 0; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .nota, .pin { transition: box-shadow .15s, border-color .15s, outline-color .15s; }
+}
+</style>
+
+<div class="app">
+  <header class="barra">
+    <div class="barra-in">
+      <button class="btn-icono" id="btn-nav" aria-pressed="false" title="Ocultar secciones" aria-label="Ocultar secciones">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/></svg>
+      </button>
+      <div class="marca">
+        <h1>Revisión de CabriCoach</h1>
+        <span class="sub" id="estado-con">Conectando…</span>
+      </div>
+      <div class="conteos" id="conteos"></div>
+      <button class="btn btn-prim" id="btn-enviar" disabled>Enviar a revisión</button>
+    </div>
+  </header>
+  <div class="cuerpo">
+    <nav class="riel" id="riel" aria-label="Secciones de la app">
+      <div class="riel-tit">Secciones de la app</div>
+      <div id="lista-secciones"></div>
+      <div class="como" style="padding:16px 10px 0">
+        <b style="color:var(--ink);font-weight:500">Cómo funciona</b>
+        <ol>
+          <li>Señala en una captura o en la estructura, o escribe una nota.</li>
+          <li>Tus notas quedan en borrador hasta que pulses Enviar a revisión.</li>
+          <li>Claude lee los envíos, trabaja en la app y responde en cada nota.</li>
+        </ol>
+      </div>
+    </nav>
+    <main class="mesa" id="mesa">
+      <div class="vacio" id="mesa-vacia">Cargando las secciones de CabriCoach…</div>
+    </main>
+  </div>
+</div>
+<div class="full" id="full" role="dialog" aria-label="Captura en pantalla completa" hidden></div>
+<div class="visor" id="visor" role="dialog" aria-label="Foto de la nota" hidden></div>
+<div class="editor" id="editor" role="dialog" aria-label="Rayar sobre la foto" hidden></div>
+
+<script>
+(() => {
+  "use strict";
+  const ESTADOS = {
+    borrador: { nombre: "Borrador", color: "var(--st-borrador)" },
+    enviada: { nombre: "Enviada", color: "var(--st-enviada)" },
+    en_trabajo: { nombre: "En trabajo", color: "var(--st-trabajo)" },
+    para_revisar: { nombre: "Para revisar", color: "var(--st-revisar)" },
+    resuelta: { nombre: "Resuelta", color: "var(--st-resuelta)" },
+    descartada: { nombre: "Descartada", color: "var(--st-descartada)" },
+  };
+  const TIPOS = { ajuste: "Ajuste", bug: "Algo no funciona", idea: "Idea", pregunta: "Pregunta" };
+  const PRIORIDADES = { alta: "Alta", media: "Media", baja: "Baja" };
+
+  const S = {
+    db: null, assets: null, user: null, yo: null,
+    secciones: [], novedades: [], capturas: [], notas: [], envios: [], informes: [], hitos: [], aprendizajes: [], pendientes: [], vistaManual: false, proyTab: "pendientes", agregando: null, aprQ: "", aprTema: "",
+    sec: null, pestana: "informe", captura: null, focoNota: null,
+    pinNuevo: null, editando: null, confirmarEnvio: false, listo: false,
+    adjuntos: {}, subiendo: {}, visor: null,
+  };
+  try { const g = JSON.parse(localStorage.getItem("revcabri:vista") || "{}"); if (g.sec) S.sec = g.sec; if (g.pestana) S.pestana = g.pestana; if (g.proyecto) S.vistaManual = true; if (g.proyTab) S.proyTab = g.proyTab; } catch (e) {}
+  const guardarVista = () => { try { localStorage.setItem("revcabri:vista", JSON.stringify({ sec: S.sec, pestana: S.pestana, proyecto: S.vistaManual, proyTab: S.proyTab })); } catch (e) {} };
+
+  const $ = (sel, el = document) => el.querySelector(sel);
+  const h = (tag, attrs = {}, ...hijos) => {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else if (k === "style") el.setAttribute("style", v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of hijos.flat()) if (c != null && c !== false) el.append(c.nodeType ? c : document.createTextNode(String(c)));
+    return el;
+  };
+  const ahora = () => new Date().toISOString();
+  const fecha = (iso) => { try { return new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "short" }); } catch (e) { return ""; } };
+  const toast = (txt) => { const t = h("div", { class: "toast", role: "status", text: txt }); document.body.append(t); setTimeout(() => t.remove(), 2600); };
+  const imgDe = (c) => c.assetId ? "/_blob/" + c.assetId : (c.url || "");
+
+  // ---------- Conexión ----------
+  async function iniciar() {
+    if (!window.claude || !window.claude.use) { $("#estado-con").textContent = "Ábrelo desde claude.ai para guardar notas."; return; }
+    const [db, assets, user] = await Promise.all([claude.use("db"), claude.use("assets"), claude.use("user")]);
+    S.db = db; S.assets = assets; S.user = user;
+    if (!db) { $("#estado-con").textContent = "Sin conexión a la base: no se pueden guardar notas en esta vista."; $("#mesa-vacia").textContent = "No hay datos disponibles en esta vista."; return; }
+    if (user) { try { S.yo = await user.id(); } catch (e) {} }
+    $("#estado-con").textContent = "La app de Andrés y Cami";
+    suscribir("secciones", db.collection("secciones").orderBy("orden"), (d) => { S.secciones = d; if (!S.sec || !S.secciones.some((s) => s.id === S.sec)) S.sec = S.secciones[0] ? S.secciones[0].id : null; S.listo = true; render(); });
+    suscribir("novedades", db.collection("novedades").orderBy("orden"), (d) => { S.novedades = d; render(); });
+    suscribir("capturas", db.collection("capturas").orderBy("creadoEn"), (d) => { S.capturas = d; render(); });
+    suscribir("notas", db.collection("notas").orderBy("creadoEn"), (d) => { S.notas = d; render(); });
+    suscribir("envios", db.collection("envios").orderBy("creadoEn", "desc"), (d) => { S.envios = d; render(); });
+    suscribir("informes", db.collection("informes").orderBy("lote", "desc"), (d) => { S.informes = d; render(); });
+    suscribir("hitos", db.collection("hitos").orderBy("orden"), (d) => { S.hitos = d; render(); });
+    suscribir("aprendizajes", db.collection("aprendizajes").orderBy("orden"), (d) => { S.aprendizajes = d; render(); });
+    suscribir("pendientes", db.collection("pendientes").orderBy("orden"), (d) => { S.pendientes = d; render(); });
+  }
+  function suscribir(nombre, q, fn) {
+    q.onSnapshot((snap) => fn(snap.docs.map((d) => ({ id: d.id, ...d.data() }))), (e) => {
+      $("#estado-con").textContent = e.code === "revoked" ? "Esta vista ya no tiene acceso." : "Se perdió la conexión con " + nombre + ". Recarga la página.";
+    });
+  }
+
+  // ---------- Escrituras ----------
+  async function escribir(fn, ok) {
+    try { await fn(); if (ok) toast(ok); }
+    catch (e) {
+      const m = e && e.code === "quota_exceeded" ? "La base está llena: borra notas descartadas o capturas que ya no sirvan." : "No se pudo guardar. Revisa la conexión e intenta de nuevo.";
+      toast(m);
+    }
+  }
+  const nuevaNota = (datos) => escribir(() => S.db.collection("notas").doc().set({
+    seccion: S.sec, texto: "", tipo: "ajuste", prioridad: "media", estado: "borrador",
+    capturaId: null, x: null, y: null, parte: null, autor: S.yo || null,
+    creadoEn: ahora(), actualizadoEn: ahora(), envioId: null, respuesta: null, imagenes: [], ...datos,
+  }), "Nota guardada en borrador");
+
+  async function subirCaptura(file) {
+    if (!S.assets) { toast("Solo quien puede editar la página sube capturas."); return; }
+    if (!file || !/^image\/(png|jpeg|gif|webp)$/.test(file.type)) { toast("Sube una imagen PNG, JPG, GIF o WEBP."); return; }
+    toast("Subiendo captura…");
+    try {
+      const r = await S.assets.upload(file);
+      const ref = S.db.collection("capturas").doc();
+      await ref.set({ seccion: S.sec, titulo: "Captura " + fecha(ahora()), assetId: r.id, autor: S.yo || null, creadoEn: ahora(), origen: "subida" });
+      S.captura = ref.id; S.pestana = "senalar"; guardarVista(); render(); toast("Captura agregada: haz clic sobre ella para señalar");
+    } catch (e) {
+      const m = { too_large: "La imagen pesa más de 20 MB.", unsupported_type: "Ese formato no se acepta.", quota_or_state: "Se llenó el espacio de capturas.", rate_limited: "Muchas subidas seguidas: espera un momento." }[e && e.code] || "No se pudo subir la captura.";
+      toast(m);
+    }
+  }
+
+  // ---------- Fotos en las notas ----------
+  // Cada campo de nota (por su id) tiene su lista de fotos pendientes en
+  // S.adjuntos; al guardar la nota se llevan como `imagenes` (ids de asset).
+  const tomarAdjuntos = (taId) => { const l = (S.adjuntos[taId] || []).slice(); delete S.adjuntos[taId]; return l; };
+  async function subirFotoNota(file, taId) {
+    if (!S.assets) { toast("En esta vista no se pueden subir fotos."); return; }
+    if (!file || !/^image\/(png|jpeg|gif|webp)$/.test(file.type)) { toast("Solo se pueden adjuntar imágenes PNG, JPG, GIF o WEBP."); return; }
+    S.subiendo[taId] = (S.subiendo[taId] || 0) + 1; render();
+    try {
+      const r = await S.assets.upload(file);
+      (S.adjuntos[taId] = S.adjuntos[taId] || []).push(r.id);
+    } catch (e) {
+      toast({ too_large: "La foto pesa más de 20 MB.", quota_or_state: "Se llenó el espacio de fotos.", rate_limited: "Muchas subidas seguidas: espera un momento." }[e && e.code] || "No se pudo subir la foto.");
+    }
+    S.subiendo[taId] = Math.max(0, (S.subiendo[taId] || 1) - 1); render();
+  }
+  // Prepara un textarea para recibir fotos pegadas o arrastradas.
+  function campoConFotos(ta) {
+    ta.setAttribute("data-fotos", "1");
+    ta.addEventListener("dragover", (e) => { if ([...(e.dataTransfer ? e.dataTransfer.types : [])].includes("Files")) { e.preventDefault(); ta.classList.add("sobre"); } });
+    ta.addEventListener("dragleave", () => ta.classList.remove("sobre"));
+    ta.addEventListener("drop", (e) => { const fs = [...(e.dataTransfer ? e.dataTransfer.files : [])].filter((f) => f.type.startsWith("image/")); ta.classList.remove("sobre"); if (fs.length) { e.preventDefault(); fs.forEach((f) => subirFotoNota(f, ta.id)); } });
+    return ta;
+  }
+  function zonaFotos(taId) {
+    const ids = S.adjuntos[taId] || [], n = S.subiendo[taId] || 0;
+    const w = h("div", { class: "fotos" });
+    ids.forEach((id, i) => w.append(h("div", { class: "foto" }, h("img", { src: "/_blob/" + id, alt: "Foto adjunta " + (i + 1) }),
+      h("button", { class: "quitar", "aria-label": "Quitar foto", onclick: () => { S.adjuntos[taId].splice(i, 1); render(); } }, "×"),
+      h("button", { class: "rayar", title: "Rayar y escribir sobre la foto", onclick: () => abrirEditor(id, (nuevo) => { const l = S.adjuntos[taId] || []; const k = l.indexOf(id); if (k >= 0) l[k] = nuevo; render(); }) }, "Rayar"))));
+    for (let k = 0; k < n; k++) w.append(h("div", { class: "foto cargando", text: "Subiendo…" }));
+    return w;
+  }
+  function botonAdjuntar(taId) {
+    if (!S.assets) return null;
+    const inp = h("input", { type: "file", accept: "image/png,image/jpeg,image/gif,image/webp", multiple: true, hidden: true, onchange: (e) => { [...e.target.files].forEach((f) => subirFotoNota(f, taId)); e.target.value = ""; } });
+    return h("span", {}, inp, h("button", { class: "btn-txt", title: "También puedes pegarla con Cmd+V o arrastrarla al campo", onclick: () => inp.click() }, "Adjuntar foto"));
+  }
+  const ocupado = (taId) => (S.subiendo[taId] || 0) > 0;
+  // S.visor = { id, notaId } : la foto en grande, con la opción de rayarla.
+  function renderVisor() {
+    const v = $("#visor");
+    if (!S.visor) { if (!v.hidden) { v.hidden = true; v.replaceChildren(); } return; }
+    const { id, notaId } = S.visor;
+    const caja = h("div", { class: "visor-caja", onclick: (e) => e.stopPropagation() },
+      h("img", { src: "/_blob/" + id, alt: "Foto de la nota" }),
+      h("div", { class: "visor-barra" },
+        S.assets && notaId && (S.notas.find((x) => x.id === notaId)?.imagenes || []).includes(id) ? h("button", { class: "btn btn-prim", onclick: () => {
+          S.visor = null; render();
+          abrirEditor(id, (nuevo) => {
+            const n = S.notas.find((x) => x.id === notaId); if (!n) return;
+            const imgs = (n.imagenes || []).map((x) => (x === id ? nuevo : x));
+            escribir(() => S.db.doc("notas/" + notaId).update({ imagenes: imgs, actualizadoEn: ahora() }), "Foto rayada guardada en la nota");
+          });
+        } }, "Rayar sobre esta foto") : null,
+        h("button", { class: "btn", onclick: () => { S.visor = null; render(); } }, "Cerrar")));
+    v.replaceChildren(caja);
+    v.hidden = false;
+  }
+  $("#visor").addEventListener("click", () => { S.visor = null; render(); });
+
+  // ---------- Editor para rayar y escribir sobre una foto ----------
+  // Las marcas se guardan como formas en coordenadas de la imagen; al guardar
+  // se pinta todo sobre la foto y se sube como una imagen nueva (PNG). La
+  // original no se borra.
+  const COLORES = [["#e0218a", "Magenta"], ["#e8332a", "Rojo"], ["#ffc400", "Amarillo"], ["#1f7aec", "Azul"], ["#ffffff", "Blanco"], ["#111111", "Negro"]];
+  let editorAbierto = false;
+  function abrirEditor(assetId, alGuardar) {
+    if (!S.assets) { toast("En esta vista no se pueden guardar fotos."); return; }
+    const root = $("#editor");
+    const st = { formas: [], herr: "lapiz", color: COLORES[0][0], grosor: 2, actual: null, input: null };
+    const cv = h("canvas", { class: "ed-canvas", "aria-label": "Foto para rayar" });
+    const ctx = cv.getContext("2d");
+    const wrap = h("div", { class: "ed-wrap" }, cv);
+    const img = new Image();
+    const base = () => Math.max(cv.width, cv.height) / 320;
+
+    const boton = (txt, activo, fn, extra) => h("button", { "aria-pressed": activo ? "true" : "false", onclick: fn, ...(extra || {}) }, txt);
+    const barra = h("div", { class: "ed-barra" });
+    function pintarBarra() {
+      barra.replaceChildren(
+        h("div", { class: "ed-grupo", role: "group", "aria-label": "Herramienta" },
+          ...[["lapiz", "Lápiz"], ["flecha", "Flecha"], ["caja", "Recuadro"], ["texto", "Texto"]].map(([k, t]) => boton(t, st.herr === k, () => { confirmarTexto(); st.herr = k; pintarBarra(); }))),
+        h("div", { class: "ed-grupo", role: "group", "aria-label": "Color" },
+          ...COLORES.map(([c, n]) => boton("", st.color === c, () => { st.color = c; pintarBarra(); }, { class: "ed-color", style: "background:" + c, title: n, "aria-label": n }))),
+        h("div", { class: "ed-grupo", role: "group", "aria-label": "Grosor" },
+          ...[[1, "Fino"], [2, "Medio"], [4, "Grueso"]].map(([g, t]) => boton(t, st.grosor === g, () => { st.grosor = g; pintarBarra(); }))),
+        h("div", { class: "ed-grupo" }, h("button", { onclick: deshacer, disabled: !st.formas.length }, "Deshacer"), h("button", { onclick: () => { st.formas = []; dibujar(); pintarBarra(); }, disabled: !st.formas.length }, "Borrar todo")),
+        h("span", { style: "flex:1" }),
+        h("span", { class: "ed-ayuda", text: st.herr === "texto" ? "Toca donde va el texto y escribe; Enter lo deja." : "Cmd+Z deshace · Esc cancela" }),
+        h("button", { class: "btn", onclick: cerrar }, "Cancelar"),
+        h("button", { class: "btn btn-prim", onclick: guardar }, "Guardar foto rayada"));
+    }
+    function punto(e) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * cv.width, (e.clientY - r.top) / r.height * cv.height]; }
+    function trazo(f) {
+      ctx.strokeStyle = f.color; ctx.fillStyle = f.color; ctx.lineWidth = f.w; ctx.lineCap = "round"; ctx.lineJoin = "round";
+      if (f.t === "lapiz") { ctx.beginPath(); f.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); if (f.pts.length === 1) ctx.lineTo(f.pts[0][0] + .1, f.pts[0][1]); ctx.stroke(); }
+      if (f.t === "caja") { ctx.strokeRect(Math.min(f.a[0], f.b[0]), Math.min(f.a[1], f.b[1]), Math.abs(f.b[0] - f.a[0]), Math.abs(f.b[1] - f.a[1])); }
+      if (f.t === "flecha") {
+        const [x1, y1] = f.a, [x2, y2] = f.b, ang = Math.atan2(y2 - y1, x2 - x1), L = f.w * 4.5;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - Math.cos(ang) * L * .6, y2 - Math.sin(ang) * L * .6); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - L * Math.cos(ang - .45), y2 - L * Math.sin(ang - .45)); ctx.lineTo(x2 - L * Math.cos(ang + .45), y2 - L * Math.sin(ang + .45)); ctx.closePath(); ctx.fill();
+      }
+      if (f.t === "texto") {
+        ctx.font = "600 " + f.size + "px Lexend, system-ui, sans-serif"; ctx.textBaseline = "top";
+        const lineas = f.txt.split("\n"), pad = f.size * .35, lh = f.size * 1.25;
+        const ancho = Math.max(...lineas.map((l) => ctx.measureText(l).width)) + pad * 2, alto = lineas.length * lh + pad * 2;
+        const claro = ["#ffffff", "#ffc400"].includes(f.color);
+        ctx.fillStyle = f.color; ctx.globalAlpha = .92;
+        ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(f.x, f.y, ancho, alto, f.size * .3); else ctx.rect(f.x, f.y, ancho, alto); ctx.fill(); ctx.globalAlpha = 1;
+        ctx.fillStyle = claro ? "#111111" : "#ffffff";
+        lineas.forEach((l, i) => ctx.fillText(l, f.x + pad, f.y + pad + i * lh));
+      }
+    }
+    function dibujar() { ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(img, 0, 0, cv.width, cv.height); st.formas.forEach(trazo); if (st.actual) trazo(st.actual); }
+    function deshacer() { confirmarTexto(); st.formas.pop(); dibujar(); pintarBarra(); }
+    function confirmarTexto() {
+      const inp = st.input; if (!inp) return;
+      st.input = null; const t = inp.value.trim(); inp.remove();
+      if (t) { st.formas.push({ t: "texto", x: inp._x, y: inp._y, txt: t, color: st.color, size: base() * 7 * (st.grosor === 1 ? .8 : st.grosor === 4 ? 1.4 : 1) }); dibujar(); pintarBarra(); }
+    }
+    cv.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      const [x, y] = punto(e);
+      if (st.herr === "texto") {
+        confirmarTexto();
+        const r = cv.getBoundingClientRect(), wr = wrap.getBoundingClientRect();
+        const inp = h("input", { type: "text", class: "ed-texto", placeholder: "Escribe y pulsa Enter", style: "left:" + (e.clientX - wr.left) + "px;top:" + (e.clientY - wr.top) + "px" });
+        inp._x = x; inp._y = y; st.input = inp; wrap.append(inp);
+        inp.addEventListener("keydown", (k) => { k.stopPropagation(); if (k.key === "Enter") confirmarTexto(); if (k.key === "Escape") { st.input = null; inp.remove(); } });
+        setTimeout(() => inp.focus(), 0);
+        return;
+      }
+      cv.setPointerCapture(e.pointerId);
+      const w = base() * st.grosor;
+      st.actual = st.herr === "lapiz" ? { t: "lapiz", pts: [[x, y]], color: st.color, w } : { t: st.herr, a: [x, y], b: [x, y], color: st.color, w };
+      dibujar();
+    });
+    cv.addEventListener("pointermove", (e) => {
+      if (!st.actual) return;
+      const p = punto(e);
+      if (st.actual.t === "lapiz") st.actual.pts.push(p); else st.actual.b = p;
+      dibujar();
+    });
+    const soltar = () => { if (!st.actual) return; const f = st.actual; st.actual = null; const corto = f.t !== "lapiz" && Math.hypot(f.b[0] - f.a[0], f.b[1] - f.a[1]) < base() * 3; if (!corto) st.formas.push(f); dibujar(); pintarBarra(); };
+    cv.addEventListener("pointerup", soltar); cv.addEventListener("pointercancel", () => { st.actual = null; dibujar(); });
+
+    function teclas(e) {
+      if (!editorAbierto || (e.target && e.target.classList && e.target.classList.contains("ed-texto"))) return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); deshacer(); }
+      if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); cerrar(); }
+    }
+    function cerrar() { editorAbierto = false; document.removeEventListener("keydown", teclas, true); root.hidden = true; root.replaceChildren(); }
+    function guardar() {
+      confirmarTexto();
+      if (!st.formas.length) { cerrar(); return; }
+      cv.toBlob(async (blob) => {
+        if (!blob) { toast("No se pudo preparar la foto."); return; }
+        toast("Guardando la foto rayada…");
+        try { const r = await S.assets.upload(blob, { type: "image/png" }); cerrar(); alGuardar(r.id); }
+        catch (e) { toast({ too_large: "La foto rayada pesa más de 20 MB.", quota_or_state: "Se llenó el espacio de fotos." }[e && e.code] || "No se pudo guardar la foto rayada."); }
+      }, "image/png");
+    }
+    img.onload = () => {
+      const lado = Math.max(img.naturalWidth, img.naturalHeight), k = lado > 2400 ? 2400 / lado : 1;
+      cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
+      dibujar();
+    };
+    img.onerror = () => { toast("No se pudo abrir la foto."); cerrar(); };
+    img.src = "/_blob/" + assetId;
+    pintarBarra();
+    root.replaceChildren(barra, h("div", { class: "ed-zona" }, wrap));
+    root.hidden = false; editorAbierto = true;
+    document.addEventListener("keydown", teclas, true);
+  }
+
+  // ---------- Derivados ----------
+  const seccion = () => S.secciones.find((s) => s.id === S.sec);
+  const notasDe = (sec) => S.notas.filter((n) => n.seccion === sec && n.estado !== "descartada");
+  const abiertas = (sec) => S.notas.filter((n) => n.seccion === sec && (n.estado === "borrador" || n.estado === "enviada" || n.estado === "en_trabajo" || n.estado === "para_revisar")).length;
+  const capturasDe = (sec) => S.capturas.filter((c) => c.seccion === sec);
+  const borradores = () => S.notas.filter((n) => n.estado === "borrador" && ((n.texto || "").trim() || (n.imagenes || []).length));
+  const numeroEnCaptura = (n) => { const lista = S.notas.filter((x) => x.capturaId === n.capturaId && x.estado !== "descartada"); return lista.findIndex((x) => x.id === n.id) + 1; };
+
+  // ---------- Render ----------
+  // Redibujar sin perder lo que alguien está escribiendo: se guardan los
+  // valores de los campos con id y el foco, y se devuelven después.
+  function render() {
+    if (!S.listo) return;
+    const valores = {};
+    document.querySelectorAll("#mesa textarea[id], #mesa input[type=text][id], #mesa select[id], #full textarea[id], #full select[id]").forEach((el) => { valores[el.id] = el.value; });
+    const act = document.activeElement && document.activeElement.id ? document.activeElement : null;
+    const foco = act ? { id: act.id, ini: act.selectionStart, fin: act.selectionEnd } : null;
+    renderConteos(); renderRiel(); renderMesa(); renderFull(); renderVisor();
+    for (const [id, v] of Object.entries(valores)) { const el = document.getElementById(id); if (el && el.id !== "titulo-captura") el.value = v; }
+    if (foco) { const el = document.getElementById(foco.id); if (el) { el.focus({ preventScroll: true }); try { if (foco.ini != null) el.setSelectionRange(foco.ini, foco.fin); } catch (e) {} } }
+  }
+  function renderConteos() {
+    const cont = $("#conteos"); cont.replaceChildren();
+    for (const k of ["borrador", "enviada", "en_trabajo", "para_revisar", "resuelta"]) {
+      const n = S.notas.filter((x) => x.estado === k).length;
+      cont.append(h("button", { class: "conteo", "aria-pressed": S.vistaEstado === k ? "true" : "false", title: "Ver todas las notas en " + ESTADOS[k].nombre.toLowerCase() + ", por sección", onclick: () => { S.vistaEstado = S.vistaEstado === k ? null : k; S.vistaManual = false; S.confirmarEnvio = false; render(); window.scrollTo({ top: 0 }); } }, h("span", { class: "punto", style: "background:" + ESTADOS[k].color }), h("b", { class: "num", text: String(n) }), ESTADOS[k].nombre.toLowerCase() + (n === 1 ? "" : "s")));
+    }
+    const b = $("#btn-enviar"), n = borradores().length;
+    b.textContent = n ? "Enviar a revisión (" + n + ")" : "Enviar a revisión";
+    b.disabled = n === 0;
+  }
+  function renderRiel() {
+    const l = $("#lista-secciones"); l.replaceChildren();
+    const tuyos = S.pendientes.filter((p) => p.estado !== "hecho" && p.quien === "andy").length;
+    l.append(h("button", { class: "sec-btn proy manual", "aria-current": S.vistaManual ? "true" : "false", title: "Pendientes, progreso y aprendizajes del proyecto", onclick: () => { S.vistaManual = true; S.vistaEstado = null; S.confirmarEnvio = false; guardarVista(); render(); window.scrollTo({ top: 0 }); } },
+      h("span", { class: "sec-ord", text: "" }), h("span", { text: "Proyecto" }), tuyos ? h("span", { class: "pend-n num", text: String(tuyos), title: tuyos + " pendientes tuyos" }) : h("span", { class: "n" })));
+    S.secciones.forEach((s, i) => {
+      const a = abiertas(s.id);
+      l.append(h("button", { class: "sec-btn", "aria-current": s.id === S.sec ? "true" : "false", onclick: () => { S.vistaEstado = null; S.vistaManual = false; S.sec = s.id; S.captura = null; S.pinNuevo = null; S.focoNota = null; S.confirmarEnvio = false; if (s.id === "general" && S.pestana === "senalar") S.pestana = "notas"; guardarVista(); render(); window.scrollTo({ top: 0 }); } },
+        h("span", { class: "sec-ord", text: s.id === "general" ? "" : String(i).padStart(2, "0") }),
+        h("span", { text: s.nombre }),
+        h("span", { class: "n num" + (a ? " abiertas" : ""), text: a ? String(a) : "" })));
+    l.querySelectorAll(".sec-btn:not(.manual)").forEach((b) => { if (S.vistaManual) b.setAttribute("aria-current", "false"); });
+    });
+  }
+
+  // Todas las notas de un estado, de todas las secciones, con un encabezado
+  // por sección (se abre con los contadores de arriba).
+  function panelPorEstado(k) {
+    const est = ESTADOS[k] || ESTADOS.borrador;
+    const todas = S.notas.filter((n) => n.estado === k);
+    const p = h("section", { class: "panel lista-estado" },
+      h("div", { class: "panel-tit" }, h("span", { class: "punto", style: "background:" + est.color }), h("h3", { text: est.nombre + " · " + todas.length }),
+        h("span", { class: "esp", style: "flex:1" }), h("button", { class: "btn", onclick: () => { S.vistaEstado = null; render(); } }, "Cerrar")));
+    if (!todas.length) { p.append(h("div", { class: "vacio", text: "No hay notas en este estado." })); return p; }
+    S.secciones.forEach((s) => {
+      const g = todas.filter((n) => n.seccion === s.id);
+      if (!g.length) return;
+      p.append(h("h3", { class: "sec-tit" }, s.nombre + " · " + g.length, h("button", { class: "btn-txt", onclick: () => { S.vistaEstado = null; S.sec = s.id; S.pestana = "notas"; guardarVista(); render(); window.scrollTo({ top: 0 }); } }, "Ir a la sección")));
+      const l = h("div", { class: "notas" });
+      g.forEach((n) => l.append(tarjetaNota(n, n.capturaId ? numeroEnCaptura(n) : 0, false)));
+      p.append(l);
+    });
+    const sinSec = todas.filter((n) => !S.secciones.some((s) => s.id === n.seccion));
+    if (sinSec.length) { p.append(h("h3", { class: "sec-tit", text: "Sin sección · " + sinSec.length })); const l = h("div", { class: "notas" }); sinSec.forEach((n) => l.append(tarjetaNota(n, 0, false))); p.append(l); }
+    return p;
+  }
+
+  function renderMesa() {
+    const m = $("#mesa"); m.replaceChildren();
+    if (S.vistaEstado) { if (S.confirmarEnvio) m.append(panelEnvio()); m.append(panelPorEstado(S.vistaEstado)); return; }
+    if (S.vistaManual) { if (S.confirmarEnvio) m.append(panelEnvio()); m.append(panelProyecto()); return; }
+    const s = seccion();
+    if (!s) { m.append(h("div", { class: "vacio", text: "Todavía no hay secciones cargadas. Pídele a Claude que las siembre." })); return; }
+    if (S.confirmarEnvio) m.append(panelEnvio());
+    const nNov = S.novedades.filter((n) => n.seccion === s.id).length;
+    m.append(h("div", { class: "mesa-cab" }, h("div", {}, h("h2", { text: s.nombre }), s.descripcion ? h("p", { text: s.descripcion }) : null)));
+    const infs = S.informes.filter((x) => x.seccion === s.id);
+    const tabs = [["senalar", "Señalar"], ["notas", "Notas (" + notasDe(s.id).length + ")"], ["novedades", "Novedades (" + nNov + ")"]];
+    if (infs.length) {
+      const ks = clavesDe(infs[0]), hechos = ks.filter((k) => okDe(infs[0], k)).length;
+      tabs.unshift(["informe", "Informe" + (ks.length ? " · " + hechos + "/" + ks.length : "")]);
+    }
+    if (!tabs.some(([k]) => k === S.pestana)) S.pestana = tabs[0][0];
+    m.append(h("div", { class: "pestanas", role: "tablist" }, tabs.map(([k, t]) => h("button", { class: "pestana", role: "tab", "aria-selected": S.pestana === k ? "true" : "false", onclick: () => { S.pestana = k; guardarVista(); render(); } }, t))));
+    if (S.pestana === "informe") infs.forEach((inf) => m.append(panelInforme(inf)));
+    if (S.pestana === "senalar") { m.append(panelCapturas(s)); if ((s.partes || []).length) m.append(panelEstructura(s)); }
+    if (S.pestana === "notas") { m.append(panelComposer(s)); m.append(panelNotas(s)); }
+    if (S.pestana === "novedades") m.append(panelNovedades(s));
+    if (S.pestana !== "novedades" && S.envios.length && s.id === "general") m.append(panelEnvios());
+  }
+
+  // Señalar sobre capturas
+  function panelCapturas(s) {
+    const caps = capturasDe(s.id);
+    if (S.captura && !caps.some((c) => c.id === S.captura)) S.captura = null;
+    if (!S.captura && caps.length) S.captura = caps[caps.length - 1].id;
+    const p = h("section", { class: "panel" },
+      h("div", { class: "panel-tit" }, h("h3", { text: "Capturas" }), h("span", { class: "aux", text: S.assets ? "Pega una captura con Cmd+V, arrástrala o súbela. Luego haz clic donde quieres un cambio." : "Haz clic sobre una captura para señalar un cambio." })));
+    const tira = h("div", { class: "tira" });
+    caps.forEach((c) => {
+      const n = S.notas.filter((x) => x.capturaId === c.id && x.estado !== "descartada" && x.estado !== "resuelta").length;
+      tira.append(h("button", { class: "mini", "aria-current": c.id === S.captura ? "true" : "false", title: c.titulo || "", onclick: () => { S.captura = c.id; S.pinNuevo = null; render(); } },
+        h("img", { src: imgDe(c), alt: "", loading: "lazy" }), h("span", { class: "t", text: c.titulo || "Captura" }), n ? h("span", { class: "badge num", text: String(n) }) : null));
+    });
+    if (S.assets) {
+      const inp = h("input", { type: "file", accept: "image/png,image/jpeg,image/gif,image/webp", hidden: true, onchange: (e) => subirCaptura(e.target.files[0]) });
+      const drop = h("button", { class: "soltar", onclick: () => inp.click() }, h("span", {}, "+ Agregar captura", h("br"), h("span", { style: "font-size:11px", text: "o pega con Cmd+V" })));
+      ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("sobre"); }));
+      ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, () => drop.classList.remove("sobre")));
+      drop.addEventListener("drop", (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) subirCaptura(f); });
+      tira.append(drop, inp);
+    }
+    p.append(tira);
+    const c = caps.find((x) => x.id === S.captura);
+    if (!c) { p.append(h("div", { class: "vacio", style: "margin-top:12px", text: S.assets ? "Esta sección todavía no tiene capturas. Toma una de la pantalla (Cmd+Shift+Ctrl+4 copia al portapapeles) y pégala aquí con Cmd+V." : "Esta sección todavía no tiene capturas." })); return p; }
+
+    const notasCap = S.notas.filter((x) => x.capturaId === c.id && x.estado !== "descartada");
+    const lienzo = S.full ? h("div", { class: "lienzo vacio", style: "cursor:default", text: "La captura está abierta en pantalla completa." }) : lienzoDe(c, notasCap);
+    if (!S.full) lienzo.append(h("button", { class: "btn-icono btn-full", title: "Pantalla completa", "aria-label": "Ver la captura en pantalla completa", onclick: (e) => { e.stopPropagation(); abrirFull(); } },
+      svgIcono("M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5")));
+    const lado = h("div", { class: "cap-lado" });
+    const tit = h("input", { type: "text", id: "titulo-captura", value: c.titulo || "", "aria-label": "Nombre de la captura" });
+    tit.addEventListener("change", () => escribir(() => S.db.doc("capturas/" + c.id).update({ titulo: tit.value.trim() || "Captura" })));
+    lado.append(h("div", { class: "cap-tit" }, tit));
+    lado.append(h("div", { class: "aux", style: "color:var(--muted);font-size:12.5px", text: (c.origen === "agente" ? "Captura del agente" : "Subida") + " · " + fecha(c.creadoEn) }));
+    if (!notasCap.length) lado.append(h("div", { class: "vacio", text: "Sin marcas todavía. Haz clic en la captura donde quieras un cambio." }));
+    const ln = h("div", { class: "notas" });
+    notasCap.forEach((n, i) => ln.append(tarjetaNota(n, i + 1, true)));
+    lado.append(ln);
+    if (S.assets && !notasCap.length) lado.append(h("button", { class: "btn-txt", style: "align-self:flex-start", onclick: () => escribir(() => S.db.doc("capturas/" + c.id).delete(), "Captura quitada") }, "Quitar esta captura"));
+    p.append(h("div", { class: "lienzo-wrap" }, lienzo, lado));
+    return p;
+  }
+
+  function svgIcono(d) {
+    const ns = "http://www.w3.org/2000/svg";
+    const s = document.createElementNS(ns, "svg"); s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true");
+    const p = document.createElementNS(ns, "path"); p.setAttribute("d", d); s.append(p);
+    return s;
+  }
+
+  // La captura con sus marcas y el globo de la marca nueva. La usan la vista
+  // normal y la pantalla completa.
+  function lienzoDe(c, notasCap) {
+    const lienzo = h("div", { class: "lienzo" + (c.movil ? " movil" : ""), title: "Haz clic para señalar" });
+    const img = h("img", { src: imgDe(c), alt: c.titulo || "Captura de la sección" });
+    lienzo.append(img);
+    lienzo.addEventListener("click", (e) => {
+      if (e.target.closest(".pin, .globo")) return;
+      const r = img.getBoundingClientRect();
+      S.pinNuevo = { x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)) };
+      render();
+      setTimeout(() => { const t = $(".globo textarea"); if (t) t.focus(); }, 0);
+    });
+    notasCap.forEach((n, i) => {
+      lienzo.append(h("button", { class: "pin" + (n.estado === "resuelta" ? " resuelta" : "") + (S.focoNota === n.id ? " foco" : ""), style: "left:" + (n.x * 100) + "%;top:" + (n.y * 100) + "%", title: n.texto || "", "aria-label": "Marca " + (i + 1), onclick: (e) => { e.stopPropagation(); S.focoNota = n.id; render(); } }, String(i + 1)));
+    });
+    if (S.pinNuevo) {
+      lienzo.append(h("span", { class: "pin nuevo", style: "left:" + (S.pinNuevo.x * 100) + "%;top:" + (S.pinNuevo.y * 100) + "%" }, String(notasCap.length + 1)));
+      const izq = S.pinNuevo.x > .6, abajo = S.pinNuevo.y > .6;
+      const g = h("div", { class: "globo", style: (izq ? "right:" + ((1 - S.pinNuevo.x) * 100 + 2) + "%;" : "left:" + (S.pinNuevo.x * 100 + 2) + "%;") + (abajo ? "bottom:" + ((1 - S.pinNuevo.y) * 100) + "%;" : "top:" + (S.pinNuevo.y * 100) + "%;") });
+      const ta = campoConFotos(h("textarea", { id: "nota-pin", placeholder: "¿Qué quieres cambiar aquí? (puedes pegar una foto)" }));
+      const tipo = selectDe("tipo-pin", TIPOS, "ajuste"), prio = selectDe("prio-pin", PRIORIDADES, "media");
+      g.append(ta, zonaFotos(ta.id), h("div", { class: "fila" }, tipo, prio, botonAdjuntar(ta.id)),
+        h("div", { class: "fila" }, h("span", { class: "esp" }), h("button", { class: "btn-txt", onclick: () => { delete S.adjuntos[ta.id]; S.pinNuevo = null; render(); } }, "Cancelar"),
+          h("button", { class: "btn btn-prim", onclick: () => {
+            const t = ta.value.trim();
+            if (ocupado(ta.id)) { toast("Espera a que termine de subir la foto."); return; }
+            if (!t && !(S.adjuntos[ta.id] || []).length) { ta.focus(); return; }
+            const pn = S.pinNuevo; S.pinNuevo = null;
+            nuevaNota({ texto: t, tipo: tipo.value, prioridad: prio.value, capturaId: c.id, x: pn.x, y: pn.y, imagenes: tomarAdjuntos(ta.id) }); render();
+          } }, "Guardar marca")));
+      ta.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) g.querySelector(".btn-prim").click(); });
+      lienzo.append(g);
+    }
+    return lienzo;
+  }
+
+  // ---------- Pantalla completa ----------
+  function capturaActual() {
+    const s = seccion(); if (!s) return null;
+    return capturasDe(s.id).find((x) => x.id === S.captura) || null;
+  }
+  function abrirFull() {
+    if (!capturaActual()) return;
+    S.full = true; render();
+    const f = $("#full");
+    try { if (f.requestFullscreen && !document.fullscreenElement) f.requestFullscreen().catch(() => {}); } catch (e) {}
+  }
+  function cerrarFull() {
+    S.full = false; S.pinNuevo = null;
+    try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); } catch (e) {}
+    render();
+  }
+  function renderFull() {
+    const f = $("#full");
+    const c = S.full ? capturaActual() : null;
+    if (!c) { if (!f.hidden) { f.hidden = true; f.replaceChildren(); } if (S.full) S.full = false; return; }
+    const notasCap = S.notas.filter((x) => x.capturaId === c.id && x.estado !== "descartada");
+    const abiertasCap = notasCap.filter((n) => n.estado !== "resuelta").length;
+    f.replaceChildren(
+      h("div", { class: "full-barra" }, h("h3", { text: c.titulo || "Captura" }),
+        h("span", { class: "aux", text: (notasCap.length ? notasCap.length + (notasCap.length === 1 ? " marca" : " marcas") + (abiertasCap ? ", " + abiertasCap + " abiertas" : "") + " · " : "") + "Haz clic para señalar" }),
+        h("span", { style: "flex:1" }),
+        h("button", { class: "btn", onclick: cerrarFull }, "Cerrar (Esc)")),
+      h("div", { class: "full-zona" }, lienzoDe(c, notasCap)));
+    f.hidden = false;
+  }
+  document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && S.full) { S.full = false; S.pinNuevo = null; render(); } });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (S.visor) { S.visor = null; render(); return; }
+    if (S.pinNuevo) { S.pinNuevo = null; render(); return; }
+    if (S.respondiendo) { S.respondiendo = null; render(); return; }
+    if (S.respondiendoNota) { S.respondiendoNota = null; render(); return; }
+    if (S.full) cerrarFull();
+  });
+
+  function panelEstructura(s) {
+    const p = h("section", { class: "panel" }, h("div", { class: "panel-tit" }, h("h3", { text: "Estructura de la sección" }), h("span", { class: "aux", text: "Toca una parte para dejar una nota sobre ella, sin necesidad de captura." })));
+    const w = h("div", { class: "partes" });
+    (s.partes || []).forEach((pt) => {
+      const n = S.notas.filter((x) => x.seccion === s.id && x.parte === pt.id && x.estado !== "descartada" && x.estado !== "resuelta").length;
+      w.append(h("button", { class: "parte", onclick: () => { S.pestana = "notas"; S.preParte = pt.id; guardarVista(); render(); setTimeout(() => { const t = $("#nota-texto"); if (t) t.focus(); }, 0); } }, pt.nombre, n ? h("span", { class: "n num", text: String(n) }) : null));
+    });
+    p.append(w);
+    return p;
+  }
+
+  function selectDe(id, opciones, valor) {
+    const s = h("select", { id });
+    for (const [k, v] of Object.entries(opciones)) s.append(h("option", { value: k, selected: k === valor, text: v }));
+    return s;
+  }
+
+  function panelComposer(s) {
+    const p = h("section", { class: "panel composer" });
+    const ta = h("textarea", { id: "nota-texto", placeholder: s.id === "general" ? "Una nota general sobre la app…" : "¿Qué quieres ajustar en " + s.nombre + "?" });
+    const tipo = selectDe("nota-tipo", TIPOS, "ajuste"), prio = selectDe("nota-prio", PRIORIDADES, "media");
+    const partes = { "": "Sin parte específica" }; (s.partes || []).forEach((pt) => { partes[pt.id] = pt.nombre; });
+    const parte = selectDe("nota-parte", partes, S.preParte || "");
+    S.preParte = null;
+    if (S.preTexto) { ta.value = S.preTexto; S.preTexto = null; }
+    campoConFotos(ta);
+    const guardar = () => {
+      const t = ta.value.trim();
+      if (ocupado(ta.id)) { toast("Espera a que termine de subir la foto."); return; }
+      if (!t && !(S.adjuntos[ta.id] || []).length) { ta.focus(); return; }
+      nuevaNota({ texto: t, tipo: tipo.value, prioridad: prio.value, parte: parte.value || null, imagenes: tomarAdjuntos(ta.id) }); ta.value = ""; render();
+    };
+    ta.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) guardar(); });
+    p.append(ta, zonaFotos(ta.id), h("div", { class: "fila" }, tipo, prio, (s.partes || []).length ? parte : null, botonAdjuntar(ta.id), h("span", { class: "esp" }), h("span", { class: "aux", style: "color:var(--muted);font-size:12px", text: "Cmd+V pega texto o fotos · Cmd+Enter guarda" }), h("button", { class: "btn btn-prim", onclick: guardar }, "Guardar nota")));
+    return p;
+  }
+
+  function panelNotas(s) {
+    const p = h("section", { class: "panel" });
+    const todas = notasDe(s.id);
+    p.append(h("div", { class: "panel-tit" }, h("h3", { text: "Notas de la sección" }), h("span", { class: "aux", text: todas.length ? "" : "Aún no hay notas." })));
+    for (const k of ["para_revisar", "borrador", "enviada", "en_trabajo", "resuelta"]) {
+      const g = todas.filter((n) => n.estado === k);
+      if (!g.length) continue;
+      p.append(h("div", { class: "grupo-tit" }, h("span", { class: "punto", style: "background:" + ESTADOS[k].color }), ESTADOS[k].nombre + " · " + g.length));
+      const l = h("div", { class: "notas" });
+      g.forEach((n) => l.append(tarjetaNota(n, n.capturaId ? numeroEnCaptura(n) : 0, false)));
+      p.append(l);
+    }
+    return p;
+  }
+
+  function tarjetaNota(n, numero, enCaptura) {
+    const s = S.secciones.find((x) => x.id === n.seccion);
+    const parte = s && (s.partes || []).find((pt) => pt.id === n.parte);
+    const cap = n.capturaId && S.capturas.find((c) => c.id === n.capturaId);
+    const origen = n.movidaDe && n.movidaDe !== n.seccion && S.secciones.find((x) => x.id === n.movidaDe);
+    const est = ESTADOS[n.estado] || ESTADOS.borrador;
+    const card = h("article", { class: "nota" + (S.focoNota === n.id ? " foco" : "") + (n.estado === "resuelta" ? " resuelta-n" : ""), id: "nota-" + n.id });
+    card.append(h("span", { class: "marca-n" + (numero ? "" : " sin"), text: numero ? String(numero) : "•" }));
+    const c = h("div", { class: "nota-c" });
+    if (n.ancla && n.ancla.cita && !enCaptura) c.append(h("div", { class: "cita", text: n.ancla.cita }));
+    if (S.editando === n.id) {
+      const taId = "editar-" + n.id;
+      if (!S.adjuntos[taId]) S.adjuntos[taId] = (n.imagenes || []).slice();
+      const ta = campoConFotos(h("textarea", { id: taId })); ta.value = n.texto || "";
+      c.append(ta, zonaFotos(taId), h("div", { class: "fila" }, botonAdjuntar(taId), h("span", { class: "esp" }), h("button", { class: "btn-txt", onclick: () => { delete S.adjuntos[taId]; S.editando = null; render(); } }, "Cancelar"),
+        h("button", { class: "btn btn-prim", onclick: () => {
+          if (ocupado(taId)) { toast("Espera a que termine de subir la foto."); return; }
+          const t = ta.value.trim(), imgs = tomarAdjuntos(taId); S.editando = null;
+          escribir(() => S.db.doc("notas/" + n.id).update({ texto: t, imagenes: imgs, actualizadoEn: ahora() }), "Nota actualizada");
+        } }, "Guardar")));
+    } else {
+      if (n.texto || !(n.imagenes || []).length) c.append(h("div", { class: "nota-t", text: n.texto || "(sin texto)" }));
+      if ((n.imagenes || []).length) c.append(h("div", { class: "fotos" }, n.imagenes.map((id, i) => h("button", { class: "foto", title: "Ver en grande o rayar", onclick: () => { S.visor = { id, notaId: n.id }; render(); } }, h("img", { src: "/_blob/" + id, alt: "Foto " + (i + 1) + " de la nota", loading: "lazy" })))));
+    }
+    const chips = h("div", { class: "chips" },
+      h("span", { class: "chip estado", style: "background:" + est.color, text: est.nombre }),
+      h("span", { class: "chip", text: TIPOS[n.tipo] || n.tipo }),
+      n.prioridad === "alta" ? h("span", { class: "chip", style: "border-color:var(--accent);color:var(--accent)", text: "Prioridad alta" }) : null,
+      parte ? h("span", { class: "chip", text: parte.nombre }) : null,
+      cap && !enCaptura ? h("button", { class: "chip", style: "cursor:pointer", onclick: () => { S.vistaEstado = null; S.sec = cap.seccion || S.sec; S.pestana = "senalar"; S.captura = cap.id; S.focoNota = n.id; guardarVista(); render(); } }, "Ver en " + (cap.titulo || "captura")) : null,
+      n.ancla && n.ancla.pendiente && !enCaptura ? h("button", { class: "chip", style: "cursor:pointer", title: n.ancla.cita || "", onclick: () => { S.vistaEstado = null; S.vistaManual = true; S.proyTab = "pendientes"; guardarVista(); render(); } }, "Sobre un pendiente") : null,
+      n.ancla && n.ancla.informe && !enCaptura ? h("button", { class: "chip", style: "cursor:pointer", title: n.ancla.cita || "", onclick: () => { const inf = S.informes.find((x) => x.id === n.ancla.informe); S.vistaEstado = null; if (inf && inf.seccion) S.sec = inf.seccion; S.pestana = "informe"; S.focoNota = n.id; guardarVista(); render(); } }, "Respuesta al informe") : null,
+      origen ? h("span", { class: "chip", title: "La escribiste en " + origen.nombre + " y la moviste aquí", text: "Venía de " + origen.nombre }) : null,
+      h("span", { class: "num", text: fecha(n.creadoEn) }));
+    c.append(chips);
+    // Hilo: lo que ya se conversaron Andy y el agente, en orden; la respuesta
+    // vigente del agente va al final.
+    (n.hilo || []).forEach((tu) => {
+      const caja = h("div", { class: "turno " + (tu.quien === "agente" ? "agente" : "andy") },
+        h("div", {}, h("b", { text: tu.quien === "agente" ? "Agente" : "Tú" }), " ", h("span", { class: "cuando num", text: fecha(tu.fecha) })),
+        tu.texto ? h("div", { class: "nota-t", text: tu.texto }) : null);
+      if ((tu.imagenes || []).length) caja.append(h("div", { class: "fotos" }, tu.imagenes.map((id, i) => h("button", { class: "foto", title: "Ver en grande", onclick: () => { S.visor = { id, notaId: null }; render(); } }, h("img", { src: "/_blob/" + id, alt: "Foto " + (i + 1) + " de la respuesta", loading: "lazy" })))));
+      c.append(caja);
+    });
+    if (n.respuesta) c.append(h("div", { class: "respuesta" }, h("b", { text: "Respuesta del agente: " }), n.respuesta));
+    if (S.respondiendoNota === n.id) c.append(composerRespuestaNota(n));
+    const acc = h("div", { class: "fila" });
+    if (S.editando !== n.id) {
+      const idr = "res-" + n.id, si = n.estado === "resuelta";
+      const inp = h("input", { type: "checkbox", id: idr, checked: si });
+      inp.addEventListener("change", () => escribir(() => S.db.doc("notas/" + n.id).update(inp.checked
+        ? { estado: "resuelta", resueltaPor: S.yo || null, resueltaEn: ahora(), actualizadoEn: ahora() }
+        : { estado: "borrador", envioId: null, actualizadoEn: ahora() }), inp.checked ? "Marcada como resuelta" : "Reabierta en borrador"));
+      acc.append(h("label", { class: "ok-chk" + (si ? " si" : ""), for: idr }, inp, "Resuelta"));
+    }
+    if (n.estado === "borrador" && S.editando !== n.id) {
+      acc.append(h("button", { class: "btn-txt", onclick: () => { S.editando = n.id; render(); } }, "Editar"),
+        h("button", { class: "btn-txt", onclick: () => escribir(() => S.db.doc("notas/" + n.id).delete(), "Nota borrada") }, "Borrar"));
+    }
+    if ((n.estado === "para_revisar" || (n.estado === "borrador" && ((n.hilo || []).length || n.respuesta))) && S.respondiendoNota !== n.id && S.editando !== n.id)
+      acc.append(h("button", { class: "btn btn-prim", style: "padding:4px 10px;font-size:12.5px", title: "Escribe qué hay que corregir; la nota pasa a borrador y va en el próximo envío", onclick: () => { S.respondiendoNota = n.id; render(); setTimeout(() => { const t = document.getElementById("resp-nota-" + n.id); if (t) t.focus(); }, 0); } }, "Responder"));
+    if (n.estado === "enviada") acc.append(h("button", { class: "btn-txt", onclick: () => escribir(() => S.db.doc("notas/" + n.id).update({ estado: "borrador", envioId: null, actualizadoEn: ahora() }), "Nota devuelta a borrador") }, "Devolver a borrador"));
+    if (n.estado !== "resuelta" && S.editando !== n.id && S.respondiendoNota !== n.id) acc.append(selectorMover(n));
+    if (acc.childNodes.length) c.append(acc);
+    card.append(c);
+    return card;
+  }
+
+  // Mover una nota a la sección que le corresponde (p. ej. un ajuste de Pauta
+  // que se escribió en Orgánico). La parte se limpia porque es de la sección
+  // vieja; si la nota está señalada en una captura y ninguna otra nota abierta
+  // queda en esa captura, la captura se va con ella.
+  function selectorMover(n) {
+    const sel = h("select", { class: "mover", title: "Mover esta nota a otra sección", "aria-label": "Mover a otra sección" },
+      h("option", { value: "", text: "Mover a…" }),
+      S.secciones.filter((x) => x.id !== n.seccion).map((x) => h("option", { value: x.id, text: x.nombre })));
+    sel.addEventListener("change", () => { if (sel.value) moverNota(n, sel.value); });
+    return sel;
+  }
+  function moverNota(n, destino) {
+    const dest = S.secciones.find((x) => x.id === destino); if (!dest) return;
+    const cap = n.capturaId && S.capturas.find((c) => c.id === n.capturaId);
+    const llevarCaptura = cap && cap.seccion !== destino && !S.notas.some((x) => x.id !== n.id && x.capturaId === cap.id && x.estado !== "descartada" && x.seccion !== destino);
+    escribir(async () => {
+      await S.db.doc("notas/" + n.id).update({ seccion: destino, parte: null, movidaDe: n.movidaDe || n.seccion, actualizadoEn: ahora() });
+      if (llevarCaptura) await S.db.doc("capturas/" + cap.id).update({ seccion: destino });
+    }, "Nota movida a " + dest.nombre + (llevarCaptura ? " con su captura" : ""));
+  }
+
+  // Hilos: notas pegadas a un punto del informe (fila, decisión, pendiente,
+  // verificación o punto a revisar). Viajan en el envío como cualquier nota.
+  const claveHilo = (inf, clave) => inf.id + "|" + clave;
+  const notasAncla = (inf, clave) => S.notas.filter((n) => n.ancla && n.ancla.informe === inf.id && n.ancla.clave === clave && n.estado !== "descartada");
+  function botonResponder(inf, clave) {
+    const n = notasAncla(inf, clave).length;
+    return h("button", { class: "btn-resp", onclick: () => { S.respondiendo = claveHilo(inf, clave); render(); setTimeout(() => { const t = document.getElementById(idResp(inf, clave)); if (t) t.focus(); }, 0); } },
+      "Responder", n ? h("span", { class: "num", text: " · " + n }) : null);
+  }
+  const idResp = (inf, clave) => "resp-" + (inf.id + "-" + clave).replace(/[^A-Za-z0-9_-]/g, "-");
+  function hiloDe(inf, clave, cita) {
+    const ns = notasAncla(inf, clave);
+    const abierto = S.respondiendo === claveHilo(inf, clave);
+    if (!ns.length && !abierto) return null;
+    const w = h("div", { class: "hilo" });
+    ns.forEach((n) => w.append(tarjetaNota(n, 0, true)));
+    if (abierto) {
+      const ta = campoConFotos(h("textarea", { id: idResp(inf, clave), placeholder: "¿Qué quieres que pase con esto? (puedes pegar una foto)" }));
+      const tipo = selectDe(idResp(inf, clave) + "-tipo", TIPOS, "ajuste");
+      const guardar = () => {
+        const t = ta.value.trim();
+        if (ocupado(ta.id)) { toast("Espera a que termine de subir la foto."); return; }
+        if (!t && !(S.adjuntos[ta.id] || []).length) { ta.focus(); return; }
+        S.respondiendo = null;
+        nuevaNota({ texto: t, tipo: tipo.value, seccion: inf.seccion, ancla: { informe: inf.id, clave, cita: String(cita || "").slice(0, 400) }, imagenes: tomarAdjuntos(ta.id) });
+        render();
+      };
+      ta.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) guardar(); });
+      w.append(h("div", { class: "resp-form" }, ta, zonaFotos(ta.id), h("div", { class: "fila" }, tipo, botonAdjuntar(ta.id), h("span", { class: "esp" }),
+        h("button", { class: "btn-txt", onclick: () => { delete S.adjuntos[ta.id]; S.respondiendo = null; render(); } }, "Cancelar"),
+        h("button", { class: "btn btn-prim", onclick: guardar }, "Guardar respuesta"))));
+    }
+    return w;
+  }
+
+  // Casilla OK por punto del informe: se guarda en `revisado` con la misma
+  // clave del hilo (los puntos de "Para revisar" usan su id r1, r2…).
+  // Lo que Andy aprobó (OK) y ya se procesó queda en `archivado`: sale de la
+  // vista sin mover la numeración de los demás puntos ni de sus hilos.
+  const archivado = (inf, clave) => !!(inf.archivado || {})[clave];
+  function clavesDe(inf) {
+    const k = [];
+    (inf.items || []).forEach((it, i) => k.push("item:" + (it.codigo || i)));
+    (inf.decisiones || []).forEach((_, i) => k.push("decision:" + i));
+    (inf.pendiente || []).forEach((_, i) => k.push("pendiente:" + i));
+    if (inf.verificacion) k.push("verificacion");
+    (inf.extras || []).forEach((ex, j) => (ex.lineas || []).forEach((_, i) => k.push("extra" + j + ":" + i)));
+    (inf.revisar || []).forEach((r) => k.push(r.id));
+    return k.filter((x) => !archivado(inf, x));
+  }
+  const okDe = (inf, clave) => !!(inf.revisado || {})[clave];
+  const IMPACTO = { alto: "Impacto alto", medio: "Impacto medio", bajo: "Impacto bajo" };
+  const ESFUERZO = { bajo: "Arreglo rápido", medio: "Esfuerzo medio", alto: "Trabajo grande" };
+  function metaItem(it) {
+    const w = h("div", { class: "meta-it" });
+    if (it.impacto) w.append(h("span", { class: "imp " + it.impacto, text: IMPACTO[it.impacto] || it.impacto }));
+    if (it.esfuerzo) w.append(h("span", { class: "chip", text: ESFUERZO[it.esfuerzo] || it.esfuerzo }));
+    if (it.tipo) w.append(h("span", { class: "chip", text: it.tipo }));
+    if (it.zona) w.append(h("span", { class: "chip", title: "Código de zona en MAPA.md", text: it.zona }));
+    return w.childNodes.length ? w : null;
+  }
+  function checkOk(inf, clave, texto) {
+    const id = "ok-" + (inf.id + "-" + clave).replace(/[^A-Za-z0-9_-]/g, "-");
+    const si = okDe(inf, clave);
+    const inp = h("input", { type: "checkbox", id, checked: si, "aria-label": "Marcar como " + (inf.okTexto || "OK") });
+    inp.addEventListener("change", () => escribir(() => S.db.doc("informes/" + inf.id).update({ revisado: { [clave]: inp.checked } })));
+    return h("label", { class: "ok-chk" + (si ? " si" : ""), for: id }, inp, texto === "" ? "" : (texto || inf.okTexto || "OK"));
+  }
+
+  // El informe del lote para esta sección, con su lista para revisar.
+  function panelInforme(inf) {
+    const p = h("section", { class: "panel inf" });
+    p.append(h("div", { class: "inf-cab" }, h("h3", { text: inf.titulo || "Informe" }),
+      h("span", { class: "aux", text: "Lote " + inf.lote + (inf.publicado ? " · publicado el " + inf.publicado : "") }),
+      inf.docUrl ? h("a", { href: inf.docUrl, target: "_blank", rel: "noopener" }, "Abrir el informe completo") : null));
+    if (!clavesDe(inf).length) { p.append(h("p", { class: "inf-lead", text: "Todo lo de este informe quedó en OK. Su registro está en texto en el repo (docs/secciones)." })); return p; }
+    if (inf.lead) p.append(h("p", { class: "inf-lead", text: inf.lead }));
+    const todas = clavesDe(inf), listas = todas.filter((k) => okDe(inf, k)).length;
+    if (todas.length) p.append(h("div", { class: "inf-avance" }, h("span", { class: "progreso", "aria-hidden": "true" }, h("span", { style: "width:" + Math.round(listas / todas.length * 100) + "%" })), h("span", { class: "num", text: listas + " de " + todas.length + " puntos en " + (inf.okTexto || "OK") })));
+    if (inf.comoUsar) p.append(h("p", { class: "como", style: "margin:0", text: inf.comoUsar }));
+    const items = inf.items || [];
+    if (items.some((it, i) => !archivado(inf, "item:" + (it.codigo || i)))) {
+      const tb = h("tbody", {});
+      items.forEach((it, i) => {
+        const clave = "item:" + (it.codigo || i);
+        if (archivado(inf, clave)) return;
+        tb.append(h("tr", { class: okDe(inf, clave) ? "ok" : "" }, h("td", { class: "celda-ok" }, checkOk(inf, clave, "")), h("td", { text: it.codigo || "" }), h("td", {}, h("div", { text: it.pedido || "" }), metaItem(it)), h("td", { class: "celda-txt", text: it.hecho || "" }), h("td", { style: "text-align:right" }, botonResponder(inf, clave))));
+        const hilo = hiloDe(inf, clave, (it.codigo ? it.codigo + ": " : "") + (it.hecho || it.pedido || ""));
+        if (hilo) tb.append(h("tr", { class: "fila-hilo" }, h("td", {}), h("td", {}), h("td", { colspan: "3" }, hilo)));
+      });
+      p.append(h("div", { class: "inf-tabla" }, h("table", {}, h("thead", {}, h("tr", {}, h("th", { text: inf.okTexto || "OK" }), h("th", { text: "ID" }), h("th", { text: (inf.columnas || [])[0] || "Pedido" }), h("th", { text: (inf.columnas || [])[1] || "Qué se hizo y por qué" }), h("th", { text: "" }))), tb)));
+    }
+    const lista = (tit, xs, tipo) => (xs || []).some((_, i) => !archivado(inf, tipo + ":" + i)) ? h("div", { class: "inf-bloque" }, h("h4", { text: tit }), h("ul", {}, xs.map((x, i) => {
+      if (archivado(inf, tipo + ":" + i)) return null;
+      const clave = tipo + ":" + i;
+      return h("li", { class: okDe(inf, clave) ? "ok" : "" }, h("div", { class: "linea" }, h("span", { text: x }), h("span", { class: "fila", style: "gap:4px" }, checkOk(inf, clave), botonResponder(inf, clave))), hiloDe(inf, clave, x));
+    }))) : null;
+    p.append(lista("Decisiones", inf.decisiones, "decision"), lista("Pendiente", inf.pendiente, "pendiente"));
+    if (inf.verificacion && !archivado(inf, "verificacion")) p.append(h("div", { class: "inf-bloque" }, h("div", { class: "linea fila", style: "justify-content:space-between" }, h("h4", { style: "margin:0", text: "Lo que atrapó la verificación" }), h("span", { class: "fila", style: "gap:4px" }, checkOk(inf, "verificacion"), botonResponder(inf, "verificacion"))), h("p", { text: inf.verificacion, style: okDe(inf, "verificacion") ? "color:var(--muted)" : null }), hiloDe(inf, "verificacion", inf.verificacion)));
+    (inf.extras || []).forEach((ex, j) => p.append(lista(ex.titulo, ex.lineas, "extra" + j)));
+    const rev = (inf.revisar || []).filter((r) => !archivado(inf, r.id));
+    if (rev.length) {
+      const hechos = rev.filter((r) => (inf.revisado || {})[r.id]).length;
+      const box = h("div", { class: "revisar" });
+      rev.forEach((r) => {
+        const ok = !!(inf.revisado || {})[r.id];
+        const idc = "rev-" + inf.id + "-" + r.id;
+        const chk = h("input", { type: "checkbox", id: idc, checked: ok });
+        chk.addEventListener("change", () => escribir(() => S.db.doc("informes/" + inf.id).update({ revisado: { [r.id]: chk.checked } })));
+        box.append(h("div", { class: "rev-wrap" },
+          h("div", { class: "rev-item" + (ok ? " hecho" : "") }, chk, h("label", { for: idc, text: r.texto }), botonResponder(inf, "revisar:" + r.id)),
+          hiloDe(inf, "revisar:" + r.id, r.texto)));
+      });
+      p.append(h("div", { class: "inf-bloque" },
+        h("div", { class: "fila", style: "margin-bottom:6px" }, h("h4", { style: "margin:0", text: "Para revisar y corregir" }), h("span", { class: "progreso", "aria-hidden": "true" }, h("span", { style: "width:" + Math.round(hechos / rev.length * 100) + "%" })), h("span", { class: "num", style: "color:var(--muted);font-size:12.5px", text: hechos + " de " + rev.length + " revisados" })),
+        box));
+    }
+    return p;
+  }
+
+  // Responder en el hilo de una nota: guarda el turno, mueve la respuesta
+  // vigente del agente al hilo y deja la nota en borrador para el próximo envío.
+  function composerRespuestaNota(n) {
+    const taId = "resp-nota-" + n.id;
+    const ta = campoConFotos(h("textarea", { id: taId, placeholder: "¿Qué hay que corregir o qué falta? (puedes pegar fotos)" }));
+    const guardar = () => {
+      const t = ta.value.trim();
+      if (ocupado(taId)) { toast("Espera a que termine de subir la foto."); return; }
+      if (!t && !(S.adjuntos[taId] || []).length) { ta.focus(); return; }
+      const hilo = (n.hilo || []).slice();
+      if (n.respuesta) hilo.push({ quien: "agente", texto: n.respuesta, fecha: n.actualizadoEn || ahora() });
+      hilo.push({ quien: "andy", texto: t, imagenes: tomarAdjuntos(taId), fecha: ahora(), autor: S.yo || null });
+      S.respondiendoNota = null;
+      escribir(() => S.db.doc("notas/" + n.id).update({ hilo, respuesta: null, estado: "borrador", envioId: null, actualizadoEn: ahora() }), "Respuesta guardada: la nota quedó en borrador y va en el próximo envío");
+      render();
+    };
+    ta.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) guardar(); });
+    return h("div", { class: "resp-nota" }, ta, zonaFotos(taId),
+      h("div", { class: "fila" }, botonAdjuntar(taId), h("span", { class: "esp" }),
+        h("button", { class: "btn-txt", onclick: () => { delete S.adjuntos[taId]; S.respondiendoNota = null; render(); } }, "Cancelar"),
+        h("button", { class: "btn btn-prim", onclick: guardar }, n.estado === "borrador" ? "Agregar al hilo" : "Guardar y pasar a borrador")));
+  }
+
+  function panelNovedades(s) {
+    const p = h("section", { class: "panel" });
+    const lista = S.novedades.filter((n) => n.seccion === s.id);
+    p.append(h("div", { class: "panel-tit" }, h("h3", { text: "Novedades" }), h("span", { class: "aux", text: lista.length ? "Lo que cambió en esta sección, lote por lote." : "Sin novedades registradas todavía." })));
+    const lotes = {};
+    lista.forEach((n) => { (lotes[n.lote] = lotes[n.lote] || []).push(n); });
+    Object.keys(lotes).sort().reverse().forEach((lote) => {
+      const items = lotes[lote];
+      const box = h("div", { class: "lote" }, h("h4", { text: "Lote " + lote + (items[0].publicado ? " · publicado el " + items[0].publicado : "") }));
+      const l = h("div", {});
+      items.forEach((n) => l.append(h("div", { class: "nov" }, h("code", { text: n.codigo || "" }), h("div", {}, h("div", { class: "tt", text: n.titulo }), n.detalle ? h("div", { class: "dd", text: n.detalle }) : null))));
+      box.append(l); p.append(box);
+    });
+    return p;
+  }
+
+  // ---------- Proyecto: pendientes, progreso y aprendizajes ----------
+  // Lo que antes vivia en documentos sueltos (CONTEXTO, planes, memoria de
+  // Claude) queda aqui en tres colecciones: `pendientes` (quien, estado,
+  // origen), `hitos` (fases del plan y REVs) y `aprendizajes` (trampas y
+  // decisiones por tema). Andy marca hechos, agrega y responde; Claude lo lee
+  // en la siguiente pasada.
+  const QUIEN = { andy: "Tuyos", claude: "De Claude", juntos: "De los dos" };
+  const PRIO = { alta: "Prioridad alta", media: "Prioridad media", baja: "Prioridad baja" };
+  const ESTADO_FASE = { hecho: "Hecha", en_curso: "En curso", pendiente: "Por hacer" };
+  const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  const fechaCorta = (iso) => { const p = String(iso || "").split("-"); return p.length === 3 ? (+p[2]) + "/" + p[1] : ""; };
+
+  function panelProyecto() {
+    const w = h("div", { style: "display:flex;flex-direction:column;gap:16px" });
+    const abiertos = S.pendientes.filter((p) => p.estado !== "hecho");
+    const revs = S.hitos.filter((x) => x.tipo === "hito" && x.rev).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+    const ult = revs[0];
+    w.append(h("div", { class: "mesa-cab" }, h("div", {}, h("h2", { text: "Proyecto CabriCoach" }),
+      h("p", { text: "Lo que falta, cómo vamos y lo que aprendimos construyendo la app. Marca lo que ya hiciste, agrega lo que se te ocurra y responde donde quieras que cambie algo: va en el próximo envío." }))));
+    w.append(h("div", { class: "proy-res" },
+      h("div", { class: "cifra" }, h("b", { text: ult ? ult.rev.replace("REV ", "") : "–" }), h("span", { text: ult ? "REV en producción · " + fechaCorta(ult.fecha) : "REV en producción" })),
+      h("div", { class: "cifra" }, h("b", { text: String(abiertos.filter((p) => p.quien === "andy").length) }), h("span", { text: "pendientes tuyos" })),
+      h("div", { class: "cifra" }, h("b", { text: String(abiertos.filter((p) => p.quien !== "andy").length) }), h("span", { text: "de Claude o de los dos" })),
+      h("div", { class: "cifra" }, h("b", { text: String(S.aprendizajes.length) }), h("span", { text: "aprendizajes guardados" }))));
+    const tabs = [["pendientes", "Pendientes (" + abiertos.length + ")"], ["progreso", "Progreso"], ["aprendizajes", "Aprendizajes (" + S.aprendizajes.length + ")"]];
+    w.append(h("div", { class: "pestanas", role: "tablist" }, tabs.map(([k, t]) => h("button", { class: "pestana", role: "tab", "aria-selected": S.proyTab === k ? "true" : "false", onclick: () => { S.proyTab = k; S.agregando = null; guardarVista(); render(); } }, t))));
+    if (S.proyTab === "progreso") w.append(panelProgreso());
+    else if (S.proyTab === "aprendizajes") w.append(panelAprendizajes());
+    else w.append(panelPendientes());
+    return w;
+  }
+
+  function formAgregar(tipo) {
+    const box = h("div", { class: "panel composer", style: "margin-bottom:12px" });
+    const ti = h("input", { type: "text", id: "nuevo-" + tipo + "-titulo", placeholder: tipo === "pend" ? "Qué hay que hacer" : "El aprendizaje en una frase" });
+    const tx = h("textarea", { id: "nuevo-" + tipo + "-texto", placeholder: tipo === "pend" ? "Detalle (opcional)" : "Por qué importa o cómo se hace", style: "min-height:60px" });
+    const sel = tipo === "pend" ? selectDe("nuevo-pend-quien", QUIEN, "andy") : selectDe("nuevo-apr-tema", Object.fromEntries([...new Set(S.aprendizajes.map((a) => a.tema))].map((x) => [x, x])), S.aprendizajes[0] ? S.aprendizajes[0].tema : "");
+    const guardar = () => {
+      const t = ti.value.trim(); if (!t) { ti.focus(); return; }
+      S.agregando = null;
+      if (tipo === "pend") escribir(() => S.db.collection("pendientes").doc().set({ titulo: t, detalle: tx.value.trim() || null, quien: sel.value, estado: "abierto", prioridad: "media", origen: "Agregado por Andy en la mesa", orden: 900 + S.pendientes.length, creadoEn: ahora(), autor: S.yo || null }), "Pendiente agregado");
+      else escribir(() => S.db.collection("aprendizajes").doc().set({ titulo: t, texto: tx.value.trim() || null, tema: sel.value || "Otros", fuente: "Andy en la mesa", orden: 900 + S.aprendizajes.length, creadoEn: ahora(), autor: S.yo || null }), "Aprendizaje guardado");
+      render();
+    };
+    ti.addEventListener("keydown", (e) => { if (e.key === "Enter") guardar(); });
+    box.append(ti, tx, h("div", { class: "fila" }, sel, h("span", { class: "esp" }), h("button", { class: "btn-txt", onclick: () => { S.agregando = null; render(); } }, "Cancelar"), h("button", { class: "btn btn-prim", onclick: guardar }, "Guardar")));
+    return box;
+  }
+
+  function tarjetaPendiente(p) {
+    const hecho = p.estado === "hecho";
+    const card = h("article", { class: "pend" + (hecho ? " hecho" : "") + (p.prioridad === "alta" && !hecho ? " prio-alta" : "") });
+    const idc = "pend-" + p.id;
+    const chk = h("input", { type: "checkbox", id: idc, checked: hecho, "aria-label": "Marcar como hecho: " + (p.titulo || "") });
+    chk.addEventListener("change", () => escribir(() => S.db.doc("pendientes/" + p.id).update(chk.checked ? { estado: "hecho", hechoEn: ahora(), hechoPor: S.yo || null } : { estado: "abierto", hechoEn: null }), chk.checked ? "Marcado como hecho" : "Reabierto"));
+    const c = h("div", { class: "pend-c" }, h("label", { class: "pend-t", for: idc, text: p.titulo || "" }));
+    if (p.detalle) c.append(h("details", {}, h("summary", { text: "Detalle" }), h("div", { class: "det", text: p.detalle })));
+    c.append(h("div", { class: "chips" },
+      p.prioridad && p.prioridad !== "media" ? h("span", { class: "chip", text: PRIO[p.prioridad] || p.prioridad }) : null,
+      p.origen ? h("span", { class: "chip", text: p.origen }) : null,
+      hecho && p.hechoEn ? h("span", { class: "num", text: "Hecho el " + fecha(p.hechoEn) }) : null));
+    const clave = "pend:" + p.id;
+    const ns = S.notas.filter((n) => n.ancla && n.ancla.pendiente === p.id && n.estado !== "descartada");
+    ns.forEach((n) => c.append(tarjetaNota(n, 0, true)));
+    if (S.respondiendo === clave) {
+      const ta = campoConFotos(h("textarea", { id: "resp-" + idc, placeholder: "Qué quieres que pase con esto (puedes pegar una foto)" }));
+      const guardar = () => {
+        const t = ta.value.trim();
+        if (ocupado(ta.id)) { toast("Espera a que termine de subir la foto."); return; }
+        if (!t && !(S.adjuntos[ta.id] || []).length) { ta.focus(); return; }
+        S.respondiendo = null;
+        nuevaNota({ texto: t, tipo: "ajuste", seccion: "general", ancla: { pendiente: p.id, clave, cita: String(p.titulo || "").slice(0, 400) }, imagenes: tomarAdjuntos(ta.id) });
+        render();
+      };
+      ta.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) guardar(); });
+      c.append(h("div", { class: "resp-form" }, ta, zonaFotos(ta.id), h("div", { class: "fila" }, botonAdjuntar(ta.id), h("span", { class: "esp" }),
+        h("button", { class: "btn-txt", onclick: () => { delete S.adjuntos[ta.id]; S.respondiendo = null; render(); } }, "Cancelar"),
+        h("button", { class: "btn btn-prim", onclick: guardar }, "Guardar respuesta"))));
+    } else if (!hecho) {
+      c.append(h("div", { class: "fila" }, h("button", { class: "btn-resp", onclick: () => { S.respondiendo = clave; render(); setTimeout(() => { const x = document.getElementById("resp-" + idc); if (x) x.focus(); }, 0); } }, "Responder", ns.length ? h("span", { class: "num", text: " · " + ns.length }) : null)));
+    }
+    card.append(chk, c);
+    return card;
+  }
+
+  function panelPendientes() {
+    const p = h("section", { class: "panel" });
+    p.append(h("div", { class: "panel-tit" }, h("h3", { text: "Pendientes" }), h("span", { class: "aux", text: "Lo tuyo primero: casi todo lo de Claude espera a que decidas algo de aquí." }), h("span", { class: "esp", style: "flex:1" }),
+      h("button", { class: "btn", onclick: () => { S.agregando = S.agregando === "pend" ? null : "pend"; render(); } }, S.agregando === "pend" ? "Cerrar" : "Agregar pendiente")));
+    if (S.agregando === "pend") p.append(formAgregar("pend"));
+    if (!S.pendientes.length) { p.append(h("div", { class: "vacio", text: "Todavía no hay pendientes cargados. Claude los siembra desde los documentos del proyecto." })); return p; }
+    const orden = { alta: 0, media: 1, baja: 2 };
+    ["andy", "juntos", "claude"].forEach((q) => {
+      const g = S.pendientes.filter((x) => x.estado !== "hecho" && (x.quien || "claude") === q).sort((a, b) => (orden[a.prioridad] ?? 1) - (orden[b.prioridad] ?? 1) || (a.orden || 0) - (b.orden || 0));
+      if (!g.length) return;
+      p.append(h("div", { class: "grupo-pend" }, h("span", { class: "punto", style: "background:" + (q === "andy" ? "var(--accent)" : q === "juntos" ? "var(--gold)" : "var(--st-borrador)") }), QUIEN[q] + " · " + g.length));
+      g.forEach((x) => p.append(tarjetaPendiente(x)));
+    });
+    const hechos = S.pendientes.filter((x) => x.estado === "hecho");
+    if (hechos.length) p.append(h("details", { style: "margin-top:16px" }, h("summary", { class: "grupo-pend", style: "cursor:pointer;display:list-item" }, "Hechos · " + hechos.length), ...hechos.map(tarjetaPendiente)));
+    return p;
+  }
+
+  function panelProgreso() {
+    const w = h("div", { style: "display:flex;flex-direction:column;gap:16px" });
+    const fases = S.hitos.filter((x) => x.tipo === "fase");
+    if (fases.length) {
+      const grupos = {};
+      fases.forEach((f) => { (grupos[f.plan || "Plan"] = grupos[f.plan || "Plan"] || []).push(f); });
+      Object.entries(grupos).forEach(([plan, fs]) => {
+        const hechas = fs.filter((f) => f.estado === "hecho").length;
+        w.append(h("section", { class: "panel" }, h("div", { class: "panel-tit" }, h("h3", { text: plan }), h("span", { class: "progreso", "aria-hidden": "true" }, h("span", { style: "width:" + Math.round(hechas / fs.length * 100) + "%" })), h("span", { class: "aux num", text: hechas + " de " + fs.length })),
+          h("div", { class: "fases" }, fs.map((f) => h("div", { class: "fase " + (f.estado || "pendiente") }, h("b", { text: f.titulo }), h("span", { class: "est", text: ESTADO_FASE[f.estado] || f.estado || "" }), f.detalle ? h("span", { style: "color:var(--muted)", text: f.detalle }) : null)))));
+      });
+    }
+    const hs = S.hitos.filter((x) => x.tipo === "hito").sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)) || (b.orden || 0) - (a.orden || 0));
+    const p = h("section", { class: "panel" }, h("div", { class: "panel-tit" }, h("h3", { text: "Así ha crecido" }), h("span", { class: "aux", text: hs.length ? "De lo más reciente a lo más viejo. El detalle de cada REV está en el historial de git." : "" })));
+    if (!hs.length) { p.append(h("div", { class: "vacio", text: "Todavía no hay hitos cargados." })); w.append(p); return w; }
+    const tl = h("div", { class: "linea-t" });
+    let mes = "";
+    hs.forEach((x) => {
+      const [y, m] = String(x.fecha).split("-");
+      const nm = MESES[(+m || 1) - 1] + " de " + y;
+      if (nm !== mes) { mes = nm; tl.append(h("div", { class: "mes-t", text: nm.charAt(0).toUpperCase() + nm.slice(1) })); }
+      tl.append(h("div", { class: "hito" }, h("div", {}, h("div", { class: "f", text: fechaCorta(x.fecha) }), x.rev ? h("div", { class: "rev", text: x.rev }) : null),
+        h("div", {}, h("div", { class: "tt", text: x.titulo }), x.detalle ? h("div", { class: "dd", text: x.detalle }) : null)));
+    });
+    p.append(tl); w.append(p);
+    return w;
+  }
+
+  function panelAprendizajes() {
+    const p = h("section", { class: "panel" });
+    const temas = [...new Set(S.aprendizajes.map((a) => a.tema || "Otros"))];
+    const q = h("input", { type: "text", id: "apr-q", placeholder: "Buscar en los aprendizajes", value: S.aprQ || "", style: "flex:1;min-width:160px" });
+    q.addEventListener("input", () => { S.aprQ = q.value; render(); });
+    const sel = selectDe("apr-tema", Object.assign({ "": "Todos los temas" }, Object.fromEntries(temas.map((x) => [x, x]))), S.aprTema || "");
+    sel.addEventListener("change", () => { S.aprTema = sel.value; render(); });
+    p.append(h("div", { class: "panel-tit" }, h("h3", { text: "Aprendizajes" }), h("span", { class: "esp", style: "flex:1" }),
+      h("button", { class: "btn", onclick: () => { S.agregando = S.agregando === "apr" ? null : "apr"; render(); } }, S.agregando === "apr" ? "Cerrar" : "Agregar aprendizaje")));
+    p.append(h("p", { style: "margin:-4px 0 12px;color:var(--muted);font-size:13px", text: "Las trampas que ya nos mordieron y las decisiones que no se deducen del código. Claude los lee antes de tocar la app." }));
+    if (S.agregando === "apr") p.append(formAgregar("apr"));
+    p.append(h("div", { class: "fila", style: "margin-bottom:6px" }, q, sel));
+    const txt = (S.aprQ || "").trim().toLowerCase();
+    const lista = S.aprendizajes.filter((a) => (!S.aprTema || (a.tema || "Otros") === S.aprTema) && (!txt || ((a.titulo || "") + " " + (a.texto || "")).toLowerCase().includes(txt)));
+    if (!lista.length) { p.append(h("div", { class: "vacio", text: S.aprendizajes.length ? "Nada coincide con esa búsqueda." : "Todavía no hay aprendizajes cargados." })); return p; }
+    temas.forEach((tm) => {
+      const g = lista.filter((a) => (a.tema || "Otros") === tm);
+      if (!g.length) return;
+      p.append(h("div", { class: "apr-tema" }, tm, h("span", { class: "n", text: String(g.length) })));
+      g.forEach((a) => p.append(h("div", { class: "apr" }, h("b", { text: a.titulo }), a.texto ? h("div", { style: "white-space:pre-wrap", text: a.texto }) : null, a.fuente ? h("div", { class: "fte", text: a.fuente }) : null)));
+    });
+    return p;
+  }
+
+  function panelEnvios() {
+    const p = h("section", { class: "panel" }, h("div", { class: "panel-tit" }, h("h3", { text: "Envíos a revisión" })));
+    S.envios.slice(0, 10).forEach((e) => {
+      const n = (e.notas || []).length;
+      p.append(h("div", { class: "nov" }, h("code", { text: fecha(e.creadoEn) }), h("div", {}, h("div", { class: "tt", text: n + (n === 1 ? " nota" : " notas") + " · " + ({ pendiente: "Pendiente", en_trabajo: "En trabajo", para_revisar: "Para revisar", cerrado: "Cerrado" }[e.estado] || e.estado) }), e.resumen ? h("div", { class: "dd", text: e.resumen }) : null)));
+    });
+    return p;
+  }
+
+  function panelEnvio() {
+    const b = borradores();
+    const porSec = {};
+    b.forEach((n) => { (porSec[n.seccion] = porSec[n.seccion] || []).push(n); });
+    const box = h("section", { class: "envio", role: "dialog", "aria-label": "Confirmar envío" }, h("h3", { text: "Enviar " + b.length + (b.length === 1 ? " nota" : " notas") + " a revisión" }),
+      h("p", { style: "margin:0;color:var(--muted)", text: "Falta un paso: pulsa Enviar aquí abajo. El agente las lee en orden de sección, trabaja y responde en cada una. Después del envío ya no se editan; puedes devolverlas a borrador si cambias de idea." }));
+    const ul = h("ul", {});
+    S.secciones.forEach((s) => { const g = porSec[s.id]; if (g) ul.append(h("li", {}, h("b", { style: "font-weight:500", text: s.nombre }), " · " + g.length)); });
+    const resumen = h("textarea", { id: "envio-resumen", placeholder: "Opcional: una línea para el agente sobre este envío (prioridad, contexto)…", style: "min-height:56px" });
+    box.append(ul, resumen, h("div", { class: "fila" }, h("span", { class: "esp" }), h("button", { class: "btn-txt", onclick: () => { S.confirmarEnvio = false; render(); } }, "Cancelar"),
+      h("button", { class: "btn btn-prim", onclick: async () => {
+        const ids = b.map((n) => n.id);
+        const ref = S.db.collection("envios").doc();
+        S.confirmarEnvio = false;
+        await escribir(async () => {
+          await ref.set({ creadoEn: ahora(), autor: S.yo || null, notas: ids, estado: "pendiente", resumen: resumen.value.trim() || null });
+          await Promise.all(ids.map((id) => S.db.doc("notas/" + id).update({ estado: "enviada", envioId: ref.id, actualizadoEn: ahora() })));
+        }, "Enviado a revisión: el agente ya lo puede leer");
+      } }, "Enviar")));
+    return box;
+  }
+
+  // Ocultar y mostrar el menú de secciones (se recuerda en este navegador).
+  let navOculto = false;
+  try { navOculto = localStorage.getItem("revcabri:nav") === "oculto"; } catch (e) {}
+  const pintarNav = () => {
+    $(".app").classList.toggle("sin-nav", navOculto);
+    const b = $("#btn-nav"), t = navOculto ? "Mostrar secciones" : "Ocultar secciones";
+    b.setAttribute("aria-pressed", navOculto ? "true" : "false"); b.title = t; b.setAttribute("aria-label", t);
+  };
+  $("#btn-nav").addEventListener("click", () => {
+    navOculto = !navOculto; pintarNav();
+    try { localStorage.setItem("revcabri:nav", navOculto ? "oculto" : "visible"); } catch (e) {}
+  });
+  pintarNav();
+
+  $("#btn-enviar").addEventListener("click", () => { S.confirmarEnvio = true; render(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && S.confirmarEnvio) { S.confirmarEnvio = false; render(); } });
+  // Pegar: en un campo de nota, una imagen sin texto se adjunta como foto
+  // (con texto, se pega el texto). Fuera de los campos, la imagen se agrega
+  // como captura de la sección.
+  document.addEventListener("paste", (e) => {
+    if (!S.sec) return;
+    const items = [...(e.clipboardData ? e.clipboardData.items : [])];
+    const img = items.find((i) => i.kind === "file" && i.type.startsWith("image/"));
+    const hayTexto = items.some((i) => i.type === "text/plain") && (e.clipboardData.getData("text/plain") || "").trim() !== "";
+    const campo = e.target.closest && e.target.closest("textarea[data-fotos]");
+    if (campo) {
+      if (img && !hayTexto) { e.preventDefault(); subirFotoNota(img.getAsFile(), campo.id); }
+      return;
+    }
+    if (e.target.closest && e.target.closest("textarea, input")) return;
+    if (S.vistaManual || S.vistaEstado) return;
+    if (img && S.assets) { e.preventDefault(); subirCaptura(img.getAsFile()); }
+  });
+  iniciar();
+})();
+</script>

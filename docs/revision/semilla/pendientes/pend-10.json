@@ -1,0 +1,10 @@
+{
+ "titulo": "Quitar docs/PROYECTO.md",
+ "detalle": "Es un archivo vacío desde el 10/08.",
+ "quien": "claude",
+ "prioridad": "baja",
+ "estado": "abierto",
+ "origen": "Análisis del 14/10",
+ "orden": 9,
+ "creadoEn": "2026-10-14T08:00:00.000Z"
+}

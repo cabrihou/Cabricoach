@@ -1,0 +1,9 @@
+{
+ "seccion": "entrenar",
+ "codigo": "EN02",
+ "titulo": "Borrar una serie se puede deshacer",
+ "detalle": "Con la X o deslizando.",
+ "lote": "REV 223 · en local, sin deploy",
+ "publicado": null,
+ "orden": 114
+}

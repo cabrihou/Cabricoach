@@ -1,0 +1,48 @@
+{
+ "seccion": "retos",
+ "lote": "2026-10-14",
+ "titulo": "Análisis UX y UI · 14 de octubre",
+ "lead": "El versus de los cabritos es el momento con más carácter de la app. Son ajustes de lectura.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Marca Va en lo que quieres que haga. Usa Responder si lo quieres distinto o tienes una pregunta: va en el próximo envío. Lo que no marques se queda aquí.",
+ "items": [
+  {
+   "codigo": "RE01",
+   "zona": "R1, R2",
+   "tipo": "Interfaz",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "El marcador va apretado («Cami ★7 ★2 ★1 5 – 2 ★2Andrés»), con nombres cortados y un «VS» fantasma detrás del título.",
+   "hecho": "Marcador en dos líneas: avatares y puntos grandes arriba, estrellas debajo; sin el VS de fondo."
+  },
+  {
+   "codigo": "RE02",
+   "zona": "R2",
+   "tipo": "Texto",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "Textos crípticos: «semana del 12/10 · 4 D», «bonus entrenos: 1 · 1», «puntos (máx 49)».",
+   "hecho": "«Faltan 4 días», «Entrenos bonus: Cami 1, Andrés 1», «Cami lidera 5 a 2 (máximo 49)»."
+  },
+  {
+   "codigo": "RE03",
+   "zona": "R1",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Retos solo se encuentra manteniendo oprimido el avatar o si aparece una tarjeta en el Inicio.",
+   "hecho": "Entrada en el menú del avatar (G01)."
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

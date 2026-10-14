@@ -1,0 +1,7 @@
+{
+ "tema": "El archivo",
+ "titulo": "Nunca buscar con grep amplio sobre el archivo",
+ "texto": "Tiene fuentes en base64 en líneas muy largas: un grep amplio se cuelga o encuentra basura. Buscar con python3 limpiando antes los data-URI con re.sub(r'data:[a-z0-9/+.-]+;base64,[A-Za-z0-9+/=]+','data:B',t). La clase debe incluir dígitos o woff2 no se limpia.",
+ "fuente": "CLAUDE.md del proyecto",
+ "orden": 0
+}

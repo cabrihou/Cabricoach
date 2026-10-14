@@ -1,0 +1,9 @@
+{
+ "seccion": "general",
+ "codigo": "G02",
+ "titulo": "La isla solo aparece con series marcadas",
+ "detalle": "Mirar una rutina ya no deja la isla pegada, y con la isla visible el pie de cada vista tiene espacio.",
+ "lote": "REV 223 · en local, sin deploy",
+ "publicado": null,
+ "orden": 100
+}

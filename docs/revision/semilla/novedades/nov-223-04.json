@@ -1,0 +1,9 @@
+{
+ "seccion": "general",
+ "codigo": "G08",
+ "titulo": "Importar un respaldo pide confirmación",
+ "detalle": "Bloquea el respaldo del otro usuario, muestra un resumen, no toca el mercado compartido ni el PIN y deja Deshacer.",
+ "lote": "REV 223 · en local, sin deploy",
+ "publicado": null,
+ "orden": 103
+}

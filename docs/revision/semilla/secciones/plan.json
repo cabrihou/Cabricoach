@@ -1,0 +1,35 @@
+{
+ "orden": 6,
+ "nombre": "Plan",
+ "descripcion": "Etapas, checkpoints, rescans, creatina y diario de decisiones.",
+ "partes": [
+  {
+   "id": "PL1",
+   "nombre": "PL1 · Semáforo de la semana"
+  },
+  {
+   "id": "PL2",
+   "nombre": "PL2 · Lo que comes"
+  },
+  {
+   "id": "PL3",
+   "nombre": "PL3 · Checkpoints"
+  },
+  {
+   "id": "PL4",
+   "nombre": "PL4 · El plan completo"
+  },
+  {
+   "id": "PL5",
+   "nombre": "PL5 · Rescans"
+  },
+  {
+   "id": "PL6",
+   "nombre": "PL6 · Creatina"
+  },
+  {
+   "id": "PL7",
+   "nombre": "PL7 · Diario de decisiones"
+  }
+ ]
+}

@@ -1,0 +1,7 @@
+{
+ "tema": "Probar y verificar",
+ "titulo": "Sembrar datos para ver la app de verdad",
+ "texto": "Con el estado vacío muchas pantallas no muestran nada. ?demo=1 da 18 días de Andrés sin guardar; el análisis del 14/10 sembró 70 días de peso, pasos, agua, comidas, entrenos, medidas y Hyrox para los dos (herramientas/sembrar-datos-prueba.js, con el ayudante de CDP en herramientas/cdp_pruebas.py).",
+ "fuente": "Análisis del 14/10",
+ "orden": 13
+}

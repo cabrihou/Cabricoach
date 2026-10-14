@@ -1,0 +1,10 @@
+{
+ "titulo": "Revisar el análisis y marcar Va en lo que quieres",
+ "detalle": "Cada sección tiene su informe con hallazgo, propuesta, impacto y esfuerzo. Lo que marques Va entra al primer lote; lo que respondas, lo ajusto antes de tocar la app.",
+ "quien": "andy",
+ "prioridad": "alta",
+ "estado": "abierto",
+ "origen": "Análisis del 14/10",
+ "orden": 0,
+ "creadoEn": "2026-10-14T08:00:00.000Z"
+}

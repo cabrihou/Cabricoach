@@ -23,6 +23,9 @@
   --card:#15181C; --card2:#1B1F23;
   --ink:#F2F5F4; --ink2:#AEB6B3; --smoke:#828C89;
   --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.05);
+  /* REV 223: borde de los controles (campos, series, casillas) a 3:1 contra la tarjeta,
+     el minimo de WCAG 1.4.11. --line queda para separadores y tarjetas */
+  --line-ctl:rgba(255,255,255,.34);
   /* rampa de "levante": el RGB con el que se hacen pistas, hairlines y superficies
      hundidas por transparencia. En oscuro es blanco (aclara); en claro se invierte a
      tinta (oscurece). Lo que deba seguir blanco SIEMPRE (sobre fotos o sobre rellenos
@@ -59,6 +62,7 @@ html[data-tema=claro]{
   --card:#FCFCFB; --card2:#FFFFFF;
   --ink:#1A2026; --ink2:#49525A; --smoke:#6C757D;
   --line:rgba(15,23,32,.11); --line2:rgba(15,23,32,.07);
+  --line-ctl:rgba(15,23,32,.48);
   --lift:15,23,32;
   --dim:#5D666E;
   --shadow:0 8px 24px rgba(15,23,32,.08);
@@ -215,7 +219,7 @@ a{color:inherit}
 .btn.ghost{border-color:var(--line);color:var(--ink2);background:transparent}
 .btn[disabled]{opacity:.4;pointer-events:none}
 
-.in{width:100%;background:var(--paper2);border:1px solid var(--line);color:var(--ink);padding:11px 12px;
+.in{width:100%;background:var(--paper2);border:1px solid var(--line-ctl);color:var(--ink);padding:11px 12px;
   font:500 16px var(--ui);border-radius:var(--r-sm);-webkit-appearance:none;appearance:none}
 .in[inputmode="decimal"],.in[inputmode="numeric"],input[type="time"].in{font:500 16px var(--mono);font-variant-numeric:tabular-nums}
 .in::placeholder,.in[inputmode]::placeholder{font-family:var(--ui);font-weight:500;letter-spacing:0}
@@ -296,7 +300,7 @@ button.chip::after,[role=button].chip::after{content:'';position:absolute;left:0
 .settbl.thead span:nth-child(2){padding-left:2px}
 .settbl .in{min-height:34px;padding:6px 4px}
 .settbl.srow.done .in{background:rgba(var(--acc-rgb),.06);border-color:rgba(var(--acc-rgb),.25);color:var(--ink2)}
-.settbl .okbtn2{width:100%;height:34px;border:1.5px solid var(--line);border-radius:9px;background:var(--card2);color:var(--smoke);display:flex;align-items:center;justify-content:center}
+.settbl .okbtn2{width:100%;height:34px;border:1.5px solid var(--line-ctl);border-radius:9px;background:var(--card2);color:var(--smoke);display:flex;align-items:center;justify-content:center}
 .settbl.srow.done .okbtn2{background:var(--grad);color:var(--onmint);border-color:transparent}
 .settbl .delset{width:26px;height:34px;border:none;background:none;padding:0;border-radius:8px;color:var(--smoke);opacity:.5;display:flex;align-items:center;justify-content:center;transition:opacity .15s,color .15s,background .15s}
 .settbl .delset:active{opacity:1;color:#FF5257;background:rgba(255,82,87,.14)}
@@ -549,16 +553,32 @@ table.tb .r{text-align:right}
 .deset .in{width:64px;padding:8px 6px}
 .deset .dex{font:500 12.5px var(--ui);color:var(--smoke)}
 /* F5: checkbox real (marca/desmarca todas las series), ya no chevron */
-.exrow .exrck{flex:none;width:26px;height:26px;border-radius:8px;border:1.5px solid var(--line);color:var(--smoke);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .18s,border-color .18s}
+.exrow .exrck{flex:none;width:26px;height:26px;border-radius:8px;border:1.5px solid var(--line-ctl);color:var(--smoke);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .18s,border-color .18s}
 .exrow .exrck.on{background:var(--grad);color:var(--onmint);border-color:transparent}
 .exrow .exrn,.exrow .exrpk,.exrow .exrck{margin-top:1px}
 /* N2: circulos de verificacion por serie (reemplazan el texto "N/M hechas"). Envuelven
    sin desbordar a 320px (con .many, mas de 6 series, se encogen un poco). Area tocable
    comoda: 28px por defecto, con separacion. */
 .sdotrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.sdot{flex:none;width:28px;height:28px;border-radius:999px;border:1.5px solid var(--line);color:var(--smoke);display:flex;align-items:center;justify-content:center;font:700 11.5px var(--num);font-variant-numeric:tabular-nums;cursor:pointer;transition:background .18s,border-color .18s}
+.sdot{flex:none;width:28px;height:28px;border-radius:999px;border:1.5px solid var(--line-ctl);color:var(--smoke);display:flex;align-items:center;justify-content:center;font:700 11.5px var(--num);font-variant-numeric:tabular-nums;cursor:pointer;transition:background .18s,border-color .18s}
 .sdot.on{background:var(--grad);color:var(--onmint);border-color:transparent}
 .sdotrow.many .sdot{width:24px;height:24px;font-size:10px}
+/* REV 223: area de toque de 44 px (WCAG 2.5.5) sin cambiar el dibujo. El margen
+   horizontal no pasa de la mitad del hueco para no robarle el toque al vecino */
+.sdotrow{gap:10px}
+.sdot,.exrow .exrck,.exrow .exrpk{position:relative}
+.sdot::after{content:'';position:absolute;inset:-8px -5px}
+.sdotrow.many .sdot::after{inset:-10px -5px}
+.exrow .exrck::after{content:'';position:absolute;inset:-9px -3px}
+.exrow .exrpk::after{content:'';position:absolute;inset:-6px -1px}
+/* REV 223: en la caja del Inicio la cifra del agua ("1.000") se salia hacia Medidas y
+   "+250 ML" partia en dos lineas */
+.cktile .wml{font-size:clamp(24px,7vw,30px)}
+.wbtn2.plus{white-space:nowrap}
+.wbtn2.plus small{font:600 12px var(--ui);opacity:.85}
+.cktile .wbtn2.plus svg{display:none}   /* en la caja angosta del Inicio el icono empujaba el "ml" fuera */
+/* REV 223: con la isla de la rutina abierta, el pie de cada vista quedaba tapado */
+body.conisla #view{padding-bottom:170px}
 /* F6/F7: deslizar para borrar. El slot envuelve la fila/cabecera en el momento del
    gesto (ver swdConfirm en el JS); el fondo rojo vive detras, sin moverse, y solo
    la fila de encima se traslada, revelandolo. */
@@ -843,8 +863,10 @@ html[data-tema=claro] .mealprep .mpd{color:#33604C}
   flex:1 1 0;min-width:0;max-width:72px}
 .ckcirc{width:46px;height:46px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--smoke)}
 .ckbadge{position:absolute;top:-5px;right:4px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:var(--paper2);border:1px solid var(--line);font:600 11px/16px var(--mono);text-align:center;color:var(--ink2);z-index:1}
-.cklbl{font:500 10.5px var(--ui);letter-spacing:.03em;color:var(--smoke);max-width:100%;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* REV 223: el rotulo cortaba en "PAS…", "CO…" y "BON…" a 390 px. Ahora puede salir del
+   ancho del nodo (queda centrado bajo su circulo, lejos de las lineas del camino) */
+.cklbl{font:500 10px var(--ui);letter-spacing:0;color:var(--smoke);
+  overflow:visible;white-space:nowrap}
 .cknode.on .ckcirc{border-color:var(--mint);color:var(--mint);background:rgba(var(--acc-rgb),.12);box-shadow:0 0 12px rgba(var(--acc-rgb),.35)}
 .cknode.on .cklbl{color:var(--mint)}
 .cknode.bonus .ckcirc{border-color:rgba(255,201,77,.5);color:var(--gold)}
@@ -2734,7 +2756,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 222';
+const APPREV='REV 223';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -9544,8 +9566,15 @@ const SHARED_KEYS = new Set(['meal','retos','ideas','recipeIdeas','facturas','cu
 const nsKey = k => SHARED_KEYS.has(k) ? 'afc2:shared:'+k : 'afc2:u:'+UID+':'+k;
 const store = {
   get(k, fb){ const nk=nsKey(k); try{ const v = localStorage.getItem(nk); if(v===null) return (nk in MEM)?MEM[nk]:fb; const p=JSON.parse(v); return (p===null||p===undefined)?fb:p; }catch(e){ return (nk in MEM)?MEM[nk]:fb; } },
-  set(k, v){ MEM[nsKey(k)]=v; try{ localStorage.setItem(nsKey(k), JSON.stringify(v)); }catch(e){} },
+  set(k, v){ MEM[nsKey(k)]=v; try{ localStorage.setItem(nsKey(k), JSON.stringify(v)); }catch(e){ avisoAlmacen(); } },
 };
+/* REV 223: si el telefono no deja guardar (sin espacio), antes fallaba en silencio y el dato
+   vivia solo en memoria hasta cerrar la app. Ahora avisa, maximo una vez por minuto. */
+let _avisoAlmacen=0;
+function avisoAlmacen(){
+  if(Date.now()-_avisoAlmacen<60000) return; _avisoAlmacen=Date.now();
+  setTimeout(()=>{ try{ toast('No pude guardar en este teléfono: no queda espacio. Descarga un respaldo en Más y libera espacio'); }catch(e){} }, 50);
+}
 /* migración: datos de la REV 3 (sin usuario) pasan a Andrés; meal pasa a compartido */
 function migrateV3(){
   if(BACKEND!=='ls') return;
@@ -9766,6 +9795,23 @@ function buildNav(){
   }));
 }
 /* isla flotante: si hay una rutina en curso y no la estás viendo, aparece una barra para volver */
+/* REV 223: pantalla encendida durante la sesion de entreno. En el gimnasio se apagaba entre
+   series y el descanso no avisaba con el telefono bloqueado. Si el navegador no lo
+   soporta (o lo niega) no pasa nada: queda como antes. */
+let WAKE=null;
+function wakeSesion(){
+  const quiere=!!(UI.tab==='entrenar' && UI.session && !document.hidden);
+  try{
+    if(quiere && !WAKE && navigator.wakeLock && navigator.wakeLock.request){
+      WAKE='pidiendo';
+      navigator.wakeLock.request('screen').then(l=>{
+        if(!(UI.tab==='entrenar' && UI.session)){ WAKE=null; l.release().catch(()=>{}); return; }
+        WAKE=l; l.addEventListener('release',()=>{ if(WAKE===l) WAKE=null; });
+      }).catch(()=>{ WAKE=null; });
+    } else if(!quiere && WAKE && WAKE!=='pidiendo'){ const l=WAKE; WAKE=null; l.release().catch(()=>{}); }
+  }catch(e){ WAKE=null; }
+}
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) wakeSesion(); });
 function updateIsland(){
   const el=$('#island'); if(!el||!el.classList) return;
   /* el reto de la dominada manda mientras corre: es una sesion cronometrada y hay
@@ -9784,12 +9830,17 @@ function updateIsland(){
       </span>
       <span class="isltxt"><b>${f.tipo==='work'?'Haz '+PU.reps+' dominadas':'Descansa'}</b><i>Ronda ${PU.ronda} · toca para volver</i></span>
       <span class="islgo">${ic('chevR',16)}</span>`;
-    el.classList.add('on');
+    el.classList.add('on'); document.body.classList.add('conisla');
     el.onclick=()=>puBoxOpen();
     return;
   }
   const inSession = UI.tab==='entrenar' && UI.session;
-  const show = S && S.draft && S.draft.rid && !inSession;
+  /* REV 223: solo con series marcadas. Abrir una rutina para mirarla creaba el borrador y
+     la isla "0/5 ejercicios" se quedaba tapando el pie de todas las vistas */
+  const conSeries = !!(S && S.draft && S.draft.data && Object.values(S.draft.data).some(sets=>(sets||[]).some(x=>x.done)));
+  const show = S && S.draft && S.draft.rid && !inSession && conSeries;
+  document.body.classList.toggle('conisla', !!show);
+  wakeSesion();
   if(!show){ el.classList.remove('on'); el.innerHTML=''; el.onclick=null; return; }
   const r=findRoutine(S.draft.rid);
   const ex=r?sessEx(r):[]; const n=ex.length||1;
@@ -10747,6 +10798,20 @@ let SB=null, sbState='off', sbDiagMsg='';
 try{ SB=JSON.parse(localStorage.getItem('afc2:sb')||'null'); if(SB) sbState='ok'; }catch(e){}
 const SB_KEYS=['weights','logs','sessions','steps','water','meals','checkins','inject','meal','reminders','cfg','sched','week','acts','custom','customRoutines','exnotes','free','nlog','customFoods','retos','fotopub','fotoSrc','mobil','retoprops','retovotes','retoreset','ideas','recipeIdeas','facturas','perso','goals','pullup','medidas','rutMod','creat','creatp','bia','plan','hyrox','hxprog','hxplan'];
 const sbTimers={}, sbPending={};
+/* REV 223: lo que no alcanzo a subir queda marcado como pendiente en este telefono hasta que
+   la nube confirme. Antes un envio fallido (sin señal) no se reintentaba y al abrir la app
+   con señal sbPull bajaba la version vieja de la nube encima: se perdia lo del dia. */
+function sbSucio(){ try{ return JSON.parse(localStorage.getItem('afc2:sbsucio')||'{}')||{}; }catch(e){ return {}; } }
+function sbSucioSet(m){ try{ localStorage.setItem('afc2:sbsucio', JSON.stringify(m)); }catch(e){} }
+function sbMarcar(key){ const m=sbSucio(); m[key]=Date.now(); sbSucioSet(m); }
+function sbLimpiar(key, ts){ const m=sbSucio(); if(m[key] && m[key]<=ts){ delete m[key]; sbSucioSet(m); } }
+function sbReintentar(){
+  if(!SB || DEMO) return;
+  Object.keys(sbSucio()).forEach(key=>{ const i=key.indexOf('|'), uid=key.slice(0,i), k=key.slice(i+1);
+    if(!SB_KEYS.includes(k)) return;
+    clearTimeout(sbTimers[key]); delete sbPending[key]; sbSend(uid,k,rawGet(uid,k),false); });
+}
+window.addEventListener('online', ()=>{ sbReintentar(); });
 /* el payload se lee SIEMPRE del namespace correcto al momento de enviar: si el usuario cambió
    entre el save y el disparo del debounce, S ya es del otro y usarlo cruzaría los datos */
 function rawGet(uid,k){
@@ -10755,12 +10820,13 @@ function rawGet(uid,k){
   return MEM[key];
 }
 function sbSend(uid,k,val,keep){
+  const sKey=uid+'|'+k, sTs=Date.now();
   const body=JSON.stringify([{house:SB.house, uid, k, v:val, updated_at:new Date().toISOString()}]);
   /* keepalive deja que la subida sobreviva al cierre de la página (límite ~64 KB por request) */
   return fetch(SB.url+'/rest/v1/kv?on_conflict=house,uid,k',{method:'POST',
     headers:sbHeaders({'Content-Type':'application/json', Prefer:'resolution=merge-duplicates'}),
     body, keepalive:!!keep&&body.length<50000})
-  .then(r=>{ sbState=r.ok?'ok':'err'; if(!r.ok) sbDiagMsg='La tabla kv rechazó la subida (HTTP '+r.status+'). Corre supabase-schema.sql en el SQL Editor.'; return r.ok; })
+  .then(r=>{ sbState=r.ok?'ok':'err'; if(r.ok) sbLimpiar(sKey, sTs); else sbDiagMsg='La tabla kv rechazó la subida (HTTP '+r.status+'). Corre supabase-schema.sql en el SQL Editor.'; return r.ok; })
   .catch(()=>{ sbState='err'; sbDiagMsg='Sin conexión con Supabase (revisa la URL o la señal).'; return false; });
 }
 /* headers de Supabase. Las llaves nuevas (sb_publishable_/sb_secret_) NO son JWT: si se mandan
@@ -10781,6 +10847,7 @@ function sbFetch(url,opts,ms){
 function sbPush(k,now){
   if(!SB || DEMO || !SB_KEYS.includes(k)) return;
   const uid=SHARED_KEYS.has(k)?'shared':UID, key=uid+'|'+k;
+  sbMarcar(key);
   clearTimeout(sbTimers[key]);
   if(now){ delete sbPending[key]; return sbSend(uid,k,rawGet(uid,k),true); }
   sbPending[key]=1;
@@ -10800,7 +10867,9 @@ let sbLastPull=0;
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){ sbFlush(); return; }
   /* al volver a primer plano (la PWA de iOS no re-ejecuta init): bajar lo último de la nube */
-  if(SB && S && sbState==='ok' && Date.now()-sbLastPull>30000){
+  /* REV 223: tambien despues de un error (antes un solo fallo apagaba la bajada hasta reabrir) */
+  if(SB && S) sbReintentar();
+  if(SB && S && sbState!=='sync' && Date.now()-sbLastPull>30000){
     sbPull().then(had=>{ if(had){ S=loadState(); rutinasRefrescar(); applyStepsIn(); render(); } });
   }
 });
@@ -10814,9 +10883,14 @@ async function sbPull(){
       {headers:sbHeaders()});
     if(!r.ok){ sbDiagMsg='La nube respondió HTTP '+r.status+(r.status===404?' (falta correr supabase-schema.sql)':r.status===401||r.status===403?' (llave equivocada o RLS sin política)':''); throw 0; }
     const rows=await r.json();
+    const sucio=sbSucio();
     rows.forEach(row=>{
       const key = row.uid==='shared' ? 'afc2:shared:'+row.k : 'afc2:u:'+row.uid+':'+row.k;
       let val=row.v;
+      /* REV 223: un dato propio que no alcanzo a subir no se pisa con el de la nube: se queda
+         el del telefono y se sube al terminar. Los compartidos se fusionan abajo */
+      const pend=!!sucio[row.uid+'|'+row.k];
+      if(pend && row.uid!=='shared') return;
       /* mercado compartido: el checklist se fusiona ítem por ítem (gana el toque más reciente),
          así los dos pueden chulear en el súper al mismo tiempo sin pisarse */
       if(row.uid==='shared' && row.k==='meal' && S && S.meal && val){
@@ -10827,7 +10901,7 @@ async function sbPull(){
             const c=cl[n]===undefined?null:((cl[n]&&cl[n].v!==undefined)?cl[n]:{v:!!cl[n],t:0});
             if(!c || l.t>c.t) cl[n]=l;
           });
-          val={...val, checklist:cl};
+          val= pend ? {...S.meal, checklist:cl} : {...val, checklist:cl};
         }catch(e){}
       }
       if(row.uid==='shared' && row.k==='ideas' && S && S.ideas && val){
@@ -10867,6 +10941,7 @@ async function sbPull(){
       try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
     });
     sbState='ok'; sbLastPull=Date.now();
+    if(Object.keys(sucio).length) setTimeout(sbReintentar, 300);
     return rows.length>0;
   }catch(e){ sbState='err'; if(!sbDiagMsg) sbDiagMsg='Sin conexión con la nube (timeout o URL). Revisa la URL y tu señal.'; return false; }
 }
@@ -12196,7 +12271,7 @@ function sbFotoUrl(uid,d){ return SB.url+'/storage/v1/object/public/fotos/'+sbFo
 function sbFotoUp(d,blob){
   return fetch(SB.url+'/storage/v1/object/fotos/'+sbFotoPath(UID,d), {method:'POST',
     headers:sbHeaders({'Content-Type':'image/jpeg', 'x-upsert':'true'}), body:blob})
-    .then(r=>{ if(!r.ok){ toast(r.status===404||r.status===400?'Falta el bucket de fotos: re-corre supabase-schema.sql':'La nube rechazó la foto (HTTP '+r.status+')'); throw 0; } });
+    .then(r=>{ if(!r.ok){ sbDiagMsg='Fotos: la nube respondió HTTP '+r.status+(r.status===404||r.status===400?' (falta el bucket de fotos: re-corre supabase-schema.sql)':''); toast('La foto no subió a la nube. Revisa la conexión en Más > Nube'); throw 0; } });
 }
 function sbFotoDelR(uid,d){ return fetch(SB.url+'/storage/v1/object/fotos/'+sbFotoPath(uid,d), {method:'DELETE', headers:sbHeaders()}); }
 function sbFotoList(uid){
@@ -12338,7 +12413,7 @@ function fotoStore(file, date, opts){
           const ok=(nube)=>{ FOTODAYS.add(finalDate); FOTOLIST=null; if(!sil){ toast('Foto del '+fmtD(finalDate)+(fromExif?' (fecha de la foto)':'')+' guardada'); render(); if(UI.tab==='fotos') setTimeout(()=>fotoFill(true),80); } resolve({ok:true, finalDate, fromExif, nube}); };
           if(SB){
             sbFotoUp(finalDate,b).then(()=>ok(true)).catch(()=>{
-              fotoPut(UID+':'+finalDate,b).then(()=>{ ok(false); if(!sil) toast('Sin nube: quedó local en este teléfono'); }).catch(e=>{ if(!sil) toast('No pude guardar la foto'); resolve({ok:false, finalDate, fromExif, err:e}); });
+              fotoPut(UID+':'+finalDate,b).then(()=>{ ok(false); if(!sil) toast('Sin nube: quedó local en este teléfono'); }).catch(e=>{ if(!sil) toast('No pude guardar la foto en este teléfono. Revisa que haya espacio y vuelve a intentar'); resolve({ok:false, finalDate, fromExif, err:e}); });
             });
           } else {
             fotoPut(UID+':'+finalDate,b).then(()=>ok(false)).catch(e=>{ if(!sil) toast('Este entorno no permite guardar fotos'); resolve({ok:false, finalDate, fromExif, err:e}); });
@@ -12921,7 +12996,7 @@ function fotoOpen(k){
 }
 /* snackbar con acción DESHACER (auto-cierra a los 6s) */
 let SNACKT=null;
-function snackUndo(msg, onUndo){
+function snackUndo(msg, onUndo, ms){
   try{
     const old=$('#snack'); if(old&&old.remove) old.remove();
     const s=document.createElement('div'); s.id='snack'; s.className='snack';
@@ -12931,7 +13006,8 @@ function snackUndo(msg, onUndo){
     const close=()=>{ s.classList.remove('show'); setTimeout(()=>{ if(s.remove) s.remove(); },260); };
     const b=s.querySelector&&s.querySelector('.snackb');
     if(b) b.onclick=()=>{ clearTimeout(SNACKT); try{onUndo();}catch(e){} close(); };
-    clearTimeout(SNACKT); SNACKT=setTimeout(close, 6000);
+    /* REV 223: 6 s no alcanzaban para deshacer con la mano ocupada; los borrados grandes piden mas */
+    clearTimeout(SNACKT); SNACKT=setTimeout(close, ms||8000);
   }catch(e){}
 }
 /* cámara con guía: superpone tu última foto para repetir la misma pose */
@@ -12957,7 +13033,7 @@ function poseCamera(){
   const start=()=>{ if(stream) stream.getTracks().forEach(t=>t.stop());
     navigator.mediaDevices.getUserMedia({video:{facingMode:facing, width:{ideal:1280}, height:{ideal:1707}}, audio:false})
       .then(st=>{ stream=st; vid.srcObject=st; vid.style.transform=facing==='user'?'scaleX(-1)':'none'; })
-      .catch(()=>{ toast('No pude abrir la cámara (permiso)'); close(); });
+      .catch(()=>{ toast('Falta el permiso de la cámara. Actívalo en Ajustes > Safari > Cámara y vuelve a intentar'); close(); });
   };
   const close=()=>{ if(stream) stream.getTracks().forEach(t=>t.stop()); ov.remove(); };
   ov.querySelector('#pX').onclick=close;
@@ -13338,7 +13414,8 @@ function exDoneCelebrate(){
 let toastT=null;
 function toast(msg){
   const t=$('#toast'); t.textContent=msg; t.classList.add('show');
-  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'), 2600);
+  /* REV 223: la duracion crece con el largo del mensaje (los de dos lineas no alcanzaban a leerse) */
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'), Math.min(7000, Math.max(2600, String(msg).length*60)));
 }
 function showTip(x,y,html){
   const t=$('#tooltip'); t.innerHTML=html; t.style.display='block';
@@ -13624,7 +13701,7 @@ function waterUI(dISO,act){
       <div class="small ${n>=goal?'mint':'dim'}">${n>=goal?'meta cumplida':'faltan '+fmtInt(goal-n)}</div></div>
     <div class="wbtns">
       <button class="wbtn2" data-a="${act}" data-n="-${paso}" aria-label="menos agua">−</button>
-      <button class="wbtn2 plus" data-a="${act}" data-n="${paso}" aria-label="más agua">${ic('drop',13)} +${fmtInt(paso)} ML</button>
+      <button class="wbtn2 plus" data-a="${act}" data-n="${paso}" aria-label="más agua, ${fmtInt(paso)} ml">${ic('drop',13)} +${fmtInt(paso)}<small> ml</small></button>
     </div>
   </div>
   ${''/* REV 216: la medida se cambia manteniendo oprimido el + (wPickAbrir). No se
@@ -14665,7 +14742,7 @@ function vInicio(){
     return wins.slice(0,1).join('');
   })()}
   ${isDeload()?`<section class="mod tight inv"><div class="flex">${ic('alert',18)}<div><b style="font-size:16px">Semana 4 · Descarga</b><div class="small dim">Mismos pesos de la semana 3, solo 2 series por ejercicio.</div></div></div></section>`:''}
-  ${injectToday?`<section class="mod tight"><div class="flex between"><div class="flex">${ic('syringe',18)}<div><b style="font-size:16px">Hoy: inyección semanal</b><div class="small dim">Retatrutida · registra la aplicación</div></div></div><button class="btn sm" data-a="inject">Hecha</button></div></section>`:''}
+  ${injectToday?`<section class="mod tight"><div class="flex between"><div class="flex">${ic('syringe',18)}<div><b style="font-size:16px">Hoy: inyección semanal</b><div class="small dim">Retatrutida · registra la aplicación</div></div></div><button class="btn sm" data-a="inject" aria-label="Marcar la inyección semanal como hecha">Hecha</button></div></section>`:''}
 
   ${nutriDay(t)}
   ${cycHome()}
@@ -14757,7 +14834,9 @@ function ckSection(){
       const heroImg=UID==='andres'?CAB.andBuff:CAB.camCheck;
       /* cada nodo lleva a su historico en Progreso: mirar el numero de hoy y no poder ver la
    semana era el paso que faltaba */
-const CK_DEST={AGUA:'general', PASOS:'pasos', COMIDA:'nutri', ENTRENO:'volumen', BONUS:'volumen'};
+/* REV 223: la clave era COMIDA y el nodo se pinta como COMIDAS: el nodo de comidas salia
+   como div y no se podia tocar */
+const CK_DEST={AGUA:'general', PASOS:'pasos', COMIDAS:'nutri', ENTRENO:'volumen', BONUS:'volumen'};
 const node=(on,icn,val,lb,bonus)=>{
   const dest=CK_DEST[lb]||null;
   return `<${dest?'button':'div'} class="cknode ${on?'on':''} ${bonus?'bonus':''}"${dest?` data-a="progIr" data-s="${dest}" aria-label="Ver el histórico de ${lb.toLowerCase()}"`:''}><span class="ckbadge">${val}</span><span class="ckcirc">${ic(icn,16)}</span><span class="cklbl">${lb}</span></${dest?'button':'div'}>`;
@@ -14784,7 +14863,7 @@ const node=(on,icn,val,lb,bonus)=>{
       `})()}
     <div class="ckgrid">
       <div class="cktile ${st.entreno?'on':''}" data-a="islaSemana" style="position:relative;overflow:hidden;cursor:pointer">
-        <div class="flex between" style="width:100%"><b>${ic(st.alt?(st.act.t==='padel'?'padel':'heart'):st.isRest?'moon':'barbell',16)} ${st.alt?(st.act.t==='padel'?'Pádel':'Cardio'):st.isRest?'Descanso':'Entreno'}</b><span class="chip" style="color:var(--gold);border-color:rgba(255,201,77,.4)">Bonus</span></div>
+        <div class="flex between" style="width:100%;flex-wrap:wrap;gap:4px 6px"><b>${ic(st.alt?(st.act.t==='padel'?'padel':'heart'):st.isRest?'moon':'barbell',16)} ${st.alt?(st.act.t==='padel'?'Pádel':'Cardio'):st.isRest?'Descanso':'Entreno'}</b><span class="chip" style="color:var(--gold);border-color:rgba(255,201,77,.4)">Bonus</span></div>
         <span class="small dim">${st.isRest?'Día libre: camina suave':st.trained?'Sesión registrada':st.alt?'Cuenta como entreno':routine?routine.name+' te espera':'Sin rutina hoy'}</span>
         ${routine?`<img loading="lazy" src="${entrenoImg(routine)}" alt="" decoding="async" style="display:block;margin:4px auto 0;height:150px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.5))">`:''}
         ${routine?`<div class="lbrow"><button class="linkbtn" data-a="goSession" data-rid="${routine.id}">Ir a Entrenar</button><button class="okall" data-a="autoDone" data-rid="${routine.id}" aria-label="Completar toda la rutina con los valores sugeridos" title="Completar toda la rutina">${ic('check',15)}</button></div>`
@@ -14827,16 +14906,20 @@ const node=(on,icn,val,lb,bonus)=>{
       ${(()=>{const ciDone=S.checkins.some(c=>c.d>=mondayOf(t));
       const mp=(typeof medPendientes==='function')?medPendientes().filter(x=>x.g!=='dia'):[];
       const mTarde=mp.some(x=>x.tarde);
-      return `<div class="cktile ${ciDone&&!mp.length?'on':''}" data-a="medGo" role="button" style="cursor:pointer;position:relative;overflow:hidden">
+      const mdF=medFaltanDias();
+      return `<div class="cktile ${ciDone&&!mp.length?'on':''}" data-a="medGo" role="button" aria-label="Medidas: ${mp.length?mp.length+' por medir hoy':(mdF?'te toca en '+mdF+(mdF>1?' días':' día'):'al día')}" style="cursor:pointer;position:relative;overflow:hidden">
         <b style="position:relative;z-index:1">${ic('ruler',16)} Medidas${ciDone&&!mp.length?`<span class="tick">${ic('check',11)}</span>`:''}</b>
         ${''/* la misma anatomia que las demas cajas: una cifra que manda y su rotulo.
            Las dos lineas de texto se iban encima de la cabrita y no decian mas. */}
         ${''/* el rotulo bajo la cifra se metia encima de la cabrita: queda solo el
            numero (lo que importa) y el color del chip dice si toca o no */}
-        <div style="position:relative;z-index:1;max-width:44%">
-          <div class="ckmetric">${mp.length?mp.length:(medFaltanDias()||'·')}</div>
+        ${''/* REV 223: el "5" suelto y el chip "EN 5 D" (tapado por la cabrita) se leian como
+           dos datos distintos. Ahora es la misma anatomia de las otras cajas: cifra y rotulo */}
+        <div style="position:relative;z-index:1;max-width:50%">
+          <div class="ckmetric">${mp.length?mp.length:(mdF||'·')}</div>
+          <span class="small dim cksub" style="white-space:nowrap">${mp.length?'por medir':(mdF?(mdF>1?'días':'día'):'al día')}</span>
         </div>
-        <span class="chip ${mp.length?'fill':'dim'}" style="position:relative;z-index:1;margin-top:auto">${mp.length?(mp.length>1?'MEDIR '+mp.length:'MEDIR'):(medFaltanDias()?'EN '+medFaltanDias()+' D':'AL DÍA')}</span>
+        ${mp.length?`<span class="chip fill" style="position:relative;z-index:1;margin-top:auto">Medir hoy</span>`:''}
         <img loading="lazy" src="${UID==='andres'?CAB.tileCheckA:CAB.tileCheckC}" alt="" decoding="async" style="position:absolute;right:-16px;bottom:-6px;height:186px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.5));pointer-events:none">
       </div>`})()}
       ${''/* la caja de comidas se unificó en la sección NUTRICIÓN de abajo */}
@@ -16064,11 +16147,15 @@ function sessEx(r){
   const skip=(S.draft&&S.draft.skip)||[];   // ejercicios de la rutina que se sacaron de la sesion de hoy (F7)
   return r.ex.concat(extra.map(id=>EXMAP[id]||((S.draft.extraDefs||{})[id])).filter(Boolean)).filter(e=>!skip.includes(e.id));
 }
+/* REV 223: ultima sesion de un ejercicio con el mismo sustituto ('' = el original). Los
+   registros de un sustituto viven bajo el id del original con .alt; mezclarlos hacia
+   que el sustituto se rellenara con los kg del original y al reves */
+function ultimoDe(id, alt){ const h=(S.logs[id]||[]).filter(x=>(x.alt||'')===(alt||'')); return h[h.length-1]; }
 function buildDraft(r,dISO){
   /* precarga pesos Y reps de la última sesión; si la sugerencia es "sube a X", el peso ya viene subido */
   const data={};
   r.ex.forEach(e=>{
-    const hist=S.logs[e.id]||[], last=hist[hist.length-1];
+    const last=ultimoDe(e.id,'');
     const sug=suggestion(e);
     const nSets=(S.custom&&S.custom[e.id])??e.sets;
     data[e.id]=Array.from({length:nSets},(_,i)=>({
@@ -21754,6 +21841,31 @@ function completePending(r){
 }
 /* N3: ventana de confirmacion cuando quedan series sin marcar al finalizar (patron de
    showSummary/impBox: .fbox colgado de document.body, NO confirm() nativo) */
+/* REV 223: confirmacion propia con botones que dicen la accion. El dialogo nativo de iOS
+   solo ofrece Cancelar y Aceptar. Devuelve una promesa con 'si', 'no' o el valor de un
+   boton extra. Escape y tocar fuera cuentan como 'no'; el foco arranca en el boton seguro. */
+function hojaConfirmar(o){
+  return new Promise(res=>{
+    const box=document.createElement('div'); box.className='fbox small';
+    box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('aria-labelledby','hcTit');
+    box.innerHTML=`<div class="fboxin"><div class="mod glowtop" style="margin:0">
+      <h2 class="t-h2 strong" id="hcTit" style="margin:0 0 6px">${esc(o.titulo)}</h2>
+      ${o.texto?`<div class="small dim mb8">${esc(o.texto)}</div>`:''}
+      <button class="btn ${o.peligro?'red':'primary'} full mt8" data-r="si" aria-label="${esc(o.si)}">${esc(o.si)}</button>
+      ${(o.extra||[]).map(x=>`<button class="btn full ghost mt8" data-r="${esc(x.valor)}" aria-label="${esc(x.label)}">${esc(x.label)}</button>`).join('')}
+      <button class="btn full ghost mt8" data-r="no" aria-label="${esc(o.no||'Cancelar')}">${esc(o.no||'Cancelar')}</button>
+    </div></div>`;
+    const previo=document.activeElement;
+    const tecla=ev=>{ if(ev.key==='Escape'){ ev.preventDefault(); cerrar('no'); } };
+    const cerrar=r=>{ document.removeEventListener('keydown',tecla,true); box.remove();
+      try{ if(previo&&previo.focus) previo.focus({preventScroll:true}); }catch(e){} res(r); };
+    box.addEventListener('click', ev=>{ const b=ev.target.closest&&ev.target.closest('[data-r]');
+      if(b){ ev.stopPropagation(); cerrar(b.dataset.r); return; } if(ev.target===box) cerrar('no'); });
+    document.addEventListener('keydown',tecla,true);
+    document.body.appendChild(box);
+    const f=box.querySelector('[data-r="no"]'); if(f) try{ f.focus({preventScroll:true}); }catch(e){}
+  });
+}
 function finishPendBox(pendSeries, pendEx){
   const box=document.createElement('div'); box.className='fbox small';
   box.innerHTML=`<div class="fboxin"><div class="mod glowtop" style="margin:0">
@@ -21901,9 +22013,11 @@ const ACTIONS = {
   },
   hxCBorrar(d){
     const r=(S.customRoutines||[]).find(x=>x.id===d.rid); if(!r) return;
-    if(!confirm('¿Borrar la sesión «'+r.name+'»?')) return;
-    S.customRoutines=(S.customRoutines||[]).filter(x=>x.id!==d.rid);
-    save('customRoutines'); rutinasRefrescar(); toast('Sesión borrada'); render();
+    /* REV 223: sin dialogo; se borra y se puede deshacer (las marcas no se tocan) */
+    const antes=(S.customRoutines||[]).slice();
+    S.customRoutines=antes.filter(x=>x.id!==d.rid);
+    save('customRoutines'); rutinasRefrescar(); render();
+    snackUndo('Sesión «'+r.name+'» borrada', ()=>{ S.customRoutines=antes; save('customRoutines'); rutinasRefrescar(); render(); }, 10000);
   },
   hxAbrir(d, el){ UI.hxAbre=UI.hxAbre||{}; UI.hxAbre[d.k]=!UI.hxAbre[d.k]; renderAnclado(el); },
   /* nivel 3: abre la ventana con la explicacion larga. No re-renderiza la vista. */
@@ -22007,7 +22121,10 @@ const ACTIONS = {
     ACTIONS.finish();
     if(!S.draft && antes) toast('Rutina completa · '+n+' series registradas con los valores sugeridos');
   },
-  tab(d){ UI.tab=d.t; if(d.t==='agenda'){ UI.calView='mes'; UI.calM=0; UI.calSel=null; UI.calDay=null; UI.session=null; } if(d.t==='entrenar'){ UI.session=null; UI.routineView=null; } if(d.t==='mas'){ markIdeasSeen(); } render(); },
+  tab(d){
+    /* REV 223: salir por la barra de una rutina que solo se miro descarta el borrador vacio */
+    if(S.draft && !Object.values(S.draft.data||{}).some(sets=>(sets||[]).some(x=>x.done))){ S.draft=null; save('draft'); }
+    UI.tab=d.t; if(d.t==='agenda'){ UI.calView='mes'; UI.calM=0; UI.calSel=null; UI.calDay=null; UI.session=null; } if(d.t==='entrenar'){ UI.session=null; UI.routineView=null; } if(d.t==='mas'){ markIdeasSeen(); } render(); },
   routineOpen(d){
     /* igual que goSession: desde Hyrox o el Inicio hay que poder volver */
     UI.sessBack = (UI.tab && UI.tab!=='entrenar' && VIEWS[UI.tab]) ? UI.tab : null;
@@ -22117,7 +22234,7 @@ const ACTIONS = {
     if(!ex||!arr) return;
     const allDone=arr.every(s=>s.done);
     if(allDone){ arr.forEach(s=>{ s.done=false; }); save('draft'); render(); return; }
-    const hist=S.logs[d.ex]||[], last=hist[hist.length-1];
+    const last=ultimoDe(d.ex,(S.draft.alts||{})[d.ex]||'');
     const paid=xpPaidArr(d.ex);
     let sumXp=0;
     arr.forEach((s,i)=>{
@@ -22149,7 +22266,9 @@ const ACTIONS = {
   delSet(d){
     const arr=S.draft.data[d.ex];
     if(arr.length<=1) return;
-    arr.splice(+d.i,1); save('draft'); render(); toast('Serie eliminada');
+    const i=+d.i, quitada=arr.splice(i,1)[0]; save('draft'); render();
+    /* REV 223: borrar una serie (con la X o deslizando) ahora se puede deshacer */
+    snackUndo('Serie '+(i+1)+' borrada', ()=>{ const a=S.draft&&S.draft.data&&S.draft.data[d.ex]; if(!a) return; a.splice(Math.min(i,a.length),0,quitada); save('draft'); render(); }, 10000);
   },
   addSet(d){
     const arr=S.draft.data[d.ex];
@@ -22171,7 +22290,22 @@ const ACTIONS = {
   },
   swapEx(d){
     S.draft.alts=S.draft.alts||{};
+    const antes=S.draft.alts[d.ex]||'';
     if(d.n) S.draft.alts[d.ex]=d.n; else delete S.draft.alts[d.ex];
+    const ahora=S.draft.alts[d.ex]||'';
+    /* REV 223: las series sin marcar se quedaban con los kg y reps del ejercicio anterior y
+       se guardaban como si los hubiera levantado el sustituto. Se recargan del historial
+       del que queda: el sustituto si ya se hizo, el original con su progresion */
+    if(antes!==ahora){
+      const r=findRoutine(S.draft.rid);
+      const base=(!ahora && r && r.ex.some(e=>e.id===d.ex)) ? (buildDraft(r,S.draft.d).data[d.ex]||[]) : null;
+      const last=ultimoDe(d.ex, ahora);
+      (S.draft.data[d.ex]||[]).forEach((s,i)=>{ if(s.done) return;
+        if(base){ const b=base[i]||base[0]||{}; s.w=(b.w!=null?b.w:''); s.r=(b.r!=null?b.r:''); }
+        else { s.w=last?.sets?.[i]?.w ?? last?.sets?.[0]?.w ?? ''; s.r=last?.sets?.[i]?.r ?? last?.sets?.[0]?.r ?? ''; }
+      });
+      if(ahora) toast(last?'Kg y reps de tu última vez con '+shortEx(ahora):'Primera vez con '+shortEx(ahora)+': escribe los kg');
+    }
     save('draft'); UI.swapOpen=false; render();
   },
   /* boton okbtn2 de la tabla de series Y los circulos de la cabecera (N2) llegan aca.
@@ -22183,7 +22317,7 @@ const ACTIONS = {
     if(!was){
       const ex=EXMAP[d.ex];
       if(ex){
-        const hist=S.logs[d.ex]||[], last=hist[hist.length-1];
+        const last=ultimoDe(d.ex,(S.draft.alts||{})[d.ex]||'');
         if((arr[i].w===''||arr[i].w==null) && !exPesoCorporal(d.ex))
           arr[i].w = last?.sets?.[i]?.w ?? last?.sets?.[0]?.w ?? '';
         if(arr[i].r===''||arr[i].r==null) arr[i].r = last?.sets?.[i]?.r ?? last?.sets?.[0]?.r ?? ex.reps[0];
@@ -22446,11 +22580,16 @@ const ACTIONS = {
     save('logs'); render(); toast('Registro quitado');
   },
   dayDelAll(d){
-    if(!confirm('¿Borrar TODOS los registros del '+fmtD(d.d)+'? Esto quita las series y la sesión de ese día. No hay deshacer.')) return;
-    Object.keys(S.logs).forEach(id=>{ S.logs[id]=S.logs[id].filter(h=>h.d!==d.d); if(!S.logs[id].length) delete S.logs[id]; });
-    S.sessions=S.sessions.filter(s=>s.d!==d.d);
-    UI.dayEdit=null; UI.histDay=null;
-    save('logs'); save('sessions'); render(); toast('Día borrado del historial');
+    /* REV 223: hoja propia con la accion en el boton, y Deshacer despues */
+    hojaConfirmar({titulo:'¿Borrar el '+fmtD(d.d)+' del historial?', texto:'Se quitan las series y la sesión de ese día. Puedes deshacerlo justo después.', si:'Borrar el día', no:'Conservar', peligro:true}).then(r=>{
+      if(r!=='si') return;
+      const antesLogs=JSON.parse(JSON.stringify(S.logs)), antesSes=S.sessions.slice();
+      Object.keys(S.logs).forEach(id=>{ S.logs[id]=S.logs[id].filter(h=>h.d!==d.d); if(!S.logs[id].length) delete S.logs[id]; });
+      S.sessions=S.sessions.filter(s=>s.d!==d.d);
+      UI.dayEdit=null; UI.histDay=null;
+      save('logs'); save('sessions'); render();
+      snackUndo('Día '+fmtD(d.d)+' borrado del historial', ()=>{ S.logs=antesLogs; S.sessions=antesSes; save('logs'); save('sessions'); render(); }, 12000);
+    });
   },
   delHist(d){
     if(!confirm('¿Borrar el registro del '+fmtD(d.d)+' de este ejercicio?')) return;
@@ -23509,11 +23648,19 @@ const ACTIONS = {
   },
   pastSession(d){
     const r=ROUTINES.find(x=>x.id===d.rid); if(!r) return;
-    if(S.draft && Object.values(S.draft.data).some(sets=>sets.some(s=>s.done)) &&
-       !confirm('Tienes una sesión a medias. ¿La descarto para registrar la del '+fmtD(UI.calSel)+'?')) return;
-    S.draft=buildDraft(r, UI.calSel); save('draft');
-    UI.tab='entrenar'; UI.session=r.id; UI.exIdx=null; UI.sessList=true; UI.swapOpen=false;
-    render(); window.scrollTo({top:0});
+    const dia=UI.calSel;
+    const seguir=()=>{ S.draft=buildDraft(r, dia); save('draft');
+      UI.tab='entrenar'; UI.session=r.id; UI.exIdx=null; UI.sessList=true; UI.swapOpen=false;
+      render(); window.scrollTo({top:0}); };
+    /* REV 223: hoja propia; la salida segura lleva de vuelta a la sesion a medias */
+    if(S.draft && Object.values(S.draft.data).some(sets=>sets.some(s=>s.done))){
+      hojaConfirmar({titulo:'¿Descartar la sesión a medias?', texto:'Perderías las series que marcaste y no has guardado. Después se abre la del '+fmtD(dia)+'.', si:'Descartar y seguir', no:'Volver a la sesión', peligro:true}).then(res=>{
+        if(res==='si'){ seguir(); return; }
+        if(S.draft){ UI.tab='entrenar'; UI.session=S.draft.rid; render(); window.scrollTo({top:0}); }
+      });
+      return;
+    }
+    seguir();
   },
   schedReset(){ const out={}; for(let d=0;d<7;d++){ const r=ROUTINES.find(rr=>rr.day===d); out[d]=r?r.id:'rest'; } S.week=out; UI.wkPick=null; save('week'); render(); toast('Semana original restaurada'); },
   wkPickDay(d){ const dow=+d.d; UI.wkPick = UI.wkPick===dow ? null : dow; render(); },
@@ -23983,8 +24130,9 @@ const ACTIONS = {
   },
   delWeight(){
     const last=S.weights[S.weights.length-1]; if(!last) return;
-    if(!confirm('¿Borrar el pesaje del '+fmtD(last.d)+' ('+fmt1(last.kg)+' kg)?')) return;
+    /* REV 223: sin dialogo; se borra y se puede deshacer */
     S.weights.pop(); save('weights'); metasInvalidar(UID); render();
+    snackUndo('Pesaje del '+fmtD(last.d)+' borrado ('+fmt1(last.kg)+' kg)', ()=>{ S.weights.push(last); S.weights.sort((a,b)=>a.d<b.d?-1:1); save('weights'); metasInvalidar(UID); render(); }, 10000);
   },
   addSteps(){
     const v=parseInt(($('#stIn')?.value||'').replace(/\D/g,''),10);
@@ -24543,6 +24691,11 @@ function goBack(){
   if(UI.tab==='comida' && UI.foodCat){ UI.foodCat=null; render(); return; }
   if(UI.tab==='entrenar' && UI.routineView){ UI.routineView=null; render(); return; }
   if(UI.tab==='agenda' && (UI.calSel||UI.calDay)){ UI.calSel=null; UI.calDay=null; render(); window.scrollTo({top:0}); return; }
+  /* REV 223: el gesto hace lo mismo que el boton de volver. Dentro de Medidas o Hyrox vuelve
+     a la portada de la seccion, y fuera a donde venias (backTo); antes siempre al Inicio */
+  if(UI.tab==='medidas' && medSec()){ ACTIONS.medSecIr({}); return; }
+  if(UI.tab==='hyrox' && hxSec()){ ACTIONS.hxSecIr({}); return; }
+  if(UI.tab!=='inicio' && UI.backTo && VIEWS[UI.backTo]){ ACTIONS.volver(); return; }
   if(UI.tab!=='inicio'){ UI.tab='inicio'; render(); window.scrollTo({top:0}); }
 }
 /* swipe desde el borde izquierdo → atrás (no interfiere con sliders/scroll internos) */
@@ -24794,17 +24947,37 @@ $('#fotoLoteIn').addEventListener('change', e=>{ const fs=Array.from(e.target.fi
 $('#facIn').addEventListener('change', e=>{
   const f=e.target.files[0]; if(!f||!UI.facPendingId) return;
   const id=UI.facPendingId;
-  facFotoStore(f,id).then(ok=>{ UI.facFotoOk = ok; render(); toast(ok?'Foto de la factura adjunta':'No pude guardar la foto'); });
+  facFotoStore(f,id).then(ok=>{ UI.facFotoOk = ok; render(); toast(ok?'Foto de la factura adjunta':'No pude guardar la foto de la factura. Revisa que haya espacio y vuelve a intentar'); });
 });
+/* REV 223: importar reemplazaba todo sin preguntar ni mirar de quien era el archivo (se podia
+   cargar el respaldo del otro, con su PIN y lo compartido, y subirlo a la nube). Ahora:
+   bloquea el respaldo de otro usuario, valida el tipo de cada dato, no toca lo compartido
+   ni el PIN, pide confirmacion con un resumen y deja Deshacer. */
 $('#importFile').addEventListener('change', e=>{
   const f=e.target.files[0]; if(!f) return;
+  try{ e.target.value=''; }catch(_){}
   f.text().then(txt=>{
-    try{
-      const j=JSON.parse(txt);
-      if(!j.data) throw 0;
-      Object.entries(j.data).forEach(([k,v])=>{ if(k in S){ S[k]=v; save(k); } });
-      toast('Datos importados'); render();
-    }catch(err){ toast('Archivo no válido'); }
+    let j=null; try{ j=JSON.parse(txt); }catch(err){}
+    if(!j || !j.data || typeof j.data!=='object'){ toast('Ese archivo no es un respaldo de CabriCoach'); return; }
+    if(j.user && USERS[j.user] && j.user!==UID){ toast('Ese respaldo es de '+USERS[j.user].name+'. Cámbiate a su perfil para restaurarlo'); return; }
+    const NO=new Set(['draft','fired','fotoLote']);
+    const ok=Object.keys(j.data).filter(k=>(k in S) && !NO.has(k) && !SHARED_KEYS.has(k) && j.data[k]!==null
+      && typeof j.data[k]===typeof S[k] && Array.isArray(j.data[k])===Array.isArray(S[k]));
+    if(!ok.length){ toast('Ese respaldo no trae datos que se puedan restaurar'); return; }
+    const n=k=>Array.isArray(j.data[k])?j.data[k].length:Object.keys(j.data[k]||{}).length;
+    const resumen=[['weights','pesajes'],['sessions','entrenos'],['nlog','días de comida'],['medidas','tomas de medidas']]
+      .filter(([k])=>ok.includes(k)).map(([k,tx])=>n(k)+' '+tx).join(' · ');
+    hojaConfirmar({titulo:'¿Restaurar el respaldo'+(j.exported?' del '+fmtD(j.exported):'')+'?',
+      texto:'Reemplaza tus datos de '+CU().name+' en este teléfono'+(SB?' y en la nube':'')+' por los del archivo'+(resumen?' ('+resumen+')':'')+'. El mercado compartido y tu PIN no se tocan. Puedes deshacerlo justo después.',
+      si:'Restaurar respaldo', no:'Conservar mis datos', peligro:true}).then(r=>{
+      if(r!=='si') return;
+      const antes={}; ok.forEach(k=>{ antes[k]=JSON.parse(JSON.stringify(S[k])); });
+      const pin={pin:S.cfg&&S.cfg.pin, pinH:S.cfg&&S.cfg.pinH};
+      ok.forEach(k=>{ S[k]=j.data[k]; });
+      if(ok.includes('cfg') && S.cfg){ ['pin','pinH'].forEach(c=>{ if(pin[c]!==undefined) S.cfg[c]=pin[c]; else delete S.cfg[c]; }); }
+      ok.forEach(k=>save(k)); clearDayCache(); rutinasRefrescar(); render();
+      snackUndo('Respaldo restaurado', ()=>{ ok.forEach(k=>{ S[k]=antes[k]; save(k); }); clearDayCache(); rutinasRefrescar(); render(); toast('Volviste a tus datos de antes'); }, 12000);
+    });
   });
 });
 
@@ -24849,6 +25022,8 @@ function seedDemo(){
   S=loadState(); rutinasRefrescar();
   UI.ex=ROUTINES[0].ex[0].id;
   if(p.get('demo')){ seedDemo(); applyUser(); }
+  /* REV 223: pedir almacenamiento persistente para que el navegador no purgue los datos */
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
   /* pasos desde Atajos de iOS: ...?steps=9432 */
   const hp=new URLSearchParams(location.hash.replace(/^#\??/,''));
   /* Atajos manda el número con formato local ("8.532" o "8,532"): limpiar todo lo no-dígito */

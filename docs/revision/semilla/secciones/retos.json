@@ -1,0 +1,23 @@
+{
+ "orden": 10,
+ "nombre": "Retos",
+ "descripcion": "El versus de los cabritos: puntos, premios y vitrina.",
+ "partes": [
+  {
+   "id": "R1",
+   "nombre": "R1 · Héroe del versus"
+  },
+  {
+   "id": "R2",
+   "nombre": "R2 · Puntos"
+  },
+  {
+   "id": "R3",
+   "nombre": "R3 · Premios"
+  },
+  {
+   "id": "R4",
+   "nombre": "R4 · Vitrina"
+  }
+ ]
+}

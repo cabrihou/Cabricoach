@@ -1,0 +1,43 @@
+{
+ "orden": 0,
+ "nombre": "General",
+ "descripcion": "Lo que cruza toda la app: barra inferior, navegación, nube, avisos, arranque, accesibilidad y tema claro.",
+ "partes": [
+  {
+   "id": "G2",
+   "nombre": "Barra inferior"
+  },
+  {
+   "id": "G5",
+   "nombre": "Ventanas flotantes"
+  },
+  {
+   "id": "G6",
+   "nombre": "Isla de rutina y descanso"
+  },
+  {
+   "id": "G4",
+   "nombre": "Avisos (toasts)"
+  },
+  {
+   "id": "nube",
+   "nombre": "Nube y sincronización"
+  },
+  {
+   "id": "recordatorios",
+   "nombre": "Recordatorios"
+  },
+  {
+   "id": "arranque",
+   "nombre": "Arranque y versión nueva"
+  },
+  {
+   "id": "tema",
+   "nombre": "Tema claro"
+  },
+  {
+   "id": "texto",
+   "nombre": "Tamaño del texto y accesibilidad"
+  }
+ ]
+}

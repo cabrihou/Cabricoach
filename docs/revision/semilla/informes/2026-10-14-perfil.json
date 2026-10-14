@@ -1,0 +1,39 @@
+{
+ "seccion": "perfil",
+ "lote": "2026-10-14",
+ "titulo": "Análisis UX y UI · 14 de octubre",
+ "lead": "Funciona como centro de la app, pero lo que más se busca está al final.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Marca Va en lo que quieres que haga. Usa Responder si lo quieres distinto o tienes una pregunta: va en el próximo envío. Lo que no marques se queda aquí.",
+ "items": [
+  {
+   "codigo": "PF01",
+   "zona": "PF7",
+   "tipo": "Flujo",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Los Accesos (Progreso, Check-in, Medidas, Plan, Ajustes) están al fondo del Perfil, después del héroe, los trofeos y las estadísticas.",
+   "hecho": "Subirlos justo debajo del héroe."
+  },
+  {
+   "codigo": "PF02",
+   "zona": "PF7",
+   "tipo": "Texto",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "Queda un texto sobrante: «Llegaste aquí tocando tu propio avatar».",
+   "hecho": "Quitarlo."
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

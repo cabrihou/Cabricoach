@@ -1,0 +1,7 @@
+{
+ "tema": "Probar y verificar",
+ "titulo": "innerText miente con content-visibility",
+ "texto": "Las secciones no pintadas devuelven texto vacío: usar textContent. Y medir el layout dos veces, porque tras render() hay marcadores de 240 px.",
+ "fuente": "ARQUITECTURA §3",
+ "orden": 9
+}

@@ -1,0 +1,66 @@
+{
+ "seccion": "entrenar",
+ "lote": "2026-10-14b",
+ "titulo": "Segunda pasada con la skill Design · 14 de octubre",
+ "lead": "Pensada para una mano y sin señal; lo que la skill agrega es que en el gimnasio, con poco brillo, los controles pendientes casi no se ven.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Segunda pasada, con el plugin Design de Anthropic. Marca Va en lo que quieres que haga y usa Responder si lo quieres distinto. El informe del primer análisis sigue abajo.",
+ "items": [
+  {
+   "codigo": "DE01",
+   "tipo": "Accesibilidad · WCAG 1.4.11",
+   "impacto": "alto",
+   "esfuerzo": "bajo",
+   "pedido": "En la sesión, los campos de kg y reps, el check pendiente y los círculos de serie sin marcar tienen un borde de 1,26:1: con el brillo bajo del gimnasio no se distingue qué es campo y qué es fondo.",
+   "hecho": "Borde de control a 3:1 (DG01) y la serie pendiente con un relleno tenue además del punteado.",
+   "zona": "E2a"
+  },
+  {
+   "codigo": "DE02",
+   "tipo": "Accesibilidad · WCAG 2.1.1",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "35 de los 50 controles de la sesión no se alcanzan con teclado ni con el control por botón de iOS: la cabecera del ejercicio, los círculos de serie, la gráfica y las opciones son elementos sin foco.",
+   "hecho": "Botones reales, o foco y Enter en esos elementos.",
+   "zona": "E2"
+  },
+  {
+   "codigo": "DE03",
+   "tipo": "Accesibilidad · WCAG 3.3.2 y 1.4.3",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Los campos de reps no tienen nombre para el lector (los de kg sí dicen «peso en kilos») y el número de serie (1, 2, 3) va a 3,04:1 de contraste con 13 px.",
+   "hecho": "Nombre «repeticiones de la serie 1» y el número de serie a 4,5:1.",
+   "zona": "E2a"
+  },
+  {
+   "codigo": "DE04",
+   "tipo": "Diseño · jerarquía",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Al abrir un ejercicio, la columna «Anterior» (102,0 × 8) y los campos de hoy (102 y 8) pesan lo mismo a la vista: no queda claro cuál es el dato a superar y cuál el que escribes. El descanso (3:00) entre filas compite con los dos.",
+   "hecho": "Anterior en gris y más pequeño, el campo de hoy con borde de control y el objetivo de progresión resaltado; el descanso como un separador fino.",
+   "zona": "E2a"
+  },
+  {
+   "codigo": "DE05",
+   "tipo": "Texto · ux-copy",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "Las confirmaciones de la sesión son nativas y ambiguas: «Voy a registrar toda la rutina… ¿Sigo?», «Tienes una sesión a medias. ¿La descarto…?» y «¿Borrar la sesión X?» sin decir qué se pierde.",
+   "hecho": "«¿Registrar toda la rutina de hoy? Se guarda con los kg y reps sugeridos» con «Registrar rutina» y «Revisar antes»; «¿Descartar la sesión a medias? Perderías las series sin guardar» con «Descartar» y «Terminar la actual».",
+   "zona": "E2"
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

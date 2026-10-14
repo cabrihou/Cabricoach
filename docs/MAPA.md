@@ -15,6 +15,11 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
   "qué pasó + efecto": serie marcada, agua sumada y hábitos cerrados confirman igual
 - **G5** Ventana flotante genérica (overlays de PIN, stats de ejercicio, fotos) (`.fbox`)
 - **G6** Isla dinámica de descanso/cronómetro (`#island`)
+  - REV 223: la isla de la rutina en curso solo aparece si hay series marcadas (mirar una
+    rutina ya no la deja pegada) y, mientras se ve, `body.conisla` le da 170 px de aire al pie
+    de la vista. Con sesión abierta la pantalla se mantiene encendida (`wakeSesion`)
+- **G7** Hoja de confirmación propia (`hojaConfirmar`, REV 223): título con la acción, consecuencia,
+  botón con verbo y salida segura. Reemplaza a `confirm()` en lo destructivo
 
 ## I · Inicio (`vInicio`)
 
@@ -48,6 +53,9 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
     opción y al soltar queda; soltar afuera cierra sin cambiar. El toque corto sigue
     sumando. `touch-action:none` en el botón para que el arrastre no se vuelva scroll
   - I2a Entreno ("Ir a entrenar" + check que completa la rutina)
+  - REV 223: el nodo de comidas del camino ya se toca (la clave era COMIDA y el nodo COMIDAS)
+    y los rótulos no se cortan. En la caja de Medidas la cifra lleva su rótulo ("5 días",
+    "2 por medir") y el chip "Medir hoy" solo cuando toca; en Agua el botón dice "+250 ml"
   - I2b Pasos · I2c Agua · **I2d Medidas** (lleva a la vista propia de Medidas, `medGo`;
     dice qué toca hoy o en cuántos días) · **I2e Hyrox** (REV 215, solo con la sección
     encendida: tiempo proyectado y estaciones medidas)

@@ -1,0 +1,9 @@
+{
+ "seccion": "general",
+ "codigo": "G11",
+ "titulo": "Aviso cuando el teléfono no deja guardar",
+ "detalle": "Y la app pide almacenamiento persistente al abrir.",
+ "lote": "REV 223 · en local, sin deploy",
+ "publicado": null,
+ "orden": 104
+}

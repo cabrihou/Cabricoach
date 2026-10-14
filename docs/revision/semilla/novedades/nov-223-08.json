@@ -1,0 +1,9 @@
+{
+ "seccion": "general",
+ "codigo": "DG08",
+ "titulo": "Confirmaciones propias con la acción en el botón",
+ "detalle": "Borrar un día, sesión a medias e importar. Borrar pesaje, sesión de Hyrox y serie pasaron a Deshacer. Quedan unas 18 por migrar.",
+ "lote": "REV 223 · en local, sin deploy",
+ "publicado": null,
+ "orden": 107
+}

@@ -1,0 +1,7 @@
+{
+ "tema": "El archivo",
+ "titulo": "Claves duplicadas en ACTIONS y CHANGES",
+ "texto": "En un objeto grande gana la última clave y la otra queda muerta en silencio. Así se rompieron el registro de medidas y el botón de cambiar ejercicio (REV 222). Buscar duplicados al tocar esos objetos.",
+ "fuente": "REV 222",
+ "orden": 2
+}

@@ -1,0 +1,7 @@
+{
+ "tema": "El archivo",
+ "titulo": "El MAPA es el idioma común",
+ "texto": "Los códigos de zona (I4b, C3d, P2d) sirven para señalar sin ambigüedad. Se quedan con la zona, no con la posición, y el MAPA se actualiza cada vez que algo se mueve.",
+ "fuente": "MAPA.md",
+ "orden": 5
+}

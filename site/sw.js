@@ -1,5 +1,5 @@
 /* Coach Cabritos · offline para el gimnasio sin señal */
-const CACHE = 'cabritos-v166';
+const CACHE = 'cabritos-v167';
 const CORE = ['./', 'index.html', 'manifest.webmanifest'];
 /* Las imagenes de la interfaz salieron del HTML a archivos sueltos (bajo de 4,3 MB a
    1 MB). Como el gimnasio puede no tener señal, se precargan en segundo plano al
@@ -128,13 +128,25 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   const isPage = req.mode === 'navigate' || req.url.endsWith('/index.html');
   if (isPage) {
-    /* la app: red primero (para recibir actualizaciones), caché si no hay señal */
+    /* la app: red primero (para recibir actualizaciones), caché si no hay señal.
+       REV 223: con señal mala la red podia tardar un minuto en rendirse y la app se quedaba
+       en negro. Ahora se espera la red maximo 3 s; si no llega, abre la version guardada y
+       la descarga sigue en segundo plano para la proxima vez. Sin version guardada (primera
+       vez) se espera la red como siempre. */
+    const red = fetch(req).then(res => {
+      if (res && res.ok) {
+        const copy = res.clone(), copy2 = res.clone();
+        caches.open(CACHE).then(c => { c.put(req, copy); c.put('index.html', copy2); });
+      }
+      return res;
+    });
+    e.waitUntil(red.then(() => {}, () => {}));
     e.respondWith(
-      fetch(req).then(res => {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => { c.put(req, copy); c.put('index.html', res.clone()); });
-        return res;
-      }).catch(() => caches.match(req).then(h => h || caches.match('index.html')))
+      caches.match('index.html').then(guardada => {
+        if (!guardada) return red.catch(() => caches.match(req));
+        const espera = new Promise(r => setTimeout(() => r(null), 3000));
+        return Promise.race([red.catch(() => null), espera]).then(res => res || guardada);
+      })
     );
   } else {
     /* assets (videos, imagenes de interfaz y fotos de ejercicios): cache primero,

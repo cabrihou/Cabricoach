@@ -1,0 +1,57 @@
+{
+ "seccion": "inicio",
+ "lote": "2026-10-14b",
+ "titulo": "Segunda pasada con la skill Design · 14 de octubre",
+ "lead": "Lo que atrapa la vista en 2 segundos es la cifra del peso, y está bien que sea así. Lo que falta es que la primera pantalla diga qué te queda pendiente hoy.",
+ "columnas": [
+  "Hallazgo",
+  "Propuesta"
+ ],
+ "okTexto": "Va",
+ "comoUsar": "Segunda pasada, con el plugin Design de Anthropic. Marca Va en lo que quieres que haga y usa Responder si lo quieres distinto. El informe del primer análisis sigue abajo.",
+ "items": [
+  {
+   "codigo": "DI01",
+   "tipo": "Diseño · primera impresión",
+   "impacto": "medio",
+   "esfuerzo": "medio",
+   "pedido": "En 2 segundos el ojo va a la cifra del peso (89,6) y enseguida a la cabrita grande del checkpoint. Pero lo que te falta hoy no se lee arriba: el «0 de 3» y la proteína que falta quedan una y tres pantallas más abajo. Después del peso, el ojo salta entre cuatro tarjetas con el mismo peso visual (Entreno, Pasos, Creatina y Hyrox, Agua y Medidas) sin orden entre ellas.",
+   "hecho": "Que la primera pantalla responda «qué me falta hoy»: el peso y debajo una sola fila con lo pendiente (proteína, agua, entreno) por urgencia. Las tarjetas iguales pasan a un segundo nivel.",
+   "zona": "I1, I2"
+  },
+  {
+   "codigo": "DI02",
+   "tipo": "Accesibilidad · WCAG 2.5.8",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "La pastilla de grasa junto al peso mide 18 px de alto (WCAG 2.2 pide al menos 24) y está pegada al peso, que también se toca.",
+   "hecho": "Área de toque de al menos 24 px, ideal 44, con el ::after que ya usa la app.",
+   "zona": "I1"
+  },
+  {
+   "codigo": "DI03",
+   "tipo": "Accesibilidad · WCAG 4.1.2",
+   "impacto": "medio",
+   "esfuerzo": "bajo",
+   "pedido": "El lector anuncia la tarjeta de Medidas como «Medidas 5 EN 5 D» (y no se alcanza con teclado) y el botón de la inyección solo como «Hecha». La creatina sí dice si ya la tomaste.",
+   "hecho": "Nombres completos: «Medidas: te toca en 5 días» y «Marcar la inyección semanal como hecha».",
+   "zona": "I2"
+  },
+  {
+   "codigo": "DI04",
+   "tipo": "Diseño · consistencia",
+   "impacto": "bajo",
+   "esfuerzo": "bajo",
+   "pedido": "En la misma rejilla conviven tres anatomías de tarjeta: ilustración grande (Entreno, Medidas), anillo con barras (Pasos) y cifra en cápsula (Creatina, Hyrox), y las columnas no terminan a la misma altura.",
+   "hecho": "Una anatomía común (rótulo, cifra y apoyo visual) y alturas parejas por fila.",
+   "zona": "I2"
+  }
+ ],
+ "decisiones": [],
+ "pendiente": [],
+ "verificacion": null,
+ "extras": [],
+ "revisar": [],
+ "revisado": {},
+ "archivado": {}
+}

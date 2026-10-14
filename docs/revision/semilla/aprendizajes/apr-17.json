@@ -1,0 +1,7 @@
+{
+ "tema": "Publicar",
+ "titulo": "git pull --rebase antes de tocar nada",
+ "texto": "Si dos computadores editan el archivo en paralelo, toca descartar el trabajo de uno.",
+ "fuente": "CLAUDE.md del proyecto",
+ "orden": 16
+}

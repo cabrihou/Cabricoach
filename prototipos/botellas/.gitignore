@@ -1,7 +1,7 @@
 # se regeneran con build.py o son pruebas locales: no viajan por git
 botellas.html
 botellas-local.html
-pagina-extraida.js
+pagina-extraida*.js
 capturas/
 respaldo-v1/
 __pycache__/

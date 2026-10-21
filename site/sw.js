@@ -1,5 +1,5 @@
 /* Coach Cabritos · offline para el gimnasio sin señal */
-const CACHE = 'cabritos-v167';
+const CACHE = 'cabritos-v168';
 const CORE = ['./', 'index.html', 'manifest.webmanifest'];
 /* Las imagenes de la interfaz salieron del HTML a archivos sueltos (bajo de 4,3 MB a
    1 MB). Como el gimnasio puede no tener señal, se precargan en segundo plano al
@@ -116,7 +116,7 @@ self.addEventListener('install', e => {
          igual queda usable y esa imagen se pedira a la red cuando toque */
       /* el catalogo de paquetes va en este lote resiliente (una falla no tumba el resto),
          no en CORE: alla addAll es todo-o-nada y por eso el JSON no entraba en dev */
-      .then(() => caches.open(CACHE).then(c => Promise.allSettled(UI_IMGS.concat(['assets/paq/nutricion-co.json']).map(u => c.add(u)))))
+      .then(() => caches.open(CACHE).then(c => Promise.allSettled(UI_IMGS.concat(['assets/paq/nutricion-co.json','assets/botellas.html']).map(u => c.add(u)))))
       .then(()=>self.skipWaiting())
   );
 });
@@ -126,7 +126,8 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
-  const isPage = req.mode === 'navigate' || req.url.endsWith('/index.html');
+  /* el juego (assets/botellas.html) se pide con fetch, no es navegacion; aun asi, nada bajo /assets/ cuenta como la app */
+  const isPage = !new URL(req.url).pathname.includes('/assets/') && (req.mode === 'navigate' || req.url.endsWith('/index.html'));
   if (isPage) {
     /* la app: red primero (para recibir actualizaciones), caché si no hay señal.
        REV 223: con señal mala la red podia tardar un minuto en rendirse y la app se quedaba

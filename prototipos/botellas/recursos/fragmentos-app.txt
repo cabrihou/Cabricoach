@@ -1,0 +1,140 @@
+/* ---- function confettiBurst( ---- */
+function confettiBurst(){
+  try{
+    if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const cv=document.createElement('canvas'); cv.className='cfetti';
+    cv.width=innerWidth; cv.height=innerHeight;
+    document.body.appendChild(cv);
+    const x=cv.getContext('2d'), cols=['#FFD700','#FF5A7A','#58DFA3','#5AA9FF','#FFC94D','#C77DFF'];
+    const N=Math.min(140, Math.round(innerWidth/3)), P=[];
+    for(let i=0;i<N;i++) P.push({ x:innerWidth*(0.15+0.7*(i/N)), y:-20-Math.round(60*(i%7)/7), vx:(((i*53)%100)/100-0.5)*5, vy:2+((i*29)%100)/28, r:4+((i*17)%6), c:cols[i%cols.length], a:((i*37)%360), va:(((i*7)%10)-5)*0.9 });
+    let t0=null;
+    const step=(ts)=>{ if(t0===null) t0=ts; const el=ts-t0;
+      x.clearRect(0,0,cv.width,cv.height);
+      P.forEach(p=>{ p.vy+=0.12; p.x+=p.vx; p.y+=p.vy; p.a+=p.va;
+        x.save(); x.translate(p.x,p.y); x.rotate(p.a*Math.PI/180);
+        x.globalAlpha=Math.max(0,1-el/1900); x.fillStyle=p.c; x.fillRect(-p.r/2,-p.r/2,p.r,p.r*1.5); x.restore(); });
+      if(el<1900) requestAnimationFrame(step); else cv.remove();
+    };
+    requestAnimationFrame(step);
+  }catch(e){}
+}
+
+.mod{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 16px;margin-top:12px;box-shadow:var(--shadow)}
+
+.mod{margin:0;border:none;border-top:1px solid var(--line2);border-radius:0;box-shadow:none;background:none;animation:exslide .2s ease}
+
+.mod{content-visibility:auto;contain-intrinsic-size:auto 240px}
+
+.mod anidado (seria una tarjeta dentro de otra) */
+.mealrow{padding:14px 0;border-bottom:1px solid var(--line2)}
+
+.mod + .hlc{margin-top:14px}
+
+.glowtop{background:radial-gradient(150% 110% at 50% -35%, rgba(var(--accHi-rgb),.5), rgba(var(--acc-rgb),.12) 54%, transparent 80%), var(--card);border-color:rgba(140,175,255,.22)}
+
+.bignum span{background:linear-gradient(180deg,#39434E 5%,rgb(var(--acc2-rgb)) 120%);-webkit-background-clip:text;background-clip:text}
+
+.bignum{font:700 clamp(40px,12vw,56px)/1 var(--num);letter-spacing:-.01em;font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,var(--bn1) 10%,var(--bn2) 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+.bignum small{font-size:.45em;font-weight:500;letter-spacing:0;-webkit-background-clip:text;background-clip:text}
+
+.statrow{display:grid;grid-template-columns:repeat(3,1fr);margin-top:18px}
+
+.statrow.s4{grid-template-columns:repeat(4,1fr)}
+
+.statrow>div,.statrow>.stw{padding:2px 4px;text-align:center;border-left:1px solid var(--line2)}
+
+.t-display{font:800 clamp(48px,13vw,64px)/.92 var(--display);letter-spacing:-.01em;text-transform:uppercase}
+
+.t-h1{font:600 clamp(28px,7.5vw,32px)/1.15 var(--ttl);letter-spacing:-.01em;color:var(--ink)}
+
+.t-h2{font:500 clamp(20px,5.5vw,24px)/1.2 var(--ttl);color:var(--ink)}
+
+.t-h2.strong{font-weight:600}
+
+.t-metric{font:700 clamp(40px,12vw,56px)/1 var(--num);letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+
+.t-metric-md{font:600 clamp(24px,7vw,36px)/1.05 var(--num);font-variant-numeric:tabular-nums}
+
+.t-metric{color:var(--bc)}
+
+.t-unit{font:500 .45em var(--num);color:var(--ink2);letter-spacing:0}
+
+.t-body.strong,.t-body-sm.strong{font-weight:600}
+
+.t-body-sm.strong{font-weight:600}
+
+.t-body{font:400 16px/1.5 var(--ui);color:var(--ink)}
+
+.t-label{font:500 12.5px/1.25 var(--ui);letter-spacing:.05em;text-transform:uppercase;color:var(--smoke)}
+
+.t-btn{font:600 15px/1.1 var(--ui);letter-spacing:.005em}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);
+  background:var(--card2);color:var(--ink);padding:12px 18px;font:600 15px/1.1 var(--ui);letter-spacing:.005em;
+  min-height:46px;border-radius:999px;transition:transform .12s cubic-bezier(.32,.72,0,1),box-shadow .12s cubic-bezier(.32,.72,0,1),filter .12s}
+
+.btn{flex:none}
+
+.btn{min-height:38px;padding:8px 12px;font-size:15px}
+
+.btn.primary{background:var(--grad);color:var(--onmint);border:none;box-shadow:var(--glow)}
+
+.btn.primary:active{transform:scale(.97);filter:brightness(1.08)}
+
+.btn.red{border-color:rgba(255,82,87,.4);color:var(--red);background:rgba(255,82,87,.08)}
+
+.shake */
+.shake{animation:sacudida .4s cubic-bezier(.36,.07,.19,.97)}
+
+.shake{animation:sacudida .4s cubic-bezier(.36,.07,.19,.97)}
+
+.shake,.cajain{animation:none}
+
+@keyframes badgepop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+
+#toast{position:fixed;z-index:96;bottom:calc(88px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(8px);
+  background:#22272B;color:#F2F5F4;font:400 14.5px/1.4 var(--ui);letter-spacing:0;
+  padding:12px 18px;opacity:0;transition:opacity .2s,transform .2s;max-width:90vw;text-align:center;border-radius:999px;border:1px solid rgba(var(--acc-rgb),.3);box-shadow:var(--shadow)}
+
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+#toast:not(.show){pointer-events:none}
+
+.chip{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:34px;border:1px solid var(--line);background:var(--card2);padding:6px 12px;font:500 12px/1.3 var(--ui);letter-spacing:.05em;white-space:nowrap;border-radius:999px;color:var(--ink2)}
+
+.chip{padding:8px 13px;font-size:13px}
+
+.chip{flex:1;justify-content:center}
+
+.flick{display:inline-flex;transform-origin:50% 88%;animation:flick 1.9s ease-in-out infinite}
+
+.flick,.bar.run>i::after,.ringdone{animation:none}
+
+@keyframes flick{0%,100%{transform:rotate(-4deg) scale(1)}30%{transform:rotate(3deg) scale(1.07)}60%{transform:rotate(-2deg) scale(.97)}}
+
+#topbar{position:sticky;top:0;z-index:60;background:rgba(var(--glass-rgb),.78);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  display:flex;align-items:center;justify-content:space-between;padding:14px 4px 12px;gap:8px;border-bottom:1px solid var(--line2);margin:0 -14px;padding-left:18px;padding-right:18px;
+  /* iPhone con notch: el header absorbe el safe-area para que nada se asome por detrás al hacer scroll */
+  padding-top:calc(14px + env(safe-area-inset-top))}
+
+#topbar .brand{font:600 17px/1 var(--ttl);letter-spacing:-.01em}
+
+#topbar .rev{font:500 11px/1.6 var(--ui);letter-spacing:.06em;color:var(--smoke);text-transform:uppercase}
+
+body{background:var(--paper);color:var(--ink);font:400 16px/1.5 var(--ui);-webkit-font-smoothing:antialiased;touch-action:manipulation}
+
+body{font:400 16px/1.5 var(--ui);color:var(--ink)}
+
+body{min-width:0}
+
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(52% 34% at 82% -6%, rgba(var(--acc-rgb),.13), transparent 70%),
+    radial-gradient(40% 28% at 8% 4%, rgba(var(--acc2-rgb),.07), transparent 70%)}
+
+body::before{background:
+  radial-gradient(52% 34% at 82% -6%, rgba(255,201,77,.12), transparent 70%),
+  radial-gradient(40% 28% at 8% 4%, rgba(242,169,59,.07), transparent 70%)}

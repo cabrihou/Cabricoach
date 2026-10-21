@@ -16,6 +16,7 @@ assets/                imágenes y videos que usa la fuente al abrirla local
 docs/                  proyecto, estándar de diseño, mapa de zonas, indicaciones
 herramientas/          verificar.py y el coach diario
 archivo/               prototipo React y respaldos viejos (fuera de git)
+prototipos/botellas/   juego de botellas para Cami, aparte de la app hasta aprobarlo (ver ESPEC.md y ESPEC-v2.md)
 publicar.sh            verifica y sincroniza site/
 supabase-schema.sql    esquema de la nube opcional
 ```

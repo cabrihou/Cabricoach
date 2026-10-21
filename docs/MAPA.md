@@ -625,6 +625,12 @@ pestaña del mismo contenido. `progGroup()` solo devuelve `act` o `nutri`.
   las reglas de puntuación viven en nivel 3 (`INFO3['retos-reglas']`) y la vitrina
   y el reinicio van plegados (`uiCaja`)
 - **R4** Vitrina de trofeos y palmarés
+- **R5** Botellas (REV 224): tarjeta con el nivel del juego y botón "Jugar" (`botellasNivel`, acción
+  `botellasAbrir`). El juego corre en una capa fija a pantalla completa colgada de `body`
+  (`#botlayer`, fuera de `#view` para que `render()` no la destruya) con un iframe cargado por
+  `fetch('assets/botellas.html')` + `srcdoc` (nunca `iframe.src`: el service worker lo guardaría como
+  index.html). La capa pone `window.__botellasHost={usuario:UID, cerrar}`; el juego toma ese usuario,
+  muestra "Volver a CabriCoach" y guarda en `localStorage['botellas:v1']`. Precargado en `sw.js`.
 
 ## PF · Perfil (se llega tocando el avatar del nav, `vPerfil`)
 

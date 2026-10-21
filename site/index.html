@@ -597,6 +597,19 @@ body.conisla #view{padding-bottom:170px}
 .retohero .rhface:first-of-type{left:0}
 .retohero .rhface:last-of-type{right:0}
 .retohero .rhmid{position:relative;z-index:1}
+/* R5 Botellas: tarjeta de entrada y capa a pantalla completa (REV 224). La capa cuelga de body, no de #view,
+   porque render() reconstruye #view y destruiria el juego. El padding de safe areas va aqui porque dentro
+   del iframe env() vale 0. */
+.botcard{display:flex;align-items:center;gap:14px;overflow:hidden}
+.botcard .botbody{flex:1;min-width:0}
+.botcard .botbody .t-h2{margin:4px 0 2px}
+.botcard .botnv{font:500 15px var(--ui);color:var(--ink2)}
+.botcard .botnv b{font:700 18px var(--num);font-variant-numeric:tabular-nums;color:var(--ink);margin-left:2px}
+.botcard .botface{flex:none;width:84px;height:auto;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(0,0,0,.5))}
+#botlayer{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;background:var(--paper);
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);overscroll-behavior:contain}
+#botlayer iframe{flex:1 1 auto;width:100%;min-height:0;border:0;display:block;background:var(--paper)}
+#botlayer .botload{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font:500 16px var(--ui);color:var(--ink2);pointer-events:none}
 .retohero .rhvs{position:absolute;left:50%;top:8px;transform:translateX(-50%);font:700 20px var(--num);color:rgba(255,255,255,.14);letter-spacing:.04em;z-index:0}
 .vsface{width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin:0 5px;background:var(--card2)}
 .rmini{width:44px;height:44px;border-radius:12px;overflow:hidden;flex:none;background:radial-gradient(120% 120% at 70% 25%,#1a2230,#0B0D0F);display:flex;align-items:flex-end;justify-content:center}
@@ -2756,7 +2769,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 223';
+const APPREV='REV 224';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -18349,6 +18362,42 @@ function vPerfil(){
     <div class="small dim mt8">Llegaste aquí tocando tu propio avatar. El del otro cambia de usuario (con su PIN si lo tiene).</div>
   </section>`;
 }
+/* ============ BOTELLAS (R5): el juego vive en assets/botellas.html y corre en un iframe dentro de una capa ============
+   Se carga con fetch + srcdoc, NUNCA con iframe.src: el service worker trata toda navegacion como "la app" y
+   guardaria el juego como index.html. El progreso lo guarda el propio juego en localStorage 'botellas:v1'. */
+function botellasNivel(){
+  try{ const j=JSON.parse(localStorage.getItem('botellas:v1')||'null'); const n=j&&j.perfiles&&j.perfiles[UID]?Math.floor(+j.perfiles[UID].nivel):0; return n>0?n:1; }
+  catch(e){ return 1; }
+}
+let BOT_CAPA=null, BOT_OV=null;
+function botellasCerrar(){
+  const capa=BOT_CAPA; BOT_CAPA=null;
+  if(capa) capa.remove();
+  try{ delete window.__botellasHost; }catch(e){ window.__botellasHost=undefined; }
+  if(BOT_OV){ document.documentElement.style.overflow=BOT_OV[0]; document.body.style.overflow=BOT_OV[1]; BOT_OV=null; }
+  render();
+}
+async function botellasAbrir(){
+  if(BOT_CAPA) return;
+  const capa=document.createElement('div');
+  capa.id='botlayer'; capa.setAttribute('role','dialog'); capa.setAttribute('aria-label','Botellas');
+  capa.innerHTML='<div class="botload" role="status">Cargando el juego</div>';
+  const fr=document.createElement('iframe'); fr.title='Botellas';
+  capa.appendChild(fr); document.body.appendChild(capa); BOT_CAPA=capa;
+  BOT_OV=[document.documentElement.style.overflow, document.body.style.overflow];
+  document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden';
+  window.__botellasHost={usuario:UID, cerrar:botellasCerrar};
+  try{
+    const r=await fetch('assets/botellas.html');
+    if(!r.ok) throw new Error('sin juego');
+    const txt=await r.text();
+    if(BOT_CAPA!==capa) return;
+    fr.addEventListener('load',()=>{ const l=capa.querySelector('.botload'); if(l) l.remove(); },{once:true});
+    fr.srcdoc=txt;
+  }catch(e){
+    if(BOT_CAPA===capa){ botellasCerrar(); toast('Necesitas señal la primera vez que abres el juego'); }
+  }
+}
 function vRetos(){
   const t=TODAY(), otherN=UID==='andres'?'Cami':'Andrés';
   const hasPartner=partnerScoreRange(mondayOf(t),t)!==null;
@@ -18367,6 +18416,17 @@ function vRetos(){
   </section>
   ${''/* Fase 2: la letra menuda de las reglas se fue a nivel 3; queda una linea */}
   <section class="mod tight"><div class="flex between" style="gap:10px"><span class="small dim">Máximo 7 puntos al día: hábitos, entreno y movilidad.</span>${i3('retos-reglas','Cómo se puntúa')}</div></section>
+  ${(()=>{ /* R5: entrada al juego; el nivel se lee del progreso del juego (mismo origen) */
+    const nv=botellasNivel(), face=UID==='andres'?CAB.faceA:CAB.faceC;
+    return `<section class="mod botcard">
+    <div class="botbody">
+      <span class="lbl mint">Un descanso</span>
+      <h3 class="t-h2">Botellas</h3>
+      <div class="botnv">Nivel<b>${nv}</b></div>
+      <button class="btn sm mt12" data-a="botellasAbrir" aria-label="Jugar Botellas">Jugar</button>
+    </div>
+    <img loading="lazy" class="botface" src="${face}" alt="" decoding="async">
+  </section>`})()}
   ${retoCard('sem','Reto de la semana')}
   ${retoCard('mes','Reto del mes')}
   ${retoCard('tri','Reto del trimestre')}
@@ -22678,6 +22738,7 @@ const ACTIONS = {
   pinOff(){ delete S.cfg.pin; delete S.cfg.pinH; delete S.cfg.lockPin; save('cfg'); render(); toast('PIN quitado'); },
   lockTgl(){ S.cfg.lockPin=!S.cfg.lockPin; save('cfg'); render(); },
   retoDx(d){ UI.retoDx=UI.retoDx===d.k?null:d.k; render(); },
+  botellasAbrir(){ botellasAbrir(); },
   retoVote(d){ S.retovotes[d.k]=d.w; save('retovotes'); render(); },
   resetProp(){ const v=($('#rrDate')&&$('#rrDate').value)||''; if(!/^\d{4}-\d{2}-\d{2}$/.test(v)) return; S.retoreset={d:v}; save('retoreset'); render(); toast('Propuesta enviada: desde '+fmtD(v)); },
   resetAccept(){ const o=(partnerState('retoreset')||{}).d; if(o){ S.retoreset={d:o}; save('retoreset'); render(); toast('Reinicio acordado'); } },

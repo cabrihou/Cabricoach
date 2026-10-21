@@ -604,6 +604,7 @@ body.conisla #view{padding-bottom:170px}
 .botcard .botbody{flex:1;min-width:0}
 .botcard .botbody .t-h2{margin:4px 0 2px}
 .botcard .botnv{font:500 15px var(--ui);color:var(--ink2)}
+.botcard .botnv+.botnv{font-size:14px;color:var(--smoke)}
 .botcard .botnv b{font:700 18px var(--num);font-variant-numeric:tabular-nums;color:var(--ink);margin-left:2px}
 .botcard .botface{flex:none;width:84px;height:auto;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(0,0,0,.5))}
 #botlayer{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;background:var(--paper);
@@ -2769,7 +2770,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 224';
+const APPREV='REV 225';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -9776,6 +9777,7 @@ function loadState(){
     retoprops: store.get('retoprops', {}), // {sem:'texto',...} propuesta de premio MÍA por reto
     retovotes: store.get('retovotes', {}), // {sem:'andres'|'cami'} mi voto por reto
     retoreset: store.get('retoreset', {}), // {d:'iso'} mi propuesta de reinicio de retos
+    botellas: store.get('botellas', null), // progreso de Botellas (perfil del juego sin partida a medias); el del otro se lee con partnerState
     ideas: store.get('ideas', {}),     // compartido: id -> {t:'food'|'ex', x, by, ts}
     recipeIdeas: store.get('recipeIdeas', {}), // compartido: id -> {nombre,desc,ingTxt,pg,cg,fg,kc,miss,by,ts}
     facturas: store.get('facturas', {}), // compartido: id -> {producto,precio,tienda,fecha,foto:bool,by,ts}
@@ -10809,7 +10811,7 @@ function save(k){ clearDayCache(); if(!DEMO){ store.set(k, S[k]); sbPush(k); } }
    'draft' y 'fired' no se sincronizan (son del dispositivo). */
 let SB=null, sbState='off', sbDiagMsg='';
 try{ SB=JSON.parse(localStorage.getItem('afc2:sb')||'null'); if(SB) sbState='ok'; }catch(e){}
-const SB_KEYS=['weights','logs','sessions','steps','water','meals','checkins','inject','meal','reminders','cfg','sched','week','acts','custom','customRoutines','exnotes','free','nlog','customFoods','retos','fotopub','fotoSrc','mobil','retoprops','retovotes','retoreset','ideas','recipeIdeas','facturas','perso','goals','pullup','medidas','rutMod','creat','creatp','bia','plan','hyrox','hxprog','hxplan'];
+const SB_KEYS=['weights','logs','sessions','steps','water','meals','checkins','inject','meal','reminders','cfg','sched','week','acts','custom','customRoutines','exnotes','free','nlog','customFoods','retos','fotopub','fotoSrc','mobil','retoprops','retovotes','retoreset','ideas','recipeIdeas','facturas','perso','goals','pullup','medidas','rutMod','creat','creatp','bia','plan','hyrox','hxprog','hxplan','botellas'];
 const sbTimers={}, sbPending={};
 /* REV 223: lo que no alcanzo a subir queda marcado como pendiente en este telefono hasta que
    la nube confirme. Antes un envio fallido (sin señal) no se reintentaba y al abrir la app
@@ -18366,8 +18368,11 @@ function vPerfil(){
    Se carga con fetch + srcdoc, NUNCA con iframe.src: el service worker trata toda navegacion como "la app" y
    guardaria el juego como index.html. El progreso lo guarda el propio juego en localStorage 'botellas:v1'. */
 function botellasNivel(){
-  try{ const j=JSON.parse(localStorage.getItem('botellas:v1')||'null'); const n=j&&j.perfiles&&j.perfiles[UID]?Math.floor(+j.perfiles[UID].nivel):0; return n>0?n:1; }
-  catch(e){ return 1; }
+  /* el propio: lo de la nube (S.botellas) y lo local del juego (botellas:v1); gana el mayor */
+  let a=0, b=0;
+  try{ a=Math.floor(+((S&&S.botellas)||{}).nivel)||0; }catch(e){}
+  try{ const j=JSON.parse(localStorage.getItem('botellas:v1')||'null'); b=j&&j.perfiles&&j.perfiles[UID]?Math.floor(+j.perfiles[UID].nivel)||0:0; }catch(e){}
+  return Math.max(a,b,1);
 }
 let BOT_CAPA=null, BOT_OV=null;
 function botellasCerrar(){
@@ -18386,7 +18391,18 @@ async function botellasAbrir(){
   capa.appendChild(fr); document.body.appendChild(capa); BOT_CAPA=capa;
   BOT_OV=[document.documentElement.style.overflow, document.body.style.overflow];
   document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden';
-  window.__botellasHost={usuario:UID, cerrar:botellasCerrar};
+  /* contrato con el juego (ESPEC-v3 seccion 3). perfil es getter: sbPull reemplaza S y debe leerse fresco */
+  window.__botellasHost={usuario:UID, cerrar:botellasCerrar,
+    get perfil(){ return (S&&S.botellas)||null; },
+    leerPareja(){ const o=UID==='andres'?'cami':'andres'; let p=null; try{ p=partnerState('botellas')||null; }catch(e){} return {usuario:o, nombre:o==='cami'?'Cami':'Andrés', perfil:p}; },
+    guardar(p){ S.botellas=p; save('botellas'); }};
+  /* bajar lo ultimo de la nube en segundo plano (como al volver a primer plano) y avisar al juego */
+  if(SB && S){
+    sbPull().then(had=>{
+      if(had){ S=loadState(); rutinasRefrescar(); applyStepsIn(); render(); }
+      if(BOT_CAPA===capa){ try{ fr.contentWindow.__botellasRefrescar&&fr.contentWindow.__botellasRefrescar(); }catch(e){} }
+    }).catch(()=>{});
+  }
   try{
     const r=await fetch('assets/botellas.html');
     if(!r.ok) throw new Error('sin juego');
@@ -18418,11 +18434,13 @@ function vRetos(){
   <section class="mod tight"><div class="flex between" style="gap:10px"><span class="small dim">Máximo 7 puntos al día: hábitos, entreno y movilidad.</span>${i3('retos-reglas','Cómo se puntúa')}</div></section>
   ${(()=>{ /* R5: entrada al juego; el nivel se lee del progreso del juego (mismo origen) */
     const nv=botellasNivel(), face=UID==='andres'?CAB.faceA:CAB.faceC;
+    const otN=UID==='andres'?'Cami':'Andrés', op=partnerState('botellas'), onv=op&&+op.nivel>0?Math.floor(+op.nivel):0;
     return `<section class="mod botcard">
     <div class="botbody">
       <span class="lbl mint">Un descanso</span>
       <h3 class="t-h2">Botellas</h3>
-      <div class="botnv">Nivel<b>${nv}</b></div>
+      <div class="botnv">Tú · Nivel<b>${nv}</b></div>
+      <div class="botnv">${onv?`${otN} · Nivel<b>${onv}</b>`:`Cuando ${otN} juegue, aquí ves cómo va`}</div>
       <button class="btn sm mt12" data-a="botellasAbrir" aria-label="Jugar Botellas">Jugar</button>
     </div>
     <img loading="lazy" class="botface" src="${face}" alt="" decoding="async">

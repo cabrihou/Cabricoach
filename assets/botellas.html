@@ -301,6 +301,20 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
 .vllave{position:absolute;z-index:60;pointer-events:none;display:flex;align-items:center;justify-content:center}
 .vllave svg{width:100%;height:100%}
 .pdot{position:absolute;z-index:60;width:12px;height:12px;border-radius:50%;pointer-events:none;background:var(--lc);box-shadow:0 0 10px var(--lc)}
+/* tarjeta "Tu y el otro" (solo dentro de CabriCoach) */
+.pares{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:12px}
+.par{display:flex;flex-direction:column;gap:3px;min-width:0;padding:0 12px}
+.par:first-child{padding-left:0}
+.par+.par{border-left:1px solid var(--line2)}
+.par .cab{display:flex;align-items:center;gap:8px;min-width:0}
+.par img{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:none;background:var(--paper2)}
+.par .nm{font:600 15px/1.2 var(--ui);min-width:0}
+.par .nv{font:700 28px/1.05 var(--num);font-variant-numeric:tabular-nums;margin-top:6px}
+.par .nv small{font:500 14px var(--ui);color:var(--ink2);margin-left:4px}
+.par .est{display:inline-flex;align-items:center;gap:4px;font:600 14px/1.2 var(--num);color:var(--ink2)}
+.par .est svg{width:14px;height:14px;fill:var(--mint)}
+.par .hoy{font:400 14px/1.35 var(--ui);color:var(--ink2)}
+.par .vacio{font:400 14px/1.4 var(--ui);color:var(--ink2);margin-top:6px}
 #sheetNov{text-align:center}
 #sheetNov .ilus{--bw:44px;margin:4px 0 16px;min-height:100px}
 #sheetNov .t-h2{margin-top:2px}
@@ -354,11 +368,17 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
       <div class="t-label" id="rLabel">Reto del día</div>
       <p class="t-body-sm" id="rHoy" style="margin-top:4px"></p>
       <p class="t-body estado" id="rEstado">Todavía sin jugar</p>
+      <p class="t-body-sm" id="rOtro" style="margin-top:4px" hidden></p>
       <div class="rachafila">
         <span class="flick" id="rImgW"><img id="rImg" alt=""></span>
         <div class="n" id="rRacha"></div>
       </div>
       <button class="btn block t-btn" id="rJugar" type="button">Jugar el reto</button>
+    </section>
+
+    <section class="mod" id="cPareja" hidden aria-label="Tú y el otro jugador">
+      <div class="t-label" id="pTit">Tú y Andrés</div>
+      <div class="pares" id="pCont"></div>
     </section>
 
     <section class="mod statcard" aria-label="Estadísticas">
@@ -400,7 +420,7 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
       </div>
     </section>
 
-    <p class="pie">Prototipo para CabriCoach. 200 niveles comprobados, todos con solución.</p>
+    <p class="pie" id="pie">Prototipo para CabriCoach. 200 niveles comprobados, todos con solución.</p>
   </div>
 </main>
 
@@ -432,6 +452,7 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
     <div><div class="t-metric-md" id="wMeta">0</div><div class="t-label">Meta</div></div>
     <div><div class="t-metric-md" id="wTiempo">0:00</div><div class="t-label">Tiempo</div></div>
   </div>
+  <p class="t-body-sm" id="wOtro" hidden style="margin:-8px 0 18px"></p>
   <div class="acts2">
     <button class="btn primary block t-btn" id="wSig" type="button">Siguiente nivel</button>
     <button class="btn block t-btn" id="wRep" type="button">Repetir</button>
@@ -1393,7 +1414,51 @@ function normalizar(x){
   b.partida = pa && (pa.modo === 'camino' || pa.modo === 'dia') && pa.estado && Array.isArray(pa.estado.b) ? pa : null;
   return b;
 }
-function guardar(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+/* ---------- progreso compartido (solo dentro de CabriCoach, con window.__botellasHost) ----------
+   El perfil viaja por la nube sin `legado`; la partida a medias no viaja (es del telefono). */
+const fechaMayor = (a, b) => (a || '') > (b || '') ? a : b;
+function perfilPublico(pf){ return { v:3, nivel:pf.nivel, estrellas:pf.estrellas, dias:pf.dias, racha:pf.racha, stats:pf.stats, vistos:pf.vistos }; }
+// une dos perfiles sin perder nada de ninguno: nivel y estrellas el mayor, reto del dia el mejor de cada fecha,
+// racha la del ultimo dia mas reciente, estadisticas el mayor de cada una, novedades vistas en union
+function fusionar(a, b){
+  const o = perfilNuevo(), num = (x) => (x > 0 ? x : 0);
+  o.nivel = Math.max(1, num(a.nivel), num(b.nivel));
+  [a.estrellas, b.estrellas].forEach(e => { Object.keys(e || {}).forEach(k => { if(!(o.estrellas[k] >= e[k])) o.estrellas[k] = e[k]; }); });
+  [a.dias, b.dias].forEach(d => { Object.keys(d || {}).forEach(f => {
+    const x = d[f], y = o.dias[f];
+    if(!y || x.estrellas > y.estrellas || (x.estrellas === y.estrellas && x.movs < y.movs)) o.dias[f] = { movs:x.movs, estrellas:x.estrellas, seg:x.seg || 0 };
+  }); });
+  const ra = Object.assign({ actual:0, mejor:0, ultimo:null }, a.racha), rb = Object.assign({ actual:0, mejor:0, ultimo:null }, b.racha);
+  let base = ra;
+  if(fechaMayor(ra.ultimo, rb.ultimo) === rb.ultimo && rb.ultimo !== ra.ultimo) base = rb;
+  else if(ra.ultimo === rb.ultimo && rb.actual > ra.actual) base = rb;
+  o.racha = { actual:base.actual, ultimo:base.ultimo, mejor:Math.max(num(ra.mejor), num(rb.mejor), base.actual) };
+  const sa = Object.assign({ ganados:0, segundos:0 }, a.stats), sb = Object.assign({ ganados:0, segundos:0 }, b.stats);
+  o.stats = { ganados:Math.max(num(sa.ganados), num(sb.ganados)), segundos:Math.max(num(sa.segundos), num(sb.segundos)) };
+  o.vistos = Object.assign({}, a.vistos, b.vistos);
+  return o;
+}
+let ULTIMO = null;   // lo ultimo que se mando a la nube (texto), para subir solo si el perfil cambia
+const canon = (pf) => JSON.stringify(perfilPublico(fusionar(perfilNuevo(), pf)));
+function subirSiCambio(){
+  if(!HOST) return;
+  try{
+    const pub = perfilPublico(P()), t = JSON.stringify(pub);
+    if(t === ULTIMO) return;
+    ULTIMO = t;
+    HOST.guardar(JSON.parse(t));     // copia: la app no comparte objetos con el juego
+  }catch(e){}
+}
+// trae lo de la nube y lo une con lo local; si el resultado difiere de la nube, lo sube
+function fusionarConNube(){
+  if(!HOST) return;
+  const nube = HOST.perfil && typeof HOST.perfil === 'object' ? HOST.perfil : null;
+  const pf = P(), leg = pf.legado;
+  if(nube){ const m = fusionar(pf, nube); m.legado = leg; S.perfiles[S.jugador] = m; }
+  ULTIMO = nube ? canon(nube) : JSON.stringify(perfilPublico(perfilNuevo()));
+  guardar();      // deja lo fusionado en el telefono y, si difiere de la nube, lo sube
+}
+function guardar(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} subirSiCambio(); }
 function guardarNiveles(){
   try{
     const ks = Object.keys(NIV);
@@ -2405,6 +2470,11 @@ function ganar(){
   for(let k = 0; k < 3; k++) h += estrellaSvg(k < est).replace('animation-delay:0ms', 'animation-delay:' + (300 + k * 120) + 'ms');
   $('wEst').innerHTML = h;
   $('wEst').setAttribute('aria-label', est + (est === 1 ? ' estrella' : ' estrellas'));
+  $('wOtro').hidden = true;
+  if(dia){
+    const pj = parejaAhora(), od = pj && pj.perfil && pj.perfil.dias && pj.perfil.dias[g.clave];
+    if(od){ $('wOtro').textContent = pj.nombre + ' lo resolvió en ' + od.movs + (od.movs === 1 ? ' movimiento.' : ' movimientos.'); $('wOtro').hidden = false; }
+  }
   $('wSig').textContent = dia ? 'Volver al inicio' : (ultima ? 'Seguir con el nivel ' + (NTOTAL + 1) : 'Siguiente nivel');
   confettiBurst();
   sonar('ganar'); vib([30, 40, 60]);
@@ -2471,6 +2541,7 @@ function pintarInicio(){
   const d = pf.dias[hoy];
   $('rEstado').textContent = d ? 'Resuelto en ' + d.movs + ' movimientos · ' + d.estrellas + (d.estrellas === 1 ? ' estrella' : ' estrellas') : 'Todavía sin jugar';
   $('rJugar').textContent = d ? 'Ver cómo quedó' : 'Jugar el reto';
+  pintarPareja(hoy);
   $('rImg').src = u === 'cami' ? IMG.rachaC : IMG.rachaA;
   const vigente = pf.racha.ultimo === hoy || pf.racha.ultimo === ayerDe(hoy);
   const n = vigente ? pf.racha.actual : 0;
@@ -2478,6 +2549,29 @@ function pintarInicio(){
   const sumaEst = Object.keys(pf.estrellas).reduce((a, k) => a + pf.estrellas[k], 0);
   $('sNiv').textContent = pf.nivel - 1; $('sEst').textContent = sumaEst; $('sRac').textContent = pf.racha.mejor;
   document.querySelectorAll('.sw').forEach(b => b.setAttribute('aria-checked', S.ajustes[b.dataset.aj] ? 'true' : 'false'));
+}
+/* la pareja: lo que tiene la nube del otro jugador, leido en el momento de pintar */
+function parejaAhora(){
+  if(!HOST) return null;
+  try{ const p = HOST.leerPareja && HOST.leerPareja(); return p && p.nombre ? p : null; }catch(e){ return null; }
+}
+const sumaEstrellas = (pf) => Object.keys(pf.estrellas || {}).reduce((a, k) => a + pf.estrellas[k], 0);
+function pintarPareja(hoy){
+  const card = $('cPareja'), otroEl = $('rOtro');
+  const pj = parejaAhora();
+  card.hidden = !pj; otroEl.hidden = true;
+  if(!pj) return;
+  const pf = P(), op = pj.perfil && typeof pj.perfil === 'object' && pj.perfil.nivel > 0 ? pj.perfil : null;
+  $('pTit').textContent = 'Tú y ' + pj.nombre;
+  const hoyDe = (p) => { const d = p && p.dias && p.dias[hoy]; return d ? 'Hoy: ' + d.movs + (d.movs === 1 ? ' movimiento' : ' movimientos') : 'Hoy: sin jugar'; };
+  const col = (nombre, foto, p) => '<div class="par"><div class="cab"><img alt="" src="' + foto + '"><span class="nm">' + nombre + '</span></div>' +
+    (p ? '<div class="nv">' + p.nivel + '<small>nivel</small></div><div class="est"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + ESTRELLA_D + '"/></svg>' + sumaEstrellas(p) + '</div><div class="hoy">' + hoyDe(p) + '</div>'
+       : '<div class="vacio">Cuando ' + pj.nombre + ' juegue, aquí ves cómo va.</div>') + '</div>';
+  const yoFoto = S.jugador === 'cami' ? IMG.faceC : IMG.faceA, otroFoto = pj.usuario === 'cami' ? IMG.faceC : IMG.faceA;
+  $('pCont').innerHTML = col('Tú', yoFoto, pf) + col(pj.nombre, otroFoto, op);
+  // en el reto de hoy: una linea con lo del otro, si ya lo jugo
+  const d = op && op.dias && op.dias[hoy];
+  if(d){ otroEl.textContent = pj.nombre + ' lo resolvió en ' + d.movs + (d.movs === 1 ? ' movimiento.' : ' movimientos.'); otroEl.hidden = false; }
 }
 let pvTok = 0;
 // dibuja un nivel en miniatura, sin interaccion (inicio y hoja de Novedad); usa el mismo reparto en filas que el tablero
@@ -2647,6 +2741,8 @@ function start(data){
     $('who').tabIndex = -1; $('who').setAttribute('aria-disabled', 'true');
     $('salir').hidden = false;
     $('salir').onclick = () => { if(G && G.estado) guardarPartida(); try{ HOST.cerrar(); }catch(e){} };
+    $('pie').textContent = '200 niveles comprobados, todos con solución.';
+    fusionarConNube();      // un telefono nuevo recupera el progreso de la nube
   }
   iniciarWorker();
   engancharEventos();
@@ -2660,6 +2756,16 @@ function start(data){
   }
   if(window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ S:S }));
 }
+
+// la app la llama despues de bajar datos frescos: une de nuevo y repinta el inicio si esta a la vista
+window.__botellasRefrescar = () => {
+  if(!HOST) return;
+  try{
+    const nube = HOST.perfil && typeof HOST.perfil === 'object' ? HOST.perfil : null;
+    if(nube){ const pf = P(), m = fusionar(pf, nube); m.legado = pf.legado; S.perfiles[S.jugador] = m; ULTIMO = canon(nube); guardar(); }
+    if(!$('vInicio').hidden) pintarInicio();
+  }catch(e){}
+};
 
 const boot = (data) => start(data);
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});

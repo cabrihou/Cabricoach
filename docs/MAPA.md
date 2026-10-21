@@ -630,7 +630,11 @@ pestaña del mismo contenido. `progGroup()` solo devuelve `act` o `nutri`.
   (`#botlayer`, fuera de `#view` para que `render()` no la destruya) con un iframe cargado por
   `fetch('assets/botellas.html')` + `srcdoc` (nunca `iframe.src`: el service worker lo guardaría como
   index.html). La capa pone `window.__botellasHost={usuario:UID, cerrar}`; el juego toma ese usuario,
-  muestra "Volver a CabriCoach" y guarda en `localStorage['botellas:v1']`. Precargado en `sw.js`.
+  muestra "Volver a CabriCoach". REV 225: el progreso viaja por la nube como la clave `botellas` (por usuario,
+  en `SB_KEYS`/`loadState`, `S.botellas`). El host entrega `perfil` (getter de `S.botellas`), `leerPareja()`
+  (`partnerState('botellas')` y el nombre del otro) y `guardar(p)` (`S.botellas=p; save('botellas')`). Al abrir,
+  con nube, `sbPull()` en segundo plano y luego `__botellasRefrescar()` dentro del iframe. La tarjeta muestra
+  "Tú · Nivel N" y el nivel del otro (o "Cuando Cami juegue, aquí ves cómo va"). Precargado en `sw.js`.
 
 ## PF · Perfil (se llega tocando el avatar del nav, `vPerfil`)
 

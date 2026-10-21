@@ -88,3 +88,43 @@ de 50 %. En vivo: niveles 201-205 y 14 retos del día, deterministas y ≤ 2 s.
 - **Capturas**: inicio (390 y 320), aviso de difícil y de muy difícil, un nivel de cada
   dificultad, llave y candado (siguen), Muy difícil a 320 con la extra, ganar en el 200. Sin
   errores de JS ni scroll horizontal.
+
+## 3. En CabriCoach: progreso compartido (pedido de Andy, 2026-10-21)
+
+"Déjalo para Andrés y Cami y que ambos puedan ver el progreso del otro."
+
+El progreso del juego viaja por la nube de la app (Supabase, tabla `kv`) como una clave más
+por usuario: `botellas` (no compartida). La app ya baja las claves de los dos usuarios en
+`sbPull`, así que el del otro se lee con `partnerState('botellas')`.
+
+### Contrato `window.__botellasHost` (lo pone la app antes de cargar el iframe)
+```
+{ usuario:'cami'|'andres',
+  cerrar(),
+  perfil,                 // el perfil propio que tiene la nube (S.botellas) o null
+  leerPareja(),           // -> { usuario, nombre:'Cami'|'Andrés', perfil|null } en el momento de llamarla
+  guardar(perfil) }       // la app lo guarda en S.botellas y lo sube (save('botellas'))
+```
+`perfil` = el perfil v3 del juego sin `legado`: `{v, nivel, estrellas, dias, racha, stats, vistos}`.
+La partida a medias no viaja (es del teléfono).
+
+### Juego
+- Al arrancar con host: fusiona el perfil local con `host.perfil` (nivel = el mayor; estrellas =
+  la mayor por nivel; dias = el mejor resultado por fecha; racha = la de `ultimo` más reciente,
+  y si empatan la mayor; stats = el mayor de cada uno; vistos = unión) y, si el resultado difiere
+  de la nube, lo sube. Así un teléfono nuevo recupera el progreso.
+- Cada vez que cambia el perfil (ganar, ver una Novedad), `host.guardar(copia)`. Solo si cambió.
+- Inicio: tarjeta "Tú y Andrés" (o "Tú y Cami"): las dos caras, nivel en `--num`, estrellas, y
+  el reto de hoy de cada uno ("Hoy: 24 movimientos" o "Hoy: sin jugar"). Sin perfil del otro:
+  "Cuando Andrés juegue, aquí ves cómo va." Sin regaños ni comparaciones duras.
+- Reto del día: una línea con el resultado del otro si ya lo jugó. En la hoja de ganar del reto,
+  "Andrés lo resolvió en 26 movimientos." si aplica.
+- `window.__botellasRefrescar()`: la app la llama después de bajar datos frescos; repinta el
+  inicio si está a la vista.
+- Dentro de la app el pie no dice "Prototipo".
+
+### App
+- `botellas` en `SB_KEYS` y en `loadState` (`store.get('botellas', null)`).
+- Al abrir el juego, si hay nube, `sbPull()` en segundo plano (como al volver a primer plano) y
+  al terminar `__botellasRefrescar()` dentro del iframe.
+- Tarjeta R5 en Retos: el nivel propio y el del otro ("Cami · Nivel 52").

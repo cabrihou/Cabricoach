@@ -160,8 +160,10 @@
 
   const DIFS = ['facil', 'normal', 'dificil', 'muy'];
   // [nivel, mecanica]: en ese nivel se estrena (siempre Facil o Normal, y con la Novedad en la interfaz)
-  const ESTRENOS = [[4, 'candVacio'], [7, 'cajaVacia'], [12, 'candLiq'], [16, 'cajaLiq'], [20, 'mistLeve'],
-                    [25, 'largas'], [35, 'mistTotal'], [50, 'dosCajas'], [80, 'cadena']];
+  // v4: nada cerrado viene vacio. L4 candado (con liquido), L7 llave con caja de una botella, L12 cajon de dos
+  // botellas (con un color nuevo adentro), L30 botella gigante.
+  const ESTRENOS = [[4, 'candado'], [7, 'cajaUna'], [12, 'cajon'], [20, 'mistLeve'], [25, 'largas'],
+                    [30, 'gigante'], [35, 'mistTotal'], [50, 'dosCajas'], [80, 'cadena']];
   function estrenoDe(L) {
     for (let i = 0; i < ESTRENOS.length; i++) if (ESTRENOS[i][0] === L) return ESTRENOS[i][1];
     return null;
@@ -207,18 +209,18 @@
     const n = Math.max(3, Math.min(12, coloresBase(L) + [-1, 0, 1, 2][idx]));
     const p = { ruta: 'camino', L: L, id: 'camino-' + L, n: n, vacias: 2, cap: 4, misterio: 0, cajas: [], candados: [], cadena: false,
                 hondo: [0, 0.5, 1, 1][idx], dif: dif, estreno: estreno,
-                seleccion: ['facil', 'mediana', 'dificil', 'muy'][idx], cuantos: [6, 6, 8, 10][idx] };
+                seleccion: ['facil', 'mediana', 'dificil', 'muy'][idx], cuantos: [6, 6, 8, 16][idx] };
     const largas = function () { p.cap = 6; p.n = Math.max(4, Math.min(6, n - 3)); };
     if (estreno) {
       // el estreno va solo y limpio: la mecanica nueva es lo unico distinto del nivel
-      if (estreno === 'candVacio') p.candados = [CAND_VACIO];
-      else if (estreno === 'cajaVacia') p.cajas = [cajaVacia(1)];
-      else if (estreno === 'candLiq') p.candados = [CAND_LIQ];
-      else if (estreno === 'cajaLiq') p.cajas = [cajaLiq(1)];
+      if (estreno === 'candado') p.candados = [CAND_LIQ];
+      else if (estreno === 'cajaUna') p.cajas = [cajaLiq(1)];
+      else if (estreno === 'cajon') p.cajas = [cajaLiq(2)];
       else if (estreno === 'mistLeve') p.misterio = 1;
       else if (estreno === 'largas') largas();
+      else if (estreno === 'gigante') p.gigante = true;
       else if (estreno === 'mistTotal') p.misterio = 2;
-      else if (estreno === 'dosCajas') p.cajas = [cajaLiq(1), cajaLiq(1)];
+      else if (estreno === 'dosCajas') p.cajas = [cajaLiq(2), cajaLiq(1)];
       else if (estreno === 'cadena') { p.cajas = [cajaLiq(1), cajaLiq(2)]; p.cadena = true; }
     } else {
       sortearMecanicas(p, L, idx, R);
@@ -231,50 +233,38 @@
     if (L >= 25 && idx <= 1 && R() < 0.12) { p.cap = 6; p.n = Math.max(4, Math.min(6, p.n - 3)); return; } // largas: solas
     const cuantas = idx === 0 ? (R() < 0.5 ? 1 : 0) : idx === 1 ? (R() < 0.85 ? 1 : 0) : idx === 2 ? 1 + (R() < 0.5 ? 1 : 0) : 2 + (R() < 0.4 ? 1 : 0);
     const kinds = [];
-    if (L >= 4) kinds.push('cv');
-    if (L >= 7) kinds.push('xv');
-    if (L >= 12) kinds.push('cl');
-    if (L >= 16) kinds.push('xl');
+    if (L >= 4) kinds.push('c');                          // candado (con liquido)
+    if (L >= 7) kinds.push('x');                          // caja: una botella antes de L12, cajon de dos despues
     if (L >= 20) kinds.push('m');
     if (L >= 50 && idx >= 2) kinds.push('2c');
     if (L >= 80 && idx >= 2) kinds.push('cad');
     barajar(kinds, R);
     const pick = {};
-    let hechas = 0;
+    let hechas = 0, hayCaja = false;
     for (let i = 0; i < kinds.length && hechas < cuantas; i++) {
       const k = kinds[i];
-      const esCaja = k === 'xv' || k === 'xl' || k === '2c' || k === 'cad';
-      const hayCaja = pick.xv || pick.xl || pick['2c'] || pick.cad;
-      if ((k === 'cv' || k === 'cl') && (pick.cv || pick.cl)) continue;   // un solo candado
-      if (esCaja && hayCaja && !((k === 'xv' && pick.xl) || (k === 'xl' && pick.xv)) ) continue;
-      if (esCaja && hayCaja && L < 50) continue;                           // dos cajas solo desde que se estrenan
+      const esCaja = k === 'x' || k === '2c' || k === 'cad';
+      if (esCaja && hayCaja) continue;                    // una sola familia de cajas por nivel
+      if (esCaja) hayCaja = true;
       pick[k] = true; hechas++;
     }
-    if (pick.cv) p.candados.push(CAND_VACIO);
-    if (pick.cl) p.candados.push(CAND_LIQ);
-    if (pick.xv) p.cajas.push(cajaVacia(1));
-    if (pick.xl) p.cajas.push(cajaLiq(idx >= 2 && R() < 0.5 ? 2 : 1));
-    if (pick['2c']) p.cajas.push(cajaLiq(1), cajaLiq(idx >= 2 && R() < 0.5 ? 2 : 1));
+    if (pick.c) p.candados.push(CAND_LIQ);
+    const cajon = function () { return L >= 12 && R() < 0.85 ? 2 : 1; };
+    if (pick.x) p.cajas.push(cajaLiq(cajon()));
+    if (pick['2c']) p.cajas.push(cajaLiq(cajon()), cajaLiq(idx >= 2 && R() < 0.5 ? 2 : 1));
     if (pick.cad) { p.cajas.push(cajaLiq(1), cajaLiq(2)); p.cadena = true; }
     if (pick.m) p.misterio = (idx >= 2 && L >= 35) ? 2 : 1;
-    // una sola vacia libre solo con caja vacia (medido: el candado vacio con una libre casi nunca tiene salida)
-    if (idx >= 2 && pick.xv && !pick.cv && R() < 0.5) p.vacias = 1;
+    // la botella gigante aparece de vez en cuando (no con largas)
+    if (L > 30 && R() < 0.15) p.gigante = true;
   }
 
-  // si las vacias extra no caben en 15 botellas, pasan a ser botellas con liquido
+  // 15 botellas como tope: n colores + 2 vacias libres. La gigante cuenta como una de las n.
   function topar(p) {
-    const total = function () {
-      let t = p.n + p.vacias;
-      p.cajas.forEach(function (c) { if (c.vacia) t++; });
-      p.candados.forEach(function (c) { if (c.vacia) t++; });
-      return t;
-    };
-    while (total() > MAXBOT) {
-      let hecho = false;
-      for (let i = 0; i < p.candados.length && !hecho; i++) if (p.candados[i].vacia) { p.candados[i] = CAND_LIQ; hecho = true; }
-      for (let i = 0; i < p.cajas.length && !hecho; i++) if (p.cajas[i].vacia) { p.cajas[i] = cajaLiq(p.cajas[i].bots); hecho = true; }
-      if (!hecho) { if (p.vacias > 2) p.vacias--; else p.n--; }
-    }
+    let k = p.candados.length;
+    p.cajas.forEach(function (c) { k += c.bots; });
+    while (p.n + 2 > MAXBOT) p.n--;
+    if (p.gigante && p.n - k - 1 < 1) p.gigante = false;
+    p.vacias = 2;
     return p;
   }
 
@@ -286,12 +276,15 @@
        candado: la botella b no se puede tocar hasta que se complete una botella de `color`.
      E (cambia en cada jugada): { b:[[...],...], ab } con ab = bits de lo que ya abrio:
        bit c = caja c (c < 4), bit 4+d = candado d (d < 4).
+     Capacidad por botella (botella gigante): C.caps[i] es la capacidad de la botella i (si falta,
+       C.cap) y C.u las capas que tiene cada color (si falta, C.cap). Una botella esta completa cuando
+       tiene las u capas de un solo color, aunque le sobre espacio (la gigante de 10 se completa con 4).
      Atajos: C puede ser un numero (solo cap) y E un arreglo de botellas (nada abierto).
      Un objeto de nivel completo (el que devuelve generar) sirve tal cual como C. */
   const MAXC = 4;
   const CACHE = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
   function compilar(C) {
-    const P = { esP: true, cap: C.cap, llaves: C.llaves || [], cajas: C.cajas || [], candados: C.candados || [], cierre: [], porColor: [], llaveEn: [] };
+    const P = { esP: true, cap: C.cap, u: C.u || C.cap, caps: C.caps || null, llaves: C.llaves || [], cajas: C.cajas || [], candados: C.candados || [], cierre: [], porColor: [], llaveEn: [] };
     P.cajas.forEach(function (cj, c) { cj.bots.forEach(function (i) { P.cierre[i] = (P.cierre[i] || 0) | (1 << c); }); });
     P.candados.forEach(function (cd, d) {
       const bit = 1 << (MAXC + d);
@@ -299,7 +292,7 @@
       P.porColor[cd.color] = (P.porColor[cd.color] || 0) | bit;
     });
     P.llaves.forEach(function (ll, q) { (P.llaveEn[ll.b] = P.llaveEn[ll.b] || []).push({ k: ll.k, bit: 1 << ll.caja, caja: ll.caja, q: q }); });
-    P.simple = !P.llaves.length && !P.cajas.length && !P.candados.length;
+    P.simple = !P.llaves.length && !P.cajas.length && !P.candados.length && !P.caps;
     return P;
   }
   // el compilado se guarda aparte (WeakMap) para no ensuciar el objeto del nivel que se serializa
@@ -311,6 +304,7 @@
     return P;
   }
   function nE(E) { return Array.isArray(E) ? { b: E, ab: 0 } : { b: E.b, ab: E.ab | 0 }; }
+  function capDe(P, i) { return (P.caps && P.caps[i]) || P.cap; }
   function cerradaP(P, ab, i) { const m = P.cierre[i]; return !!m && (m & ~ab) !== 0; }
   function llaveDentro(P, ab, i) {
     const ls = P.llaveEn[i];
@@ -333,16 +327,17 @@
     return b.length > 0;
   }
   function completa(b, cap) { return b.length === cap && unColor(b); }
-  function ganadoB(b, cap) {
+  // u = capas por color: completa es tener todas las de un color juntas
+  function ganadoB(b, u) {
     // las cerradas tambien cuentan: una caja con liquido adentro no deja ganar
-    for (let i = 0; i < b.length; i++) if (b[i].length && !completa(b[i], cap)) return false;
+    for (let i = 0; i < b.length; i++) if (b[i].length && !completa(b[i], u)) return false;
     return true;
   }
   function puedeV(b, ab, i, j, P) {
     if (i === j) return false;
-    const a = b[i], d = b[j], cap = P.cap;
-    if (!a || !d || !a.length || completa(a, cap)) return false;
-    if (d.length >= cap) return false;
+    const a = b[i], d = b[j];
+    if (!a || !d || !a.length || completa(a, P.u)) return false;
+    if (d.length >= capDe(P, j)) return false;
     if (P.cierre[i] && cerradaP(P, ab, i)) return false;
     if (P.cierre[j] && cerradaP(P, ab, j)) return false;
     if (!d.length) {
@@ -353,9 +348,9 @@
     return d[d.length - 1] === a[a.length - 1];
   }
   function vert(b, ab, i, j, P) {
-    const cap = P.cap, a = b[i], d = b[j];
+    const a = b[i], d = b[j];
     const color = a[a.length - 1];
-    const cantidad = Math.min(racha(a), cap - d.length);
+    const cantidad = Math.min(racha(a), capDe(P, j) - d.length);
     const nb = b.slice();
     nb[i] = a.slice(0, a.length - cantidad);
     const nd = d.slice();
@@ -372,7 +367,7 @@
       }
     }
     // candados: abren cuando se completa una botella de su color
-    if (P.porColor[color] && completa(nd, cap)) {
+    if (P.porColor[color] && completa(nd, P.u)) {
       const bits = P.porColor[color] & ~ab2;
       if (bits) {
         ab2 |= bits;
@@ -389,7 +384,7 @@
     const e = nE(E), r = vert(e.b, e.ab, i, j, prep(C));
     return { estado: { b: r.b, ab: r.ab }, cantidad: r.cantidad, color: r.color, abre: r.abre || [] };
   }
-  function ganado(E, C) { return ganadoB(nE(E).b, prep(C).cap); }
+  function ganado(E, C) { return ganadoB(nE(E).b, prep(C).u); }
   function cerrada(E, i, C) { const e = nE(E); return cerradaP(prep(C), e.ab, i); }
   function hayJugadas(E, C) {
     const e = nE(E), P = prep(C);
@@ -414,6 +409,8 @@
   // marca de la botella: su contenido mas las llaves que todavia tiene adentro
   function marca(b, ab, i, P) {
     let t = cadena(b[i]);
+    // una botella de otra capacidad no es intercambiable con las normales
+    if (P.caps && P.caps[i] && P.caps[i] !== P.cap) t += '^' + P.caps[i];
     const ls = P.llaveEn[i];
     if (ls) for (let q = 0; q < ls.length; q++) if (!(ab & ls[q].bit)) t += '#' + ls[q].k;
     return t;
@@ -455,10 +452,10 @@
 
   // jugadas de un estado, sin las equivalentes (mismo origen repetido, destinos iguales)
   function jugadasP(b, ab, P) {
-    const out = [], origenes = {}, cap = P.cap;
+    const out = [], origenes = {}, u = P.u;
     for (let i = 0; i < b.length; i++) {
       const a = b[i];
-      if (!a.length || completa(a, cap)) continue;
+      if (!a.length || completa(a, u)) continue;
       if (P.cierre[i] && cerradaP(P, ab, i)) continue;
       const ka = marca(b, ab, i, P);
       if (origenes[ka]) continue;
@@ -516,7 +513,7 @@
     while (open.a.length) {
       const n = open.pop();
       if (n.g > mejorG.get(n.k)) continue; // version vieja del estado
-      if (ganadoB(n.s, P.cap)) {
+      if (ganadoB(n.s, P.u)) {
         const movs = [];
         for (let x = n; x.p; x = x.p) movs.push(x.m);
         movs.reverse();
@@ -544,16 +541,16 @@
     const visto = new Set();
     let nodos = 0;
     const camino = [];
-    const cap = P.cap;
+    const u = P.u;
     function rec(s, ab, prof) {
-      if (ganadoB(s, cap)) return true;
+      if (ganadoB(s, u)) return true;
       if (++nodos > tope || prof > 300) return false;
       const js = jugadasP(s, ab, P);
       const pun = js.map(function (m) {
         const d = s[m[1]];
         const r = vert(s, ab, m[0], m[1], P);
         let sc = 0;
-        if (completa(r.b[m[1]], cap)) sc -= 100;
+        if (completa(r.b[m[1]], u)) sc -= 100;
         if (r.abre) sc -= 50;
         if (d.length) sc -= 10;
         sc += heuristica(r.b);
@@ -582,7 +579,7 @@
   function resolver(E, C, opts) {
     opts = opts || {};
     const e = nE(E), P = prep(C);
-    if (ganadoB(e.b, P.cap)) return { movs: [], largo: 0, optimo: true, nodos: 0 };
+    if (ganadoB(e.b, P.u)) return { movs: [], largo: 0, optimo: true, nodos: 0 };
     const tt = opts.topes || [Math.min(60000, opts.tope || 60000), Math.min(150000, opts.tope || 150000), Math.min(200000, opts.tope || 200000)];
     let total = 0, r;
     if (!opts.rapido) {
@@ -619,51 +616,91 @@
   // Un reparto con sus mecanicas, todavia sin resolver. Devuelve null si no hubo donde poner algo
   // (el llamador lo cuenta como intento fallido). Orden final: sueltas mezcladas y al final las
   // botellas de cada caja, contiguas (el formato de nivel v2).
+  // v4: nada cerrado viene vacio (toda botella de caja o con candado trae liquido), siempre 2 vacias
+  // libres, colores nuevos escondidos en lo cerrado (si suma 8 capas o mas) y botella gigante opcional.
+  const CAP_GIGANTE = 10;
   function armar(p, R) {
-    const cap = p.cap, n = p.n;
+    const u = p.cap, n = p.n;                     // u = capas por color; las botellas normales caben u
     const cajasP = p.cajas || [], candP = p.candados || [];
-    let cont = null;
-    for (let t = 0; t < 60 && !cont; t++) {
-      const capas = [];
-      for (let c = 1; c <= n; c++) for (let k = 0; k < cap; k++) capas.push(c);
-      barajar(capas, R);
-      const bs = [];
-      let mono = false;
-      for (let b = 0; b < n; b++) {
-        const bt = capas.slice(b * cap, (b + 1) * cap);
-        if (completa(bt, cap)) mono = true; // una botella ya resuelta regala el nivel
-        bs.push(bt);
-      }
-      if (!mono) cont = bs;
-    }
-    if (!cont) return null;
-    const enCaja = [];
-    for (let i = 0; i < n; i++) enCaja.push(-1);
+    const conG = !!p.gigante;
+    let nCerr = candP.length;
+    cajasP.forEach(function (c) { nCerr += c.bots; });
+    // 1) papeles de cada botella (todavia sin contenido): gigante, cajas y candados
     const pool = [];
     for (let i = 0; i < n; i++) pool.push(i);
     barajar(pool, R);
-
-    // cajas: de liquido (botellas del reparto) o con una vacia de premio
+    let G = -1;
+    if (conG) { if (n - nCerr - 1 < 1) return null; G = pool.pop(); }
+    const enCaja = [];
+    for (let i = 0; i < n; i++) enCaja.push(-1);
     const miembros = [];
     for (let c = 0; c < cajasP.length; c++) {
       const m = [];
-      let faltan = cajasP[c].bots;
-      if (cajasP[c].vacia) { cont.push([]); enCaja.push(c); m.push(cont.length - 1); faltan--; }
-      for (; faltan > 0; faltan--) {
+      for (let q = 0; q < cajasP[c].bots; q++) {
         if (!pool.length) return null;
         const i = pool.pop(); enCaja[i] = c; m.push(i);
       }
       miembros.push(m);
     }
-    // llaves: enterradas bajo al menos una capa (k <= len-2), mas hondo en las rutas dificiles.
+    const candHost = [];
+    for (let d = 0; d < candP.length; d++) {
+      if (!pool.length) return null;
+      candHost.push(pool.pop());
+    }
+    const esCerrada = function (i) { return enCaja[i] >= 0 || candHost.indexOf(i) >= 0; };
+    // 2) contenido. Lo cerrado suma capasK capas; desde 8 capas vive ahi al menos un color entero
+    // (nuevos), mezclado con capas de colores de afuera para que haya que redistribuir al abrir.
+    const K = [];
+    miembros.forEach(function (m) { m.forEach(function (i) { K.push(i); }); });
+    candHost.forEach(function (i) { K.push(i); });
+    const capasK = K.length * u;
+    const nn = capasK >= 8 ? Math.max(1, Math.floor(capasK / (2 * u))) : 0;
+    if (n - nn < 1) return null;
+    let cont = null, nuevos = null;
+    for (let t = 0; t < 60 && !cont; t++) {
+      const cols = [];
+      for (let c = 1; c <= n; c++) cols.push(c);
+      barajar(cols, R);
+      const nuevosC = cols.slice(0, nn), fuera = cols.slice(nn);
+      const capasF = [];
+      fuera.forEach(function (c) { for (let k = 0; k < u; k++) capasF.push(c); });
+      barajar(capasF, R);
+      const relleno = capasK - nn * u;
+      if (relleno > capasF.length) return null;
+      const cerr = capasF.slice(0, relleno);
+      nuevosC.forEach(function (c) { for (let k = 0; k < u; k++) cerr.push(c); });
+      barajar(cerr, R);
+      const resto = capasF.slice(relleno);
+      const bs = [];
+      for (let i = 0; i < n; i++) bs.push(null);
+      K.forEach(function (i, q) { bs[i] = cerr.slice(q * u, (q + 1) * u); });
+      if (G >= 0) {
+        // la gigante empieza con entre u+1 y 2u capas mezcladas; lo que le sobra de mas a las libres
+        // lo pierde la ultima (queda con menos capas, o vacia si la gigante toma 2u)
+        const g = u + 1 + Math.floor(R() * u);
+        bs[G] = resto.splice(0, g);
+        const cnt = {};
+        bs[G].forEach(function (c) { cnt[c] = (cnt[c] || 0) + 1; });
+        let entero = false;
+        Object.keys(cnt).forEach(function (c) { if (cnt[c] >= u) entero = true; });
+        if (entero) continue;
+      }
+      let pos = 0;
+      for (let i = 0; i < n; i++) if (bs[i] === null) { bs[i] = resto.slice(pos, pos + u); pos += u; }
+      let mono = false;
+      bs.forEach(function (b) { if (completa(b, u)) mono = true; }); // una botella ya resuelta regala el nivel
+      if (!mono) { cont = bs; nuevos = nuevosC.slice().sort(function (a, b) { return a - b; }); }
+    }
+    if (!cont) return null;
+    // 3) llaves: enterradas bajo al menos una capa (k <= len-2), mas hondo en las rutas dificiles.
     // La llave de una caja nunca va en esa misma caja; con cadena, la de la caja 1 va dentro de la 0.
     const llaveEn = [], llaves = [];
     for (let c = 0; c < cajasP.length; c++) {
       let hosts = [];
       if (p.cadena && c === 1) {
-        hosts = miembros[0].filter(function (i) { return cont[i].length > 0 && !llaveEn[i]; });
+        hosts = miembros[0].filter(function (i) { return !llaveEn[i]; });
       } else {
-        for (let i = 0; i < n; i++) if (enCaja[i] < 0 && !llaveEn[i]) hosts.push(i);
+        for (let i = 0; i < n; i++) if (!esCerrada(i) && i !== G && !llaveEn[i] && cont[i].length >= 2) hosts.push(i);
       }
       if (!hosts.length) return null;
       const h = hosts[Math.floor(R() * hosts.length)];
@@ -672,29 +709,20 @@
       llaveEn[h] = true;
       llaves.push({ b: h, k: k, caja: c });
     }
-    // candados: el color pedido no puede estar dentro de la botella cerrada (si no, no habria salida)
-    const candEn = [], candados = [], usados = {};
+    // 4) candados: el color pedido es de afuera y no puede estar dentro de la botella cerrada
+    const candados = [], usados = {};
     for (let d = 0; d < candP.length; d++) {
-      let b, opciones = [];
-      if (candP[d].vacia) {
-        cont.push([]); enCaja.push(-1); b = cont.length - 1;
-        for (let c = 1; c <= n; c++) if (!usados[c]) opciones.push(c);
-      } else {
-        const hosts = [];
-        for (let i = 0; i < n; i++) if (enCaja[i] < 0 && !llaveEn[i] && !candEn[i]) hosts.push(i);
-        if (!hosts.length) return null;
-        b = hosts[Math.floor(R() * hosts.length)];
-        for (let c = 1; c <= n; c++) if (!usados[c] && cont[b].indexOf(c) < 0) opciones.push(c);
-      }
+      const b = candHost[d], opciones = [];
+      for (let c = 1; c <= n; c++) if (!usados[c] && nuevos.indexOf(c) < 0 && cont[b].indexOf(c) < 0) opciones.push(c);
       if (!opciones.length) return null;
       const color = opciones[Math.floor(R() * opciones.length)];
-      usados[color] = true; candEn[b] = true;
+      usados[color] = true;
       candados.push({ b: b, color: color });
     }
-    for (let v = 0; v < p.vacias; v++) { cont.push([]); enCaja.push(-1); }
+    for (let v = 0; v < 2; v++) { cont.push([]); enCaja.push(-1); } // siempre 2 vacias libres
     if (cont.length > MAXBOT) return null;
 
-    // orden final: sueltas mezcladas, luego cada caja entera
+    // 5) orden final: sueltas mezcladas, luego cada caja entera
     const orden = [];
     for (let i = 0; i < cont.length; i++) if (enCaja[i] < 0) orden.push(i);
     barajar(orden, R);
@@ -702,9 +730,9 @@
     for (let c = 0; c < miembros.length; c++) {
       const m = miembros[c].slice();
       barajar(m, R);
-      const nuevos = [];
-      for (let q = 0; q < m.length; q++) { orden.push(m[q]); nuevos.push(orden.length - 1); }
-      cajasOut.push({ bots: nuevos });
+      const nuevosI = [];
+      for (let q = 0; q < m.length; q++) { orden.push(m[q]); nuevosI.push(orden.length - 1); }
+      cajasOut.push({ bots: nuevosI });
     }
     const nuevo = [];
     orden.forEach(function (viejo, pos) { nuevo[viejo] = pos; });
@@ -714,7 +742,9 @@
       llaves: llaves.map(function (l) { return { b: nuevo[l.b], k: l.k, caja: l.caja }; }),
       cajas: cajasOut,
       candados: candados.map(function (d) { return { b: nuevo[d.b], color: d.color }; }),
-      ocultas: null
+      ocultas: null,
+      nuevos: nuevos,
+      caps: G >= 0 ? orden.map(function (i) { return i === G ? CAP_GIGANTE : u; }) : null
     };
     if (p.misterio) {
       // 1 = leve (se ven las 2 de arriba), 2 = total (solo la de arriba). Las botellas de caja se
@@ -735,7 +765,8 @@
   // completar una botella 8, abrir caja o candado 6, caer sobre su mismo color 3, caer en una vacia 1.
   function jugarBot(b0, P, meta, R) {
     let b = b0, ab = 0, prevK = null, curK = claveP(b, ab, P);
-    const tope = 3 * meta + 20, cap = P.cap;
+    // cap aqui son las capas por color (u): con botella gigante no es la capacidad
+    const tope = 3 * meta + 20, cap = P.u;
     for (let t = 0; t < tope; t++) {
       if (ganadoB(b, cap)) return 1;
       const js = jugadasP(b, ab, P);
@@ -787,6 +818,7 @@
       const a = armar(p, R);
       if (!a) continue;
       const C = { cap: p.cap, llaves: a.llaves, cajas: a.cajas, candados: a.candados };
+      if (a.caps) { C.caps = a.caps; C.u = p.cap; } // botella gigante: capacidad por botella y capas por color
       const r = resolver(a.botellas, C, { topes: topes });
       if (!r || r.sinSolucion) continue;
       const c = { a: a, C: C, meta: r.largo, optimo: r.optimo, movs: r.movs, bot: 0, atasco: 0, idx: cands.length };
@@ -827,11 +859,14 @@
     if (a.candados.length) rasgos.push('candado');
     if (a.ocultas) rasgos.push('misterio');
     if (p.cap > 4) rasgos.push('largas');
+    if (a.caps) rasgos.push('gigante');
     const out = {};
     if (p.ruta === 'dia' && p.fecha) { out.id = 'dia-' + p.fecha; out.ruta = 'dia'; }
     else if (p.ruta && p.L) { out.id = p.ruta + '-' + p.L; out.ruta = p.ruta; out.L = p.L; }
-    out.cap = p.cap; out.botellas = a.botellas; out.llaves = a.llaves; out.cajas = a.cajas; out.candados = a.candados;
-    out.ocultas = a.ocultas; out.meta = el.meta; out.movs = el.movs; out.optimo = el.optimo;
+    out.cap = p.cap;
+    if (a.caps) { out.caps = a.caps; out.u = p.cap; }
+    out.botellas = a.botellas; out.llaves = a.llaves; out.cajas = a.cajas; out.candados = a.candados;
+    out.ocultas = a.ocultas; out.nuevos = a.nuevos; out.meta = el.meta; out.movs = el.movs; out.optimo = el.optimo;
     out.rasgos = rasgos; out.dif = p.dif || (sel === 'mediana' ? 'normal' : sel === 'facil' ? 'facil' : sel);
     if (cat) { out.bot = el.bot; out.atasco = el.atasco; }
     return out;
@@ -841,7 +876,7 @@
     rng: rng, hashCadena: hashCadena, nivelParams: nivelParams, difDe: difDe, rutaParams: rutaParams, diaParams: diaParams,
     racha: racha, unColor: unColor, completa: completa, ganado: ganado,
     puedeVerter: puedeVerter, verter: verter, hayJugadas: hayJugadas, estrellasDe: estrellasDe,
-    clave: clave, heuristica: heuristica, jugadas: jugadas, cerrada: cerrada, prep: prep,
+    clave: clave, heuristica: heuristica, jugadas: jugadas, cerrada: cerrada, prep: prep, capDe: function (C, i) { return capDe(prep(C), i); },
     resolver: resolver, pista: pista, generar: generar
   };
 })(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : this));

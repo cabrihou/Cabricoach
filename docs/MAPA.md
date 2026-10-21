@@ -63,6 +63,8 @@ Entre paréntesis va el nombre de la función en el código (para Claude).
     un **botón flotante** del Inicio (REV 215, `fabFotoHTML`, `.fabfoto`): ocupaba una
     caja entera todos los días para decir lo mismo. Si ya hay foto de hoy cambia de
     aspecto y lleva a la galería en vez de a la cámara
+  - **I2g** Acceso rápido a **Botellas** (REV 226, `fabBotellasHTML`, `.fabfoto.fabbot`): botón flotante
+    igual al de la foto, justo encima, en versión secundaria (icono `botella` de trazo con punto de acento); abre el juego (`botellasAbrir`)
 - **I4x** Guardar una combinación como **plato reutilizable** (alimento compuesto en
   customFoods, sale en la categoría Platos y se registra con su desglose). Se puede
   desde el borrador (`platoGuardar`) **y desde un loggeo ya guardado** con 2+
@@ -625,7 +627,7 @@ pestaña del mismo contenido. `progGroup()` solo devuelve `act` o `nutri`.
   las reglas de puntuación viven en nivel 3 (`INFO3['retos-reglas']`) y la vitrina
   y el reinicio van plegados (`uiCaja`)
 - **R4** Vitrina de trofeos y palmarés
-- **R5** Botellas (REV 224): tarjeta con el nivel del juego y botón "Jugar" (`botellasNivel`, acción
+- **R5** Botellas (REV 224; salida propia en REV 226: la capa lleva su barra de vidrio con "Volver a CabriCoach" en `#botlayer .botbar`, listener propio que llama `botellasCerrar`, el iframe va en `.botmarco` y el host avisa `barra:true`; también se entra desde I2g): tarjeta con el nivel del juego y botón "Jugar" (`botellasNivel`, acción
   `botellasAbrir`). El juego corre en una capa fija a pantalla completa colgada de `body`
   (`#botlayer`, fuera de `#view` para que `render()` no la destruya) con un iframe cargado por
   `fetch('assets/botellas.html')` + `srcdoc` (nunca `iframe.src`: el service worker lo guardaría como

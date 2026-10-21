@@ -17,6 +17,7 @@
   --num:'Archivo','Instrument Sans',sans-serif;
   --ease:cubic-bezier(.32,.72,0,1); --rebote:cubic-bezier(.34,1.36,.64,1);
   /* colores del liquido: contenido del juego, no acento de interfaz */
+  --estante:url("@IMG:botEstante@");
   --c1:#FF5A6E; --c2:#FF9F43; --c3:#FFD93D; --c4:#8BE04E; --c5:#1FBF8F; --c6:#3DD6F5;
   --c7:#4C7DFF; --c8:#9B6BFF; --c9:#FF6FCF; --c10:#A86B3C; --c11:#D5DCE0; --c12:#A3284F;
 }
@@ -106,6 +107,11 @@ svg.ic .acc{fill:var(--mint);stroke:none}
 .enapp .who{pointer-events:none}
 .pg{max-width:560px;margin:0 auto;padding:4px max(16px,env(safe-area-inset-right,0px)) calc(40px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .hero .t-label{margin-bottom:6px}
+/* la ilustracion del inicio (Andres y Cami ordenando tubos): ocupa el borde de arriba del heroe y se funde con la tarjeta,
+   porque el cuadro trae su propio fondo casi negro */
+.hero .arte{display:block;width:calc(100% + 32px);max-width:none;height:200px;margin:-18px -16px 8px;object-fit:cover;object-position:50% 45%;border-radius:var(--r-lg) var(--r-lg) 0 0;pointer-events:none;
+  -webkit-mask-image:linear-gradient(to bottom,#000 55%,transparent 100%);mask-image:linear-gradient(to bottom,#000 55%,transparent 100%)}
+@media (max-width:359px){.hero .arte{height:170px}}
 .hero .sub{margin-top:8px}
 #prevHero{margin:16px 0 14px;pointer-events:none}
 .pv{display:flex;flex-direction:column;align-items:center}
@@ -136,6 +142,7 @@ svg.ic .acc{fill:var(--mint);stroke:none}
 .sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:var(--ink2);transition:transform .22s var(--ease),background .2s}
 .sw[aria-checked="true"]{background:var(--grad);border-color:transparent}
 .sw[aria-checked="true"]::after{transform:translateX(20px);background:var(--onmint)}
+.pie::before{content:"";display:block;height:120px;margin:0 -16px 6px;background:var(--estante) center/cover no-repeat;opacity:.35;-webkit-mask-image:radial-gradient(70% 90% at 50% 50%,#000 40%,transparent 100%);mask-image:radial-gradient(70% 90% at 50% 50%,#000 40%,transparent 100%)}
 .pie{margin:22px 4px 0;text-align:center;font:400 13.5px/1.5 var(--ui);color:var(--smoke)}
 
 /* ===== Juego ===== */
@@ -151,15 +158,21 @@ svg.ic .acc{fill:var(--mint);stroke:none}
 #gMov .t-label{display:block;margin-top:2px}
 #gMov .meta{margin-top:2px;font:400 14px/1.2 var(--ui);color:var(--smoke)}
 #gMov .meta b{font:600 14px var(--num);font-variant-numeric:tabular-nums;color:var(--ink2)}
+/* estante de tubos de ambiente: franja abajo, detras de las botellas, atenuada y fundida con el fondo (la imagen trae su propio fondo casi negro) */
+#board::after{content:"";position:absolute;left:0;right:0;bottom:0;height:min(40%,260px);z-index:-1;pointer-events:none;background:var(--estante) center bottom/cover no-repeat;opacity:.17;
+  -webkit-mask-image:linear-gradient(to top,#000 30%,transparent 100%);mask-image:linear-gradient(to top,#000 30%,transparent 100%)}
 #board{flex:1;min-height:0;position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));overflow:hidden}
 .brow{display:flex;justify-content:center;align-items:center;gap:var(--bgap,10px);position:relative}
 .brow+.brow{margin-top:var(--rgap,22px)}
+.brow.congig{align-items:flex-end}
 .slot{position:relative;width:var(--bw);height:var(--bh);flex:none;outline:none;-webkit-user-select:none;user-select:none;cursor:pointer;touch-action:manipulation}
 .slot:focus-visible .glass{box-shadow:0 0 0 2px var(--mint)}
 .slot.done{cursor:default}
 .bwrap{position:absolute;inset:0;transform-origin:50% 0;transition:transform .16s var(--ease);will-change:transform}
 .slot.sel .bwrap{transform:translateY(-16px)}
+@keyframes llegan{0%{filter:brightness(1) drop-shadow(0 0 0 rgba(var(--accHi-rgb),0))}35%{filter:brightness(1.35) drop-shadow(0 0 14px rgba(var(--accHi-rgb),.95))}100%{filter:brightness(1) drop-shadow(0 0 0 rgba(var(--accHi-rgb),0))}}
+.slot.llegan .bwrap{animation:llegan 1s ease-out}
 .glass{position:absolute;inset:0;overflow:hidden;background:rgba(255,255,255,.035);border:1.5px solid rgba(255,255,255,.26);
   border-radius:8px 8px calc(var(--bw)/2) calc(var(--bw)/2);transition:border-color .16s,box-shadow .16s}
 .slot.sel .glass{border-color:var(--mint);box-shadow:0 0 0 1px rgba(var(--acc-rgb),.55),0 0 20px rgba(var(--acc-rgb),.5)}
@@ -189,10 +202,6 @@ svg.ic .acc{fill:var(--mint);stroke:none}
 @keyframes brilla{0%{opacity:0;transform:scale(.4)}35%{opacity:1}100%{opacity:0;transform:scale(1.25)}}
 .chorro{position:absolute;z-index:45;border-radius:999px;pointer-events:none;background-color:var(--lc);
   background-image:linear-gradient(90deg,rgba(0,0,0,.3),rgba(255,255,255,.14) 45%,rgba(0,0,0,.3));transform-origin:50% 0}
-.slot.hint-o .glass{border-color:var(--mint);animation:latir 1s ease-in-out infinite}
-.slot.hint-d::after{content:"";position:absolute;left:-6px;right:-6px;top:-6px;bottom:-6px;border:2px dashed rgba(var(--acc-rgb),.95);
-  border-radius:calc(8px + 6px) calc(8px + 6px) calc(var(--bw)/2 + 6px) calc(var(--bw)/2 + 6px);animation:latir 1s ease-in-out infinite;pointer-events:none}
-@keyframes latir{0%,100%{box-shadow:0 0 0 0 rgba(var(--acc-rgb),.0);opacity:1}50%{box-shadow:0 0 0 5px rgba(var(--acc-rgb),.28),0 0 18px rgba(var(--acc-rgb),.5);opacity:.8}}
 .fadein{animation:fadein .12s ease-out}
 @keyframes fadein{from{opacity:.35}to{opacity:1}}
 .sk .glass{background:rgba(255,255,255,.03)}
@@ -207,7 +216,7 @@ svg.ic .acc{fill:var(--mint);stroke:none}
 #strip .t-body{font-size:15px;font-weight:600}
 #strip .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 #strip .btn{min-height:42px;padding:9px 14px}
-#gCtl{flex:none;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:rgba(11,13,15,.8);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line2);
+#gCtl{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:rgba(11,13,15,.8);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line2);
   padding:8px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .ctl{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:52px;background:none;border:0;border-radius:16px;font:500 13px/1.1 var(--ui);color:var(--ink2);padding:6px 2px;text-align:center;transition:background .12s,opacity .2s}
 .ctl:active:not(:disabled){background:var(--card2)}
@@ -215,14 +224,6 @@ svg.ic .acc{fill:var(--mint);stroke:none}
 .ctl .bdg{position:absolute;top:0;left:calc(50% + 6px);min-width:18px;height:18px;border-radius:9px;background:var(--grad);color:var(--onmint);font:700 12px/18px var(--num);text-align:center;padding:0 4px;animation:badgepop .3s var(--rebote)}
 .ctl .bdg.off{display:none}
 .ctl{white-space:nowrap}
-.ctl .cto{display:none}
-/* a 320 px "Botella extra" no cabe en su cuarto de barra y se partia en dos lineas:
-   ahi basta "Extra", el icono de la botella y la insignia ya dicen de que se trata */
-@media (max-width:359px){
-  .ctl .lgo{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-  .ctl .cto{display:inline}
-}
-
 /* ===== Hojas (ganar y confirmar) ===== */
 .velo{position:fixed;inset:0;z-index:90;background:rgba(5,6,7,.64);opacity:0;pointer-events:none;transition:opacity .28s var(--ease)}
 .velo.on{opacity:1;pointer-events:auto}
@@ -264,6 +265,8 @@ svg.ic .acc{fill:var(--mint);stroke:none}
 #aviso{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:0 24px;background:rgba(5,6,7,.45);cursor:pointer}
 #aviso .tarjeta{width:min(100%,320px);text-align:center;padding:22px 20px;border-radius:var(--r-lg);background:var(--card);border:1px solid rgba(var(--acc-rgb),.35);box-shadow:var(--shadow),var(--glow);animation:avisoIn .32s var(--rebote) both}
 #aviso .tarjeta .medidor{margin-bottom:10px}
+#aviso .tarjeta .arte{display:block;width:calc(100% + 40px);height:150px;margin:-22px -20px 6px;object-fit:cover;border-radius:var(--r-lg) var(--r-lg) 0 0;
+  -webkit-mask-image:linear-gradient(to bottom,#000 50%,transparent 100%);mask-image:linear-gradient(to bottom,#000 50%,transparent 100%)}
 #aviso .t-h2{margin-bottom:4px}
 #aviso.sale{animation:avisoOut .26s ease-out forwards}
 @keyframes avisoIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:none}}
@@ -353,6 +356,7 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
 
   <div class="pg">
     <section class="mod glowtop hero" aria-label="Camino">
+      <img class="arte" id="hArte" alt="" aria-hidden="true">
       <div class="t-label">Camino</div>
       <div class="bignum" id="hNivel">Nivel 1</div>
       <p class="t-body-sm sub" id="hSub"></p>
@@ -434,8 +438,7 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
   <div id="gCtl">
     <button class="ctl" id="cUndo" type="button" disabled><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/><circle class="acc" cx="19" cy="20" r="1.6"/></svg>Deshacer</button>
     <button class="ctl" id="cReset" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/><circle class="acc" cx="12" cy="12" r="1.6"/></svg>Reiniciar</button>
-    <button class="ctl" id="cHint" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.5 10.9c.7.6 1.2 1.4 1.2 2.1h4.6c0-.7.5-1.5 1.2-2.1A6 6 0 0012 3z"/><circle class="acc" cx="12" cy="9" r="1.6"/></svg>Pista</button>
-    <button class="ctl" id="cExtra" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3h4M10 3v4l-2.5 3.5V19a2 2 0 002 2h5a2 2 0 002-2v-8.5L14 7V3"/><path d="M12 12.5v5M9.5 15h5"/><circle class="acc" cx="12" cy="9.2" r="1.3"/></svg><span class="lgo">Botella extra</span><span class="cto" aria-hidden="true">Extra</span><span class="bdg" id="extraBdg">1</span></button>
+    <button class="ctl" id="cExtra" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3h4M10 3v4l-2.5 3.5V19a2 2 0 002 2h5a2 2 0 002-2v-8.5L14 7V3"/><path d="M12 12.5v5M9.5 15h5"/><circle class="acc" cx="12" cy="9.2" r="1.3"/></svg>Botella extra<span class="bdg" id="extraBdg">1</span></button>
   </div>
 </section>
 
@@ -492,7 +495,7 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
 
 /*@NIVELES@*/
 
-const IMG = { celebC:'@IMG:celebC@', celebA:'@IMG:celebA@', faceC:'@IMG:faceC@', faceA:'@IMG:faceA@', rachaC:'@IMG:rachaC@', rachaA:'@IMG:rachaA@' };
+const IMG = { botDuo:'@IMG:botDuo@', botCami:'@IMG:botCami@', botAndres:'@IMG:botAndres@', celebC:'@IMG:celebC@', celebA:'@IMG:celebA@', faceC:'@IMG:faceC@', faceA:'@IMG:faceA@', rachaC:'@IMG:rachaC@', rachaA:'@IMG:rachaA@' };
 const NOMBRES = { cami:'Cami', andres:'Andrés' };
 const COLORES = ['rojo','naranja','amarillo','lima','esmeralda','cian','azul','violeta','rosa','café','perla','vino'];
 const DIAS = ['dom','lun','mar','mié','jue','vie','sáb'];
@@ -508,15 +511,16 @@ const DIF_INFO = {
   muy:     { nom:'Muy difícil', barras:4 }
 };
 const NTOTAL = 200;                     // niveles del camino que vienen comprobados en el catalogo
-const RASGO_ORDEN = ['llave', 'candado', 'misterio', 'largas'];
-const RASGO_TXT = { llave:'Llave', candado:'Candado', misterio:'Misterio', largas:'Botellas largas' };
-const RASGO_CHIP = { llave:'Llave', candado:'Candado', misterio:'Misterio', largas:'Largas' };
+const RASGO_ORDEN = ['llave', 'candado', 'misterio', 'largas', 'gigante'];
+const RASGO_TXT = { llave:'Llave', candado:'Candado', misterio:'Misterio', largas:'Botellas largas', gigante:'Botella gigante' };
+const RASGO_CHIP = { llave:'Llave', candado:'Candado', misterio:'Misterio', largas:'Largas', gigante:'Gigante' };
 
 /* ---------- iconos sueltos (trazo, con el punto de acento como firma) ---------- */
 const ICO = {
   llave:    '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l8.5-8.5M16 7l3 3M13.5 9.5l2.2 2.2"/><circle class="acc" cx="8" cy="15" r="1.3"/></svg>',
   candado:  '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 018 0v3"/><circle class="acc" cx="12" cy="16" r="1.6"/></svg>',
   misterio: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9.2a3.2 3.2 0 116 1.3c-.8 1.2-2.6 1.6-2.6 3.4"/><circle class="acc" cx="12.4" cy="18.6" r="1.7"/></svg>',
+  gigante:  '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 1.8h7M9.2 1.8v3L6.8 8v12.2a2 2 0 002 2h6.4a2 2 0 002-2V8l-2.4-3.2v-3"/><circle class="acc" cx="12" cy="14" r="1.7"/></svg>',
   largas:   '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 2.5h5M10 2.5v3l-1.5 2v12.5a2 2 0 002 2h3a2 2 0 002-2V7.5L14 5.5v-3"/><circle class="acc" cx="12" cy="13" r="1.5"/></svg>',
   salida:   '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/><circle class="acc" cx="12" cy="4.2" r="1.3"/></svg>',
   lock:     '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>',
@@ -644,7 +648,6 @@ function ejecutarOp(op, a){
     const p = a.fecha ? M.diaParams(a.fecha) : M.nivelParams(a.L);
     return M.generar(p, a.seed, { modo:'rapido' });
   }
-  if(op === 'pista') return M.pista(a.s, a.C);
   if(op === 'vigilar'){
     const r = M.resolver(a.s, a.C, { rapido:true, tope:40000 });
     return r && r.sinSolucion ? { sinSalida:true } : { ok:true };
@@ -688,7 +691,12 @@ function llamar(op, a){
   });
 }
 // lo fijo del nivel, sin el estado ni las metricas: es lo que viaja al Worker
-const cDe = (nv) => ({ cap:nv.cap, llaves:nv.llaves, cajas:nv.cajas, candados:nv.candados });
+// lo fijo del nivel, sin el estado ni las metricas: es lo que viaja al Worker (caps y u: botella gigante)
+const cDe = (nv) => ({ cap:nv.cap, u:nv.u, caps:nv.caps, llaves:nv.llaves, cajas:nv.cajas, candados:nv.candados });
+// capacidad de la botella i (la gigante guarda mas capas) y capas por color (u): completa se mide con u, no con la capacidad
+const capI = (nv, i) => MOTOR.capDe(nv, i);
+const uDe = (nv) => nv.u || nv.cap;
+const GIG_W = 1.4, GIG_H = 1.7;   // la gigante es 1,4 veces mas ancha y 1,7 mas alta que una normal
 
 /* ---------- niveles ---------- */
 const GEN = {};   // generaciones en curso, para no pedir dos veces el mismo nivel
@@ -698,6 +706,7 @@ function rasgosDeNivel(n){
   if((n.candados || []).length) r.push('candado');
   if(n.ocultas) r.push('misterio');
   if(n.cap > 4) r.push('largas');
+  if(n.caps && n.caps.some(c => c > n.cap)) r.push('gigante');
   return r;
 }
 // lo mismo desde los parametros, para pintar el inicio sin generar nada
@@ -707,6 +716,7 @@ function rasgosDeParams(p){
   if((p.candados || []).length) r.push('candado');
   if(p.misterio) r.push('misterio');
   if(p.cap > 4) r.push('largas');
+  if(p.gigante) r.push('gigante');
   return r;
 }
 function botellasDeParams(p){
@@ -799,10 +809,10 @@ function htmlLlaves(ls, dos){
   (ls || []).forEach(l => { h += '<i class="llave" data-q="' + l.q + '" style="--k:' + l.k + '">' + SVG_LLAVE + (dos ? '<b class="kn">' + (l.caja + 1) + '</b>' : '') + '</i>'; });
   return h;
 }
-function htmlBot(b, oc, cap, o){
+function htmlBot(b, oc, u, o){
   o = o || {};
   let h = '<div class="bwrap"><div class="glass"><div class="liq">' + htmlBloques(b, oc, o.split, o.rev, o.simb) + htmlLlaves(o.llaves, o.dos) + '</div><i class="shine"></i></div><i class="lip"></i>';
-  if(MOTOR.completa(b, cap)) h += '<i class="tapa' + (o.tapaNueva ? ' cae' : '') + '"><b></b></i>' + (o.tapaNueva ? '<i class="brillo"></i>' : '');
+  if(MOTOR.completa(b, u)) h += '<i class="tapa' + (o.tapaNueva ? ' cae' : '') + '"><b></b></i>' + (o.tapaNueva ? '<i class="brillo"></i>' : '');
   return h + '</div>';
 }
 // candado: de caja (blanco, con el punto de acento o el numero) o de color (cuerpo del color, glifo si hay simbolos)
@@ -819,7 +829,7 @@ function svgCandado(o){
   return '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="arco" d="M8 10.5V8a4 4 0 018 0v2.5"/>' + cuerpo + centro + '</svg>';
 }
 
-function etiquetaAria(b, oc, cap, i, ex){
+function etiquetaAria(b, oc, cap, i, ex, u){
   ex = ex || {};
   const vis = [], ocu = oc ? oc.filter(Boolean).length : 0;
   for(let k = b.length - 1; k >= 0; k--) if(!(oc && oc[k])) vis.push(COLORES[b[k]-1]);
@@ -829,7 +839,7 @@ function etiquetaAria(b, oc, cap, i, ex){
     t += (b.length ? cuerpo + '. Cerrada' : 'cerrada') + ' con candado ' + ex.candado + '. Se abre al completar el ' + ex.candado;
   } else if(!b.length){
     t += 'vacía. Le caben ' + cap;
-  } else if(MOTOR.completa(b, cap)){
+  } else if(MOTOR.completa(b, u)){
     t += cuerpo + '. Completa';
   } else if(ex.caja){
     t += cuerpo + '. En una caja cerrada: se abre al sacar la llave';
@@ -845,20 +855,23 @@ function etiquetaAria(b, oc, cap, i, ex){
    { nv, cx, E, oc, simb, inter }; con inter se le ponen los atributos de accesibilidad */
 function llenarSlot(sl, i, f, o){
   o = Object.assign({ simb:f.simb }, o);
-  const b = f.E.b[i], oc = f.oc ? f.oc[i] : null, ab = f.E.ab | 0, cap = f.nv.cap;
+  const b = f.E.b[i], oc = f.oc ? f.oc[i] : null, ab = f.E.ab | 0, cap = capI(f.nv, i), u = uDe(f.nv), gig = cap > f.nv.cap;
   const ls = (f.cx.llavesEn[i] || []).filter(l => !(ab & bitCaja(l.caja)));
   o.llaves = ls; o.dos = f.cx.dos;
   const cd = f.cx.candadoEn[i];
   const cer = !!cd && !(ab & bitCand(cd.d));
   const caj = f.cx.cajaEn[i];
   const enCajaCerrada = caj !== undefined && !(ab & bitCaja(caj));
-  sl.innerHTML = htmlBot(b, oc, cap, o) + (cer ? '<span class="cand">' + svgCandado({ color:cd.color, simb:o.simb }) + '</span>' : '');
-  const comp = MOTOR.completa(b, cap);
+  sl.dataset.gig = gig ? cap : '';
+  sl.classList.toggle('gig', gig);
+  if(gig) sl.style.setProperty('--cap', cap); else sl.style.removeProperty('--cap');   // sus capas miden alto/10
+  sl.innerHTML = htmlBot(b, oc, u, o) + (cer ? '<span class="cand">' + svgCandado({ color:cd.color, simb:o.simb }) + '</span>' : '');
+  const comp = MOTOR.completa(b, u);
   sl.classList.toggle('done', comp);
   sl.classList.toggle('cerrada', cer);
   if(f.inter){
     const nom = cd ? COLORES[cd.color - 1] : null;
-    sl.setAttribute('aria-label', etiquetaAria(b, oc, cap, i, { candado:cer ? nom : null, caja:enCajaCerrada, llaves:ls.length ? ls : null, dos:f.cx.dos }));
+    sl.setAttribute('aria-label', etiquetaAria(b, oc, cap, i, { candado:cer ? nom : null, caja:enCajaCerrada, llaves:ls.length ? ls : null, dos:f.cx.dos }, u));
     sl.setAttribute('aria-disabled', comp || cer || enCajaCerrada ? 'true' : 'false');
     sl.tabIndex = comp ? -1 : 0;
   }
@@ -882,31 +895,38 @@ function decorarCaja(el, ci, f){
 function unidadesDe(n, nv){
   const enCaja = {};
   ((nv && nv.cajas) || []).forEach((cj, c) => cj.bots.forEach(i => { enCaja[i] = c; }));
+  const caps = nv && nv.caps;
+  const gig = (i) => !!(caps && caps[i] && caps[i] > nv.cap);
+  // peso = cuantas botellas de ancho ocupa la unidad; alto = cuanto crece su fila (la gigante es mas ancha y mas alta)
+  const dim = (u) => { u.peso = u.bots.reduce((a, i) => a + (gig(i) ? GIG_W : 1), 0); u.alto = u.bots.some(gig) ? GIG_H : 1; return u; };
   const out = [], hecho = {};
   for(let i = 0; i < n; i++){
     const c = enCaja[i];
-    if(c === undefined) out.push({ bots:[i] });
-    else if(!hecho[c]){ hecho[c] = 1; out.push({ caja:c, bots:nv.cajas[c].bots.slice().sort((a, b) => a - b) }); }
+    if(c === undefined) out.push(dim({ bots:[i] }));
+    else if(!hecho[c]){ hecho[c] = 1; out.push(dim({ caja:c, bots:nv.cajas[c].bots.slice().sort((a, b) => a - b) })); }
   }
   return out;
 }
 /* Reparte las unidades en filas contiguas (una caja nunca se parte) y calcula el tamano de botella.
-   Ancho de una fila = botellas * w + huecos y marcos (que no dependen de w), asi se despeja w de cada fila.
-   Se prefiere 1 fila hasta 6 botellas, si no 2; una tercera solo si 2 filas dejan botellas chicas y 3 ganan claro. */
+   Ancho de una fila = peso * w + huecos y marcos (que no dependen de w), asi se despeja w de cada fila; el peso cuenta
+   la botella gigante como 1,4. El alto suma el de cada fila (las que llevan gigante son 1,7 veces mas altas).
+   Se escoge el reparto que deja las botellas mas grandes: 2 filas solo si ganan 15 % sobre 1; 3 filas si no pierden mas de 3 % (a igual tamano llenan mejor el alto). */
 function distribuir(unid, W_, H_, o){
   const ratio = o.cap >= 6 ? 4.6 : 3.3, gap = o.gap, MARCO = 15;   // 15 = 2 * (padding 6 + borde 1,5)
-  const nB = unid.reduce((a, u) => a + u.bots.length, 0);
   const medida = (fila) => {
-    let a = 0, c = 0, caja = false;
-    fila.forEach((u, x) => { a += u.bots.length; if(x) c += gap; if(u.caja !== undefined){ c += (u.bots.length - 1) * gap + MARCO; caja = true; } });
-    return { a:a, c:c, caja:caja };
+    let a = 0, c = 0, caja = false, hf = 1;
+    fila.forEach((u, x) => {
+      a += u.peso || u.bots.length; if(x) c += gap; hf = Math.max(hf, u.alto || 1);
+      if(u.caja !== undefined){ c += (u.bots.length - 1) * gap + MARCO; caja = true; }
+    });
+    return { a:a, c:c, caja:caja, hf:hf };
   };
   const evaluar = (filas) => {
     const ms = filas.map(medida);
     let w = o.maxW;
     ms.forEach(m => { w = Math.min(w, Math.floor((W_ - m.c) / m.a)); });
-    const conCaja = ms.filter(m => m.caja).length;
-    w = Math.min(w, Math.floor((H_ - (filas.length - 1) * o.rgap - MARCO * conCaja) / (filas.length * ratio)));
+    const conCaja = ms.filter(m => m.caja).length, sumHf = ms.reduce((a, m) => a + m.hf, 0);
+    w = Math.min(w, Math.floor((H_ - (filas.length - 1) * o.rgap - MARCO * conCaja) / (ratio * sumHf)));
     return { w:w, filas:filas, mx:Math.max.apply(null, ms.map(m => m.a)) };
   };
   const partir = (r) => {
@@ -922,20 +942,23 @@ function distribuir(unid, W_, H_, o){
     else for(let a = 1; a < m - 1; a++) for(let b = a + 1; b < m; b++) prueba([a, b]);
     return mejor;
   };
-  let el;
-  if(nB <= 6 || unid.length < 2) el = partir(1);
-  else {
-    el = partir(2);
-    if(o.tres !== false && unid.length >= 3){ const e3 = partir(3); if(el.w < 40 && e3.w >= el.w + 5) el = e3; }
-  }
+  let el = partir(1);
+  if(unid.length >= 2){ const e2 = partir(2); if(e2.w >= el.w * 1.15) el = e2; }
+  if(o.tres !== false && unid.length >= 3 && el.filas.length === 2){ const e3 = partir(3); if(e3.w >= el.w * 0.97) el = e3; }   // a igual tamano, mas filas llenan mejor el alto
   const w = Math.max(o.minW, el.w);
   return { w:w, h:Math.round(w * ratio), filas:el.filas, sig:el.filas.map(f => f.map(u => u.bots[0]).join('.')).join('|') };
 }
-function colocarTam(cont, t, gap, rgap){
+function colocarTam(cont, t, gap, rgap, unid){
   cont.style.setProperty('--bw', t.w + 'px');
   cont.style.setProperty('--bh', t.h + 'px');
   cont.style.setProperty('--bgap', gap + 'px');
   cont.style.setProperty('--rgap', rgap + 'px');
+  // la gigante lleva su propio tamano: sus capas, llave y tapa miden con el suyo
+  (unid || []).forEach(u => (u.els || []).forEach(sl => {
+    if(!sl.dataset.gig) return;
+    sl.style.setProperty('--bw', Math.round(t.w * GIG_W) + 'px');
+    sl.style.setProperty('--bh', Math.round(t.h * GIG_H) + 'px');
+  }));
 }
 // mueve los elementos de cada unidad a sus filas; si el reparto no cambio no toca el DOM
 // (mover una botella a mitad de un vertido cortaria su animacion)
@@ -947,6 +970,7 @@ function colocarFilas(cont, lay){
   lay.filas.forEach(f => {
     const row = document.createElement('div'); row.className = 'brow';
     f.forEach(u => row.appendChild(u.el));
+    if(f.some(u => (u.alto || 1) > 1)) row.classList.add('congig');   // la gigante se apoya abajo en su fila
     frag.appendChild(row);
   });
   cont.insertBefore(frag, cont.firstChild);
@@ -1008,12 +1032,15 @@ function medir(){
   const nTot = G.unid.reduce((a, u) => a + u.bots.length, 0);
   // con cajas el candado se monta sobre el borde de arriba: la fila de abajo necesita un poco mas de aire
   const gap = nTot > 9 ? 6 : 10, rgap = G.nv && G.nv.cajas && G.nv.cajas.length ? 32 : 26;
-  const o = { cap:cap, gap:gap, rgap:rgap, maxW:64, minW:22 };
+  const o = { cap:cap, gap:gap, rgap:rgap, maxW:110, minW:22 };
   // arriba se deja sitio para la botella levantada y para que la que vierte se incline sobre la fila de arriba
+  // (dos pasadas: el tamano depende de lo que se reserva y lo reservado, del tamano)
   let t = distribuir(G.unid, W_, bd.clientHeight - 24 - 16, o);
-  const padTop = Math.round(t.w * 1.15) + 8;
+  let padTop = Math.round(t.w * 1.1) + 6;
   t = distribuir(G.unid, W_, bd.clientHeight - padTop - 18, o);
-  colocarTam(bd, t, gap, rgap);
+  padTop = Math.round(t.w * 1.1) + 6;
+  t = distribuir(G.unid, W_, bd.clientHeight - padTop - 18, o);
+  colocarTam(bd, t, gap, rgap, G.unid);
   colocarFilas(bd, t);
   bd.style.paddingTop = padTop + 'px';
   bd.style.paddingBottom = '18px';
@@ -1069,7 +1096,7 @@ function abrirJuego(modo, ruta, clave, o){
 function armarPartida(nv, o){
   const pa = S.partida;
   const g = G;
-  g.nv = nv; g.cx = contextoDe(nv); g.meta = nv.meta; g.cap = nv.cap; g.sol = nv.movs;
+  g.nv = nv; g.cx = contextoDe(nv); g.meta = nv.meta; g.cap = nv.cap; g.u = uDe(nv); g.sol = nv.movs;
   g.ini = nv.botellas; g.iniOc = nv.ocultas || null;
   g.estado = { b:nv.botellas.map(b => b.slice()), ab:0 }; g.oc = copiaOc(nv.ocultas);
   if(o.solo){
@@ -1124,7 +1151,6 @@ function pintarControles(){
   const ok = G && G.estado && !G.solo;
   $('cUndo').disabled = !ok || G.busy || !G.hist.length;
   $('cReset').disabled = !ok || G.busy;
-  $('cHint').disabled = !ok || G.busy || G.ganado;
   $('cExtra').disabled = !ok || G.busy || G.extra || G.ganado;
   $('extraBdg').classList.toggle('off', !ok || G.extra);
   $('gMovs').textContent = G ? (G.movs || 0) : 0;
@@ -1171,18 +1197,17 @@ function seleccionar(i){
 function tocar(i){
   if(!G || !G.estado || G.busy || G.ganado || G.solo) return;
   despertarAudio();
-  if(G.pistaT){ limpiarPista(); }
   const E = G.estado, s = E.b;
   if(MOTOR.cerrada(E, i, G.nv)){ avisarCerrada(i); return; }
   if(G.sel === null){
-    if(MOTOR.completa(s[i], G.cap) || !s[i].length) { sacudir(i); return; }
+    if(MOTOR.completa(s[i], G.u) || !s[i].length) { sacudir(i); return; }
     if(puedeOrigen(i)) seleccionar(i); else { sacudir(i); sonar('malo'); }
     return;
   }
   if(G.sel === i){ seleccionar(null); return; }
   if(MOTOR.puedeVerter(E, G.sel, i, G.nv)){ verterAnim(G.sel, i); return; }
   // si lo tocado puede ser origen, se cambia la seleccion; si no, golpe sordo
-  if(!MOTOR.completa(s[i], G.cap) && s[i].length && puedeOrigen(i)){ seleccionar(i); return; }
+  if(!MOTOR.completa(s[i], G.u) && s[i].length && puedeOrigen(i)){ seleccionar(i); return; }
   sacudir(i); sonar('malo');
 }
 
@@ -1193,9 +1218,9 @@ function relRect(el, br){ const r = el.getBoundingClientRect(); return { left:r.
 const llavesVisibles = (g, i, ab) => (g.cx.llavesEn[i] || []).filter(l => !(ab & bitCaja(l.caja)));
 
 async function verterAnim(i, j){
-  const g = G, cap = g.cap;
+  const g = G, cap = g.cap, u = g.u;
   g.busy = true; pintarControles();
-  ocultarStrip(); limpiarPista(); ocultarTip();
+  ocultarStrip(); ocultarTip();
   const sl = g.slots[i];
   seleccionar(null);
   g.hist.push(snap());
@@ -1213,21 +1238,23 @@ async function verterAnim(i, j){
     ocD = g.oc[j].concat(new Array(q).fill(false));
   }
   const nuevoOc = g.oc ? g.oc.map((a, k) => k === i ? ocS : (k === j ? ocD : a)) : null;
-  const compAntes = MOTOR.completa(antes.b[j], cap);
+  const compAntes = MOTOR.completa(antes.b[j], u);
+  const capS = capI(g.nv, i), capD = capI(g.nv, j);   // la gigante tiene su propia capacidad
   let vuelos = {};
 
   if(!rm()){
     const bd = $('board'), br = bd.getBoundingClientRect();
     const dl = g.slots[j];
     const Sr = relRect(sl, br), Dr = relRect(dl, br);
-    const bw = g.tam.w, bh = g.tam.h;
+    // cada botella con su tamano real (la gigante es mas ancha y mas alta)
+    const bw = Sr.width, bh = Dr.height;
     const wrap = sl.firstElementChild;
     // el origen se dibuja con las capas que caen separadas, para poder vaciarlas; la llave se queda en su sitio
     sl.querySelector('.liq').innerHTML = htmlBloques(antes.b[i], g.oc ? g.oc[i] : null, q, null, S.ajustes.simbolos) + htmlLlaves(llavesVisibles(g, i, antes.ab), g.cx.dos);
     sl.style.zIndex = 50; dl.style.zIndex = 10;
     const Scx = Sr.left + Sr.width / 2, Dcx = Dr.left + Dr.width / 2;
     const dir = Dcx > Scx ? 1 : (Dcx < Scx ? -1 : (Dcx < br.width / 2 ? -1 : 1));
-    const th = (55 + 20 * q / cap) * Math.PI / 180;
+    const th = (55 + 20 * q / capS) * Math.PI / 180;
     const thGr = th * 180 / Math.PI;
     const originY = Dr.top - 0.3 * bw;
     const pivX = Dcx - dir * (bw / 2) * Math.cos(th);
@@ -1243,7 +1270,7 @@ async function verterAnim(i, j){
     await fin(A(wrap, [{ transform:'translate(' + tx + 'px,' + ty + 'px) rotate(0deg)' }, { transform:'translate(' + tx + 'px,' + ty + 'px) rotate(' + (dir * thGr) + 'deg)' }], { duration:110, easing:'ease-in-out' }));
     // 3) chorro + las capas bajan en el origen y suben en el destino
     const sw = Math.max(4, Math.round(bw * 0.14));
-    const surf = (n) => Dr.top + 1.5 + (bh - 3) * (1 - n / cap);
+    const surf = (n) => Dr.top + 1.5 + (bh - 3) * (1 - n / capD);
     const y0 = surf(n0), y1 = surf(n0 + q);
     const st = document.createElement('i');
     st.className = 'chorro c' + color;
@@ -1255,11 +1282,11 @@ async function verterAnim(i, j){
     lista.push(fin(A(st, [{ transform:'scaleY(0)' }, { transform:'scaleY(1)' }], { duration:80, easing:'ease-out' })));
     lista.push(fin(A(st, [{ height:Math.max(6, y0 - originY) + 'px' }, { height:Math.max(6, y1 - originY) + 'px' }], { duration:DUR, easing:EQ })));
     const pour = sl.querySelector('.ly.sp');
-    if(pour) lista.push(fin(A(pour, [{ height:(q / cap * 100) + '%' }, { height:'0%' }], { duration:DUR, easing:EQ })));
+    if(pour) lista.push(fin(A(pour, [{ height:(q / capS * 100) + '%' }, { height:'0%' }], { duration:DUR, easing:EQ })));
     const dliq = dl.querySelector('.liq');
     const nb = document.createElement('div'); nb.className = 'ly c' + color; nb.style.setProperty('--n', q); nb.style.height = '0%';
     dliq.appendChild(nb);
-    lista.push(fin(A(nb, [{ height:'0%' }, { height:(q / cap * 100) + '%' }], { duration:DUR, easing:EQ })));
+    lista.push(fin(A(nb, [{ height:'0%' }, { height:(q / capD * 100) + '%' }], { duration:DUR, easing:EQ })));
     lista.push(fin(A(wrap, [{ transform:'translate(' + tx + 'px,' + ty + 'px) rotate(' + (dir * thGr) + 'deg)' }, { transform:'translate(' + tx + 'px,' + ty + 'px) rotate(' + (dir * (thGr + 7)) + 'deg)' }], { duration:DUR, easing:'linear' })));
     await Promise.all(lista);
     // 4) el chorro se retira y la botella vuelve a su lugar
@@ -1283,7 +1310,7 @@ async function verterAnim(i, j){
 function aplicarEstado(i, j, estado, oc, revK, compAntes){
   const g = G;
   g.estado = estado; g.oc = oc; g.movs++;
-  const nuevaTapa = !compAntes && MOTOR.completa(estado.b[j], g.cap);
+  const nuevaTapa = !compAntes && MOTOR.completa(estado.b[j], g.u);
   pintarSlot(i, { rev:revK });
   pintarSlot(j, { tapaNueva:nuevaTapa });
   g.tapaNueva = nuevaTapa;
@@ -1331,11 +1358,22 @@ function prepararVuelos(g, abre, sl, br){
   });
   return out;
 }
+// si lo que se abrio suelta botellas con colores de nv.nuevos (solo vivian adentro), se marca el momento con un brillo breve
+function llegaronNuevos(g, ab){
+  const nu = g.nv.nuevos;
+  if(!nu || !nu.length) return;
+  const bots = ab.tipo === 'caja' ? g.nv.cajas[ab.caja].bots : [ab.b];
+  const hit = bots.filter(i => g.estado.b[i] && g.estado.b[i].some(c => nu.indexOf(c) >= 0));
+  if(!hit.length) return;
+  hit.forEach(i => { const sl = g.slots[i]; if(!sl) return; sl.classList.add('llegan'); setTimeout(() => sl.classList.remove('llegan'), 1000); });
+  anunciar('Llegaron colores nuevos');
+}
 async function animarAperturas(g, abre, j, vuelos){
   for(const ab of abre){
     if(G !== g) return;
     if(ab.tipo === 'caja') await abrirCaja(g, ab, vuelos && vuelos[ab.llave]);
     else await abrirCandado(g, ab, j);
+    if(G === g) llegaronNuevos(g, ab);
   }
 }
 async function abrirCaja(g, ab, v){
@@ -1455,7 +1493,7 @@ function volverConSalida(){
 function deshacer(){
   const g = G; if(!g || g.busy || !g.hist.length || g.solo) return;
   g.ganado = false;
-  ocultarStrip(); limpiarPista(); ocultarTip();
+  ocultarStrip(); ocultarTip();
   const h = g.hist.pop();
   restaurar(h); vigilar();
 }
@@ -1465,7 +1503,7 @@ function reiniciar(){
   // Lo que ya se vio del misterio sigue visto (vistos no se toca).
   g.hist.push(snap());
   g.estado = { b:g.ini.map(b => b.slice()), ab:0 }; g.oc = conVistos(copiaOc(g.iniOc)); g.movs = 0; g.extra = false; g.sel = null; g.ganado = false;
-  ocultarStrip(); limpiarPista();
+  ocultarStrip();
   construirTablero(); pintarControles(); guardarPartida(); vigilar(); tutorial();
   toast('Empezaste de nuevo. Deshacer te devuelve la partida.');
 }
@@ -1474,30 +1512,10 @@ function botellaExtra(){
   g.hist.push(snap());
   g.estado = { b:g.estado.b.concat([[]]), ab:g.estado.ab }; if(g.oc) g.oc = g.oc.concat([[]]);
   g.extra = true; g.sel = null;
-  ocultarStrip(); limpiarPista();
+  ocultarStrip();
   construirTablero(); pintarControles(); guardarPartida(); vigilar();
   anunciar('Agregaste una botella vacía');
 }
-function limpiarPista(){
-  if(!G) return;
-  if(G.pistaT){ clearTimeout(G.pistaT); G.pistaT = null; }
-  (G.slots || []).forEach(s => s && s.classList.remove('hint-o', 'hint-d'));
-}
-function pedirPista(){
-  const g = G; if(!g || g.busy || g.ganado || g.solo) return;
-  limpiarPista(); ocultarTip();
-  if(g.sel !== null) seleccionar(null);
-  const tok = ++g.tokP;
-  llamar('pista', { s:g.estado, C:cDe(g.nv) }).then(r => {
-    if(G !== g || tok !== g.tokP) return;
-    if(r.sinSalida){ mostrarStrip(); return; }
-    if(r.desconocido || !r.mov){ toast('Esta está enredada: prueba deshacer un par de movimientos'); return; }
-    g.slots[r.mov[0]].classList.add('hint-o');
-    g.slots[r.mov[1]].classList.add('hint-d');
-    g.pistaT = setTimeout(limpiarPista, 2500);
-  }).catch(() => {});
-}
-
 /* ---------- tutorial de toques: nivel 1, si el perfil nunca ha ganado ---------- */
 function ocultarTip(){ const t = document.getElementById('tip'); if(t) t.remove(); }
 function tutorial(){
@@ -1533,7 +1551,7 @@ function avisoDificil(g, nueva){
     const a = $('aviso'), d = AVISO[dif];
     let barras = '';
     for(let k = 1; k <= 4; k++) barras += '<i' + (k <= DIF_INFO[dif].barras ? ' class="on"' : '') + '></i>';
-    a.innerHTML = '<div class="tarjeta"><span class="medidor grande" aria-hidden="true">' + barras + '</span><div class="t-h2 strong">' + d.t + '</div><p class="t-body-sm">' + d.x + '</p></div>';
+    a.innerHTML = '<div class="tarjeta"><img class="arte" alt="" src="' + (S.jugador === 'cami' ? IMG.botCami : IMG.botAndres) + '"><span class="medidor grande" aria-hidden="true">' + barras + '</span><div class="t-h2 strong">' + d.t + '</div><p class="t-body-sm">' + d.x + '</p></div>';
     a.classList.remove('sale'); a.hidden = false;
     g.pausa = true;
     anunciar(d.t + '. ' + d.x);
@@ -1556,6 +1574,10 @@ const NOVEDAD = {
               nv:{ cap:4, botellas:[[1, 1, 1, 2], [], [2, 2, 2, 3]], llaves:[], cajas:[], candados:[{ b:1, color:1 }] } },
   misterio: { t:'Misterio', x:'Las capas con signo de pregunta se ven al quedar arriba. Lo que ya viste no se vuelve a esconder.',
               nv:{ cap:4, botellas:[[1, 2, 3, 1], [3, 2, 1, 2]], llaves:[], cajas:[], candados:[], ocultas:[[true, true, true, false], [true, true, false, false]] } },
+  gigante:  { t:'Botella gigante', x:'Es más grande y se llena con más capas, pero se completa igual: con cuatro del mismo color.',
+              nv:{ cap:4, u:4, caps:[10, 4, 4], botellas:[[1, 2, 3, 1, 2, 3], [1, 2, 1, 3], [3, 2, 1, 2]], llaves:[], cajas:[], candados:[] } },
+  nuevos:   { t:'Colores nuevos', x:'Lo que hay dentro del cajón trae colores que no estaban afuera. Al abrirlo, hay que ordenarlos también.',
+              nv:{ cap:4, botellas:[[2, 1, 3, 1], [2, 3, 3, 2], [6, 6, 1, 6], [6, 2, 3, 1]], llaves:[{ b:0, k:1, caja:0 }], cajas:[{ bots:[2, 3] }], candados:[], nuevos:[6] } },
   largas:   { t:'Botellas largas', x:'Estas botellas guardan más capas. Se juegan igual, solo que hay más por ordenar.',
               nv:{ cap:6, botellas:[[1, 2, 3, 1, 2, 3], [3, 1, 2, 3, 1, 2]], llaves:[], cajas:[], candados:[] } }
 };
@@ -1563,7 +1585,7 @@ function mostrarNovedad(r){
   return new Promise(res => {
     const d = NOVEDAD[r];
     $('nTit').textContent = d.t; $('nTxt').textContent = d.x;
-    pintarPreview($('nIlus'), d.nv, false, { ancho:280, alto:r === 'largas' ? 170 : 150, maxW:r === 'largas' ? 34 : 44 });
+    pintarPreview($('nIlus'), d.nv, false, { ancho:280, alto:r === 'largas' || r === 'gigante' ? 170 : 150, maxW:r === 'largas' || r === 'gigante' ? 34 : 44 });
     const v = $('veloNov');
     const previo = document.activeElement;
     const cierra = () => { v.classList.remove('on'); document.removeEventListener('keydown', kd); $('nOk').onclick = null; v.onclick = null; if(previo && previo.focus) previo.focus({ preventScroll:true }); res(); };
@@ -1576,7 +1598,8 @@ function mostrarNovedad(r){
 }
 async function novedades(g){
   const pf = P();
-  const nuevas = (g.nv.rasgos || []).filter(r => !pf.vistos[r]);
+  const lista = (g.nv.rasgos || []).concat(g.nv.nuevos && g.nv.nuevos.length ? ['nuevos'] : []);
+  const nuevas = lista.filter(r => !pf.vistos[r]);
   if(!nuevas.length) return;
   g.pausa = true;                       // el tiempo de leer no cuenta
   for(const r of nuevas){
@@ -1671,6 +1694,7 @@ function pintarInicio(){
   $('who').setAttribute('aria-label', 'Jugador: ' + NOMBRES[u] + (HOST ? '' : '. Toca para cambiar'));
   const L = pf.nivel;
   $('hNivel').textContent = 'Nivel ' + L;
+  $('hArte').src = IMG.botDuo;
   const p = MOTOR.nivelParams(L), nv0 = nivelSinc('camino', 'camino', L);
   subHero(nv0, p);
   insigniaHero(nv0 ? nv0.dif : difDeParams(p));
@@ -1739,7 +1763,7 @@ function pintarPreview(cont, nv, esq, o){
   const unid = unidadesDe(n, nv);
   unid.forEach(u => crearUnidad(u, f));
   const t = distribuir(unid, W_, o.alto || 178, { cap:cap, gap:gap, rgap:rgap, maxW:o.maxW || 40, minW:12, tres:false });
-  colocarTam(cont, t, gap, rgap);
+  colocarTam(cont, t, gap, rgap, unid);
   colocarFilas(cont, t);
 }
 
@@ -1851,7 +1875,7 @@ function engancharEventos(){
     e.preventDefault(); tocar(parseInt(s.dataset.i, 10));
   });
   $('gBack').onclick = cerrarJuego;
-  $('cUndo').onclick = deshacer; $('cReset').onclick = reiniciar; $('cHint').onclick = pedirPista; $('cExtra').onclick = botellaExtra;
+  $('cUndo').onclick = deshacer; $('cReset').onclick = reiniciar; $('cExtra').onclick = botellaExtra;
   $('wSig').onclick = siguiente; $('wRep').onclick = repetir;
   $('hJugar').onclick = () => { despertarAudio(); abrirJuego('camino', 'camino', P().nivel); };
   $('rJugar').onclick = () => { despertarAudio(); const f = hoyISO(); abrirJuego('dia', 'dia', f, { solo:!!P().dias[f] }); };
@@ -1890,7 +1914,8 @@ function start(data){
     S.jugador = HOST.usuario === 'andres' ? 'andres' : 'cami';
     document.documentElement.classList.add('enapp');
     $('who').tabIndex = -1; $('who').setAttribute('aria-disabled', 'true');
-    $('salir').hidden = false;
+    // si la app pone su propia barra "Volver a CabriCoach" (HOST.barra), mi boton sobra y el titulo queda a la izquierda sin hueco
+    $('salir').hidden = !!HOST.barra;
     $('salir').onclick = () => { if(G && G.estado) guardarPartida(); try{ HOST.cerrar(); }catch(e){} };
     $('pie').textContent = '200 niveles comprobados, todos con solución.';
     fusionarConNube();      // un telefono nuevo recupera el progreso de la nube

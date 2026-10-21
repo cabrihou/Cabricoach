@@ -608,8 +608,16 @@ body.conisla #view{padding-bottom:170px}
 .botcard .botnv b{font:700 18px var(--num);font-variant-numeric:tabular-nums;color:var(--ink);margin-left:2px}
 .botcard .botface{flex:none;width:84px;height:auto;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(0,0,0,.5))}
 #botlayer{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;background:var(--paper);
-  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);overscroll-behavior:contain}
-#botlayer iframe{flex:1 1 auto;width:100%;min-height:0;border:0;display:block;background:var(--paper)}
+  padding:0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);overscroll-behavior:contain}
+/* REV 226: la salida es de la app, no del juego (en el iPhone el boton de adentro no respondia). Vidrio como #topbar */
+#botlayer .botbar{flex:none;display:flex;align-items:center;padding:calc(6px + env(safe-area-inset-top)) 10px 6px;background:rgba(var(--glass-rgb),.78);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--line2)}
+#botlayer .botsal{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 8px;border:0;background:transparent;color:var(--ink);font:600 15px var(--ui);border-radius:999px}
+#botlayer .botdot{flex:none;width:6px;height:6px;border-radius:50%;background:rgb(var(--acc-rgb));margin-left:-6px}
+#botlayer .botsal:active{background:rgba(255,255,255,.08)}
+/* en iOS un iframe puede crecer a la altura de su contenido: se encierra en un marco que manda */
+#botlayer .botmarco{position:relative;flex:1 1 0;min-height:0;overflow:hidden}
+#botlayer iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:var(--paper)}
+.fabfoto.fabbot{bottom:calc(20px + env(safe-area-inset-bottom) + 76px + 54px + 12px);background:var(--card2);color:var(--mint);border:1px solid rgba(var(--acc-rgb),.45);box-shadow:0 6px 16px rgba(0,0,0,.4)}
 #botlayer .botload{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font:500 16px var(--ui);color:var(--ink2);pointer-events:none}
 .retohero .rhvs{position:absolute;left:50%;top:8px;transform:translateX(-50%);font:700 20px var(--num);color:rgba(255,255,255,.14);letter-spacing:.04em;z-index:0}
 .vsface{width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin:0 5px;background:var(--card2)}
@@ -2770,7 +2778,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 225';
+const APPREV='REV 226';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -2949,7 +2957,8 @@ const ICONS = {
   book:'<path d="M4 19V4a2 2 0 0 1 2-2h14v17"/><circle cx="16.5" cy="5.5" r="1.1" class="acc"/><path d="M4 19a2.5 2.5 0 0 0 2.5 2.5H20V17H6.5A2.5 2.5 0 0 0 4 19Z"/>',
   share:'<path d="M12 3v12"/><path d="m8 6.5 4-4 4 4"/><path d="M5 12v8h14v-8"/>',
   lock:'<rect x="5" y="10.5" width="14" height="10" rx="2.6"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3" class="acc"/>',
-  camera:'<path d="M4 8.6A2.6 2.6 0 0 1 6.6 6h1.5l1.1-1.7a1.6 1.6 0 0 1 1.3-.7h3a1.6 1.6 0 0 1 1.3.7L15.9 6h1.5A2.6 2.6 0 0 1 20 8.6v7.8A2.6 2.6 0 0 1 17.4 19H6.6A2.6 2.6 0 0 1 4 16.4Z"/><circle cx="12" cy="12.4" r="3.4"/><circle cx="12" cy="12.4" r="1.2" class="acc"/>',
+  botella:'<path d="M10 3h4M10.5 3v4.2c0 .6-.3 1.1-.8 1.5C8.6 9.6 8 10.6 8 11.8V19a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7.2c0-1.2-.6-2.2-1.7-3.1-.5-.4-.8-.9-.8-1.5V3"/><circle cx="12" cy="15.6" r="1.3" class="acc"/>',
+ camera:'<path d="M4 8.6A2.6 2.6 0 0 1 6.6 6h1.5l1.1-1.7a1.6 1.6 0 0 1 1.3-.7h3a1.6 1.6 0 0 1 1.3.7L15.9 6h1.5A2.6 2.6 0 0 1 20 8.6v7.8A2.6 2.6 0 0 1 17.4 19H6.6A2.6 2.6 0 0 1 4 16.4Z"/><circle cx="12" cy="12.4" r="3.4"/><circle cx="12" cy="12.4" r="1.2" class="acc"/>',
   star:'<path d="M12 3.1 14.8 8.9l6.4.9-4.6 4.5 1.1 6.4-5.7-3-5.7 3 1.1-6.4L3 9.8l6.4-.9Z"/>',
   /* familia de rangos para antes y despues: el mismo calendario se va llenando segun el periodo */
   rango7:'<rect x="2.8" y="4.6" width="18.4" height="16.6" rx="2.6"/><path d="M2.8 9.6h18.4M7.6 2.6v4M16.4 2.6v4"/><path d="M6.6 15.4h10.8"/>',
@@ -14728,6 +14737,7 @@ function vInicio(){
     ${daystrip()}
   </section>
   ${fabFotoHTML()}
+  ${fabBotellasHTML()}
   ${(()=>{ /* un rescan mal tomado no se arregla despues: el aviso llega con el
      protocolo puesto, no el dia de la cita */
     const r=rescanProximo(UID); if(!r) return '';
@@ -18386,13 +18396,15 @@ async function botellasAbrir(){
   if(BOT_CAPA) return;
   const capa=document.createElement('div');
   capa.id='botlayer'; capa.setAttribute('role','dialog'); capa.setAttribute('aria-label','Botellas');
-  capa.innerHTML='<div class="botload" role="status">Cargando el juego</div>';
+  capa.innerHTML='<div class="botbar"><button class="botsal" data-botsal aria-label="Volver a CabriCoach">'+ic('chevL',20)+'<i class="botdot" aria-hidden="true"></i><span>Volver a CabriCoach</span></button></div><div class="botmarco"><div class="botload" role="status">Cargando el juego</div></div>';
   const fr=document.createElement('iframe'); fr.title='Botellas';
-  capa.appendChild(fr); document.body.appendChild(capa); BOT_CAPA=capa;
+  capa.querySelector('.botmarco').appendChild(fr); document.body.appendChild(capa); BOT_CAPA=capa;
+  /* listener propio y no data-a: la capa esta fuera de #view y esto no depende de la delegacion de la app */
+  capa.querySelector('[data-botsal]').addEventListener('click',botellasCerrar);
   BOT_OV=[document.documentElement.style.overflow, document.body.style.overflow];
   document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden';
   /* contrato con el juego (ESPEC-v3 seccion 3). perfil es getter: sbPull reemplaza S y debe leerse fresco */
-  window.__botellasHost={usuario:UID, cerrar:botellasCerrar,
+  window.__botellasHost={usuario:UID, cerrar:botellasCerrar, barra:true,
     get perfil(){ return (S&&S.botellas)||null; },
     leerPareja(){ const o=UID==='andres'?'cami':'andres'; let p=null; try{ p=partnerState('botellas')||null; }catch(e){} return {usuario:o, nombre:o==='cami'?'Cami':'Andrés', perfil:p}; },
     guardar(p){ S.botellas=p; save('botellas'); }};
@@ -20481,6 +20493,10 @@ function medMetaPickHTML(){
 /* Boton flotante de la foto del dia (REV 215, pedido del dueno). Solo en el Inicio.
    Si ya hay foto de hoy cambia de aspecto y lleva a la galeria en vez de a la camara:
    un boton que repite la misma accion cuando ya esta hecha solo confunde. */
+/* REV 226: acceso rapido a Botellas, justo encima del de la foto. Mismo tamano, en version secundaria (un solo primario por pantalla). */
+function fabBotellasHTML(){
+  return `<button class="fabfoto fabbot" data-a="botellasAbrir" aria-label="Jugar Botellas" title="Botellas">${ic('botella',22)}</button>`;
+}
 function fabFotoHTML(){
   if(!(FOTOS_OK||SB)) return '';
   const hecha=FOTODAYS.has(TODAY());

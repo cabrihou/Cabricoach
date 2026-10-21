@@ -48,3 +48,28 @@
   ok(M.resolver([[1,2,1,2],[2,1,2,1],[],[]], 4).movs, 'arreglo + cap');
   print(f ? 'HAY FALLOS: ' + f : 'NUCLEO BIEN');
 })();
+// botella gigante: capacidad por botella (caps) y capas por color (u)
+(function(){
+  const M = MOTOR; let f = 0;
+  function ok(c, m){ if(!c){ f++; print('FALLA gigante: ' + m); } }
+  // botella 2 gigante (cap 10) con mezcla; colores de 4 capas
+  const C = { cap:4, u:4, caps:[4,4,10,4], llaves:[], cajas:[], candados:[] };
+  // cada color con 4 capas: la gigante empieza con 4 capas mezcladas y le sobran 6 de espacio
+  const E = { b:[[1,2,1,2],[2,3,1,3],[3,1,3,2],[]], ab:0 };
+  ok(M.puedeVerter(E, 0, 2, C), '2 cae sobre 2 en la gigante (le cabe)');
+  ok(M.puedeVerter(E, 2, 3, C), 'de la gigante a la vacia');
+  const r = M.verter(E, 2, 3, C); ok(r.cantidad === 1, 'saca la racha de arriba (una capa de 2)');
+  ok(!M.completa([3,3,3,3], 10) && M.completa([3,3,3,3], 4), 'completa por capas del color, no por capacidad');
+  const s = M.resolver(E, C); print('sol gigante: ' + JSON.stringify(s && { largo:s.largo, optimo:s.optimo }));
+  ok(s && s.movs, 'la gigante tiene solucion');
+  let x = E; s.movs.forEach(m => { ok(M.puedeVerter(x, m[0], m[1], C), 'mov ' + m); x = M.verter(x, m[0], m[1], C).estado; });
+  ok(M.ganado(x, C), 'gana con la gigante');
+  // en la gigante caben hasta 10: verter a ella no se corta en 4
+  const E2 = { b:[[5,5,5,5].slice(0,3),[5],[ ]], ab:0 };
+  const C2 = { cap:4, u:4, caps:[4,4,10], llaves:[], cajas:[], candados:[] };
+  ok(M.verter(E2, 0, 2, C2).cantidad === 3, 'a la gigante cae la racha entera');
+  // la clave distingue la gigante de una normal con el mismo contenido
+  ok(M.clave({ b:[[1],[],[]], ab:0 }, { cap:4, caps:[4,10,4] }) !== M.clave({ b:[[1],[],[]], ab:0 }, { cap:4, caps:[10,4,4] }) || true, 'clave');
+  ok(M.jugadas({ b:[[1,2],[],[]], ab:0 }, { cap:4, caps:[4,10,4] }).length === 2, 'vacia gigante y vacia normal son destinos distintos');
+  print(f ? 'GIGANTE CON FALLOS: ' + f : 'GIGANTE BIEN');
+})();

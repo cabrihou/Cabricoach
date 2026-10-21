@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Genera el catalogo de 200 niveles (un solo camino, v3) con jsc en paralelo.
+"""Genera el catalogo de 200 niveles (un solo camino, v4) con jsc en paralelo.
 
 Uso (desde esta carpeta):
     python3 catalogo.py              # los 200, en 10 procesos
@@ -59,24 +59,25 @@ def main():
     except Exception:
         pass
     with open(ruta_json, 'w') as f:
-        json.dump({'version': 3, 'generado': generado, 'camino': camino}, f, separators=(',', ':'), ensure_ascii=False)
+        json.dump({'version': 4, 'generado': generado, 'camino': camino}, f, separators=(',', ':'), ensure_ascii=False)
     print('niveles.json: %.1f KB' % (os.path.getsize(ruta_json) / 1024))
     informe(camino, segs, resumen, total)
 
 
 def tabla_resumen(camino):
-    filas = ['| Dificultad | Niveles | Meta prom | Bot prom | Atasco prom | Colores | Llave | Candado | Misterio | Largas | No optimos |',
-             '|---|---|---|---|---|---|---|---|---|---|---|']
+    filas = ['| Dificultad | Niveles | Meta prom | Bot prom | Atasco prom | Colores | Llave | Candado | Cajon de 2 | Colores nuevos | Misterio | Largas | Gigante | No optimos |',
+             '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|']
     for d in DIFS:
         lista = [n for n in camino if n['dif'] == d]
         if not lista:
             continue
         cs = [colores(n) for n in lista]
         cuenta = lambda t: sum(1 for n in lista if t in n['rasgos'])
-        filas.append('| %s | %d | %.1f | %.3f | %.3f | %d a %d | %d | %d | %d | %d | %d |' % (
+        filas.append('| %s | %d | %.1f | %.3f | %.3f | %d a %d | %d | %d | %d | %d | %d | %d | %d | %d |' % (
             NOMBRES[d], len(lista), sum(n['meta'] for n in lista) / len(lista), sum(n['bot'] for n in lista) / len(lista),
             sum(n['atasco'] for n in lista) / len(lista), min(cs), max(cs),
-            cuenta('llave'), cuenta('candado'), cuenta('misterio'), cuenta('largas'),
+            cuenta('llave'), cuenta('candado'), sum(1 for n in lista if any(len(x['bots']) == 2 for x in n['cajas'])),
+            sum(1 for n in lista if n['nuevos']), cuenta('misterio'), cuenta('largas'), cuenta('gigante'),
             sum(1 for n in lista if not n['optimo'])))
     return '\n'.join(filas)
 

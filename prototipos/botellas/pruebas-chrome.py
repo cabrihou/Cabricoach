@@ -114,7 +114,7 @@ def estado(nivel=1, estrellas=None, vistos=True, jugador="cami"):
     """Estado guardado v3 para arrancar; vistos = ya vio todas las novedades."""
     p = {"v": 3, "nivel": nivel, "estrellas": {str(k): v for k, v in (estrellas or {}).items()}, "dias": {},
          "racha": {"actual": 0, "mejor": 0, "ultimo": None}, "stats": {"ganados": 1, "segundos": 0},
-         "vistos": {k: True for k in ("llave", "candado", "misterio", "largas")} if vistos else {}}
+         "vistos": {k: True for k in ("llave", "candado", "misterio", "largas", "gigante", "nuevos")} if vistos else {}}
     return {"jugador": jugador, "perfiles": {"cami": p, "andres": p}, "ajustes": {"sonido": False, "vibra": False, "simbolos": False}}
 
 
@@ -319,6 +319,88 @@ if __name__ == "__main__":
             pg.js("window.__botellas.libre()")
             pg.foto("v3-13-reto-dia")
             print("dia:", pg.js("JSON.stringify([window.__botellas.G.nv.id, window.__botellas.G.nv.rasgos, window.__botellas.G.nv.dif])", False))
+
+        if todo or "v4" in which:
+            GIG = json.load(open("/private/tmp/claude-501/-Users-afcastro-Documents-Projects/4e98e039-e9b2-48eb-b87f-a3c14e238be4/scratchpad/gig.json"))
+            def inyectar(pg, nv, L=30):
+                pass   # con el niveles.json v4 los niveles reales ya traen gigante (L30, L33, L41) y colores nuevos (desde L12)
+            # sin pista: barra de 3 botones
+            abrir(pg, "#nivel24", estado(24))
+            print("v4 botones de la barra:", pg.js("JSON.stringify([...document.querySelectorAll('#gCtl .ctl')].map(b=>b.textContent.trim()))", False), "| #cHint:", pg.js("!!document.getElementById('cHint')", False), "| texto 'ista' en la pagina de juego:", pg.js("/Pista/.test(document.getElementById('vJuego').innerText)", False))
+            pg.foto("v4-01-sin-pista-390")
+            scroll_h(pg, "juego 390")
+            abrir(pg, "#nivel24", estado(24), 320, 640)
+            pg.foto("v4-01b-sin-pista-320")
+            scroll_h(pg, "juego 320")
+            # gigante
+            for tag, w, h in (("390", 390, 844), ("320", 320, 640)):
+                limpio(pg, "", w, h, 1.2, estado(30))
+                pg.js(JUGAR, False)
+                inyectar(pg, GIG["gig"])
+                pg.js("window.__botellas.abrir('camino','camino',30); true", False)
+                pg.js("window.__botellas.libre()")
+                time.sleep(0.4)
+                pg.foto("v4-02-gigante-%s" % tag)
+                print("gigante", tag, pg.js("(()=>{const s=[...document.querySelectorAll('#board .slot')]; const g=s.find(x=>x.classList.contains('gig')).getBoundingClientRect(), n=s.find(x=>!x.classList.contains('gig')).getBoundingClientRect(); return JSON.stringify({ancho:[g.width,n.width,+(g.width/n.width).toFixed(2)], alto:[g.height,n.height,+(g.height/n.height).toFixed(2)], base:[g.bottom, n.bottom]})})()", False))
+                scroll_h(pg, "gigante " + tag)
+                if tag == "390":
+                    nvg = GIG["gig"]
+                    # vertido desde la gigante a otra botella (a mitad) y de otra hacia la gigante
+                    mv = pg.js("JSON.stringify(window.__botellas.G.sol)", False)
+                    sol = json.loads(mv)
+                    desde = [m for m in sol if m[0] == 0]
+                    haci = [m for m in sol if m[1] == 0]
+                    print("movs con gigante de origen:", desde[:2], "de destino:", haci[:2])
+                    # jugar la solucion hasta el primer mov que sale de la gigante
+                    k = sol.index(desde[0])
+                    pg.js("window.__jugar(%d)" % k)
+                    pg.js("(async()=>{const b=window.__botellas,m=b.G.sol[%d];b.tocar(m[0]);await new Promise(r=>setTimeout(r,200));b.tocar(m[1]);await new Promise(r=>setTimeout(r,420));b.pausar();return 1})()" % k)
+                    pg.foto("v4-03-vertido-desde-gigante")
+                    pg.js("window.__botellas.reanudar(); true", False); time.sleep(1.2)
+                    pg.foto("v4-03b-tras-vertido-gigante")
+                    # hacia la gigante
+                    limpio(pg, "", 390, 844, 1.2, estado(30)); pg.js(JUGAR, False); inyectar(pg, GIG["gig"])
+                    pg.js("window.__botellas.abrir('camino','camino',30); true", False); pg.js("window.__botellas.libre()"); time.sleep(0.3)
+                    kk = sol.index(haci[0])
+                    pg.js("window.__jugar(%d)" % kk)
+                    pg.js("(async()=>{const b=window.__botellas,m=b.G.sol[%d];b.tocar(m[0]);await new Promise(r=>setTimeout(r,200));b.tocar(m[1]);await new Promise(r=>setTimeout(r,420));b.pausar();return 1})()" % kk)
+                    pg.foto("v4-03c-vertido-hacia-gigante")
+                    pg.js("window.__botellas.reanudar(); true", False); time.sleep(1.2)
+                    # resolver completo: la gigante se completa con 4
+                    pg.js("window.__botellas.resolver(0)"); time.sleep(1.4)
+                    pg.foto("v4-03d-gigante-ganar")
+                    print("gigante: ganado", pg.js("window.__botellas.G.ganado", False), "| tapas:", pg.js("document.querySelectorAll('#board .tapa').length", False), "| tapa en la gigante:", pg.js("!!document.querySelector('#board .slot.gig .tapa')", False))
+            # colores nuevos
+            limpio(pg, "", 390, 844, 1.2, estado(12)); pg.js(JUGAR, False)
+            pg.js("window.__botellas.abrir('camino','camino',12); true", False); pg.js("window.__botellas.libre()"); time.sleep(0.4)
+            pg.foto("v4-04-nuevos-antes")
+            k = pg.js("window.__primera('caja')", False)
+            pg.js("window.__jugar(%d)" % k)
+            pg.js("(async()=>{const b=window.__botellas,m=b.G.nv.movs[%d];b.tocar(m[0]);await new Promise(r=>setTimeout(r,90));b.tocar(m[1]);return 1})()" % k)
+            pg.js("window.__espera('.slot.llegan', 250)")
+            pg.js("window.__botellas.pausar(); true", False)
+            print("llegan:", pg.js("document.querySelectorAll('#board .slot.llegan').length", False), "| live:", pg.js("document.getElementById('live').textContent", False))
+            pg.foto("v4-04b-colores-nuevos-brillo")
+            pg.js("window.__botellas.reanudar(); true", False); time.sleep(1.8)
+            pg.foto("v4-04c-nuevos-despues")
+            # tablero chico y grande
+            for L_, tag in ((2, "chico"), (111, "grande")):
+                for w, h in ((390, 844), (320, 640)):
+                    abrir(pg, "#nivel%d" % L_, estado(L_), w, h)
+                    pg.foto("v4-05-tablero-%s-%d" % (tag, w))
+                    print("tablero", tag, w, "botellas", pg.js("window.__botellas.G.estado.b.length", False), "ancho botella", pg.js("Math.round(document.querySelector('#board .slot').getBoundingClientRect().width)", False), "| filas", pg.js("document.querySelectorAll('#board .brow').length", False), "| hueco arriba (px):", pg.js("(()=>{const b=document.getElementById('board').getBoundingClientRect(), r=document.querySelector('#board .brow').getBoundingClientRect(); return Math.round(r.top-b.top)})()", False), "abajo:", pg.js("(()=>{const b=document.getElementById('board').getBoundingClientRect(), rs=document.querySelectorAll('#board .brow'), r=rs[rs.length-1].getBoundingClientRect(); return Math.round(b.bottom-r.bottom)})()", False))
+                    scroll_h(pg, "tablero %s %d" % (tag, w))
+            # vertido a mitad en un tablero grande, desde la fila de arriba (que no se corte)
+            abrir(pg, "#nivel2", estado(2))
+            pg.js("(async()=>{const b=window.__botellas,m=b.G.sol[0];b.tocar(m[0]);await new Promise(r=>setTimeout(r,200));b.tocar(m[1]);await new Promise(r=>setTimeout(r,430));b.pausar();return 1})()")
+            pg.foto("v4-06-vertido-tablero-chico")
+            pg.js("window.__botellas.reanudar(); true", False)
+            # inicio (menos vacio)
+            limpio(pg, "", S=estado(37, {i: 3 for i in range(1, 37)}))
+            pg.foto("v4-07-inicio-390")
+            limpio(pg, "", 320, 640, S=estado(37, {i: 3 for i in range(1, 37)}))
+            pg.foto("v4-07b-inicio-320")
+            scroll_h(pg, "inicio 320 v4")
         print("errores:", pg.errores if pg.errores else "ninguno")
     finally:
         pg.cerrar()

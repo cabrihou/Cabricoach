@@ -637,6 +637,11 @@ pestaña del mismo contenido. `progGroup()` solo devuelve `act` o `nutri`.
   (`partnerState('botellas')` y el nombre del otro) y `guardar(p)` (`S.botellas=p; save('botellas')`). Al abrir,
   con nube, `sbPull()` en segundo plano y luego `__botellasRefrescar()` dentro del iframe. La tarjeta muestra
   "Tú · Nivel N" y el nivel del otro (o "Cuando Cami juegue, aquí ves cómo va"). Precargado en `sw.js`.
+  REV 227: la app pide `assets/botellas.html?v=APPREV` y `sw.js` sirve el juego red primero (máximo 4 s,
+  luego la copia guardada) y lo precarga con `cache:'reload'`: antes, cache primero más los 7 días de
+  `/assets/*` en Netlify dejaban un juego viejo en el iPhone. Lo de adentro del juego (5 grados con Extra
+  difícil, sin deshacer ni botella extra, lo cerrado tapado, mapa del recorrido, zona del nivel en el
+  tablero) vive en `prototipos/botellas` (ESPEC-v5 a v7).
 
 ## PF · Perfil (se llega tocando el avatar del nav, `vPerfil`)
 

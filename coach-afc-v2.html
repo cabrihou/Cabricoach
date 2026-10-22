@@ -2778,7 +2778,7 @@ b,strong{font-weight:600}
 
 <script>
 "use strict";
-const APPREV='REV 226';
+const APPREV='REV 227';
 const REC={
   pollo:"assets/cab/pollo.png",
   res:"assets/cab/res.png",
@@ -18416,7 +18416,8 @@ async function botellasAbrir(){
     }).catch(()=>{});
   }
   try{
-    const r=await fetch('assets/botellas.html');
+    // con la version en la direccion: la cache de 7 dias de /assets/ no puede servir un juego viejo
+      const r=await fetch('assets/botellas.html?v='+encodeURIComponent(APPREV));
     if(!r.ok) throw new Error('sin juego');
     const txt=await r.text();
     if(BOT_CAPA!==capa) return;

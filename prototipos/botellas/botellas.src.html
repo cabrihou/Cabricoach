@@ -17,10 +17,14 @@
   --num:'Archivo','Instrument Sans',sans-serif;
   --ease:cubic-bezier(.32,.72,0,1); --rebote:cubic-bezier(.34,1.36,.64,1);
   /* colores del liquido: contenido del juego, no acento de interfaz */
+  /* zonas seguras del telefono; dentro de CabriCoach (.enapp) valen 0 porque la app ya las cubre con su propia barra */
+  --sa-t:env(safe-area-inset-top,0px); --sa-r:env(safe-area-inset-right,0px); --sa-b:env(safe-area-inset-bottom,0px); --sa-l:env(safe-area-inset-left,0px);
   --estante:url("@IMG:botEstante@");
   --c1:#FF5A6E; --c2:#FF9F43; --c3:#FFD93D; --c4:#8BE04E; --c5:#1FBF8F; --c6:#3DD6F5;
   --c7:#4C7DFF; --c8:#9B6BFF; --c9:#FF6FCF; --c10:#A86B3C; --c11:#D5DCE0; --c12:#A3284F;
 }
+/* en modo app el iframe tambien recibe env(safe-area-inset-*) en iOS: se contaria dos veces (una franja vacia bajo la barra de la app) */
+:root.enapp{--sa-t:0px;--sa-r:0px;--sa-b:0px;--sa-l:0px}
 /* Acento por jugador: Cami dorado (por defecto), Andres azul */
 :root,:root[data-user="cami"]{--mint:#FFC94D; --mint2:#E89B2E; --onmint:#2A1B04;
   --grad:linear-gradient(135deg,#FFE08A 0%,#F2A93B 100%);
@@ -81,7 +85,9 @@ svg.ic .acc{fill:var(--mint);stroke:none}
 .btn:focus-visible,.ctl:focus-visible,.who:focus-visible,.sw:focus-visible,.schedhead:focus-visible,.back:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
 .chip{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:24px;border:1px solid var(--line);background:var(--card2);padding:2px 10px;font:500 12px/1.3 var(--ui);letter-spacing:.05em;white-space:nowrap;border-radius:999px;color:var(--ink2)}
 .chip.acc{border-color:rgba(var(--acc-rgb),.35);color:var(--mint)}
-#toast{position:fixed;z-index:96;bottom:calc(96px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(8px);
+/* el chip de la cabecera se parte en dos lineas si trae 3 rasgos: en 320 px no cabe en una */
+#gChip{white-space:normal;max-width:100%;text-align:left;justify-content:flex-start;line-height:1.25;border-radius:14px}
+#toast{position:fixed;z-index:96;bottom:calc(96px + var(--sa-b));left:50%;transform:translateX(-50%) translateY(8px);
   background:#22272B;color:#F2F5F4;font:400 14.5px/1.4 var(--ui);letter-spacing:0;
   padding:12px 18px;opacity:0;transition:opacity .2s,transform .2s;max-width:90vw;text-align:center;border-radius:999px;border:1px solid rgba(var(--acc-rgb),.3);box-shadow:var(--shadow)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -96,16 +102,19 @@ svg.ic .acc{fill:var(--mint);stroke:none}
 
 /* ===== Inicio ===== */
 #vInicio{position:relative;z-index:1;min-height:100%}
-#safetop{position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:rgba(11,13,15,.8);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);z-index:61;pointer-events:none}
-#topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:60;background:rgba(11,13,15,.8);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--line2);
-  padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px))}
+#safetop{position:fixed;top:0;left:0;right:0;height:var(--sa-t);background:rgba(11,13,15,.8);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);z-index:61;pointer-events:none}
+#topbar{position:sticky;top:var(--sa-t);z-index:60;background:rgba(11,13,15,.8);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--line2);
+  padding:12px max(16px,var(--sa-r)) 12px max(16px,var(--sa-l))}
 #topbar .in{max-width:560px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .who{display:inline-flex;align-items:center;gap:9px;background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:4px 14px 4px 4px;min-height:44px;font:600 15px/1 var(--ui)}
 .who img{width:34px;height:34px;border-radius:50%;object-fit:cover;display:block;background:var(--paper2)}
 #topbar .izq{display:flex;align-items:center;gap:10px;min-width:0}
 /* dentro de CabriCoach el jugador lo pone la app: la ficha solo informa */
 .enapp .who{pointer-events:none}
-.pg{max-width:560px;margin:0 auto;padding:4px max(16px,env(safe-area-inset-right,0px)) calc(40px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+/* dentro de la app la barra del inicio se va con el scroll (la de la app ya queda fija arriba) */
+.enapp #topbar{position:static}
+.enapp #safetop{display:none}
+.pg{max-width:560px;margin:0 auto;padding:4px max(16px,var(--sa-r)) calc(40px + var(--sa-b)) max(16px,var(--sa-l))}
 .hero .t-label{margin-bottom:6px}
 /* la ilustracion del inicio (Andres y Cami ordenando tubos): ocupa el borde de arriba del heroe y se funde con la tarjeta,
    porque el cuadro trae su propio fondo casi negro */
@@ -149,7 +158,7 @@ svg.ic .acc{fill:var(--mint);stroke:none}
 #vJuego{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;
   background:radial-gradient(52% 30% at 82% -6%, rgba(var(--acc-rgb),.11), transparent 70%),radial-gradient(40% 24% at 8% 4%, rgba(var(--acc2-rgb),.06), transparent 70%),var(--paper)}
 #gTop{display:flex;align-items:center;gap:12px;flex:none;background:rgba(11,13,15,.8);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--line2);
-  padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+  padding:calc(10px + var(--sa-t)) max(16px,var(--sa-r)) 10px max(16px,var(--sa-l))}
 .back{width:44px;height:44px;border-radius:50%;background:var(--card2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex:none;padding:0}
 #gTit{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px}
 #gTit .t-h2{line-height:1.1}
@@ -158,11 +167,47 @@ svg.ic .acc{fill:var(--mint);stroke:none}
 #gMov .t-label{display:block;margin-top:2px}
 #gMov .meta{margin-top:2px;font:400 14px/1.2 var(--ui);color:var(--smoke)}
 #gMov .meta b{font:600 14px var(--num);font-variant-numeric:tabular-nums;color:var(--ink2)}
-/* estante de tubos de ambiente: franja abajo, detras de las botellas, atenuada y fundida con el fondo (la imagen trae su propio fondo casi negro) */
-#board::after{content:"";position:absolute;left:0;right:0;bottom:0;height:min(40%,260px);z-index:-1;pointer-events:none;background:var(--estante) center bottom/cover no-repeat;opacity:.17;
-  -webkit-mask-image:linear-gradient(to top,#000 30%,transparent 100%);mask-image:linear-gradient(to top,#000 30%,transparent 100%)}
+/* la zona del nivel (v7): paisaje en una franja baja, adornos en el suelo y un ambiente muy sutil. Todo va detras de las botellas
+   (capa hermana del tablero, que se reconstruye) y sin recibir toques */
+#boardWrap{flex:1;min-height:0;position:relative;display:flex;flex-direction:column}
+#boardWrap #board{flex:1}
+#zonaFx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#zonaFx .zpais{position:absolute;left:0;right:0;bottom:0;height:min(42%,280px);background:var(--zimg,none) center bottom/cover no-repeat;opacity:.3;filter:blur(2.5px) brightness(.62);
+  -webkit-mask-image:linear-gradient(to top,#000 25%,transparent 100%);mask-image:linear-gradient(to top,#000 25%,transparent 100%)}
+#zonaFx .ztinte{position:absolute;left:0;right:0;bottom:0;height:min(55%,340px);background:linear-gradient(to top,var(--t),transparent)}
+#zonaFx.zz0{--zimg:var(--zona1)}#zonaFx.zz1{--zimg:var(--zona2)}#zonaFx.zz2{--zimg:var(--zona3)}#zonaFx.zz3{--zimg:var(--zona4)}
+#zonaFx .ador{opacity:.9}
+#zonaFx .zamb i{position:absolute;left:var(--x);top:var(--y);width:var(--s);height:var(--s);border-radius:50%;opacity:0;animation:var(--an) var(--d) ease-in-out var(--dl) infinite}
+#zonaFx.zz0 .zamb i{background:#FFC870;box-shadow:0 0 6px #FFB347;--an:chispa}
+#zonaFx.zz1 .zamb i{background:#D9FF8A;box-shadow:0 0 7px #B6F25C;--an:luci}
+#zonaFx.zz2 .zamb i{background:#EAF4FF;box-shadow:0 0 4px #CFE6FF;--an:copo}
+#zonaFx.zz3 .zamb i{background:#FFFFFF;box-shadow:0 0 5px #C9B8FF;--an:titila}
+@keyframes chispa{0%{opacity:0;transform:translateY(0)}25%{opacity:.5}100%{opacity:0;transform:translateY(-70px)}}
+@keyframes luci{0%,100%{opacity:0;transform:translate(0,0)}30%{opacity:.5}60%{opacity:.15;transform:translate(14px,-12px)}}
+@keyframes copo{0%{opacity:0;transform:translate(0,-10px)}20%{opacity:.5}100%{opacity:0;transform:translate(-18px,120px)}}
+@keyframes titila{0%,100%{opacity:.06}50%{opacity:.5}}
+#zonaFx.pausa *{animation-play-state:paused!important}
+/* repisa bajo cada fila (hija de la fila, detras de las botellas y quieta al arrastrar) y objetos de laboratorio sobre ella */
+.repisa{position:absolute;z-index:-1;height:16px;pointer-events:none;background:linear-gradient(180deg,#7a5530,#4a3119 70%,#35230f);background-size:100% 100%;border-radius:3px;
+  box-shadow:0 7px 9px -3px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,222,170,.3)}
+.repisa.conimg{background-image:var(--repisaimg);box-shadow:0 7px 9px -3px rgba(0,0,0,.65)}
+.brow .labo{z-index:-1}
+.labo{position:absolute;pointer-events:none;background:var(--laboimg) no-repeat;background-size:300% 300%;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
+/* el cabrito del jugador: dos capas que se funden entre poses (2x2) */
+/* el cabrito vive en la barra de abajo (a la izquierda de Reiniciar), con los pies en el fondo; sobresale sobre el piso del tablero solo donde no hay nada */
+#gCtl{position:relative;z-index:3}
+#cabrito{position:absolute;pointer-events:none;left:max(8px,var(--sa-l));bottom:calc(var(--sa-b) + 2px)}
+#cabrito i{position:absolute;inset:0;background:var(--reacimg) no-repeat;background-size:200% 200%;opacity:0;transition:opacity .22s}
+#cabrito i.on{opacity:1}
+#cabrito.seco i{transition:none}
+#cabrito.salto{animation:saltito .4s var(--ease)}
+@keyframes saltito{40%{transform:translateY(-9px)}}
+.gzona{font:500 12.5px/1.25 var(--ui);color:var(--ink2);overflow-wrap:anywhere}
+@media (max-width:359px){.gzona .anc{display:none}}
+#sheetWin img.metacima{width:100%;max-width:300px;height:140px;object-fit:cover;border-radius:20px}
+#board,#board .slot{touch-action:none}   /* arrastrar una botella no debe hacer scroll ni zoom */
 #board{flex:1;min-height:0;position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));overflow:hidden}
+  padding:0 max(16px,var(--sa-r)) 0 max(16px,var(--sa-l));overflow:hidden}
 .brow{display:flex;justify-content:center;align-items:center;gap:var(--bgap,10px);position:relative}
 .brow+.brow{margin-top:var(--rgap,22px)}
 .brow.congig{align-items:flex-end}
@@ -171,6 +216,12 @@ svg.ic .acc{fill:var(--mint);stroke:none}
 .slot.done{cursor:default}
 .bwrap{position:absolute;inset:0;transform-origin:50% 0;transition:transform .16s var(--ease);will-change:transform}
 .slot.sel .bwrap{transform:translateY(-16px)}
+/* arrastre: la botella sigue al dedo, por encima de todo y sin transicion; la valida de abajo se marca con el anillo del acento */
+.slot.arrastra{z-index:80}
+.slot.arrastra .bwrap{transition:none;will-change:transform}
+.slot.arrastra .glass{border-color:var(--mint);box-shadow:0 0 0 1px rgba(var(--acc-rgb),.55),0 0 20px rgba(var(--acc-rgb),.5)}
+.slot.destino .glass{border-color:var(--mint);box-shadow:0 0 0 3px rgba(var(--acc-rgb),.4),0 0 22px rgba(var(--acc-rgb),.55)}
+.slot.destino::after{content:"";position:absolute;left:-6px;right:-6px;top:-6px;bottom:-6px;border:2px dashed rgba(var(--acc-rgb),.95);border-radius:calc(8px + 6px) calc(8px + 6px) calc(var(--bw)/2 + 6px) calc(var(--bw)/2 + 6px);pointer-events:none}
 @keyframes llegan{0%{filter:brightness(1) drop-shadow(0 0 0 rgba(var(--accHi-rgb),0))}35%{filter:brightness(1.35) drop-shadow(0 0 14px rgba(var(--accHi-rgb),.95))}100%{filter:brightness(1) drop-shadow(0 0 0 rgba(var(--accHi-rgb),0))}}
 .slot.llegan .bwrap{animation:llegan 1s ease-out}
 .glass{position:absolute;inset:0;overflow:hidden;background:rgba(255,255,255,.035);border:1.5px solid rgba(255,255,255,.26);
@@ -212,23 +263,21 @@ svg.ic .acc{fill:var(--mint);stroke:none}
   padding:9px 16px;border-radius:999px;border:1px solid rgba(var(--acc-rgb),.45);box-shadow:var(--shadow);animation:flota 1.3s ease-in-out infinite}
 .tip::after{content:"";position:absolute;left:var(--ax,50%);bottom:-6px;width:10px;height:10px;margin-left:-5px;background:#22272B;border-right:1px solid rgba(var(--acc-rgb),.45);border-bottom:1px solid rgba(var(--acc-rgb),.45);transform:rotate(45deg)}
 @keyframes flota{0%,100%{translate:0 0}50%{translate:0 -4px}}
-#strip{flex:none;margin:0 max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));padding:14px 16px;border-color:rgba(var(--acc-rgb),.3);animation:cajain .22s var(--ease);margin-top:0}
+#strip{flex:none;margin:0 max(16px,var(--sa-r)) 8px max(16px,var(--sa-l));padding:14px 16px;border-color:rgba(var(--acc-rgb),.3);animation:cajain .22s var(--ease);margin-top:0}
 #strip .t-body{font-size:15px;font-weight:600}
 #strip .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 #strip .btn{min-height:42px;padding:9px 14px}
-#gCtl{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:rgba(11,13,15,.8);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line2);
-  padding:8px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-.ctl{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:52px;background:none;border:0;border-radius:16px;font:500 13px/1.1 var(--ui);color:var(--ink2);padding:6px 2px;text-align:center;transition:background .12s,opacity .2s}
+#gCtl{flex:none;display:flex;justify-content:center;gap:4px;background:rgba(11,13,15,.8);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line2);
+  padding:8px max(16px,var(--sa-r)) calc(10px + var(--sa-b)) max(16px,var(--sa-l))}
+.ctl{position:relative;min-width:132px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:52px;background:none;border:0;border-radius:16px;font:500 13px/1.1 var(--ui);color:var(--ink2);padding:6px 2px;text-align:center;transition:background .12s,opacity .2s}
 .ctl:active:not(:disabled){background:var(--card2)}
 .ctl:disabled{opacity:.4;cursor:default}
-.ctl .bdg{position:absolute;top:0;left:calc(50% + 6px);min-width:18px;height:18px;border-radius:9px;background:var(--grad);color:var(--onmint);font:700 12px/18px var(--num);text-align:center;padding:0 4px;animation:badgepop .3s var(--rebote)}
-.ctl .bdg.off{display:none}
 .ctl{white-space:nowrap}
 /* ===== Hojas (ganar y confirmar) ===== */
 .velo{position:fixed;inset:0;z-index:90;background:rgba(5,6,7,.64);opacity:0;pointer-events:none;transition:opacity .28s var(--ease)}
 .velo.on{opacity:1;pointer-events:auto}
 .sheet{position:absolute;left:0;right:0;bottom:0;margin:0 auto;max-width:560px;background:var(--card);border:1px solid var(--line);border-bottom:0;border-radius:20px 20px 0 0;
-  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  padding:10px max(16px,var(--sa-r)) calc(18px + var(--sa-b)) max(16px,var(--sa-l));
   transform:translateY(100%);transition:transform .28s var(--ease);text-align:center;max-height:92%;overflow:auto}
 .velo.on .sheet{transform:none}
 .grab{width:40px;height:4px;border-radius:2px;background:var(--line-ctl);margin:0 auto 14px}
@@ -249,11 +298,11 @@ svg.ic .acc{fill:var(--mint);stroke:none}
 .btn.texto{background:none;border:0;color:var(--mint);min-height:44px;margin-top:2px}
 .medidor{display:inline-flex;align-items:flex-end;gap:2px;flex:none;height:14px}
 .medidor i{width:4px;border-radius:2px;background:var(--line-ctl);opacity:.5}
-.medidor i:nth-child(1){height:5px}.medidor i:nth-child(2){height:8px}.medidor i:nth-child(3){height:11px}.medidor i:nth-child(4){height:14px}
+.medidor i:nth-child(1){height:4px}.medidor i:nth-child(2){height:6px}.medidor i:nth-child(3){height:9px}.medidor i:nth-child(4){height:12px}.medidor i:nth-child(5){height:14px}
 .medidor i.on{background:var(--mint);opacity:1}
 .medidor.grande{height:32px;gap:5px}
 .medidor.grande i{width:9px;border-radius:3px}
-.medidor.grande i:nth-child(1){height:11px}.medidor.grande i:nth-child(2){height:18px}.medidor.grande i:nth-child(3){height:25px}.medidor.grande i:nth-child(4){height:32px}
+.medidor.grande i:nth-child(1){height:10px}.medidor.grande i:nth-child(2){height:16px}.medidor.grande i:nth-child(3){height:22px}.medidor.grande i:nth-child(4){height:27px}.medidor.grande i:nth-child(5){height:32px}
 /* insignia de dificultad del nivel: medidor y nombre */
 .insignia{display:inline-flex;align-items:center;gap:8px;margin-top:10px;min-height:28px;padding:3px 12px 3px 10px;border-radius:999px;border:1px solid rgba(var(--acc-rgb),.35);background:rgba(var(--acc-rgb),.08);font:600 14px/1.2 var(--ui);color:var(--ink)}
 .progcam{margin-top:16px}
@@ -293,6 +342,10 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
 .cand .gl{fill:rgba(255,255,255,.92);stroke:rgba(0,0,0,.4);stroke-width:1.4;paint-order:stroke}
 .slot .liq{transition:opacity .35s var(--ease)}
 .slot.cerrada .liq{opacity:.55}
+/* lo cerrado va tapado: liquido gris opaco (que no se vea el estante del fondo) con un signo por capa */
+.slot.tapada .liq{opacity:1}
+.slot.tapada .ly.oc{background:linear-gradient(90deg,rgba(255,255,255,.07),rgba(255,255,255,.13) 45%,rgba(255,255,255,.05)),#24282e;box-shadow:inset 0 -1px 0 rgba(0,0,0,.35)}
+.slot.tapada .ly.oc span{color:rgba(255,255,255,.34)}
 .llave{position:absolute;left:0;right:0;bottom:calc(100% * var(--k) / var(--cap));height:calc(100% / var(--cap));z-index:2;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .llave svg,.vllave svg{width:calc(var(--bw)*.6);height:calc(var(--bw)*.6);overflow:visible;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.6))}
 /* disco oscuro detras de la llave: sobre perla o amarillo el blanco solo no se leia */
@@ -320,6 +373,113 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
 #sheetNov .ilus{--bw:44px;margin:4px 0 16px;min-height:100px}
 #sheetNov .t-h2{margin-top:2px}
 #sheetNov .t-body-sm{margin:6px 0 18px}
+
+/* ===== Mapa del recorrido (v6) ===== */
+#vMapa{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;
+  background:radial-gradient(52% 30% at 82% -6%, rgba(var(--acc-rgb),.11), transparent 70%),radial-gradient(40% 24% at 8% 4%, rgba(var(--acc2-rgb),.06), transparent 70%),var(--paper)}
+#mTop{flex:none;background:rgba(11,13,15,.8);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--line2);
+  padding:calc(10px + var(--sa-t)) max(16px,var(--sa-r)) 10px max(16px,var(--sa-l))}
+#mTop .in{max-width:560px;margin:0 auto}
+#mTop .mfila{display:flex;align-items:center;gap:12px}
+#mTop .mfila .t-h2{line-height:1.1}
+.mpares{display:flex;gap:8px;margin-top:10px}
+.mpar{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:9px;min-height:46px;padding:4px 10px 4px 4px;border-radius:999px;background:var(--card2);border:1.5px solid var(--pc,var(--line));font:500 12.5px/1.2 var(--ui);color:var(--ink2);white-space:nowrap}
+.mpar img{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:none;background:var(--paper2)}
+.mpar .tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.mpar b{font:600 14.5px/1.1 var(--ui);color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+.mpar .num{color:var(--ink);font-weight:600}
+.leyenda{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:10px;font:500 12px/1.2 var(--ui);color:var(--ink2)}
+.leyenda .lg{display:inline-flex;align-items:center;gap:7px;min-height:20px}
+.mini{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--card2);border:1px solid var(--line-ctl);--k:1.2px;flex:none;margin:0 3px}
+.mini.sello-m{width:18px;height:18px;margin:0;display:inline-grid;place-items:center;background:var(--card2);border:1.5px solid var(--mint);color:var(--mint)}
+.mini.sello-m svg.ic{width:11px;height:11px;stroke-width:2.4}
+#mScroll{flex:1;min-height:0;position:relative;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.mcont{position:relative;max-width:560px;margin:0 auto;display:flex;flex-direction:column-reverse;padding:0 max(16px,var(--sa-r)) 28px max(16px,var(--sa-l))}
+.zona{display:flex;flex-direction:column-reverse}
+.ruta{position:relative}
+.ruta svg.camino{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.camino path{fill:none;vector-effect:non-scaling-stroke;stroke-linecap:round}
+.camino .hecho{stroke:var(--mint);stroke-width:5;opacity:.85}
+.camino .falta{stroke:var(--smoke);stroke-width:3;stroke-dasharray:1 9;opacity:.55}
+.nodos{position:absolute;inset:0;list-style:none;margin:0;padding:0}
+.nodos li{position:absolute;width:0;height:0}
+.nodo{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;
+  font:700 16px/1 var(--num);font-variant-numeric:tabular-nums;--k:2px;border:0;color:var(--smoke);background:var(--card2);box-shadow:inset 0 0 0 1.5px var(--line-ctl)}
+.nodo.hecho{background:var(--grad);color:var(--onmint);box-shadow:none}
+.nodo.actual{width:60px;height:60px;font-size:21px;background:var(--grad);color:var(--onmint);box-shadow:var(--glow)}
+.nodo.actual::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2.5px solid var(--mint);opacity:0;animation:late 1.8s ease-out infinite;pointer-events:none}
+@keyframes late{0%{transform:scale(.82);opacity:.9}100%{transform:scale(1.32);opacity:0}}
+.nodo.meta{width:68px;height:68px;flex-direction:column;gap:3px;font-size:14px;box-shadow:inset 0 0 0 2px rgba(var(--acc-rgb),.55)}
+.nodo.meta.hecho{box-shadow:var(--glow)}
+.nodo.meta.actual{width:72px;height:72px}
+.nodo.meta>svg.ic{width:24px;height:24px;color:var(--mint);stroke-width:2.2}
+.nodo.meta.hecho>svg.ic,.nodo.meta.actual>svg.ic{color:var(--onmint)}
+/* futuro: fondo opaco (que el sendero punteado no se vea por dentro) y solo el numero atenuado */
+.nodo.futuro:not(.meta){color:rgba(255,255,255,.42)}
+/* el grado se ve en el borde: Dificil un aro, Muy dificil doble aro, Extra un aro grueso con resplandor */
+.g-d{--rc:#FF9F43;box-shadow:0 0 0 var(--k) var(--paper),0 0 0 calc(var(--k)*2.2) var(--rc)!important}
+.g-m{--rc:#FF6FCF;box-shadow:0 0 0 var(--k) var(--paper),0 0 0 calc(var(--k)*2) var(--rc),0 0 0 calc(var(--k)*3) var(--paper),0 0 0 calc(var(--k)*4) var(--rc)!important}
+.g-x{--rc:#FF3B4E;box-shadow:0 0 0 var(--k) var(--paper),0 0 0 calc(var(--k)*3) var(--rc),0 0 calc(var(--k)*7) calc(var(--k)*3) rgba(255,59,78,.6)!important}
+.nodo.futuro.g-d,.nodo.futuro.g-m,.nodo.futuro.g-x{color:rgba(255,255,255,.55)}
+.nodo:focus-visible{outline:2px solid var(--ink);outline-offset:7px}
+.ests{position:absolute;left:50%;top:calc(100% + 10px);transform:translateX(-50%);display:flex;gap:1px;padding:2px 5px;border-radius:999px;background:rgba(11,13,15,.62);pointer-events:none}
+.ests svg{width:11px;height:11px;fill:rgba(255,255,255,.2)}
+.ests svg.on{fill:var(--mint)}
+.sello{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;background:var(--card2);border:1.5px solid var(--mint);color:var(--mint);display:grid;place-items:center;pointer-events:none}
+.sello svg.ic{width:13px;height:13px;stroke-width:2.4}
+.nodo.meta .sello{top:-3px;right:-3px}
+/* la cima: la ilustracion aparece cuando ya pasaste la meta */
+.cima{position:absolute;left:50%;transform:translateX(-50%);top:6px;width:min(100%,300px);height:128px;pointer-events:none;background:var(--cimaimg,none) center/cover no-repeat;border-radius:20px;
+  -webkit-mask-image:radial-gradient(50% 58% at 50% 46%,#000 38%,transparent 100%);mask-image:radial-gradient(50% 58% at 50% 46%,#000 38%,transparent 100%)}
+.cartel{position:relative;height:150px;margin:0 -16px;overflow:hidden}
+.cartel .arte{position:absolute;inset:0;background-size:cover;background-position:50% 70%;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 24%,#000 76%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 24%,#000 76%,transparent 100%)}
+.cartel .arte svg.deco{position:absolute;left:0;bottom:0;width:100%;height:100%;display:block}
+.zn0 .arte{background-image:var(--zona1,none),linear-gradient(180deg,#241B3A 0%,#7A3F4B 52%,#D98B3A 82%)}
+.zn1 .arte{background-image:var(--zona2,none),linear-gradient(180deg,#0B1F24 0%,#12403F 100%)}
+.zn2 .arte{background-image:var(--zona3,none),linear-gradient(180deg,#12233A 0%,#3A5C84 100%)}
+.zn3 .arte{background-image:var(--zona4,none),linear-gradient(180deg,#120A2B 0%,#3B1E70 100%)}
+.cartel .txt{position:absolute;left:0;right:0;bottom:0;padding:34px 32px 14px;background:linear-gradient(0deg,rgba(11,13,15,.78),transparent)}
+.cartel .txt .t-h2{font-size:clamp(19px,5.2vw,22px);text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.cartel .txt p{font:400 13.5px/1.35 var(--ui);color:var(--ink);opacity:.88;margin-top:2px}
+.cartel .pb{height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin-top:8px;overflow:hidden}
+.cartel .pb i{display:block;height:100%;width:var(--p);background:var(--grad);border-radius:2px}
+.resumen{margin:6px 0 0;padding:14px 16px}
+.resumen .t-body-sm{margin-top:2px}
+.resumen .btn{margin-top:12px}
+.resumen .aparte{display:flex;align-items:center;gap:8px;margin-top:10px;font:500 14px/1.3 var(--ui);color:var(--ink2)}
+.resumen .aparte img{width:26px;height:26px;border-radius:50%;object-fit:cover}
+.tope{text-align:center;padding:18px 8px 6px;font:400 13.5px/1.4 var(--ui);color:var(--smoke)}
+.pines{position:absolute;inset:0;pointer-events:none;z-index:5}
+.pin{position:absolute;left:0;top:0;width:40px;height:40px;border-radius:50%;border:2.5px solid var(--pc);background:var(--paper2);box-shadow:0 3px 10px rgba(0,0,0,.5);overflow:hidden;will-change:transform}
+.pin img{width:100%;height:100%;object-fit:cover;display:block}
+.pin.otro{width:36px;height:36px}
+#mBar{flex:none;padding:12px max(16px,var(--sa-r)) calc(12px + var(--sa-b)) max(16px,var(--sa-l));background:rgba(11,13,15,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line2)}
+#mBar .btn{max-width:560px;margin:0 auto}
+#hMapa{margin-top:10px}
+.progcam[role=button]{cursor:pointer;border-radius:12px}
+.progcam[role=button]:focus-visible{outline:2px solid var(--mint);outline-offset:6px}
+.ruta{--t:transparent;--ta:transparent}
+:root{--tint0:rgba(88,112,38,.17);--tint1:rgba(24,116,104,.17);--tint2:rgba(64,116,210,.14);--tint3:rgba(112,60,205,.19)}
+.tn0{--t:var(--tint0)}.tn1{--t:var(--tint1)}.tn2{--t:var(--tint2)}.tn3{--t:var(--tint3)}
+/* tinte de la zona: sobre el negro, y arriba se mezcla con el de la zona de mas arriba (sin corte) */
+.ruta::before{content:"";position:absolute;inset:0 -16px;background:linear-gradient(180deg,var(--ta) 0,var(--t) 150px,var(--t) 100%);pointer-events:none}
+.cartel{background:var(--t)}
+/* adornos: detras de todo lo interactivo; los de lo que falta, mas tenues */
+.adornos{position:absolute;inset:0;pointer-events:none}
+.ador{position:absolute;background-repeat:no-repeat;background-size:300% 300%;pointer-events:none;opacity:var(--o,1)}
+.ador.z0{background-image:var(--ador1,none);--hc:rgba(255,196,90,.85)}
+.ador.z1{background-image:var(--ador2,none);--hc:rgba(80,235,210,.8)}
+.ador.z2{background-image:var(--ador3,none);--hc:rgba(120,210,255,.85)}
+.ador.z3{background-image:var(--ador4,none);--hc:rgba(255,190,90,.85)}
+.ador.fut{--o:.5}
+.ador.esp{transform:scaleX(-1)}
+.ador.glow{filter:drop-shadow(0 0 6px var(--hc));animation:parpadeo 7s ease-in-out infinite}
+@keyframes parpadeo{50%{opacity:calc(var(--o,1)*.7)}}
+@media (prefers-reduced-motion:reduce){.nodo.actual::after{animation:none;opacity:.5;transform:scale(1.12)}.ador.glow{animation:none}}
+@media (max-width:359px){.leyenda{gap:4px 10px;font-size:11.5px}.mpar{gap:7px;padding-right:8px}}
+/* pantallas bajitas: la cabecera no se come el mapa */
+@media (max-height:700px){#mTop{padding-top:calc(6px + var(--sa-t));padding-bottom:6px}.mpares{margin-top:6px}.mpar{min-height:40px}.mpar img{width:30px;height:30px}.leyenda{margin-top:6px}#mBar{padding-top:8px;padding-bottom:calc(8px + var(--sa-b))}}
 
 @media (prefers-reduced-motion:reduce){
   #aviso .tarjeta{animation:avisoOut .01ms reverse both!important}
@@ -363,7 +523,8 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
       <span class="insignia" id="hDif"></span>
       <div id="prevHero" class="pv" aria-hidden="true"></div>
       <button class="btn primary block t-btn" id="hJugar" type="button">Jugar el nivel 1</button>
-      <div class="progcam"><div class="fila-p"><span>Tu camino</span><span><b id="hProg">1</b> de 200</span></div><div class="pb" aria-hidden="true"><i id="hPb" style="--p:0%"></i></div></div>
+      <button class="btn block t-btn" id="hMapa" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19l6-10 4 6 2-3 6 7z"/><circle class="acc" cx="17.5" cy="6" r="1.6"/></svg>Ver el recorrido</button>
+      <div class="progcam" id="hProgBar" role="button" tabindex="0" aria-label="Ver el recorrido"><div class="fila-p"><span>Próxima meta</span><span><b id="hProg">1</b> de <span id="hMeta">50</span></span></div><div class="pb" aria-hidden="true"><i id="hPb" style="--p:0%"></i></div></div>
     </section>
 
     <section class="mod reto" aria-label="Reto del día">
@@ -385,7 +546,7 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
 
     <section class="mod statcard" aria-label="Estadísticas">
       <div class="statrow">
-        <div><div class="t-metric-md"><span id="sNiv">0</span><span class="t-unit"> de 200</span></div><div class="t-label">Niveles</div></div>
+        <div><div class="t-metric-md"><span id="sNiv">0</span></div><div class="t-label">Niveles</div></div>
         <div><div class="t-metric-md" id="sEst">0</div><div class="t-label">Estrellas</div></div>
         <div><div class="t-metric-md" id="sRac">0</div><div class="t-label">Mejor racha</div></div>
       </div>
@@ -400,11 +561,11 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
         <div class="fila"><span class="cap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle class="acc" cx="12" cy="12" r="1.6"/></svg></span><p><b>Toca una botella y luego otra.</b> El color de arriba cae en la segunda.</p></div>
         <div class="fila"><span class="cap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4s6 6.2 6 10.5a6 6 0 01-12 0C6 10.2 12 4 12 4z"/><circle class="acc" cx="12" cy="14.5" r="1.6"/></svg></span><p><b>Solo cae sobre el mismo color o en una vacía.</b> Y si cabe.</p></div>
         <div class="fila"><span class="cap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/><circle class="acc" cx="12" cy="4.2" r="1.3"/></svg></span><p><b>Ganas cuando cada botella tiene un solo color.</b></p></div>
-        <div class="fila"><span class="cap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/><circle class="acc" cx="19" cy="20" r="1.6"/></svg></span><p><b>Deshacer es gratis y sin límite.</b> Si te enredas, la app te dice si todavía hay salida.</p></div>
-        <div class="fila"><span class="cap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V15M10 19V11M15 19V7M20 19V3"/><circle class="acc" cx="5" cy="21.2" r="1.2"/></svg></span><p><b>La dificultad sale al azar.</b> Unos niveles son de respiro y otros más duros; todos tienen solución.</p></div>
-        <div class="fila"><span class="cap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l8.5-8.5M16 7l3 3M13.5 9.5l2.2 2.2"/><circle class="acc" cx="8" cy="15" r="1.3"/></svg></span><p><b>Llave escondida.</b> Está metida en una franja de color. Quítale lo que tiene encima y sale sola a abrir la caja.</p></div>
-        <div class="fila"><span class="cap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 018 0v3"/><circle class="acc" cx="12" cy="16" r="1.6"/></svg></span><p><b>Candado de color.</b> La botella se abre cuando completas ese color.</p></div>
-        <div class="fila"><span class="cap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9.2a3.2 3.2 0 116 1.3c-.8 1.2-2.6 1.6-2.6 3.4"/><circle class="acc" cx="12.4" cy="18.6" r="1.7"/></svg></span><p><b>Misterio.</b> Las capas con signo de pregunta se ven al quedar arriba, y lo que ya viste no se vuelve a esconder aunque deshagas.</p></div>
+        <div class="fila"><span class="cap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/><circle class="acc" cx="12" cy="12" r="1.6"/></svg></span><p><b>Cada movimiento cuenta.</b> No hay deshacer. Si te enredas, reinicia: las botellas cambian de color y de lugar.</p></div>
+        <div class="fila"><span class="cap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V15M10 19V11M15 19V7M20 19V3"/><circle class="acc" cx="5" cy="21.2" r="1.2"/></svg></span><p><b>La dificultad sale al azar.</b> Unos niveles son de respiro y otros más duros, y de vez en cuando sale uno extra difícil. Todos tienen solución.</p></div>
+        <div class="fila"><span class="cap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l8.5-8.5M16 7l3 3M13.5 9.5l2.2 2.2"/><circle class="acc" cx="8" cy="15" r="1.3"/></svg></span><p><b>Llave escondida.</b> Está metida en una franja de color. Quítale lo que tiene encima y sale sola a abrir la caja. Lo de adentro no se ve hasta abrirla.</p></div>
+        <div class="fila"><span class="cap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 018 0v3"/><circle class="acc" cx="12" cy="16" r="1.6"/></svg></span><p><b>Candado de color.</b> La botella se abre cuando completas ese color. Lo que trae no se ve hasta que se abre.</p></div>
+        <div class="fila"><span class="cap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9.2a3.2 3.2 0 116 1.3c-.8 1.2-2.6 1.6-2.6 3.4"/><circle class="acc" cx="12.4" cy="18.6" r="1.7"/></svg></span><p><b>Misterio.</b> Las capas con signo de pregunta se ven cuando quedan arriba.</p></div>
         <div class="fila"><span class="cap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/><circle class="acc" cx="12" cy="4.2" r="1.3"/></svg></span><p><b>Todos tienen salida.</b> Cada nivel se resolvió antes de llegar a ti. Si un movimiento te deja sin salida, te avisamos.</p></div>
       </div>
     </section>
@@ -422,7 +583,7 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
       </div>
     </section>
 
-    <p class="pie" id="pie">Prototipo para CabriCoach. 200 niveles comprobados, todos con solución.</p>
+    <p class="pie" id="pie">Prototipo para CabriCoach. Niveles sin fin, todos con solución comprobada.</p>
   </div>
 </main>
 
@@ -430,16 +591,37 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
   <div id="aviso" hidden role="status"></div>
   <div id="gTop">
     <button class="back" id="gBack" type="button" aria-label="Volver al inicio"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/><circle class="acc" cx="19" cy="12" r="1.6"/></svg></button>
-    <div id="gTit"><div class="t-h2 strong" id="gNivel">Nivel 1</div><span class="chip" id="gChip" hidden></span></div>
+    <div id="gTit"><div class="t-h2 strong" id="gNivel">Nivel 1</div><span class="gzona" id="gZona" hidden></span><span class="chip" id="gChip" hidden></span></div>
     <div id="gMov"><div class="t-metric-md" id="gMovs">0</div><span class="t-label">Movs</span><div class="meta">Meta <b id="gMeta">0</b></div></div>
   </div>
-  <div id="board" aria-label="Botellas"></div>
+  <div id="boardWrap">
+    <div id="zonaFx" aria-hidden="true"><div class="zpais"></div><div class="ztinte"></div><div class="zamb" id="zAmb"></div><div id="zAdor"></div></div>
+    <div id="board" aria-label="Botellas"></div>
+  </div>
   <div id="strip" class="mod" hidden role="status"></div>
   <div id="gCtl">
-    <button class="ctl" id="cUndo" type="button" disabled><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/><circle class="acc" cx="19" cy="20" r="1.6"/></svg>Deshacer</button>
+    <div id="cabrito" aria-hidden="true" hidden><i></i><i></i></div>
     <button class="ctl" id="cReset" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/><circle class="acc" cx="12" cy="12" r="1.6"/></svg>Reiniciar</button>
-    <button class="ctl" id="cExtra" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3h4M10 3v4l-2.5 3.5V19a2 2 0 002 2h5a2 2 0 002-2v-8.5L14 7V3"/><path d="M12 12.5v5M9.5 15h5"/><circle class="acc" cx="12" cy="9.2" r="1.3"/></svg>Botella extra<span class="bdg" id="extraBdg">1</span></button>
   </div>
+</section>
+
+<section id="vMapa" hidden aria-label="El recorrido">
+  <div id="mTop"><div class="in">
+    <div class="mfila">
+      <button class="back" id="mBack" type="button" aria-label="Volver al inicio"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/><circle class="acc" cx="19" cy="12" r="1.6"/></svg></button>
+      <h2 class="t-h2 strong" id="mTit">El recorrido</h2>
+    </div>
+    <div class="mpares" id="mPares"></div>
+    <div class="leyenda" aria-label="Leyenda del mapa">
+      <span class="lg"><i class="mini"></i>Fácil o normal</span>
+      <span class="lg"><i class="mini g-d"></i>Difícil</span>
+      <span class="lg"><i class="mini g-m"></i>Muy difícil</span>
+      <span class="lg"><i class="mini g-x"></i>Extra difícil</span>
+      <span class="lg"><i class="mini sello-m"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg></i>Estreno</span>
+    </div>
+  </div></div>
+  <div id="mScroll"><div class="mcont" id="mCont"></div></div>
+  <div id="mBar"><button class="btn primary block t-btn" id="mJugar" type="button">Jugar el nivel 1</button></div>
 </section>
 
 <div class="velo" id="veloWin"><div class="sheet" id="sheetWin" role="dialog" aria-modal="true" aria-labelledby="wTit">
@@ -453,6 +635,7 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
     <div><div class="t-metric-md" id="wMeta">0</div><div class="t-label">Meta</div></div>
     <div><div class="t-metric-md" id="wTiempo">0:00</div><div class="t-label">Tiempo</div></div>
   </div>
+  <p class="t-body-sm" id="wZona" hidden style="margin:-8px 0 18px"></p>
   <p class="t-body-sm" id="wOtro" hidden style="margin:-8px 0 18px"></p>
   <div class="acts2">
     <button class="btn primary block t-btn" id="wSig" type="button">Siguiente nivel</button>
@@ -495,20 +678,27 @@ svg .arco{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;transform-
 
 /*@NIVELES@*/
 
-const IMG = { botDuo:'@IMG:botDuo@', botCami:'@IMG:botCami@', botAndres:'@IMG:botAndres@', celebC:'@IMG:celebC@', celebA:'@IMG:celebA@', faceC:'@IMG:faceC@', faceA:'@IMG:faceA@', rachaC:'@IMG:rachaC@', rachaA:'@IMG:rachaA@' };
+const IMG = { botDuo:'@IMG:botDuo@', botCami:'@IMG:botCami@', botAndres:'@IMG:botAndres@', celebC:'@IMG:celebC@', celebA:'@IMG:celebA@', faceC:'@IMG:faceC@', faceA:'@IMG:faceA@', rachaC:'@IMG:rachaC@', rachaA:'@IMG:rachaA@',
+  // ilustraciones del mapa (v6): si no existe su .b64 quedan vacias y el mapa usa su respaldo
+  zona1:'@IMG?:zona1@', zona2:'@IMG?:zona2@', zona3:'@IMG?:zona3@', zona4:'@IMG?:zona4@', cima:'@IMG?:cima@',
+  // hojas de adornos del mapa (480x480, cuadricula 3x3 de celdas de 160 px, WebP con alfa)
+  adorPradera:'@IMG?:adorPradera@', adorBosque:'@IMG?:adorBosque@', adorNieve:'@IMG?:adorNieve@', adorCumbre:'@IMG?:adorCumbre@',
+  // elementos del juego en el tablero (v7): repisa 900x80, laboratorio 3x3 de 160 y el cabrito en 4 poses (2x2 de 200)
+  repisa:'@IMG?:repisa@', labo:'@IMG?:labo@', reacC:'@IMG?:reacC@', reacA:'@IMG?:reacA@' };
 const NOMBRES = { cami:'Cami', andres:'Andrés' };
 const COLORES = ['rojo','naranja','amarillo','lima','esmeralda','cian','azul','violeta','rosa','café','perla','vino'];
 const DIAS = ['dom','lun','mar','mié','jue','vie','sáb'];
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-// la cache de generados es la v3: la v2 queda invalida porque cambio el generador
-const KEY = 'botellas:v1', KNIV = 'botellas:niveles:v3';
+// la cache de generados es la v4: la v3 quedo invalida porque cambio el generador (receta y grado extra)
+const KEY = 'botellas:v1', KNIV = 'botellas:niveles:v4';
 const $ = (id) => document.getElementById(id);
 
 const DIF_INFO = {
   facil:   { nom:'Fácil',       barras:1 },
   normal:  { nom:'Normal',      barras:2 },
   dificil: { nom:'Difícil',     barras:3 },
-  muy:     { nom:'Muy difícil', barras:4 }
+  muy:     { nom:'Muy difícil', barras:4 },
+  extra:   { nom:'Extra difícil', barras:5 }
 };
 const NTOTAL = 200;                     // niveles del camino que vienen comprobados en el catalogo
 const RASGO_ORDEN = ['llave', 'candado', 'misterio', 'largas', 'gigante'];
@@ -530,7 +720,7 @@ const ESTRELLA_D = 'M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4
 
 /* ---------- estado persistente ---------- */
 function perfilNuevo(){
-  return { v:3, nivel:1, estrellas:{}, dias:{}, racha:{ actual:0, mejor:0, ultimo:null }, stats:{ ganados:0, segundos:0 }, vistos:{}, legado:null };
+  return { v:3, nivel:1, estrellas:{}, dias:{}, racha:{ actual:0, mejor:0, ultimo:null }, stats:{ ganados:0, segundos:0 }, vistos:{}, legado:null, mapaVisto:0 };
 }
 function estadoNuevo(){ return { jugador:'cami', perfiles:{ cami:perfilNuevo(), andres:perfilNuevo() }, ajustes:{ sonido:true, vibra:true, simbolos:false }, partida:null }; }
 let S = estadoNuevo();
@@ -553,6 +743,7 @@ function normalizar(x){
       n.stats = Object.assign(n.stats, p.stats);
       n.vistos = p.vistos && typeof p.vistos === 'object' ? p.vistos : {};
       n.legado = p.legado || null;
+      n.mapaVisto = p.mapaVisto > 0 ? p.mapaVisto | 0 : 0;
     } else {
       // el progreso por rutas (v2) o por camino de la v0 se guarda aparte y no se usa: el camino empieza de cero.
       // El reto del dia y la racha si se conservan, porque no dependen del orden de los niveles.
@@ -609,7 +800,7 @@ function fusionarConNube(){
   if(!HOST) return;
   const nube = HOST.perfil && typeof HOST.perfil === 'object' ? HOST.perfil : null;
   const pf = P(), leg = pf.legado;
-  if(nube){ const m = fusionar(pf, nube); m.legado = leg; S.perfiles[S.jugador] = m; }
+  if(nube){ const m = fusionar(pf, nube); m.legado = leg; m.mapaVisto = pf.mapaVisto; S.perfiles[S.jugador] = m; }
   ULTIMO = nube ? canon(nube) : JSON.stringify(perfilPublico(perfilNuevo()));
   guardar();      // deja lo fusionado en el telefono y, si difiere de la nube, lo sube
 }
@@ -627,6 +818,7 @@ function cargarTodo(data){
   if(!x){ try{ x = JSON.parse(localStorage.getItem(KEY) || 'null'); }catch(e){ x = null; } }
   S = normalizar(x);
   try{ NIV = JSON.parse(localStorage.getItem(KNIV) || '{}') || {}; }catch(e){ NIV = {}; }
+  try{ localStorage.removeItem('botellas:niveles:v3'); }catch(e){}   // la cache vieja ya no sirve: que no ocupe lugar
 }
 const P = () => S.perfiles[S.jugador];
 
@@ -781,7 +973,7 @@ const bitCaja = (c) => 1 << c;
 const bitCand = (d) => 1 << (4 + d);
 
 /* ---------- iconos y botellas (HTML) ---------- */
-function htmlBloques(b, oc, split, revK, simb){
+function htmlBloques(b, oc, split, revK, simb, revTodo){
   // agrupa capas contiguas del mismo color en un solo bloque: se ven como un liquido continuo
   const bl = [], L = b.length;
   for(let k = 0; k < L; k++){
@@ -795,7 +987,7 @@ function htmlBloques(b, oc, split, revK, simb){
   bl.forEach((x, idx) => {
     if(x.oc){ h += '<div class="ly oc" style="--n:1"><span>?</span></div>'; return; }
     const top = idx === bl.length - 1;
-    const rev = revK !== undefined && revK !== null && revK >= x.k0 && revK <= x.k1;
+    const rev = revTodo || (revK !== undefined && revK !== null && revK >= x.k0 && revK <= x.k1);
     let sy = '';
     if(simb) for(let q = 0; q < x.n; q++) sy += '<i class="sy"><svg viewBox="0 0 24 24"><use href="#g' + x.c + '"/></svg></i>';
     h += '<div class="ly c' + x.c + (top ? ' top' : '') + (x.sp ? ' sp' : '') + (rev ? ' rev' : '') + '" style="--n:' + x.n + '">' + sy + '</div>';
@@ -811,8 +1003,8 @@ function htmlLlaves(ls, dos){
 }
 function htmlBot(b, oc, u, o){
   o = o || {};
-  let h = '<div class="bwrap"><div class="glass"><div class="liq">' + htmlBloques(b, oc, o.split, o.rev, o.simb) + htmlLlaves(o.llaves, o.dos) + '</div><i class="shine"></i></div><i class="lip"></i>';
-  if(MOTOR.completa(b, u)) h += '<i class="tapa' + (o.tapaNueva ? ' cae' : '') + '"><b></b></i>' + (o.tapaNueva ? '<i class="brillo"></i>' : '');
+  let h = '<div class="bwrap"><div class="glass"><div class="liq">' + htmlBloques(b, oc, o.split, o.rev, o.simb, o.revTodo) + htmlLlaves(o.llaves, o.dos) + '</div><i class="shine"></i></div><i class="lip"></i>';
+  if(!o.tapada && MOTOR.completa(b, u)) h += '<i class="tapa' + (o.tapaNueva ? ' cae' : '') + '"><b></b></i>' + (o.tapaNueva ? '<i class="brillo"></i>' : '');
   return h + '</div>';
 }
 // candado: de caja (blanco, con el punto de acento o el numero) o de color (cuerpo del color, glifo si hay simbolos)
@@ -862,16 +1054,21 @@ function llenarSlot(sl, i, f, o){
   const cer = !!cd && !(ab & bitCand(cd.d));
   const caj = f.cx.cajaEn[i];
   const enCajaCerrada = caj !== undefined && !(ab & bitCaja(caj));
+  // lo cerrado (candado o caja) no deja ver sus colores: cada capa va tapada hasta que se abre
+  const tapada = cer || enCajaCerrada;
+  o.tapada = tapada;
+  const ocV = tapada ? b.map(() => true) : oc;
   sl.dataset.gig = gig ? cap : '';
   sl.classList.toggle('gig', gig);
   if(gig) sl.style.setProperty('--cap', cap); else sl.style.removeProperty('--cap');   // sus capas miden alto/10
-  sl.innerHTML = htmlBot(b, oc, u, o) + (cer ? '<span class="cand">' + svgCandado({ color:cd.color, simb:o.simb }) + '</span>' : '');
-  const comp = MOTOR.completa(b, u);
+  sl.innerHTML = htmlBot(b, ocV, u, o) + (cer ? '<span class="cand">' + svgCandado({ color:cd.color, simb:o.simb }) + '</span>' : '');
+  const comp = !tapada && MOTOR.completa(b, u);
   sl.classList.toggle('done', comp);
   sl.classList.toggle('cerrada', cer);
+  sl.classList.toggle('tapada', tapada);
   if(f.inter){
     const nom = cd ? COLORES[cd.color - 1] : null;
-    sl.setAttribute('aria-label', etiquetaAria(b, oc, cap, i, { candado:cer ? nom : null, caja:enCajaCerrada, llaves:ls.length ? ls : null, dos:f.cx.dos }, u));
+    sl.setAttribute('aria-label', etiquetaAria(b, ocV, cap, i, { candado:cer ? nom : null, caja:enCajaCerrada, llaves:ls.length ? ls : null, dos:f.cx.dos }, u));
     sl.setAttribute('aria-disabled', comp || cer || enCajaCerrada ? 'true' : 'false');
     sl.tabIndex = comp ? -1 : 0;
   }
@@ -891,7 +1088,7 @@ function decorarCaja(el, ci, f){
 
 /* ---------- geometria del tablero ---------- */
 // Unidades de fila: una botella suelta o una caja entera, en orden de indice.
-// Se arman desde `cajas`, sin suponer indices; el hueco de la botella extra del jugador queda suelto al final.
+// Se arman desde `cajas`, sin suponer indices; las botellas sueltas van en su orden de indice (ya no hay botella extra del jugador).
 function unidadesDe(n, nv){
   const enCaja = {};
   ((nv && nv.cajas) || []).forEach((cj, c) => cj.bots.forEach(i => { enCaja[i] = c; }));
@@ -1045,6 +1242,7 @@ function medir(){
   bd.style.paddingTop = padTop + 'px';
   bd.style.paddingBottom = '18px';
   G.tam = t;
+  ubicarZona();
   tutorial();
 }
 
@@ -1080,12 +1278,14 @@ function abrirJuego(modo, ruta, clave, o){
   const cap = nv0 ? nv0.cap : p.cap;
   const nBot = nv0 ? nv0.botellas.length : botellasDeParams(p);
   G = { modo:modo, ruta:ruta, clave:String(clave), cap:cap, estado:null, nv:null, cx:null, busy:true, ganado:false, sel:null, slots:[], cajasEl:[], unid:[],
-        hist:[], movs:0, extra:false, seg:0, vistos:new Set(), avisos:{}, pausa:false, tokP:0, tokV:0, nEsq:nBot };
+        movs:0, seg:0, vistos:new Set(), avisos:{}, pausa:false, tokP:0, tokV:0, nEsq:nBot };
   document.body.classList.add('jugando');
-  $('vInicio').hidden = true; $('vJuego').hidden = false;
+  $('vInicio').hidden = true; $('vMapa').hidden = true; $('vJuego').hidden = false;
   window.scrollTo(0, 0);
   pintarCabecera(nv0 && nv0.dif ? nv0.dif : difDeParams(p), nv0 ? nv0.rasgos : rasgosDeParams(p));
+  pintarZonaJuego();
   $('strip').hidden = true;
+  $('cabrito')._pose = undefined; $('cabrito').hidden = true;
   esqueleto(nBot, cap);
   pintarControles();
   obtenerNivel(modo, ruta, clave).then(nv => {
@@ -1093,11 +1293,28 @@ function abrirJuego(modo, ruta, clave, o){
     armarPartida(nv, o);
   }).catch(() => { if(tok === TOK) toast('No pude preparar el nivel. Vuelve a intentarlo.'); });
 }
-function armarPartida(nv, o){
-  const pa = S.partida;
-  const g = G;
-  g.nv = nv; g.cx = contextoDe(nv); g.meta = nv.meta; g.cap = nv.cap; g.u = uDe(nv); g.sol = nv.movs;
+// semilla de una variante: cada Reiniciar sortea otra
+const semillaVariante = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+// pone en la partida el nivel que se juega (el original o una variante suya) y lo que depende de el
+function ponerNivel(g, nv, vr){
+  g.vr = vr || null;
+  g.nv = nv; g.cx = contextoDe(nv); g.sol = nv.movs;
   g.ini = nv.botellas; g.iniOc = nv.ocultas || null;
+}
+function armarPartida(nv, o){
+  let pa = S.partida;
+  const g = G;
+  g.base = nv;   // el nivel tal cual: las variantes salen siempre de aqui
+  // firma = huella de las botellas del nivel base (sin variante). Si el catalogo cambio, la partida guardada era de un
+  // tablero que ya no existe: sin firma o con otra distinta se descarta y el nivel empieza de cero.
+  g.firma = String(MOTOR.hashCadena(JSON.stringify(nv.botellas)));
+  const misma = !o.solo && pa && pa.jugador === S.jugador && pa.modo === g.modo && pa.ruta === g.ruta && pa.clave === g.clave;
+  if(misma && pa.firma !== g.firma){ S.partida = null; pa = null; }
+  const sigue = !!(misma && pa);
+  const vr = sigue ? (pa.vr || null) : (o.variar ? semillaVariante() : null);
+  if(vr) nv = MOTOR.variante(nv, vr);
+  ponerNivel(g, nv, vr);
+  g.meta = nv.meta; g.cap = nv.cap; g.u = uDe(nv);
   g.estado = { b:nv.botellas.map(b => b.slice()), ab:0 }; g.oc = copiaOc(nv.ocultas);
   if(o.solo){
     // "Ver como quedo": se aplica la solucion en seco (con ab) y se muestra el tablero resuelto
@@ -1105,12 +1322,11 @@ function armarPartida(nv, o){
     nv.movs.forEach(m => { E = MOTOR.verter(E, m[0], m[1], nv).estado; });
     g.estado = E; g.oc = null; g.ganado = true; g.solo = true;
     const d = P().dias[g.clave]; g.movs = d ? d.movs : nv.meta;
-  } else if(pa && pa.jugador === S.jugador && pa.modo === g.modo && pa.ruta === g.ruta && pa.clave === g.clave){
+  } else if(sigue){
     g.estado = { b:pa.estado.b.map(b => b.slice()), ab:pa.estado.ab | 0 };
     g.vistos = new Set(pa.vistos || []);
     g.oc = conVistos(copiaOc(pa.ocultas));
-    g.hist = (pa.historial || []).filter(h => h && h.e && Array.isArray(h.e.b)).map(h => ({ e:h.e, o:h.o, m:h.m, x:h.x }));
-    g.movs = pa.movs || 0; g.extra = !!pa.extraUsada; g.seg = pa.seg || 0;
+    g.movs = pa.movs || 0; g.seg = pa.seg || 0;
   }
   g.busy = false; g.sel = null;
   pintarCabecera(nv.dif || 'normal', nv.rasgos);
@@ -1133,15 +1349,194 @@ function cerrarJuego(){
   cerrarHojaWin(true);
   G = null;
   pintarInicio();
+  // si el nivel se abrio desde el mapa, se vuelve al mapa (y ahi camina tu cara si avanzaste)
+  if(VINO_MAPA) abrirMapa();
+}
+/* ---------- la zona dentro del juego (v7) ----------
+   Cada nivel del camino pertenece a una zona del recorrido (tramos de 50, ciclo de 4); el reto del dia usa una fija por fecha.
+   El fondo, los adornos y el ambiente acompanan: las botellas mandan (nada va delante ni se mide encima de ellas). */
+const ZONA_HOJA = ['adorPradera', 'adorBosque', 'adorNieve', 'adorCumbre'];
+function zonaDeJuego(g){
+  if(g.modo === 'dia') return { z:Math.abs(MOTOR.hashCadena('zona:' + g.clave)) % 4, dia:true };
+  return { z:Math.floor((Math.max(1, parseInt(g.clave, 10) || 1) - 1) / 50), dia:false };
+}
+const nombreZona = (z) => ZONAS[z % 4].nom + (z >= 4 ? ' · vuelta ' + (Math.floor(z / 4) + 1) : '');
+const enMinuscula = (t) => t.charAt(0).toLowerCase() + t.slice(1);
+// pausa de la capa de zona: con el juego en pausa o la pestana oculta no se mueve nada
+// "El bosque" -> "del bosque"; "La pradera" -> "de la pradera"
+const metaDe = (nom) => /^El /.test(nom) ? 'del ' + enMinuscula(nom.slice(3)) : 'de ' + enMinuscula(nom);
+function sincFx(){ const f = $('zonaFx'); if(f) f.classList.toggle('pausa', !!(G && G.pausa) || document.hidden); }
+function pintarZonaJuego(){
+  const g = G; if(!g) return;
+  const zi = zonaDeJuego(g).z % 4, fx = $('zonaFx');
+  ponerImgsMapa();
+  fx.className = 'zz' + zi + ' tn' + zi;
+  $('zAdor').innerHTML = '';
+  const amb = $('zAmb'); amb.innerHTML = '';
+  // ambiente: muy pocas particulas lentas y casi transparentes; con movimiento reducido no hay ninguna
+  if(!rm()){
+    const rg = MOTOR.rng('zamb:' + g.modo + ':' + g.clave), yr = [[55, 92], [22, 88], [0, 40], [2, 55]][zi];
+    let h = '';
+    for(let k = 0; k < 7; k++){
+      const d = 10 + Math.floor(rg() * 9), s = 2 + Math.floor(rg() * 2);
+      h += '<i style="--x:' + Math.round(rg() * 96) + '%;--y:' + Math.round(yr[0] + rg() * (yr[1] - yr[0])) + '%;--s:' + s + 'px;--d:' + d + 's;--dl:-' + Math.round(rg() * d) + 's"></i>';
+    }
+    amb.innerHTML = h;
+  }
+  sincFx();
+}
+// Todo se mide con el tablero ya distribuido (se llama al final de medir, tambien al girar o cambiar de tamano): repisas bajo
+// cada fila, 1 a 3 objetos de laboratorio (sobre los extremos de las repisas donde sobra espacio y en el suelo), el cabrito en una
+// esquina de abajo y 2 o 3 adornos de la zona en el suelo. Nada queda detras de una botella, una caja o una llave. Cuales y de que
+// tamano, fijos por nivel (semillas); donde caben, lo decide la medida.
+function ubicarZona(){
+  const g = G, cont = $('zAdor'); if(!g || !cont) return;
+  cont.innerHTML = '';
+  const bd = $('board'), br = bd.getBoundingClientRect();
+  bd.querySelectorAll('.repisa,.labo').forEach(e => e.remove());
+  $('cabrito').hidden = true;
+  if(br.width < 10 || br.height < 10) return;
+  const zi = zonaDeJuego(g).z % 4, W = br.width, H = br.height, clave = g.modo + ':' + g.clave;
+  const hit = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
+  const rel = (e, pad) => { const r = e.getBoundingClientRect(); return { l:r.left - br.left - pad, r:r.right - br.left + pad, t:r.top - br.top - pad, b:r.bottom - br.top + pad }; };
+  const obs = [...bd.querySelectorAll('.slot,.caja,.llave')].map(e => rel(e, 8));
+  const libre = (r) => r.l >= 2 && r.r <= W - 2 && r.t >= 0 && r.b <= H && !obs.some(b => hit(r, b));
+  const poner = (r, pad) => obs.push({ l:r.l - pad, r:r.r + pad, t:r.t - pad, b:r.b + pad });
+  // 1) repisas: una por fila, a lo ancho de la fila y un poco mas, apoyadas donde acaban las botellas
+  const filas = [];
+  bd.querySelectorAll('.brow').forEach(row => {
+    const sl = [...row.querySelectorAll('.slot')]; if(!sl.length) return;
+    const rr = row.getBoundingClientRect(), rs = sl.map(e => e.getBoundingClientRect());
+    const minL = Math.min(...rs.map(r => r.left)), maxR = Math.max(...rs.map(r => r.right)), fondo = Math.max(...rs.map(r => r.bottom));
+    const sh = document.createElement('i'); sh.className = 'repisa' + (IMG.repisa ? ' conimg' : '');
+    const l0 = Math.max(br.left + 2, minL - 12), r0 = Math.min(br.right - 2, maxR + 12), top = fondo - 4;
+    sh.style.left = (l0 - rr.left) + 'px'; sh.style.width = (r0 - l0) + 'px'; sh.style.top = (top - rr.top) + 'px';
+    row.appendChild(sh);
+    filas.push({ row:row, rr:rr, sh:sh, l:l0, r:r0, top:top, minL:minL, maxR:maxR });
+  });
+  filas.forEach(f => obs.push({ l:f.l - br.left, r:f.r - br.left, t:f.top - br.top + 4, b:f.top - br.top + 16 }));   // las repisas de las demas filas
+  const rgL = MOTOR.rng('zlabo:' + clave), rgG = MOTOR.rng('zcab:' + clave), rgA = MOTOR.rng('zador:' + clave);
+  // 2) laboratorio sobre los extremos de las repisas donde sobra espacio (la repisa se alarga hasta debajo del objeto)
+  const nLab = IMG.labo ? 1 + Math.floor(rgL() * 3) : 0, orden = filas.map((f, k) => k);
+  let puestosLab = 0;
+  for(let k = orden.length - 1; k > 0; k--){ const q = Math.floor(rgL() * (k + 1)); const t = orden[k]; orden[k] = orden[q]; orden[q] = t; }   // baraja fija
+  const lado0 = rgL() < 0.5 ? -1 : 1;
+  for(let n = 0; n < orden.length * 2 && puestosLab < nLab; n++){
+    const f = filas[orden[Math.floor(n / 2)]], lado = n % 2 ? -lado0 : lado0;
+    const idx = Math.floor(rgL() * 9), sz0 = 36 + Math.floor(rgL() * 13), desde = rgL();
+    for(let t = 0; t < 3; t++){
+      const sz = sz0 - t * 5; if(sz < 30) break;
+      const lo = lado < 0 ? br.left + 4 : f.maxR + 16, hi = lado < 0 ? f.minL - 16 - sz : br.right - 4 - sz;
+      if(hi < lo) continue;
+      const x = lo + desde * (hi - lo), ob = { l:x - br.left, r:x - br.left + sz, t:f.top + 2 - sz - br.top, b:f.top + 2 - br.top };
+      if(!libre(ob)) continue;
+      const e = document.createElement('i'); e.className = 'labo'; e.style.cssText = 'left:' + Math.round(x - f.rr.left) + 'px;top:' + Math.round(f.top + 2 - sz - f.rr.top) + 'px;width:' + sz + 'px;height:' + sz + 'px;background-position:' + (idx % 3) * 50 + '% ' + Math.floor(idx / 3) * 50 + '%';
+      f.row.appendChild(e);
+      // la repisa se alarga para que el objeto quede sobre madera
+      const l1 = Math.max(br.left + 2, Math.min(f.l, x - 6)), r1 = Math.min(br.right - 2, Math.max(f.r, x + sz + 6));
+      f.sh.style.left = (l1 - f.rr.left) + 'px'; f.sh.style.width = (r1 - l1) + 'px'; f.l = l1; f.r = r1;
+      poner(ob, 6); puestosLab++;
+      break;
+    }
+  }
+  filas.forEach(f => poner({ l:f.l - br.left, r:f.r - br.left, t:f.top - br.top, b:f.top - br.top + 16 }, 3));   // repisas ya alargadas
+  // 3) el cabrito del jugador, en la barra de abajo (a la izquierda de Reiniciar) y con los pies en su fondo; sobresale hacia el piso del
+  //    tablero hasta 30 px solo donde no hay botellas, cajas ni repisas debajo. Con el aviso de sin salida visible no sobresale (lo taparia).
+  //    Nunca se esconde: si el tablero llega hasta abajo, se queda dentro de la barra
+  const rea = S.jugador === 'cami' ? IMG.reacC : IMG.reacA, cab = $('cabrito');
+  if(rea){
+    const bar = $('gCtl').getBoundingClientRect(), sa = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sa-b')) || 0;
+    const piso = bar.bottom - sa - 2, interior = piso - bar.top, ancho = innerWidth < 360 ? 76 : 92;
+    const x0 = Math.max(8, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sa-l')) || 0);
+    let libreArriba = 0;
+    if(!$('strip').hidden) libreArriba = 0;
+    else {
+      // espacio libre sobre la barra, bajo lo mas bajo que haya en la franja del cabrito
+      const franja = { l:x0 - 6 - br.left, r:x0 + ancho * 0.9 + 6 - br.left };
+      let fondo = -1e9;
+      obs.forEach(b => { if(b.l < franja.r && b.r > franja.l) fondo = Math.max(fondo, b.b); });
+      libreArriba = Math.max(0, Math.min(30, br.top + H - (br.top + fondo)));   // obs ya lleva su holgura de 8 px
+      if(fondo < -1e8) libreArriba = 30;
+    }
+    const sz = Math.round(Math.max(Math.min(ancho, (interior + libreArriba) / 0.96), 60, Math.min(ancho, interior / 0.96)));
+    cab.style.setProperty('--reacimg', 'url("' + rea + '")');
+    cab.style.width = cab.style.height = sz + 'px';
+    cab.hidden = false;
+    const sobra = Math.max(0, 0.96 * sz - interior);
+    if(sobra > 0 && $('strip').hidden) poner({ l:x0 - 2 - br.left, r:x0 + sz * 0.9 + 2 - br.left, t:H - sobra - 6, b:H }, 4);   // ese rincon del piso ya no es de nadie mas
+  }
+  // 4) adornos de la zona en el suelo
+  if(IMG[ZONA_HOJA[zi]]){
+    const quiere = 2 + (rgA() < 0.5 ? 1 : 0), ini = rgA() < 0.5 ? 1 : -1;
+    let puestos = 0, h = '';
+    for(let k = 0; k < 7 && puestos < quiere; k++){
+      const lado = k < 4 ? (k % 2 ? -ini : ini) : 0, idx = Math.floor(rgA() * 9), sz0 = 44 + Math.floor(rgA() * 21), borde = 2 + Math.floor(rgA() * 12), esp = rgA() < 0.45, frac = 0.2 + rgA() * 0.6;
+      for(let t = 0; t < 4; t++){
+        const sz = sz0 - t * 7; if(sz < 34) break;
+        const x0 = lado < 0 ? borde : lado > 0 ? W - borde - sz : Math.round(W * frac - sz / 2);
+        const r = { l:x0, r:x0 + sz, t:H - 4 - sz, b:H - 4 };
+        if(!libre(r)) continue;
+        poner(r, 6); puestos++;
+        const brilla = ADOR_BRILLA[zi].indexOf(idx) >= 0;
+        h += '<i class="ador z' + zi + (esp ? ' esp' : '') + (brilla ? ' glow' : '') + '" style="left:' + Math.round(r.l) + 'px;top:' + Math.round(r.t) + 'px;width:' + sz + 'px;height:' + sz + 'px;background-position:' + (idx % 3) * 50 + '% ' + Math.floor(idx / 3) * 50 + '%"></i>';
+        break;
+      }
+    }
+    cont.innerHTML = h;
+  }
+  // 5) los objetos de laboratorio que no cupieron sobre una repisa van en el suelo, junto a los adornos
+  if(IMG.labo && puestosLab < nLab){
+    let h = '';
+    for(let k = 0; k < 8 && puestosLab < nLab; k++){
+      const idx = Math.floor(rgL() * 9), sz0 = 36 + Math.floor(rgL() * 13), borde = 2 + Math.floor(rgL() * 16), frac = 0.15 + rgL() * 0.7, modo = k % 3;
+      for(let t = 0; t < 3; t++){
+        const sz = sz0 - t * 5; if(sz < 30) break;
+        const x0 = modo === 0 ? borde : modo === 1 ? W - borde - sz : Math.round(W * frac - sz / 2);
+        const r = { l:x0, r:x0 + sz, t:H - 3 - sz, b:H - 3 };
+        if(!libre(r)) continue;
+        poner(r, 6); puestosLab++;
+        h += '<i class="labo" style="left:' + Math.round(r.l) + 'px;top:' + Math.round(r.t) + 'px;width:' + sz + 'px;height:' + sz + 'px;background-position:' + (idx % 3) * 50 + '% ' + Math.floor(idx / 3) * 50 + '%"></i>';
+        break;
+      }
+    }
+    cont.insertAdjacentHTML('beforeend', h);
+  }
+  refrescarPose();
+}
+/* ---------- el cabrito reacciona: mira (por defecto), anima (completar botella o abrir caja o candado), piensa (sin salida), gana ---------- */
+function ponerPose(n){
+  const c = $('cabrito'); if(!c) return;
+  if(c._pose === n) return;
+  c._pose = n;
+  const capas = c.children, sig = capas[c._on ? 0 : 1], ant = capas[c._on ? 1 : 0];
+  sig.style.backgroundPosition = (n % 2) * 100 + '% ' + Math.floor(n / 2) * 100 + '%';
+  c.classList.toggle('seco', rm());
+  sig.classList.add('on'); ant.classList.remove('on'); c._on = c._on ? 0 : 1;
+  if(!rm() && !c.hidden){ c.classList.remove('salto'); void c.offsetWidth; c.classList.add('salto'); }
+}
+function refrescarPose(){
+  const g = G; if(!g) return;
+  ponerPose(g.ganado ? 3 : !$('strip').hidden ? 2 : g.anima && Date.now() < g.anima ? 1 : 0);
+}
+function reaccionar(ms){
+  const g = G; if(!g) return;
+  g.anima = Date.now() + ms; refrescarPose();
+  clearTimeout(g.animT); g.animT = setTimeout(() => { if(G === g) refrescarPose(); }, ms + 30);
 }
 function pintarCabecera(dif, rasgos){
   if(!G) return;
   if(G.modo === 'dia'){
     $('gNivel').textContent = 'Reto del día';
     setChip(etiquetaFecha(G.clave) + ' · ' + DIF_INFO[dif].nom);
+    $('gZona').hidden = true;
   } else {
     $('gNivel').textContent = 'Nivel ' + G.clave;
     setChip(chipTexto(dif, rasgos || []));
+    // la zona y lo que falta para la meta
+    const L = parseInt(G.clave, 10), z = zonaDeJuego(G).z, falta = (z + 1) * 50 - L;
+    // en pantallas angostas "para la meta" se esconde para que la linea no se parta
+    $('gZona').innerHTML = falta > 0 ? nombreZona(z) + ' · ' + (falta === 1 ? 'falta 1' : 'faltan ' + falta) + '<span class="anc"> para la meta</span>' : 'La meta ' + metaDe(nombreZona(z));
+    $('gZona').hidden = false;
   }
   $('gMeta').textContent = G.meta !== undefined ? G.meta : '·';
   $('gMovs').textContent = G.movs || 0;
@@ -1149,23 +1544,19 @@ function pintarCabecera(dif, rasgos){
 function setChip(t){ const c = $('gChip'); c.hidden = !t; c.textContent = t || ''; c.classList.toggle('acc', !!t); }
 function pintarControles(){
   const ok = G && G.estado && !G.solo;
-  $('cUndo').disabled = !ok || G.busy || !G.hist.length;
   $('cReset').disabled = !ok || G.busy;
-  $('cExtra').disabled = !ok || G.busy || G.extra || G.ganado;
-  $('extraBdg').classList.toggle('off', !ok || G.extra);
   $('gMovs').textContent = G ? (G.movs || 0) : 0;
 }
 
 /* ---------- reloj silencioso (solo para estadisticas) ---------- */
-function iniciarReloj(){ detenerReloj(); tickId = setInterval(() => { if(G && G.estado && !G.ganado && !G.pausa && !document.hidden) G.seg++; }, 1000); }
+function iniciarReloj(){ detenerReloj(); tickId = setInterval(() => { if(G && G.estado && !G.ganado && !G.pausa && !document.hidden) G.seg++; sincFx(); refrescarPose(); }, 1000); }
 function detenerReloj(){ if(tickId){ clearInterval(tickId); tickId = null; } }
 
 /* ---------- partida persistente ---------- */
-function snap(){ return { e:G.estado, o:G.oc, m:G.movs, x:G.extra }; }
 function guardarPartida(){
   if(!G || !G.estado || G.solo){ return; }
   if(G.ganado){ S.partida = null; guardar(); return; }
-  S.partida = { jugador:S.jugador, modo:G.modo, ruta:G.ruta, clave:G.clave, estado:G.estado, ocultas:G.oc, vistos:Array.from(G.vistos), historial:G.hist.slice(-150), movs:G.movs, extraUsada:G.extra, seg:G.seg };
+  S.partida = { jugador:S.jugador, modo:G.modo, ruta:G.ruta, clave:G.clave, estado:G.estado, ocultas:G.oc, vistos:Array.from(G.vistos), vr:G.vr || null, movs:G.movs, seg:G.seg, firma:G.firma };
   guardar();
 }
 
@@ -1211,6 +1602,80 @@ function tocar(i){
   sacudir(i); sonar('malo');
 }
 
+/* ---------- arrastrar para verter ----------
+   Eventos de puntero con captura: al presionar una botella que puede ser origen, si el dedo se mueve mas de 8 px
+   entra el modo arrastre. Sin mover el dedo no pasa nada aqui y sigue el toque-toque (click). */
+let D = null, tArrastre = 0;
+const UMBRAL_ARRASTRE = 8;
+function slotBajo(x, y){
+  // la botella arrastrada va debajo del dedo: se salta para ver la que hay debajo
+  const els = document.elementsFromPoint(x, y);
+  for(let k = 0; k < els.length; k++){
+    const sl = els[k].closest ? els[k].closest('#board .slot') : null;
+    if(sl && sl !== (D && D.el) && sl.dataset.i !== undefined) return parseInt(sl.dataset.i, 10);
+  }
+  return null;
+}
+function marcarDestino(j){
+  if(!D || D.dest === j) return;
+  if(D.dest !== null && G.slots[D.dest]) G.slots[D.dest].classList.remove('destino');
+  D.dest = j;
+  if(j !== null && G.slots[j]) G.slots[j].classList.add('destino');
+}
+function volverAlSitio(d, rapido){
+  const w = d.el.firstElementChild, sl = d.el;
+  const fin_ = () => { w.style.transform = ''; sl.classList.remove('arrastra'); };
+  if(!w || rapido || rm()){ fin_(); return Promise.resolve(); }
+  const a = w.animate([{ transform:w.style.transform }, { transform:'translate(0,0)' }], { duration:140, easing:'cubic-bezier(.32,.72,0,1)' });
+  return new Promise(res => { const f = () => { fin_(); res(); }; a.onfinish = f; a.oncancel = f; });
+}
+function engancharArrastre(){
+  const bd = $('board');
+  bd.addEventListener('pointerdown', (e) => {
+    if(D || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const s = e.target.closest('.slot');
+    if(!s || s.dataset.i === undefined || !G || !G.estado || G.busy || G.ganado || G.solo) return;
+    const i = parseInt(s.dataset.i, 10), b = G.estado.b[i];
+    // las cerradas, completas, vacias o sin jugada no se arrastran (el click normal las sacude o avisa)
+    if(MOTOR.cerrada(G.estado, i, G.nv) || !b.length || MOTOR.completa(b, G.u) || !puedeOrigen(i)) return;
+    D = { i:i, id:e.pointerId, x0:e.clientX, y0:e.clientY, activo:false, el:s, dest:null };
+    try{ s.setPointerCapture(e.pointerId); }catch(x){}
+  });
+  bd.addEventListener('pointermove', (e) => {
+    if(!D || e.pointerId !== D.id) return;
+    const dx = e.clientX - D.x0, dy = e.clientY - D.y0;
+    if(!D.activo){
+      if(Math.hypot(dx, dy) <= UMBRAL_ARRASTRE) return;
+      D.activo = true;
+      despertarAudio();
+      seleccionar(null); ocultarTip();
+      D.el.classList.add('arrastra');
+    }
+    e.preventDefault();
+    D.el.firstElementChild.style.transform = 'translate(' + dx + 'px,' + (dy - 16) + 'px)';
+    const j = slotBajo(e.clientX, e.clientY);
+    marcarDestino(j !== null && j !== D.i && MOTOR.puedeVerter(G.estado, D.i, j, G.nv) ? j : null);
+  });
+  const soltar = async (e, cancela) => {
+    if(!D || e.pointerId !== D.id) return;
+    const d = D;
+    try{ d.el.releasePointerCapture(d.id); }catch(x){}
+    if(!d.activo){ D = null; return; }
+    tArrastre = Date.now();
+    const j = cancela ? null : slotBajo(e.clientX, e.clientY);
+    const valido = j !== null && j !== d.i && G && G.estado && !G.busy && MOTOR.puedeVerter(G.estado, d.i, j, G.nv);
+    marcarDestino(null);
+    D = null;
+    // vuelve rapido a su sitio; si solto sobre una valida corre despues el vertido de siempre
+    await volverAlSitio(d, false);
+    if(G) seleccionar(null);
+    if(valido && G && !G.busy) verterAnim(d.i, j);
+    else if(j !== null && j !== d.i && G && !G.busy) sonar('malo');
+  };
+  bd.addEventListener('pointerup', (e) => soltar(e, false));
+  bd.addEventListener('pointercancel', (e) => soltar(e, true));
+}
+
 /* ---------- el vertido ---------- */
 const esperar = (ms) => new Promise(r => setTimeout(r, ms));
 function fin(a){ return new Promise(r => { a.onfinish = r; a.oncancel = r; }); }
@@ -1223,7 +1688,6 @@ async function verterAnim(i, j){
   ocultarStrip(); ocultarTip();
   const sl = g.slots[i];
   seleccionar(null);
-  g.hist.push(snap());
   const antes = g.estado;
   const r = MOTOR.verter(antes, i, j, g.nv);
   const q = r.cantidad, color = r.color;
@@ -1320,6 +1784,7 @@ async function tras(i, j, q, color, abre, vuelos){
   vib(8);
   anunciar('Vertiste ' + COLORES[color - 1] + ' en la botella ' + (j + 1));
   $('gMovs').textContent = g.movs;
+  if(g.tapaNueva || (abre && abre.length)) reaccionar(1200);
   if(g.tapaNueva){
     sonar('tapa'); vib(18);
     anunciar('Botella ' + (j + 1) + ' completa');
@@ -1332,7 +1797,7 @@ async function tras(i, j, q, color, abre, vuelos){
   pintarControles();
   guardarPartida();
   if(MOTOR.ganado(g.estado, g.nv)){
-    g.ganado = true; guardarPartida(); pintarControles();
+    g.ganado = true; refrescarPose(); guardarPartida(); pintarControles();
     setTimeout(() => { if(G === g) ganar(); }, 350);
     return;
   }
@@ -1379,7 +1844,8 @@ async function animarAperturas(g, abre, j, vuelos){
 async function abrirCaja(g, ab, v){
   const el = g.cajasEl[ab.caja];
   anunciar('Salió la llave: se abrió la caja');
-  const limpiar = () => { if(v && v.el) v.el.remove(); if(G === g) pintarCaja(ab.caja); };
+  // al abrir, las botellas de la caja muestran por fin sus colores
+  const limpiar = () => { if(v && v.el) v.el.remove(); if(G === g){ pintarCaja(ab.caja); g.nv.cajas[ab.caja].bots.forEach(i => pintarSlot(i, { revTodo:true })); } };
   if(rm() || !el || !v){ sonar('abrir'); vib(14); limpiar(); return; }
   const bd = $('board'), br = bd.getBoundingClientRect();
   const lock = el.querySelector('.ccand'), velo = el.querySelector('.cvelo');
@@ -1410,7 +1876,7 @@ async function abrirCandado(g, ab, jFuente){
   anunciar('Se abrió el candado de la botella ' + (ab.b + 1));
   const sl = g.slots[ab.b];
   const cand = sl && sl.querySelector('.cand');
-  if(rm() || !cand){ sonar('abrir'); vib(14); if(G === g) pintarSlot(ab.b); return; }
+  if(rm() || !cand){ sonar('abrir'); vib(14); if(G === g) pintarSlot(ab.b, { revTodo:true }); return; }
   await esperar(380);   // primero cae la tapa de la botella que completo el color
   if(G !== g) return;
   const bd = $('board'), br = bd.getBoundingClientRect();
@@ -1437,7 +1903,7 @@ async function abrirCandado(g, ab, jFuente){
     { transform:'scale(1.3)', opacity:1, offset:0.35 },
     { transform:'scale(.2)', opacity:0, offset:1 }
   ], { duration:380, easing:EASE, fill:'forwards' }));
-  if(G === g) pintarSlot(ab.b);
+  if(G === g) pintarSlot(ab.b, { revTodo:true });
 }
 
 /* ---------- sin salida ---------- */
@@ -1449,79 +1915,40 @@ function vigilar(){
     if(G === g && tok === g.tokV && r && r.sinSalida) mostrarStrip();
   }).catch(() => {});
 }
-function ocultarStrip(){ if(G) G.tokV++; $('strip').hidden = true; if(G && G.estado) setTimeout(medir, 0); }
+function ocultarStrip(){ if(G) G.tokV++; $('strip').hidden = true; refrescarPose(); if(G && G.estado) setTimeout(medir, 0); }
 function mostrarStrip(){
   const g = G; const st = $('strip');
   st.innerHTML = '<div class="t-body">Por aquí ya no hay salida.</div><div class="acts"></div>';
   const ac = st.querySelector('.acts');
-  const b1 = document.createElement('button'); b1.type = 'button'; b1.className = 'btn t-btn'; b1.textContent = 'Volver al último punto con salida';
-  b1.onclick = volverConSalida; ac.appendChild(b1);
-  if(!g.extra){
-    const b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'btn t-btn'; b2.textContent = 'Usar la botella extra';
-    b2.onclick = botellaExtra; ac.appendChild(b2);
-  }
-  st.hidden = false;
+  const b1 = document.createElement('button'); b1.type = 'button'; b1.className = 'btn t-btn'; b1.textContent = 'Empezar de nuevo';
+  b1.onclick = () => reiniciar(true); ac.appendChild(b1);
+  st.hidden = false; refrescarPose();
   anunciar('Por aquí ya no hay salida.');
   setTimeout(medir, 0);
 }
-// restaura el estado completo, con lo que estaba abierto (ab); si se vuelve a antes de abrir, queda cerrado y sin animacion
-function restaurar(h){
-  const g = G;
-  g.estado = h.e; g.oc = conVistos(copiaOc(h.o)); g.movs = h.m; g.extra = h.x; g.sel = null; g.ganado = false;
-  construirTablero(); pintarControles(); guardarPartida();
-}
-function volverConSalida(){
-  const g = G; if(!g || g.busy) return;
-  g.busy = true;
-  const lista = g.hist.slice().reverse().map(h => h.e);
-  const fallback = () => { g.busy = false; };
-  if(!lista.length){ g.busy = false; reiniciar(); return; }
-  llamar('retroceder', { lista:lista, C:cDe(g.nv) }).then(r => {
-    if(G !== g) return;
-    g.busy = false;
-    ocultarStrip();
-    if(r.k < 0){ const h0 = g.hist[0]; g.hist = []; restaurar(h0); toast('Empezamos de nuevo desde el principio'); return; }
-    const idx = g.hist.length - 1 - r.k;
-    const h = g.hist[idx];
-    g.hist = g.hist.slice(0, idx);
-    restaurar(h);
-    toast('Volviste a un punto con salida');
-  }).catch(fallback);
-}
-
 /* ---------- controles ---------- */
-function deshacer(){
-  const g = G; if(!g || g.busy || !g.hist.length || g.solo) return;
-  g.ganado = false;
-  ocultarStrip(); ocultarTip();
-  const h = g.hist.pop();
-  restaurar(h); vigilar();
-}
-function reiniciar(){
+// Reiniciar no repite el mismo tablero: saca una variante con otros colores y otro orden (misma solucion por dentro).
+// Como ya no hay Deshacer, pregunta antes si hay movimientos hechos; desde el aviso de sin salida no pregunta.
+async function reiniciar(sinPreguntar){
   const g = G; if(!g || g.busy || g.solo) return;
-  // se guarda como una jugada mas: Deshacer devuelve la partida y no hace falta preguntar.
-  // Lo que ya se vio del misterio sigue visto (vistos no se toca).
-  g.hist.push(snap());
-  g.estado = { b:g.ini.map(b => b.slice()), ab:0 }; g.oc = conVistos(copiaOc(g.iniOc)); g.movs = 0; g.extra = false; g.sel = null; g.ganado = false;
-  ocultarStrip();
+  if(sinPreguntar !== true && g.movs > 0){
+    const si = await hojaConfirmar({ titulo:'¿Empezar de nuevo?', texto:'Las botellas cambian de color y de lugar, y vuelves a cero movimientos.', ok:'Empezar de nuevo', cancel:'Seguir jugando' });
+    if(!si || G !== g || g.busy) return;
+  }
+  const vr = semillaVariante();
+  ponerNivel(g, MOTOR.variante(g.base, vr), vr);
+  g.estado = { b:g.ini.map(b => b.slice()), ab:0 }; g.oc = copiaOc(g.iniOc); g.vistos = new Set();
+  g.movs = 0; g.sel = null; g.ganado = false;
+  ocultarStrip(); ocultarTip();
   construirTablero(); pintarControles(); guardarPartida(); vigilar(); tutorial();
-  toast('Empezaste de nuevo. Deshacer te devuelve la partida.');
-}
-function botellaExtra(){
-  const g = G; if(!g || g.busy || g.extra || g.ganado || g.solo) return;
-  g.hist.push(snap());
-  g.estado = { b:g.estado.b.concat([[]]), ab:g.estado.ab }; if(g.oc) g.oc = g.oc.concat([[]]);
-  g.extra = true; g.sel = null;
-  ocultarStrip();
-  construirTablero(); pintarControles(); guardarPartida(); vigilar();
-  anunciar('Agregaste una botella vacía');
+  toast('Empezaste de nuevo con otros colores');
 }
 /* ---------- tutorial de toques: nivel 1, si el perfil nunca ha ganado ---------- */
 function ocultarTip(){ const t = document.getElementById('tip'); if(t) t.remove(); }
 function tutorial(){
   ocultarTip();
   const g = G;
-  if(!g || !g.estado || g.busy || g.ganado || g.solo || g.modo !== 'camino' || parseInt(g.clave, 10) !== 1 || P().stats.ganados > 0 || g.movs > 0 || g.hist.length || !g.sol || !g.sol.length) return;
+  if(!g || !g.estado || g.busy || g.ganado || g.solo || g.modo !== 'camino' || parseInt(g.clave, 10) !== 1 || P().stats.ganados > 0 || g.movs > 0 || !g.sol || !g.sol.length) return;
   const m = g.sol[0];
   let idx, txt;
   if(g.sel === null){ idx = m[0]; txt = 'Toca esta botella'; }
@@ -1539,10 +1966,11 @@ function tutorial(){
   tip.style.setProperty('--ax', (cx - left) + 'px');
 }
 
-/* ---------- aviso de nivel dificil: tarjeta de ~1,4 s sobre el tablero, se salta con un toque ---------- */
+/* ---------- aviso de nivel dificil: tarjeta de ~1,4 s (2,2 s en extra difícil) sobre el tablero, se salta con un toque ---------- */
 const AVISO = {
   dificil: { t:'Nivel difícil', x:'Con calma: tiene solución.' },
-  muy:     { t:'Nivel muy difícil', x:'De los duros. Tiene solución comprobada.' }
+  muy:     { t:'Nivel muy difícil', x:'De los duros. Tiene solución comprobada.' },
+  extra:   { t:'Nivel extra difícil', x:'Casi todo va tapado. Tiene solución, pero puede que no salga a la primera.', ms:2200 }
 };
 function avisoDificil(g, nueva){
   const dif = g.nv && g.nv.dif;
@@ -1550,29 +1978,29 @@ function avisoDificil(g, nueva){
   return new Promise(res => {
     const a = $('aviso'), d = AVISO[dif];
     let barras = '';
-    for(let k = 1; k <= 4; k++) barras += '<i' + (k <= DIF_INFO[dif].barras ? ' class="on"' : '') + '></i>';
+    for(let k = 1; k <= 5; k++) barras += '<i' + (k <= DIF_INFO[dif].barras ? ' class="on"' : '') + '></i>';
     a.innerHTML = '<div class="tarjeta"><img class="arte" alt="" src="' + (S.jugador === 'cami' ? IMG.botCami : IMG.botAndres) + '"><span class="medidor grande" aria-hidden="true">' + barras + '</span><div class="t-h2 strong">' + d.t + '</div><p class="t-body-sm">' + d.x + '</p></div>';
     a.classList.remove('sale'); a.hidden = false;
-    g.pausa = true;
+    g.pausa = true; sincFx();
     anunciar(d.t + '. ' + d.x);
     let hecho = false, t1 = null;
     const fin_ = () => {
       if(hecho) return; hecho = true; clearTimeout(t1);
       a.onclick = null; a.classList.add('sale');
-      setTimeout(() => { a.hidden = true; a.classList.remove('sale'); g.pausa = false; res(); }, 260);
+      setTimeout(() => { a.hidden = true; a.classList.remove('sale'); g.pausa = false; sincFx(); res(); }, 260);
     };
     a.onclick = fin_;
-    t1 = setTimeout(fin_, 1400);
+    t1 = setTimeout(fin_, d.ms || 1400);
   });
 }
 
 /* ---------- hoja de Novedad: la primera vez que un perfil encuentra una mecanica ---------- */
 const NOVEDAD = {
-  llave:    { t:'Llave escondida', x:'Está metida en una franja de color. Quítale lo que tiene encima y sale sola a abrir la caja.',
+  llave:    { t:'Llave escondida', x:'Está metida en una franja de color. Quítale lo que tiene encima y sale sola a abrir la caja. Lo de adentro no se ve hasta abrirla.',
               nv:{ cap:4, botellas:[[2, 1, 3, 1], [2, 3, 3, 2]], llaves:[{ b:0, k:1, caja:0 }], cajas:[{ bots:[1] }], candados:[] } },
-  candado:  { t:'Candado de color', x:'La botella se abre cuando completas ese color.',
-              nv:{ cap:4, botellas:[[1, 1, 1, 2], [], [2, 2, 2, 3]], llaves:[], cajas:[], candados:[{ b:1, color:1 }] } },
-  misterio: { t:'Misterio', x:'Las capas con signo de pregunta se ven al quedar arriba. Lo que ya viste no se vuelve a esconder.',
+  candado:  { t:'Candado de color', x:'La botella se abre cuando completas ese color. Lo que trae no se ve hasta que se abre.',
+              nv:{ cap:4, botellas:[[1, 1, 1, 2], [], [3, 2, 3, 2]], llaves:[], cajas:[], candados:[{ b:2, color:1 }] } },
+  misterio: { t:'Misterio', x:'Las capas con signo de pregunta se ven cuando quedan arriba.',
               nv:{ cap:4, botellas:[[1, 2, 3, 1], [3, 2, 1, 2]], llaves:[], cajas:[], candados:[], ocultas:[[true, true, true, false], [true, true, false, false]] } },
   gigante:  { t:'Botella gigante', x:'Es más grande y se llena con más capas, pero se completa igual: con cuatro del mismo color.',
               nv:{ cap:4, u:4, caps:[10, 4, 4], botellas:[[1, 2, 3, 1, 2, 3], [1, 2, 1, 3], [3, 2, 1, 2]], llaves:[], cajas:[], candados:[] } },
@@ -1601,13 +2029,13 @@ async function novedades(g){
   const lista = (g.nv.rasgos || []).concat(g.nv.nuevos && g.nv.nuevos.length ? ['nuevos'] : []);
   const nuevas = lista.filter(r => !pf.vistos[r]);
   if(!nuevas.length) return;
-  g.pausa = true;                       // el tiempo de leer no cuenta
+  g.pausa = true; sincFx();             // el tiempo de leer no cuenta
   for(const r of nuevas){
     if(G !== g) break;
     pf.vistos[r] = true; guardar();
     await mostrarNovedad(r);
   }
-  g.pausa = false;
+  g.pausa = false; sincFx();
 }
 
 /* ---------- ganar ---------- */
@@ -1637,8 +2065,15 @@ function ganar(){
   S.partida = null; guardar();
   const dia = g.modo === 'dia';
   $('wImg').src = S.jugador === 'cami' ? IMG.celebC : IMG.celebA;
+  $('wImg').classList.remove('metacima');
   $('wLabel').textContent = dia ? 'Reto del día' : 'Nivel ' + g.clave + ' · ' + DIF_INFO[g.nv.dif || 'normal'].nom;
-  $('wTit').textContent = dia ? 'Reto del día resuelto' : (ultima ? 'Completaste los 200 niveles' : 'Nivel superado');
+  // avance del tramo: la linea de la zona y, si el nivel es una meta (50, 100...), la cima y el texto de meta
+  const Lg = dia ? 0 : parseInt(g.clave, 10), zg = dia ? 0 : Math.floor((Lg - 1) / 50), esMeta = !dia && Lg % 50 === 0;
+  const resta = (zg + 1) * 50 - Lg - 1, wz = $('wZona');
+  wz.hidden = dia;
+  if(!dia) wz.textContent = esMeta ? 'Llegaste a la meta ' + metaDe(nombreZona(zg)) + '. Sigue el tramo ' + (zg + 2) + '.' : resta > 0 ? (resta === 1 ? 'Te falta 1 para la meta ' : 'Te faltan ' + resta + ' para la meta ') + metaDe(nombreZona(zg)) : 'El siguiente nivel es la meta ' + metaDe(nombreZona(zg));
+  if(esMeta){ $('wImg').src = IMG.cima || IMG.botDuo; $('wImg').classList.add('metacima'); } else $('wImg').classList.remove('metacima');
+  $('wTit').textContent = dia ? 'Reto del día resuelto' : (esMeta ? '¡Coronaste ' + enMinuscula(nombreZona(zg)) + '!' : ultima ? 'Nivel 200 superado' : 'Nivel superado');
   $('wMovs').textContent = g.movs; $('wMeta').textContent = g.meta; $('wTiempo').textContent = tiempoTxt(g.seg);
   let h = '';
   for(let k = 0; k < 3; k++) h += estrellaSvg(k < est).replace('animation-delay:0ms', 'animation-delay:' + (300 + k * 120) + 'ms');
@@ -1654,7 +2089,7 @@ function ganar(){
   sonar('ganar'); vib([30, 40, 60]);
   $('veloWin').classList.add('on');
   setTimeout(() => $('wSig').focus({ preventScroll:true }), 300);
-  anunciar((dia ? 'Reto del día resuelto' : (ultima ? 'Completaste los 200 niveles' : 'Nivel superado')) + '. ' + est + (est === 1 ? ' estrella' : ' estrellas'));
+  anunciar(($('wTit').textContent) + '. ' + est + (est === 1 ? ' estrella' : ' estrellas'));
 }
 function cerrarHojaWin(rapido){ $('veloWin').classList.remove('on'); }
 function siguiente(){
@@ -1668,7 +2103,7 @@ function repetir(){
   cerrarHojaWin();
   const modo = g.modo, ruta = g.ruta, clave = g.clave;
   S.partida = null;               // empezar de cero tambien esconde otra vez el misterio
-  abrirJuego(modo, ruta, clave, { sinAviso:true });   // es el mismo nivel: no se vuelve a avisar
+  abrirJuego(modo, ruta, clave, { sinAviso:true, variar:true });   // mismo nivel con otros colores: no se vuelve a avisar
 }
 
 /* ============================================================
@@ -1678,11 +2113,11 @@ function subHero(nv, p){
   const rasgos = nv ? nv.rasgos : rasgosDeParams(p);
   $('hSub').textContent = subTexto(nv ? coloresDe(nv) : p.n, nv ? nv.botellas.length : botellasDeParams(p), rasgos);
 }
-// insignia de dificultad del nivel: medidor de 1 a 4 barritas y el nombre
+// insignia de dificultad del nivel: medidor de 1 a 5 barritas y el nombre
 function insigniaHero(dif){
   const inf = DIF_INFO[dif] || DIF_INFO.normal;
   let barras = '';
-  for(let k = 1; k <= 4; k++) barras += '<i' + (k <= inf.barras ? ' class="on"' : '') + '></i>';
+  for(let k = 1; k <= 5; k++) barras += '<i' + (k <= inf.barras ? ' class="on"' : '') + '></i>';
   $('hDif').innerHTML = '<span class="medidor" aria-hidden="true">' + barras + '</span><span>' + inf.nom + '</span>';
   $('hDif').setAttribute('aria-label', 'Dificultad: ' + inf.nom);
 }
@@ -1698,11 +2133,11 @@ function pintarInicio(){
   const p = MOTOR.nivelParams(L), nv0 = nivelSinc('camino', 'camino', L);
   subHero(nv0, p);
   insigniaHero(nv0 ? nv0.dif : difDeParams(p));
-  const donde = Math.min(L, NTOTAL);
-  $('hProg').textContent = donde; $('hPb').style.setProperty('--p', Math.min(100, Math.round((L - 1) / NTOTAL * 100)) + '%');
-  const pa = S.partida;
-  const sigue = pa && pa.jugador === u && pa.modo === 'camino' && pa.clave === String(L) && pa.movs > 0;
-  $('hJugar').textContent = (sigue ? 'Seguir el nivel ' : 'Jugar el nivel ') + L;
+  // el camino no se acaba: la barra mide hacia la siguiente meta de 50 niveles
+  const meta = Math.ceil(L / 50) * 50, desde = meta - 50;
+  $('hProg').textContent = L; $('hMeta').textContent = meta;
+  $('hPb').style.setProperty('--p', Math.round((L - 1 - desde) / 50 * 100) + '%');
+  $('hJugar').textContent = etiquetaJugar(L);
   // vista previa del tablero real del nivel
   const pv = $('prevHero'); pv.innerHTML = '';
   const tokPv = ++pvTok;
@@ -1865,19 +2300,318 @@ function sonar(tipo){
 function vib(p){ if(S.ajustes.vibra && navigator.vibrate){ try{ navigator.vibrate(p); }catch(e){} } }
 
 /* ============================================================
+   MAPA DEL RECORRIDO (v6)
+   Los cabritos suben la montana: el nivel 1 abajo, tramos de 50 con su zona y su meta. Es de progreso, no un selector:
+   desde aqui solo se juega el nivel actual. Se dibujan completas la zona actual, la anterior y la siguiente; lo viejo
+   se resume en una tarjeta, asi el nivel 1.000 cuesta lo mismo que el 40.
+   ============================================================ */
+const ZONAS = [
+  { nom:'La pradera', arte:'<circle cx="248" cy="58" r="20" fill="#FFC94D" opacity=".85"/><path d="M0 100Q70 72 150 94T320 86V130H0z" fill="#27472E"/><path d="M0 114Q90 94 180 110T320 106V130H0z" fill="#1A3322"/><g><circle cx="38" cy="112" r="2.6" fill="#FF6FCF"/><circle cx="92" cy="119" r="2.4" fill="#FFD93D"/><circle cx="150" cy="108" r="2.6" fill="#FFFFFF"/><circle cx="214" cy="117" r="2.6" fill="#FF6FCF"/><circle cx="280" cy="111" r="2.4" fill="#FFD93D"/></g>' },
+  { nom:'El bosque',  arte:'<path d="M0 130V100l24-46 24 46 18-30 20 60zM250 130l22-64 20 40 28-36v60z" fill="#0A1F1E"/><path d="M70 130l26-76 26 76zM150 130l22-58 22 58zM205 130l20-44 20 44z" fill="#0F2F2C"/><g fill="#D9FF8A"><circle cx="60" cy="52" r="1.8" opacity=".9"/><circle cx="140" cy="38" r="1.6" opacity=".7"/><circle cx="196" cy="60" r="2" opacity=".9"/><circle cx="262" cy="44" r="1.6" opacity=".7"/><circle cx="104" cy="84" r="1.5" opacity=".6"/></g>' },
+  { nom:'La nieve',   arte:'<path d="M0 130l50-70 28 34 36-56 52 92zM180 130l44-78 28 34 30-30 38 74z" fill="#9DB8D6"/><path d="M0 130l50-70 14 17-20 53zM114 130l-4-38 20 38z" fill="#DCE8F5" opacity=".8"/><path d="M0 130V112q80-14 160 0t160-6V130z" fill="#E8F1FA" opacity=".9"/><g><path d="M30 40l5 8-5 8-5-8z" fill="#7AE0FF"/><path d="M270 32l5 8-5 8-5-8z" fill="#FF9FE0"/><path d="M160 24l4 7-4 7-4-7z" fill="#B8A0FF"/></g>' },
+  { nom:'La cumbre',  arte:'<path d="M-10 60Q70 20 150 50T330 36V74Q240 96 150 78T-10 90z" fill="#3CF0B0" opacity=".28"/><path d="M0 130l90-52 40 22 52-66 62 76 76-40V130z" fill="#0C0620"/><g fill="#FFFFFF"><circle cx="30" cy="24" r="1.3"/><circle cx="82" cy="46" r="1"/><circle cx="130" cy="16" r="1.4"/><circle cx="210" cy="30" r="1.2"/><circle cx="270" cy="14" r="1.5"/><circle cx="296" cy="52" r="1"/><circle cx="182" cy="62" r="1"/></g><path d="M182 64v-18l14 5-14 5" fill="#FFC94D"/>' }
+];
+// mecanica que se estrena en cada nivel (los mismos del motor): icono y nombre para el sello y el aviso
+const ESTRENO_MAPA = {
+  4:  ['candado',  'Candado de color'],  7:  ['llave',    'Llave escondida'],   12: ['llave',   'Cajón de dos botellas'],
+  20: ['misterio', 'Misterio'],          25: ['largas',   'Botellas largas'],   30: ['gigante', 'Botella gigante'],
+  35: ['misterio', 'Misterio total'],    50: ['llave',    'Dos cajas'],         80: ['candado', 'Cadena de cajas']
+};
+const FILA = 88, FILA_META = 112, FILA_CIMA = 224;     // alto de cada fila del sendero (la meta alcanzada lleva la cima arriba)
+const COL_JUG = { cami:'#FFC94D', andres:'#5C8DFF' };
+const SVG_BANDERA = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 5h11l-2.6 3.8L17 12.5H6"/></svg>';
+let VINO_MAPA = false;      // el juego se abrio desde el mapa: al salir se vuelve al mapa
+let MAPA_MS = 0;
+const MAPA = { desde:null };
+let mapaImgs = false;
+
+const difNivel = (L) => { const c = nivelEnCatalogo('camino', L); return c && c.dif ? c.dif : MOTOR.difDe(L); };
+const xNodo = (n) => (n % 50 === 0 ? 50 : Math.round((50 + 24 * Math.sin(n * 0.8)) * 10) / 10);
+const claseGrado = (d) => (d === 'dificil' ? 'g-d' : d === 'muy' ? 'g-m' : d === 'extra' ? 'g-x' : '');
+const textoEstrellas = (e) => (e > 0 ? e + (e === 1 ? ' estrella' : ' estrellas') : 'completado');
+const miles = (n) => { try{ return n.toLocaleString('es-CO'); }catch(e){ return String(n); } };
+function etiquetaJugar(L){
+  const pa = S.partida;
+  return (pa && pa.jugador === S.jugador && pa.modo === 'camino' && pa.clave === String(L) && pa.movs > 0 ? 'Seguir el nivel ' : 'Jugar el nivel ') + L;
+}
+// la pareja: dentro de la app lo que trae la nube; fuera, el otro perfil local
+function parejaMapa(){
+  const pj = parejaAhora();
+  if(pj){
+    const pf = pj.perfil && typeof pj.perfil === 'object' && pj.perfil.nivel > 0 ? pj.perfil : null;
+    return { nombre:pj.nombre, usuario:pj.usuario === 'andres' ? 'andres' : 'cami', nivel:pf ? pf.nivel : 0 };
+  }
+  if(HOST) return null;
+  const u = S.jugador === 'cami' ? 'andres' : 'cami';
+  return { nombre:NOMBRES[u], usuario:u, nivel:S.perfiles[u].nivel };
+}
+// las ilustraciones (si existen) se ponen una sola vez como variables de CSS: asi no se repite el data URI en cada cartel
+function ponerImgsMapa(){
+  if(mapaImgs) return; mapaImgs = true;
+  const r = document.documentElement.style;
+  ['zona1', 'zona2', 'zona3', 'zona4'].forEach(k => { if(IMG[k]) r.setProperty('--' + k, 'url("' + IMG[k] + '")'); });
+  ['adorPradera', 'adorBosque', 'adorNieve', 'adorCumbre'].forEach((k, i) => { if(IMG[k]) r.setProperty('--ador' + (i + 1), 'url("' + IMG[k] + '")'); });
+  if(IMG.repisa) r.setProperty('--repisaimg', 'url("' + IMG.repisa + '")');
+  if(IMG.labo) r.setProperty('--laboimg', 'url("' + IMG.labo + '")');
+  r.setProperty('--cimaimg', 'url("' + (IMG.cima || IMG.botDuo) + '")');
+}
+/* ---------- adornos de los lados del sendero ----------
+   Hoja 3x3 por zona (indice 0..8 por filas). Todo sale de una semilla por zona y casilla, asi que no cambia al
+   reabrir ni entre telefonos. Se coloca con el ancho minimo (288 px = 320 de pantalla) y a una distancia fija del
+   borde: en pantallas mas anchas los nodos se alejan del borde, nunca se acercan. */
+const ADOR_BRILLA = [[3, 7], [2, 3], [1, 2, 5], [1, 5, 8]];
+const WREF = 288, PASO_ADOR = 96;
+function adornosZona(z, ys, alto, L, pines, pts, base){
+  const zi = z % 4;
+  if(!IMG[['adorPradera', 'adorBosque', 'adorNieve', 'adorCumbre'][zi]]) return '';
+  const hit = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
+  const bloqueos = [];
+  for(let n = base + 1; n <= base + 50; n++){
+    const cx = xNodo(n) * WREF / 100, cy = ys[n], meta = n === base + 50, ra = meta ? 52 : 40;
+    bloqueos.push({ l:cx - ra, r:cx + ra, t:cy - (meta ? 46 : 40), b:cy + (meta ? 60 : 54) });     // nodo, aro, sello y estrellas
+    if(pines.indexOf(n) >= 0){                                                                       // cara(s) al lado con mas espacio
+      const dir = cx >= WREF / 2 ? -1 : 1, ext = cx + dir * 112;
+      bloqueos.push({ l:Math.min(cx, ext), r:Math.max(cx, ext), t:cy - 26, b:cy + 26 });
+    }
+  }
+  if(base + 50 < L) bloqueos.push({ l:0, r:WREF, t:0, b:140 });                                      // la cima
+  const colocados = [], out = [];
+  const m = 10;                                                                                      // holgura al sendero
+  const n = Math.floor(alto / PASO_ADOR);
+  for(let k = 0; k < n; k++){
+    const rg = MOTOR.rng('ador:' + z + ':' + k);
+    const lado = (k + z) % 2 ? 1 : -1;
+    for(let intento = 0; intento < 7; intento++){
+      const sz = Math.max(40, 40 + Math.floor(rg() * 37) - intento * 5);
+      const borde = 2 + Math.floor(rg() * 16), idx = Math.floor(rg() * 9), esp = rg() < 0.45;
+      const suelo = Math.round(k * PASO_ADOR + 34 + rg() * (PASO_ADOR - 34));
+      if(suelo > alto - 4 || suelo - sz < 4) continue;
+      const x0 = lado < 0 ? borde : WREF - borde - sz;
+      const r = { l:x0, r:x0 + sz, t:suelo - sz, b:suelo };
+      if(bloqueos.some(b => hit(r, b))) continue;
+      if(colocados.some(c => hit(r, { l:c.l - 6, r:c.r + 6, t:c.t - 6, b:c.b + 6 }))) continue;
+      if(pts.some(p => p[0] > r.l - m && p[0] < r.r + m && p[1] > r.t - m && p[1] < r.b + m)) continue;
+      colocados.push(r);
+      // lo que ya recorriste va a color; lo que falta, atenuado (se mide por el nodo mas cercano)
+      let cerca = base + 1, dmin = 1e9;
+      for(let q = base + 1; q <= base + 50; q++){ const d = Math.abs(ys[q] - suelo); if(d < dmin){ dmin = d; cerca = q; } }
+      const brilla = ADOR_BRILLA[zi].indexOf(idx) >= 0;
+      out.push('<i class="ador z' + zi + (cerca > L ? ' fut' : '') + (esp ? ' esp' : '') + (brilla ? ' glow' : '') + '" style="' + (lado < 0 ? 'left:' : 'right:') + borde + 'px;top:' + (suelo - sz) + 'px;width:' + sz + 'px;height:' + sz + 'px;background-position:' + (idx % 3) * 50 + '% ' + Math.floor(idx / 3) * 50 + '%"></i>');
+      break;
+    }
+  }
+  return '<div class="adornos" aria-hidden="true">' + out.join('') + '</div>';
+}
+function htmlZona(z, L, est, pines){
+  const base = z * 50, zi = z % 4, vuelta = Math.floor(z / 4) + 1;
+  const nom = ZONAS[zi].nom + (vuelta > 1 ? ' · vuelta ' + vuelta : '');
+  const ys = {}; let y = 0;
+  for(let n = base + 50; n > base; n--){
+    const meta = n === base + 50, h = meta ? (n < L ? FILA_CIMA : FILA_META) : FILA;
+    ys[n] = meta ? y + h - 56 : y + h / 2;
+    y += h;
+  }
+  const alto = y;
+  let dHecho = '', dFalta = '';
+  const pts = [];
+  const seg = (a, ya, xa, b, yb, xb, n) => {     // tramo entre dos puntos, curva con tangentes verticales
+    const ym = (ya + yb) / 2;
+    for(let i = 0; i <= 12; i++){      // puntos de la curva para que los adornos no la pisen
+      const t = i / 12, u = 1 - t;
+      pts.push([(u * u * u * xa + 3 * u * u * t * xa + 3 * u * t * t * xb + t * t * t * xb) * WREF / 100, u * u * u * ya + 3 * u * u * t * ym + 3 * u * t * t * ym + t * t * t * yb]);
+    }
+    const d = 'M' + xa + ' ' + ya + 'C' + xa + ' ' + ym + ' ' + xb + ' ' + ym + ' ' + xb + ' ' + yb;
+    if(n <= L) dHecho += d; else dFalta += d;
+  };
+  // cabo de arriba (hacia el nivel de mas arriba) y de abajo (hacia el de mas abajo): el cartel los tapa
+  const yIni = base + 50 < L ? 128 : 0;     // con la cima encima, el cabo de arriba arranca debajo de la ilustracion
+  seg(0, yIni, 50, 0, ys[base + 50], 50, base + 51);
+  for(let n = base + 50; n > base + 1; n--) seg(0, ys[n], xNodo(n), 0, ys[n - 1], xNodo(n - 1), n);
+  if(base > 0) seg(0, ys[base + 1], xNodo(base + 1), 0, alto, xNodo(base + 1), base + 1);
+  let lis = '';
+  for(let n = base + 1; n <= base + 50; n++){
+    const meta = n === base + 50, hecho = n < L, actual = n === L, dif = difNivel(n), inf = DIF_INFO[dif];
+    const es = ESTRENO_MAPA[n], e = est[n] || 0;
+    let aria = 'Nivel ' + n + ', ' + (actual ? 'el actual, ' + inf.nom : hecho ? inf.nom + ', ' + textoEstrellas(e) : inf.nom + ', todavía no');
+    if(es) aria += ', estreno: ' + es[1];
+    if(meta) aria += ', meta del tramo';
+    let in_ = meta ? SVG_BANDERA + '<span>' + n + '</span>' : String(n);
+    if(es) in_ += '<span class="sello" aria-hidden="true">' + ICO[es[0]] + '</span>';
+    if(hecho){
+      let st = ''; for(let k = 1; k <= 3; k++) st += '<svg viewBox="0 0 24 24"' + (k <= e ? ' class="on"' : '') + '><path d="' + ESTRELLA_D + '"/></svg>';
+      if(e > 0) in_ += '<span class="ests" aria-hidden="true">' + st + '</span>';
+    }
+    const cls = 'nodo ' + (actual ? 'actual' : hecho ? 'hecho' : 'futuro') + (meta ? ' meta' : '') + ' ' + claseGrado(dif);
+    lis += '<li style="left:' + xNodo(n) + '%;top:' + ys[n] + 'px"><button type="button" class="' + cls + '" data-n="' + n + '" aria-label="' + aria + '"' + (actual ? ' aria-current="step"' : '') + '>' + in_ + '</button></li>';
+  }
+  const cima = (base + 50 < L) ? '<div class="cima" aria-hidden="true"></div>' : '';
+  const lleva = Math.max(0, Math.min(50, L - 1 - base));
+  const sub = 'Niveles ' + (base + 1) + ' a ' + (base + 50) + ' · ' + (lleva >= 50 ? 'completo' : 'llevas ' + lleva + ' de 50');
+  const cartel = '<div class="cartel zn' + zi + ' tn' + zi + '"><div class="arte">' + (IMG['zona' + (zi + 1)] ? '' : '<svg class="deco" viewBox="0 0 320 130" preserveAspectRatio="xMidYMax slice" aria-hidden="true">' + ZONAS[zi].arte + '</svg>') + '</div>' +
+    '<div class="txt"><h3 class="t-h2 strong" style="margin:0">Tramo ' + (z + 1) + ' · ' + nom + '</h3><p>' + sub + '</p><div class="pb" aria-hidden="true"><i style="--p:' + Math.round(lleva * 2) + '%"></i></div></div></div>';
+  const svg = '<svg class="camino" viewBox="0 0 100 ' + alto + '" preserveAspectRatio="none" aria-hidden="true"><path class="falta" d="' + dFalta + '"/><path class="hecho" d="' + dHecho + '"/></svg>';
+  return '<section class="zona" data-z="' + z + '" aria-label="Tramo ' + (z + 1) + ', ' + nom + '">' + cartel +
+    '<div class="ruta tn' + zi + '" style="height:' + alto + 'px;--ta:var(--tint' + ((z + 1) % 4) + ')">' + svg + adornosZona(z, ys, alto, L, pines || [], pts, base) + cima + '<ol class="nodos" aria-label="Niveles ' + (base + 1) + ' a ' + (base + 50) + '">' + lis + '</ol></div></section>';
+}
+function pintarMapa(o){
+  o = o || {};
+  const t0 = performance.now();
+  const pf = P(), L = pf.nivel, est = pf.estrellas || {};
+  const z0 = Math.floor((L - 1) / 50);
+  const porDefecto = Math.max(0, z0 - 1);
+  if(MAPA.desde === null || MAPA.desde > porDefecto) MAPA.desde = porDefecto;
+  const desde = MAPA.desde, hasta = z0 + 1;
+  const pj = parejaMapa();
+  ponerImgsMapa();
+  // cabecera: los dos y su nivel
+  const cara = (u) => u === 'cami' ? IMG.faceC : IMG.faceA;
+  let pares = '<div class="mpar" style="--pc:' + COL_JUG[S.jugador] + '"><img alt="" src="' + cara(S.jugador) + '"><span class="tx"><b>Tú</b><span>nivel <span class="num">' + L + '</span></span></span></div>';
+  if(pj) pares += '<div class="mpar" style="--pc:' + COL_JUG[pj.usuario] + '"><img alt="" src="' + cara(pj.usuario) + '"><span class="tx"><b>' + pj.nombre + '</b><span>' + (pj.nivel ? 'nivel <span class="num">' + pj.nivel + '</span>' : 'sin jugar') + '</span></span></div>';
+  $('mPares').innerHTML = pares;
+  $('mJugar').textContent = etiquetaJugar(L);
+  // contenido de abajo hacia arriba (el contenedor invierte el orden: asi el DOM sigue de menor a mayor nivel)
+  let h = '';
+  if(desde > 0){
+    const hasta0 = desde * 50;
+    let suma = 0; Object.keys(est).forEach(k => { if(parseInt(k, 10) <= hasta0) suma += est[k]; });
+    const abajo = pj && pj.nivel > 0 && pj.nivel <= hasta0;
+    h += '<div class="mod resumen"><div class="t-body strong">' + (desde === 1 ? 'Tramo 1 completo' : 'Tramos 1 a ' + desde + ' completos') + '</div>' +
+      '<p class="t-body-sm">Niveles 1 a ' + miles(hasta0) + (suma ? ' · ' + miles(suma) + ' estrellas' : '') + '</p>' +
+      (abajo ? '<div class="aparte"><img alt="" src="' + cara(pj.usuario) + '"><span>' + pj.nombre + ' va en el nivel ' + pj.nivel + '</span></div>' : '') +
+      '<button class="btn block t-btn" type="button" data-accion="mas">Ver el tramo ' + desde + '</button></div>';
+  }
+  for(let z = desde; z <= hasta; z++) h += htmlZona(z, L, est, pj && pj.nivel > 0 ? [L, pj.nivel] : [L]);
+  const arriba = pj && pj.nivel > (hasta + 1) * 50;
+  h += '<div class="tope">' + (arriba ? pj.nombre + ' va más arriba, en el nivel ' + pj.nivel : 'El recorrido sigue hacia arriba') + '</div>';
+  h += '<div class="pines" id="mPines"></div>';
+  $('mCont').innerHTML = h;
+  MAPA_MS = performance.now() - t0;
+  // lo que depende de la medida real va despues de que la vista este a la vista
+  ubicarMapa(o, pj);
+  MAPA_MS = performance.now() - t0;
+}
+function centroNodo(n){
+  const b = $('mCont').querySelector('.nodo[data-n="' + n + '"]'); if(!b) return null;
+  const r = b.getBoundingClientRect(), c = $('mCont').getBoundingClientRect();
+  return { x:r.left - c.left + r.width / 2, y:r.top - c.top + r.height / 2, w:r.width };
+}
+// la cara va al lado del nodo que tiene mas espacio (no tapa el numero ni el sendero de arriba y abajo)
+function posPin(n, k, grande){
+  const c = centroNodo(n); if(!c) return null;
+  const ancho = $('mCont').clientWidth, lado = c.x >= ancho / 2 ? -1 : 1;
+  const rad = c.w / 2 + 8 + 4 + (grande ? 20 : 18);
+  return { x:c.x + lado * (rad + k * 26), y:c.y };
+}
+function ponerPin(el, p){ el.style.transform = 'translate(' + Math.round(p.x - el.offsetWidth / 2) + 'px,' + Math.round(p.y - el.offsetHeight / 2) + 'px)'; }
+function ubicarPines(o){
+  const cont = $('mPines'); if(!cont) return;
+  const L = P().nivel, pj = parejaMapa();
+  const cara = (u) => u === 'cami' ? IMG.faceC : IMG.faceA;
+  cont.innerHTML = '';
+  const mismo = pj && pj.nivel === L;
+  const mk = (cls, u, aria, k, n) => {
+    const e = document.createElement('div'); e.className = 'pin ' + cls; e.style.setProperty('--pc', COL_JUG[u]);
+    e.setAttribute('role', 'img'); e.setAttribute('aria-label', aria);
+    e.innerHTML = '<img alt="" src="' + cara(u) + '">';
+    cont.appendChild(e);
+    const p = posPin(n, k, cls === 'yo');
+    if(p) ponerPin(e, p); else e.hidden = true;
+    return e;
+  };
+  if(pj && pj.nivel > 0 && $('mCont').querySelector('.nodo[data-n="' + pj.nivel + '"]')) mk('otro', pj.usuario, pj.nombre + ', en el nivel ' + pj.nivel, mismo ? 1 : 0, pj.nivel);
+  const yo = mk('yo', S.jugador, 'Tú, en el nivel ' + L, 0, L);
+  // si avanzaste desde la ultima vez que viste el mapa, tu cara camina del nodo anterior al actual (maximo 3 pasos)
+  const ant = o && o.desde;
+  if(ant && ant < L && !rm() && yo.animate){
+    const a = Math.max(ant, L - 3), pts = [];
+    for(let n = a; n <= L; n++){ const p = posPin(n, 0, true); if(p) pts.push(p); }
+    if(pts.length > 1){
+      const fr = pts.map((p, i) => ({ transform:'translate(' + Math.round(p.x - yo.offsetWidth / 2) + 'px,' + Math.round(p.y - yo.offsetHeight / 2) + 'px)', offset:i / (pts.length - 1), easing:'ease-in-out' }));
+      yo.animate(fr, { duration:(pts.length - 1) * 650, delay:500, fill:'both' });
+    }
+  }
+}
+function centrarNivel(){
+  const sc = $('mScroll'), b = $('mCont').querySelector('.nodo.actual'); if(!b) return;
+  const r = b.getBoundingClientRect(), s = sc.getBoundingClientRect();
+  sc.scrollTop = Math.max(0, sc.scrollTop + (r.top - s.top) + r.height / 2 - sc.clientHeight / 2);
+}
+function ubicarMapa(o, pj){
+  if(o.centrar) centrarNivel();
+  ubicarPines(o);
+}
+function abrirMapa(){
+  const pf = P(), t0 = performance.now();
+  const visto = pf.mapaVisto || 0;
+  MAPA.desde = null;
+  document.body.classList.add('jugando');
+  $('vInicio').hidden = true; $('vJuego').hidden = true; $('vMapa').hidden = false;
+  window.scrollTo(0, 0);
+  pintarMapa({ centrar:true, desde:visto });
+  // el ultimo nivel visto vive en el perfil local (perfilPublico no lo manda a la nube)
+  if(pf.mapaVisto !== pf.nivel){ pf.mapaVisto = pf.nivel; guardar(); }
+  anunciar('El recorrido. Vas en el nivel ' + pf.nivel);
+  MAPA_MS = performance.now() - t0;
+}
+function cerrarMapa(){
+  VINO_MAPA = false;
+  $('vMapa').hidden = true; $('vInicio').hidden = false;
+  document.body.classList.remove('jugando');
+  window.scrollTo(0, 0);
+  pintarInicio();
+}
+function jugarDesdeMapa(){
+  despertarAudio(); VINO_MAPA = true;
+  abrirJuego('camino', 'camino', P().nivel);
+}
+function tocarNodo(n){
+  const L = P().nivel;
+  if(n === L){ jugarDesdeMapa(); return; }
+  if(n > L){ toast('Primero el nivel ' + L); return; }
+  const es = ESTRENO_MAPA[n], e = P().estrellas[n] || 0;
+  toast('Nivel ' + n + ' · ' + textoEstrellas(e) + (es ? ' · Estreno: ' + es[1] : ''));
+}
+function engancharMapa(){
+  $('hMapa').onclick = abrirMapa;
+  const pb = $('hProgBar');
+  pb.onclick = abrirMapa;
+  pb.onkeydown = (e) => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); abrirMapa(); } };
+  $('mBack').onclick = cerrarMapa;
+  $('mJugar').onclick = jugarDesdeMapa;
+  $('mCont').addEventListener('click', (e) => {
+    const b = e.target.closest('.nodo');
+    if(b){ tocarNodo(parseInt(b.dataset.n, 10)); return; }
+    if(e.target.closest('[data-accion="mas"]')){ MAPA.desde = Math.max(0, MAPA.desde - 1); pintarMapa({}); }
+  });
+}
+
+/* ============================================================
    EVENTOS Y ARRANQUE
    ============================================================ */
 function engancharEventos(){
-  $('board').addEventListener('click', (e) => { const s = e.target.closest('.slot'); if(s && s.dataset.i !== undefined) tocar(parseInt(s.dataset.i, 10)); });
+  $('board').addEventListener('click', (e) => {
+    // el click que el navegador dispara tras un arrastre no cuenta como toque
+    if(Date.now() - tArrastre < 450) return;
+    const s = e.target.closest('.slot'); if(s && s.dataset.i !== undefined) tocar(parseInt(s.dataset.i, 10));
+  });
+  engancharArrastre();
+  engancharMapa();
+  // tocar cualquier cosa que no sea una botella baja la seleccionada (los botones de control hacen lo suyo y tambien la bajan)
+  document.addEventListener('click', (e) => {
+    if(!G || G.sel === null || G.busy || $('vJuego').hidden) return;
+    if(Date.now() - tArrastre < 450) return;
+    if(e.target.closest && e.target.closest('#board .slot')) return;
+    seleccionar(null);
+  });
   $('board').addEventListener('keydown', (e) => {
     if(e.key !== 'Enter' && e.key !== ' ') return;
     const s = e.target.closest('.slot'); if(!s || s.dataset.i === undefined) return;
     e.preventDefault(); tocar(parseInt(s.dataset.i, 10));
   });
   $('gBack').onclick = cerrarJuego;
-  $('cUndo').onclick = deshacer; $('cReset').onclick = reiniciar; $('cExtra').onclick = botellaExtra;
+  $('cReset').onclick = reiniciar;
   $('wSig').onclick = siguiente; $('wRep').onclick = repetir;
-  $('hJugar').onclick = () => { despertarAudio(); abrirJuego('camino', 'camino', P().nivel); };
+  $('hJugar').onclick = () => { despertarAudio(); VINO_MAPA = false; abrirJuego('camino', 'camino', P().nivel); };
   $('rJugar').onclick = () => { despertarAudio(); const f = hoyISO(); abrirJuego('dia', 'dia', f, { solo:!!P().dias[f] }); };
   $('who').onclick = () => { if(HOST) return; S.jugador = S.jugador === 'cami' ? 'andres' : 'cami'; guardar(); pintarInicio(); };
   document.querySelectorAll('.schedhead').forEach(h => h.addEventListener('click', () => {
@@ -1897,7 +2631,8 @@ function engancharEventos(){
     if(S.partida && S.partida.jugador === S.jugador) S.partida = null;
     guardar(); pintarInicio(); toast('Progreso borrado');
   };
-  window.addEventListener('resize', () => { if(G && !$('vJuego').hidden) medir(); else pintarInicio(); });
+  document.addEventListener('visibilitychange', sincFx);
+  window.addEventListener('resize', () => { if(G && !$('vJuego').hidden) medir(); else if(!$('vMapa').hidden) ubicarPines({}); else pintarInicio(); });
   document.addEventListener('pointerdown', despertarAudio, { once:true });
   // estas dos lineas evitan el zoom por doble toque en iPhone
   document.addEventListener('gesturestart', (e) => e.preventDefault());
@@ -1917,7 +2652,7 @@ function start(data){
     // si la app pone su propia barra "Volver a CabriCoach" (HOST.barra), mi boton sobra y el titulo queda a la izquierda sin hueco
     $('salir').hidden = !!HOST.barra;
     $('salir').onclick = () => { if(G && G.estado) guardarPartida(); try{ HOST.cerrar(); }catch(e){} };
-    $('pie').textContent = '200 niveles comprobados, todos con solución.';
+    $('pie').textContent = 'Niveles sin fin, todos con solución comprobada.';
     fusionarConNube();      // un telefono nuevo recupera el progreso de la nube
   }
   iniciarWorker();
@@ -1938,8 +2673,9 @@ window.__botellasRefrescar = () => {
   if(!HOST) return;
   try{
     const nube = HOST.perfil && typeof HOST.perfil === 'object' ? HOST.perfil : null;
-    if(nube){ const pf = P(), m = fusionar(pf, nube); m.legado = pf.legado; S.perfiles[S.jugador] = m; ULTIMO = canon(nube); guardar(); }
+    if(nube){ const pf = P(), m = fusionar(pf, nube); m.legado = pf.legado; m.mapaVisto = pf.mapaVisto; S.perfiles[S.jugador] = m; ULTIMO = canon(nube); guardar(); }
     if(!$('vInicio').hidden) pintarInicio();
+    else if(!$('vMapa').hidden) pintarMapa({});
   }catch(e){}
 };
 

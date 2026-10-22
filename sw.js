@@ -1,5 +1,5 @@
 /* Coach Cabritos · offline para el gimnasio sin señal */
-const CACHE = 'cabritos-v170';
+const CACHE = 'cabritos-v171';
 const CORE = ['./', 'index.html', 'manifest.webmanifest'];
 /* Las imagenes de la interfaz salieron del HTML a archivos sueltos (bajo de 4,3 MB a
    1 MB). Como el gimnasio puede no tener señal, se precargan en segundo plano al
@@ -108,6 +108,9 @@ const UI_IMGS = ['assets/cab/pu_gruesa.jpg','assets/cab/pu_media.jpg','assets/ca
   'assets/cab/vsIcon.png',
   'assets/cab/yogur.png'
 ];
+/* el juego de botellas cambia sin cambiar de nombre: se precarga saltando la cache HTTP (reload)
+   y se sirve red primero (ver fetch). La app lo pide con ?v=APPREV. */
+const JUEGO = 'assets/botellas.html';
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
@@ -116,7 +119,7 @@ self.addEventListener('install', e => {
          igual queda usable y esa imagen se pedira a la red cuando toque */
       /* el catalogo de paquetes va en este lote resiliente (una falla no tumba el resto),
          no en CORE: alla addAll es todo-o-nada y por eso el JSON no entraba en dev */
-      .then(() => caches.open(CACHE).then(c => Promise.allSettled(UI_IMGS.concat(['assets/paq/nutricion-co.json','assets/botellas.html']).map(u => c.add(u)))))
+      .then(() => caches.open(CACHE).then(c => Promise.allSettled(UI_IMGS.concat(['assets/paq/nutricion-co.json']).map(u => c.add(u)).concat([c.add(new Request(JUEGO, { cache:'reload' }))]))))
       .then(()=>self.skipWaiting())
   );
 });
@@ -128,6 +131,20 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   /* el juego (assets/botellas.html) se pide con fetch, no es navegacion; aun asi, nada bajo /assets/ cuenta como la app */
   const isPage = !new URL(req.url).pathname.includes('/assets/') && (req.mode === 'navigate' || req.url.endsWith('/index.html'));
+  if (new URL(req.url).pathname.endsWith('/' + JUEGO)) {
+    /* REV 227: el juego, red primero (espera maximo 4 s) y la copia guardada si no hay senal.
+       Antes iba cache primero y el iPhone se quedaba con un juego viejo. Se guarda sin el ?v= para
+       que cualquier version sirva de respaldo. */
+    const red = fetch(req).then(res => {
+      if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(JUEGO, copy)); }
+      return res;
+    });
+    e.waitUntil(red.then(() => {}, () => {}));
+    const guardada = () => caches.match(JUEGO, { ignoreSearch:true });
+    e.respondWith(Promise.race([red.catch(() => null), new Promise(r => setTimeout(() => r(null), 4000))])
+      .then(res => (res && res.ok) ? res : guardada().then(g => g || red)));
+    return;
+  }
   if (isPage) {
     /* la app: red primero (para recibir actualizaciones), caché si no hay señal.
        REV 223: con señal mala la red podia tardar un minuto en rendirse y la app se quedaba

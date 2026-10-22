@@ -5,6 +5,7 @@ Sin dependencias. Marcadores que reemplaza:
   /*@FUENTES@*/   recursos/fuentes.css
   /*@MOTOR@*/     motor.js
   @IMG:nombre@    data URI de recursos/nombre.b64
+  @IMG?:nombre@   igual, pero opcional: si no existe recursos/nombre.b64 queda una cadena vacia (v6: zona1..zona4 y cima)
   /*@NIVELES@*/    const CATALOGO = <niveles.json>; CATALOGO.camino[L-1] (o recursos/niveles-muestra.json si aun no hay un v3)
   /*@TEST@*/      atajo window.__botellas, solo en la version local
 """
@@ -30,6 +31,7 @@ window.__botellas = {
   motor: MOTOR,
   catalogo: typeof CATALOGO !== 'undefined' ? CATALOGO : null,
   abrir: (m, r, c, o) => abrirJuego(m, r, c, o),
+  mapaMs: () => MAPA_MS,
   aviso: () => { const a = document.getElementById('aviso'); if(!a.hidden) a.click(); return true; },
   tocar: (i) => tocar(i),
   libre: async () => { for(let k = 0; k < 400; k++){ if(G && G.estado && !G.busy) return true; await esperar(25); } return false; },
@@ -48,7 +50,7 @@ window.__botellas = {
   },
   // e = {b, ab}
   forzar: (e) => { G.estado = e; G.oc = null; G.sel = null; construirTablero(); pintarControles(); vigilar(); },
-  volver: () => volverConSalida(),
+  sinSalida: () => mostrarStrip(),
   pausar: (t) => { document.getAnimations().forEach(a => { try{ a.pause(); if(t !== undefined) a.currentTime = t; }catch(e){} }); },
   reanudar: () => { document.getAnimations().forEach(a => { try{ a.play(); }catch(e){} }); }
 };
@@ -85,7 +87,12 @@ def armar():
         def img(m):
             return leer("recursos", m.group(1) + ".b64").strip()
 
+        def img_opc(m):
+            ruta = os.path.join(AQUI, "recursos", m.group(1) + ".b64")
+            return leer("recursos", m.group(1) + ".b64").strip() if os.path.exists(ruta) else ""
+
         t = re.sub(r"@IMG:([A-Za-z]+)@", img, t)
+        t = re.sub(r"@IMG\?:([A-Za-z0-9]+)@", img_opc, t)
         return t
 
     art = con(False)

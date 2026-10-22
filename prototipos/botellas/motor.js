@@ -37,7 +37,7 @@
 
   /* ---------- rutas: 4 caminos de 50 niveles (la curva sale de ajustarla con INFORME-NIVELES.md) ---------- */
 
-  const MAXBOT = 15; // tope de botellas del tablero (con la extra del jugador, 16)
+  const MAXBOT = 15; // tope de botellas del tablero
 
   // tabla [[desde, valor], ...] ascendente: el valor del ultimo tramo que ya empezo
   function tramo(tabla, L) {
@@ -156,9 +156,9 @@
   }
 
 
-  /* ---------- el camino (v3): un solo recorrido, con dificultad sorteada por nivel ---------- */
+  /* ---------- el camino (v5): un solo recorrido, grado sorteado por nivel y receta por grado ---------- */
 
-  const DIFS = ['facil', 'normal', 'dificil', 'muy'];
+  const DIFS = ['facil', 'normal', 'dificil', 'muy', 'extra'];
   // [nivel, mecanica]: en ese nivel se estrena (siempre Facil o Normal, y con la Novedad en la interfaz)
   // v4: nada cerrado viene vacio. L4 candado (con liquido), L7 llave con caja de una botella, L12 cajon de dos
   // botellas (con un color nuevo adentro), L30 botella gigante.
@@ -170,27 +170,55 @@
   }
   function antesDeEstreno(L) { return estrenoDe(L + 1) !== null; }
 
+  /* ---------- LA RECETA: lo unico que define como es un nivel de cada grado ----------
+     Un nivel sale de (L, grado) sin diseñarlo a mano; para subir o bajar un grado se toca solo esta tabla.
+       dc        desfase de colores sobre coloresBase(L) (siempre entre 3 y 12, y el tope de 15 botellas lo cuida topar)
+       pruebas   [min, max] de mecanicas distintas (candado, familia de cajas, misterio) entre las ya estrenadas;
+                 Extra pide todas las que haya
+       mist      como sale el misterio cuando le toca: 'leve' siempre leve, 'auto' total desde L35 (leve antes),
+                 'aVeces' total la mitad de las veces desde L35, 'siempre' total y obligatorio (Extra)
+       hondo     que tan enterrada va la llave (0 = cerca de la tapa, 1 = lo mas hondo posible)
+       cuantos   candidatos que se arman y se prueban en el catalogo (en vivo son 4)
+       franja    donde debe caer el candidato elegido: bot = [min, max] de la fraccion de partidas que gana el
+                 jugador simulado (jugarBot), atasco = minimo de la fraccion que se queda sin jugadas
+                 (el atasco es la medida de "te puedes quedar sin salida a ciegas").
+       topes     topes del solver en vivo [A* optimo, A* ponderado, dfs]: los grados duros tienen mas colores y
+                 necesitan mas margen para no caer al "sin resolver", dentro de sus 5 s.
+     Las franjas son punto de partida calibrado con el catalogo real (ver INFORME-NIVELES.md). */
+  const RECETA = {
+    facil:   { dc: -1, pruebas: [0, 1], mist: 'leve',    hondo: 0,   cuantos: 8,  franja: { bot: [0.55, 1],    atasco: 0 },    topes: [12000, 40000, 30000] },
+    normal:  { dc: 0,  pruebas: [1, 1], mist: 'leve',    hondo: 0.5, cuantos: 10, franja: { bot: [0.1, 0.599], atasco: 0 },    topes: [12000, 40000, 30000] },
+    dificil: { dc: 1,  pruebas: [1, 2], mist: 'auto',    hondo: 1,   cuantos: 8,  franja: { bot: [0, 0.249],   atasco: 0.3 },  topes: [12000, 40000, 30000] },
+    muy:     { dc: 2,  pruebas: [2, 3], mist: 'aVeces',  hondo: 1,   cuantos: 12, franja: { bot: [0, 0.05],    atasco: 0.5 },  topes: [20000, 60000, 60000] },
+    extra:   { dc: 3,  pruebas: [9, 9], mist: 'siempre', hondo: 1,   cuantos: 16, franja: { bot: [0, 0],       atasco: 0.65 }, topes: [20000, 60000, 60000] }
+  };
+  const CANDIDATOS_VIVO = 4, PARTIDAS_CATALOGO = 40, PARTIDAS_VIVO = 20;
+
+  /* ---------- sorteo del grado ----------
+     Pesos [Facil, Normal, Dificil, Muy, Extra] por tramo de nivel. El que sube la dureza del juego es esta tabla:
+     "duros" = Dificil + Muy + Extra. Extra no sale antes de L36 (el misterio total se estrena en L35).
+     Los pesos se calibraron con la meta de reparto de los 200 (duros >= 45 %, desde L81 >= 55 %, al menos 15
+     Extra, primer Muy antes de L25, primer Extra entre L36 y L50). Los respiros obligatorios (tras Muy/Extra y
+     tras dos duros) se comen parte de los duros, por eso los pesos duros son mas altos que el reparto real. */
   function pesosDif(L) {
-    if (L <= 3) return [100, 0, 0, 0];
-    if (L <= 10) return [60, 40, 0, 0];
-    if (L <= 29) return [35, 45, 20, 0];
-    if (L <= 100) return [25, 45, 20, 10];
-    return [20, 40, 25, 15];
+    return tramo([[1, [100, 0, 0, 0, 0]], [4, [50, 50, 0, 0, 0]], [11, [17, 22, 29, 16, 0]],
+                  [36, [13, 20, 31, 14, 21]], [81, [3, 15, 41, 23, 12]], [201, [3, 15, 40, 22, 20]]], L);
   }
-  // Se sortea en orden desde L=1 porque cada nivel depende del anterior (por eso se memoriza).
+  function esDuro(d) { return d === 'dificil' || d === 'muy' || d === 'extra'; }
+  // Se sortea en orden desde L=1 porque cada nivel depende de los anteriores (por eso se memoriza).
   // Cada nivel usa su propio rng('dif:'+L): el resultado no depende de cuantos se hayan pedido antes.
+  // Reglas: maximo dos duros seguidos; tras dos duros, o tras un Muy o un Extra, respiro (Facil o Normal);
+  // el estreno y su vispera no son duros; nunca cuatro Faciles seguidos despues de L10.
   const MEMO_DIF = [null];
   function sortearDif(L) {
-    const prev = MEMO_DIF[L - 1];
+    const p1 = MEMO_DIF[L - 1], p2 = MEMO_DIF[L - 2], p3 = MEMO_DIF[L - 3];
     const w = pesosDif(L).slice();
-    const duro = function (d) { return d === 'dificil' || d === 'muy'; };
-    if (prev === 'muy') return 'facil';                    // despues de un Muy dificil, respiro
-    if (duro(prev)) { w[2] = 0; w[3] = 0; }                 // nunca dos duros seguidos
+    const respiro = (esDuro(p1) && esDuro(p2)) || p1 === 'muy' || p1 === 'extra' || estrenoDe(L) || antesDeEstreno(L);
+    if (respiro) { w[2] = 0; w[3] = 0; w[4] = 0; }
+    if (L > 10 && p1 === 'facil' && p2 === 'facil' && p3 === 'facil') w[0] = 0;
     let tot = 0; w.forEach(function (x) { tot += x; });
     let x = rng('dif:' + L)() * tot, d = DIFS[0];
-    for (let i = 0; i < 4; i++) { x -= w[i]; if (x < 0) { d = DIFS[i]; break; } }
-    if (duro(d) && (estrenoDe(L) || antesDeEstreno(L))) d = 'normal'; // el estreno y su vispera no son duros
-    if (d === 'facil' && L > 10 && MEMO_DIF[L - 1] === 'facil' && MEMO_DIF[L - 2] === 'facil' && MEMO_DIF[L - 3] === 'facil') d = 'normal';
+    for (let i = 0; i < DIFS.length; i++) { x -= w[i]; if (x < 0) { d = DIFS[i]; break; } }
     return d;
   }
   function difDe(L) {
@@ -199,17 +227,19 @@
     return MEMO_DIF[L];
   }
 
+  // Etapa: colores de base segun L (3 en L1 a 11 desde L141); el grado le suma su desfase
   function coloresBase(L) { return tramo([[1, 3], [3, 4], [6, 5], [13, 6], [26, 7], [46, 8], [71, 9], [101, 10], [141, 11]], L); }
 
-  // Parametros de un nivel del camino (L >= 1, sin tope). Misma forma que rutaParams, mas id, dif y estreno.
+  // Parametros de un nivel del camino (L >= 1, sin tope): sortear el grado y aplicarle la receta.
+  // Misma forma que rutaParams, mas id, dif y estreno.
   function nivelParams(L) {
     L = Math.max(1, Math.floor(L) || 1);
-    const dif = difDe(L), idx = DIFS.indexOf(dif), estreno = estrenoDe(L);
+    const dif = difDe(L), idx = DIFS.indexOf(dif), rec = RECETA[dif], estreno = estrenoDe(L);
     const R = rng('mec:' + L);
-    const n = Math.max(3, Math.min(12, coloresBase(L) + [-1, 0, 1, 2][idx]));
+    const n = Math.max(3, Math.min(12, coloresBase(L) + rec.dc));
     const p = { ruta: 'camino', L: L, id: 'camino-' + L, n: n, vacias: 2, cap: 4, misterio: 0, cajas: [], candados: [], cadena: false,
-                hondo: [0, 0.5, 1, 1][idx], dif: dif, estreno: estreno,
-                seleccion: ['facil', 'mediana', 'dificil', 'muy'][idx], cuantos: [6, 6, 8, 16][idx] };
+                hondo: rec.hondo, dif: dif, estreno: estreno,
+                seleccion: ['facil', 'mediana', 'dificil', 'muy', 'extra'][idx], cuantos: rec.cuantos, franja: rec.franja, topes: rec.topes };
     const largas = function () { p.cap = 6; p.n = Math.max(4, Math.min(6, n - 3)); };
     if (estreno) {
       // el estreno va solo y limpio: la mecanica nueva es lo unico distinto del nivel
@@ -223,37 +253,47 @@
       else if (estreno === 'dosCajas') p.cajas = [cajaLiq(2), cajaLiq(1)];
       else if (estreno === 'cadena') { p.cajas = [cajaLiq(1), cajaLiq(2)]; p.cadena = true; }
     } else {
-      sortearMecanicas(p, L, idx, R);
+      aplicarPruebas(p, L, idx, rec, R);
     }
     return topar(p);
   }
 
-  // Mecanicas ya estrenadas, sorteadas segun la dificultad: Facil 0-1, Normal 1 (a veces 0), Dificil 1-2, Muy 2-3.
-  function sortearMecanicas(p, L, idx, R) {
-    if (L >= 25 && idx <= 1 && R() < 0.12) { p.cap = 6; p.n = Math.max(4, Math.min(6, p.n - 3)); return; } // largas: solas
-    const cuantas = idx === 0 ? (R() < 0.5 ? 1 : 0) : idx === 1 ? (R() < 0.85 ? 1 : 0) : idx === 2 ? 1 + (R() < 0.5 ? 1 : 0) : 2 + (R() < 0.4 ? 1 : 0);
+  // Las pruebas del grado: cuantas mecanicas ya estrenadas lleva y cuales (cada una solo desde su estreno).
+  // Mecanicas: 'c' candado (L4), 'x' familia de cajas (L7; cajon de 2 desde L12, dos cajas desde L50 y cadena
+  // desde L80 solo en grados duros) y 'm' misterio (L20). Una sola familia de cajas por nivel.
+  function aplicarPruebas(p, L, idx, rec, R) {
+    // largas: solas y solo en Facil/Normal
+    if (L >= 25 && idx <= 1 && R() < 0.12) { p.cap = 6; p.n = Math.max(4, Math.min(6, p.n - 3)); return; }
     const kinds = [];
-    if (L >= 4) kinds.push('c');                          // candado (con liquido)
-    if (L >= 7) kinds.push('x');                          // caja: una botella antes de L12, cajon de dos despues
+    if (L >= 4) kinds.push('c');
+    if (L >= 7) kinds.push('x');
     if (L >= 20) kinds.push('m');
-    if (L >= 50 && idx >= 2) kinds.push('2c');
-    if (L >= 80 && idx >= 2) kinds.push('cad');
+    let cuantas = rec.pruebas[0] + (rec.pruebas[1] > rec.pruebas[0] ? Math.floor(R() * (rec.pruebas[1] - rec.pruebas[0] + 1)) : 0);
+    // Normal: a veces 0 (15 %) para que no todos los Normales lleven prueba
+    if (idx === 1 && R() < 0.15) cuantas = 0;
     barajar(kinds, R);
-    const pick = {};
-    let hechas = 0, hayCaja = false;
-    for (let i = 0; i < kinds.length && hechas < cuantas; i++) {
-      const k = kinds[i];
-      const esCaja = k === 'x' || k === '2c' || k === 'cad';
-      if (esCaja && hayCaja) continue;                    // una sola familia de cajas por nivel
-      if (esCaja) hayCaja = true;
-      pick[k] = true; hechas++;
+    let elegidas;
+    if (rec.mist === 'siempre' && L >= 20) {
+      // Extra: el misterio total va siempre (primero en la lista) y las demas pruebas, todas las que haya
+      const orden = ['m'].concat(kinds.filter(function (k) { return k !== 'm'; }));
+      elegidas = orden.slice(0, Math.min(cuantas, orden.length));
+    } else {
+      elegidas = kinds.slice(0, Math.min(cuantas, kinds.length));
     }
-    if (pick.c) p.candados.push(CAND_LIQ);
-    const cajon = function () { return L >= 12 && R() < 0.85 ? 2 : 1; };
-    if (pick.x) p.cajas.push(cajaLiq(cajon()));
-    if (pick['2c']) p.cajas.push(cajaLiq(cajon()), cajaLiq(idx >= 2 && R() < 0.5 ? 2 : 1));
-    if (pick.cad) { p.cajas.push(cajaLiq(1), cajaLiq(2)); p.cadena = true; }
-    if (pick.m) p.misterio = (idx >= 2 && L >= 35) ? 2 : 1;
+    const tiene = function (k) { return elegidas.indexOf(k) >= 0; };
+    if (tiene('c')) p.candados.push(CAND_LIQ);
+    if (tiene('x')) {
+      const cajon = function () { return L >= 12 && R() < 0.85 ? 2 : 1; };
+      // en los duros las formas de cajas mas complejas salen mas (dos cajas L50+, cadena L80+)
+      const r = R();
+      if (idx >= 2 && L >= 80 && r < 0.35) { p.cajas.push(cajaLiq(1), cajaLiq(2)); p.cadena = true; }
+      else if (idx >= 2 && L >= 50 && r < 0.7) p.cajas.push(cajaLiq(cajon()), cajaLiq(idx >= 2 && R() < 0.5 ? 2 : 1));
+      else p.cajas.push(cajaLiq(cajon()));
+    }
+    if (tiene('m')) {
+      const total = L >= 35 && (rec.mist === 'auto' || rec.mist === 'siempre' || (rec.mist === 'aVeces' && R() < 0.5));
+      p.misterio = total ? 2 : 1;
+    }
     // la botella gigante aparece de vez en cuando (no con largas)
     if (L > 30 && R() < 0.15) p.gigante = true;
   }
@@ -668,6 +708,10 @@
       const relleno = capasK - nn * u;
       if (relleno > capasF.length) return null;
       const cerr = capasF.slice(0, relleno);
+      // un color de afuera no puede quedar entero adentro de lo cerrado: eso seria un color nuevo sin declarar
+      const dentro = {};
+      cerr.forEach(function (c) { dentro[c] = (dentro[c] || 0) + 1; });
+      if (Object.keys(dentro).some(function (c) { return dentro[c] >= u; })) continue;
       nuevosC.forEach(function (c) { for (let k = 0; k < u; k++) cerr.push(c); });
       barajar(cerr, R);
       const resto = capasF.slice(relleno);
@@ -794,22 +838,29 @@
   /* ---------- generar ---------- */
 
   // topes del solver: el catalogo se genera una sola vez y puede gastar minutos; en vivo se queda
-  // corto a proposito (A* optimo solo si es chico, luego ponderado) para entrar en ~2 s por nivel.
+  // corto a proposito (A* optimo solo si es chico, luego ponderado). Los de vivo salen de la RECETA del grado
+  // (los duros tienen mas colores y mas margen; Muy y Extra entran en ~5 s, los demas en ~2 s).
   const TOPES_CATALOGO = [400000, 400000, 400000];
   const TOPES_RAPIDO = [12000, 40000, 30000];
 
-  // opts.modo: 'catalogo' (6 a 10 candidatos con metricas bot y atasco) o 'rapido' (3 candidatos, sin metricas).
+  // Que tan lejos queda un candidato de la franja de su grado (0 = dentro). Suma de lo que se pasa o le falta.
+  function distanciaFranja(c, f) {
+    return Math.max(0, f.bot[0] - c.bot) + Math.max(0, c.bot - f.bot[1]) + Math.max(0, f.atasco - c.atasco);
+  }
+
+  // opts.modo: 'catalogo' (candidatos de la receta, 40 partidas del bot) o 'rapido' (4 candidatos, 20 partidas).
+  // En los dos se mide el bot y el atasco: es barato frente al solver y la franja del grado decide la eleccion.
   // Determinista por semilla y modo: todo el azar sale de rng(seedStr) y de las semillas 'bot:...'.
   function generar(p, seedStr, opts) {
     opts = opts || {};
     const cat = opts.modo === 'catalogo';
     const R = rng(seedStr);
-    // compatibilidad con los parametros viejos (nivelParams): tipo -> seleccion
-    const sel = p.seleccion || (p.tipo === 'dificil' ? 'dificil' : (p.tipo === 'respiro' ? 'facil' : 'mediana'));
-    const cuantosP = p.cuantos || { normal: 4, dificil: 10, respiro: 3, largas: 3 }[p.tipo] || 4;
-    const cuantos = cat ? cuantosP : Math.min(3, cuantosP);
-    const topes = cat ? TOPES_CATALOGO : TOPES_RAPIDO;
-    const partidas = opts.partidas || 40;
+    const dif = p.dif || (p.seleccion === 'mediana' ? 'normal' : p.seleccion) || 'normal';
+    const rec = RECETA[dif] || RECETA.normal;
+    const franja = p.franja || rec.franja;
+    const cuantos = cat ? (p.cuantos || rec.cuantos) : CANDIDATOS_VIVO;
+    const topes = cat ? TOPES_CATALOGO : (p.topes || rec.topes || TOPES_RAPIDO);
+    const partidas = opts.partidas || (cat ? PARTIDAS_CATALOGO : PARTIDAS_VIVO);
     const cands = [];
     let intentos = 0;
     const maxInt = cat ? 800 : 150;
@@ -822,36 +873,38 @@
       const r = resolver(a.botellas, C, { topes: topes });
       if (!r || r.sinSolucion) continue;
       const c = { a: a, C: C, meta: r.largo, optimo: r.optimo, movs: r.movs, bot: 0, atasco: 0, idx: cands.length };
-      if (cat) {
-        const P = prep(C), Rb = rng('bot:' + seedStr + ':' + cands.length);
-        let gana = 0, atasca = 0;
-        for (let g = 0; g < partidas; g++) {
-          const z = jugarBot(a.botellas, P, r.largo, Rb);
-          if (z === 1) gana++; else if (z === -1) atasca++;
-        }
-        c.bot = Math.round(1000 * gana / partidas) / 1000;
-        c.atasco = Math.round(1000 * atasca / partidas) / 1000;
+      const P = prep(C), Rb = rng('bot:' + seedStr + ':' + cands.length);
+      let gana = 0, atasca = 0;
+      for (let g = 0; g < partidas; g++) {
+        const z = jugarBot(a.botellas, P, r.largo, Rb);
+        if (z === 1) gana++; else if (z === -1) atasca++;
       }
+      c.bot = Math.round(1000 * gana / partidas) / 1000;
+      c.atasco = Math.round(1000 * atasca / partidas) / 1000;
+      c.dist = distanciaFranja(c, franja);
       cands.push(c);
     }
     if (!cands.length) throw new Error('No se pudo generar ' + seedStr);
-    // criterio por ruta; el indice desempata para que la eleccion sea estable
-    let puntaje;
-    if (!cat) {
-      if (sel === 'facil') puntaje = function (c) { return -c.meta; };
-      else if (sel === 'mediana') puntaje = null;
-      else puntaje = function (c) { return c.meta; };
-    } else if (sel === 'facil') puntaje = function (c) { return c.bot * 1000 - c.meta; };
-    else if (sel === 'dificil') puntaje = function (c) { return c.meta * 1000 - c.bot; };
-    else if (sel === 'muy') puntaje = function (c) { return c.meta + 15 * (1 - c.bot); };
-    else puntaje = null;
+    // Eleccion por franja: entre los que caen en ella, los duros se quedan con el de mayor meta, Facil con el de
+    // menor y Normal con el de en medio; si ninguno cae, el mas cercano a la franja (a igual distancia, el mismo
+    // criterio de meta). El indice desempata para que la eleccion sea estable.
+    const dentro = cands.filter(function (c) { return c.dist === 0; });
+    const lista = dentro.length ? dentro : (function () {
+      let m = Infinity;
+      cands.forEach(function (c) { if (c.dist < m) m = c.dist; });
+      return cands.filter(function (c) { return Math.abs(c.dist - m) < 1e-9; });
+    })();
     let el;
-    if (!puntaje) {
-      const ord = cands.slice().sort(function (x, y) { return x.meta - y.meta || x.idx - y.idx; });
+    if (dif === 'normal') {
+      const ord = lista.slice().sort(function (x, y) { return x.meta - y.meta || x.idx - y.idx; });
       el = ord[Math.floor(ord.length / 2)];
     } else {
-      el = cands[0];
-      for (let q = 1; q < cands.length; q++) if (puntaje(cands[q]) > puntaje(el)) el = cands[q];
+      const quiereCorto = dif === 'facil';
+      el = lista[0];
+      for (let q = 1; q < lista.length; q++) {
+        const mejor = quiereCorto ? lista[q].meta < el.meta : lista[q].meta > el.meta;
+        if (mejor) el = lista[q];
+      }
     }
     const a = el.a;
     const rasgos = [];
@@ -867,9 +920,51 @@
     if (a.caps) { out.caps = a.caps; out.u = p.cap; }
     out.botellas = a.botellas; out.llaves = a.llaves; out.cajas = a.cajas; out.candados = a.candados;
     out.ocultas = a.ocultas; out.nuevos = a.nuevos; out.meta = el.meta; out.movs = el.movs; out.optimo = el.optimo;
-    out.rasgos = rasgos; out.dif = p.dif || (sel === 'mediana' ? 'normal' : sel === 'facil' ? 'facil' : sel);
-    if (cat) { out.bot = el.bot; out.atasco = el.atasco; }
+    out.rasgos = rasgos; out.dif = dif;
+    out.bot = el.bot; out.atasco = el.atasco;
     return out;
+  }
+
+  /* ---------- variante para "Reiniciar": otros colores y otro orden, mismo nivel por dentro ---------- */
+  // Cambiarle el nombre a los colores y el lugar a las botellas no cambia que jugadas existen: la solucion
+  // del catalogo se traduce tal cual, asi que la variante tiene salida y la misma meta sin volver a resolver.
+  // Las botellas de cada caja siguen juntas y al final (formato v2); adentro de la caja tambien se barajan.
+  const NCOLORES = 12;
+  function variante(nv, seedStr) {
+    const n = nv.botellas.length;
+    const enCaja = {};
+    (nv.cajas || []).forEach(function (cj) { cj.bots.forEach(function (i) { enCaja[i] = 1; }); });
+    const usados = {};
+    nv.botellas.forEach(function (b) { b.forEach(function (c) { usados[c] = 1; }); });
+    const cols = Object.keys(usados).map(Number).sort(function (a, b) { return a - b; });
+    let mapaC = null, orden = null, cajas = null;
+    // si el sorteo deja todo igual (pasa en niveles diminutos) se sortea otra vez: tiene que verse distinto
+    for (let intento = 0; intento < 8; intento++) {
+      const R = rng('var:' + seedStr + ':' + intento);
+      const pal = []; for (let c = 1; c <= NCOLORES; c++) pal.push(c);
+      barajar(pal, R);
+      mapaC = {}; cols.forEach(function (c, q) { mapaC[c] = pal[q]; });
+      orden = []; for (let i = 0; i < n; i++) if (!enCaja[i]) orden.push(i);
+      barajar(orden, R);
+      cajas = (nv.cajas || []).map(function (cj) {
+        const m = cj.bots.slice(); barajar(m, R);
+        return Object.assign({}, cj, { bots: m.map(function (viejo) { orden.push(viejo); return orden.length - 1; }) });
+      });
+      const mismos = cols.every(function (c) { return mapaC[c] === c; });
+      if (!mismos || orden.some(function (v, i) { return v !== i; })) break;
+    }
+    const nuevoDe = []; orden.forEach(function (viejo, nuevo) { nuevoDe[viejo] = nuevo; });
+    const o = Object.assign({}, nv);
+    o.botellas = orden.map(function (v) { return nv.botellas[v].map(function (c) { return mapaC[c]; }); });
+    if (nv.caps) o.caps = orden.map(function (v) { return nv.caps[v]; });
+    if (nv.ocultas) o.ocultas = orden.map(function (v) { const a = nv.ocultas[v]; return a ? a.slice() : a; });
+    o.llaves = (nv.llaves || []).map(function (l) { return Object.assign({}, l, { b: nuevoDe[l.b] }); });
+    o.cajas = cajas;
+    o.candados = (nv.candados || []).map(function (c) { return Object.assign({}, c, { b: nuevoDe[c.b], color: mapaC[c.color] }); });
+    if (nv.nuevos) o.nuevos = nv.nuevos.map(function (c) { return mapaC[c]; }).sort(function (a, b) { return a - b; });
+    if (nv.movs) o.movs = nv.movs.map(function (m) { return [nuevoDe[m[0]], nuevoDe[m[1]]]; });
+    o.variante = String(seedStr);
+    return o;
   }
 
   G.MOTOR = {
@@ -877,6 +972,6 @@
     racha: racha, unColor: unColor, completa: completa, ganado: ganado,
     puedeVerter: puedeVerter, verter: verter, hayJugadas: hayJugadas, estrellasDe: estrellasDe,
     clave: clave, heuristica: heuristica, jugadas: jugadas, cerrada: cerrada, prep: prep, capDe: function (C, i) { return capDe(prep(C), i); },
-    resolver: resolver, pista: pista, generar: generar
+    resolver: resolver, pista: pista, generar: generar, variante: variante
   };
 })(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : this));
